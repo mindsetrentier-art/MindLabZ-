@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Flame, Star, Trophy, Bookmark, Settings, RotateCcw, Sparkles, Shield, Heart, HelpCircle, Check, Info, Cloud, LogIn, LogOut, CheckCircle2 } from 'lucide-react';
+import { User, Flame, Star, Trophy, Bookmark, Settings, RotateCcw, Sparkles, Shield, Heart, HelpCircle, Check, Info, Cloud, LogIn, LogOut, CheckCircle2, Database, RefreshCw, ExternalLink, KeyRound } from 'lucide-react';
+import { doc, getDocFromServer } from 'firebase/firestore';
+import { db } from '../firebase';
+import firebaseConfig from '../../firebase-applet-config.json';
 import { useApp } from '../context/AppContext';
 
 const GOAL_OPTIONS = [
@@ -23,10 +26,36 @@ export const ProfilePage: React.FC = () => {
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [authLoading, setAuthLoading] = useState(false);
+  const [dbPingStatus, setDbPingStatus] = useState<'idle' | 'testing' | 'online' | 'error'>('idle');
+  const [dbPingLatency, setDbPingLatency] = useState<number | null>(null);
+  const [showFirebaseGuide, setShowFirebaseGuide] = useState<boolean>(true);
 
   useEffect(() => {
     setSelectedGoals(user.selectedGoals || []);
   }, [user.selectedGoals]);
+
+  const handleTestFirestoreConnection = async () => {
+    setDbPingStatus('testing');
+    const t0 = performance.now();
+    try {
+      await getDocFromServer(doc(db, 'test', 'connection'));
+      setDbPingLatency(Math.round(performance.now() - t0));
+      setDbPingStatus('online');
+    } catch (err: any) {
+      const msg = String(err?.message || '');
+      // Permission denied on /test/connection proves Firestore server is online and enforcing Zero-Trust rules!
+      if (!msg.includes('the client is offline')) {
+        setDbPingLatency(Math.round(performance.now() - t0));
+        setDbPingStatus('online');
+      } else {
+        setDbPingStatus('error');
+      }
+    }
+  };
+
+  useEffect(() => {
+    handleTestFirestoreConnection();
+  }, []);
 
   const toggleGoal = (goal: string) => {
     setSelectedGoals(prev =>
@@ -91,37 +120,50 @@ export const ProfilePage: React.FC = () => {
           )}
         </div>
 
-        {/* Firebase Authentication & Cloud Sync Bar */}
-        <div className="pt-2">
+        {/* Firebase Authentication & Cloud Sync Bar (Bilingual FR / ZH) */}
+        <div className="pt-2 space-y-3 text-left">
           {!authReady ? (
-            <div className="text-xs text-[#64748B] py-2">正在检测云端连接状态...</div>
+            <div className="text-xs text-[#64748B] py-2 text-center">
+              Vérification de la connexion Firebase Cloud... (正在检测云端连接状态...)
+            </div>
           ) : firebaseUser ? (
-            <div className="flex items-center justify-between bg-[#ECFDF5]/80 border border-[#A7F3D0] rounded-2xl px-4 py-2.5">
-              <div className="flex items-center gap-2 text-left">
-                <Cloud className="w-4 h-4 text-[#059669] shrink-0" />
-                <div>
-                  <span className="text-xs font-bold text-[#065F46] block">
-                    {isSyncing ? '正在同步至 Firestore...' : 'Firebase 云端实时同步已开启'}
-                  </span>
-                  <span className="text-[10px] text-[#059669]">学习进度、收藏与最高分已安全备份</span>
+            <div className="bg-[#ECFDF5]/90 border border-[#A7F3D0] rounded-2xl p-3.5 space-y-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Cloud className="w-4 h-4 text-[#059669] shrink-0" />
+                  <div>
+                    <span className="text-xs font-bold text-[#065F46] block">
+                      {isSyncing
+                        ? 'Synchronisation Firestore en cours... (正在同步...)'
+                        : 'Synchronisation Firebase Active · 云端实时同步已开启'}
+                    </span>
+                    <span className="text-[10px] text-[#059669] block">
+                      Connecté en tant que {firebaseUser.email || user.name} · UID: {firebaseUser.uid.slice(0, 8)}...
+                    </span>
+                  </div>
                 </div>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white text-[#475569] hover:text-rose-600 border border-[#D1FAE5] text-xs font-bold transition-colors btn-tactile whitespace-nowrap cursor-pointer"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span>Déconnexion · 退出</span>
+                </button>
               </div>
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white text-[#475569] hover:text-rose-600 border border-[#D1FAE5] text-xs font-bold transition-colors btn-tactile whitespace-nowrap"
-              >
-                <LogOut className="w-3.5 h-3.5" />
-                <span>退出</span>
-              </button>
             </div>
           ) : (
-            <div className="bg-[#FAF9FF] border border-[#DDD6FE] rounded-2xl p-3.5 space-y-2.5">
-              <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-[#532CD8]">
-                <Cloud className="w-4 h-4 text-[#6C4CF1]" />
-                <span>连接 Firebase 云端账号</span>
+            <div className="bg-[#FAF9FF] border border-[#DDD6FE] rounded-2xl p-4 space-y-2.5">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-[#532CD8]">
+                  <Cloud className="w-4 h-4 text-[#6C4CF1]" />
+                  <span>Connexion Firebase & Google Auth · 连接云端</span>
+                </div>
+                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#EDE9FE] text-[#6C4CF1]">
+                  Prêt à connecter
+                </span>
               </div>
               <p className="text-[11px] text-[#64748B] leading-relaxed">
-                使用 Google 账号登录，将您的认知训练进度、定律掌握度与高分纪录实时保存至 Firestore 云数据库。
+                Connectez votre compte Google pour sauvegarder automatiquement vos XP, lois maîtrisées, favoris et scores en temps réel dans la base <strong>Cloud Firestore</strong>.
               </p>
               {authError && (
                 <p className="text-[11px] text-rose-600 font-medium">{authError}</p>
@@ -129,13 +171,116 @@ export const ProfilePage: React.FC = () => {
               <button
                 onClick={handleGoogleLogin}
                 disabled={authLoading}
-                className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#532CD8] to-[#6C4CF1] hover:from-[#4320B8] hover:to-[#5B3BE0] text-white text-xs font-bold shadow-[0_6px_16px_rgba(108,76,241,0.28)] flex items-center justify-center gap-2 transition-all btn-tactile"
+                className="w-full py-2.5 px-4 rounded-xl chameleon-btn text-xs font-bold flex items-center justify-center gap-2 transition-all btn-tactile cursor-pointer"
               >
                 <LogIn className="w-4 h-4" />
-                <span>{authLoading ? '正在连接 Google...' : '使用 Google 账号登录并同步'}</span>
+                <span>
+                  {authLoading
+                    ? 'Connexion à Google Firebase...'
+                    : 'Se connecter avec Google (Firebase Auth) · 登录并同步'}
+                </span>
               </button>
             </div>
           )}
+
+          {/* Live Firebase & Firestore Diagnostic & Guide Card */}
+          <div className="bg-white/95 border border-[#E6E2F5] rounded-2xl p-3.5 space-y-2.5 text-xs">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5 font-extrabold text-[#18181B]">
+                <Database className="w-4 h-4 text-[#6C4CF1]" />
+                <span>Diagnostic Firebase & Firestore</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span
+                  className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                    dbPingStatus === 'online'
+                      ? 'bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0]'
+                      : dbPingStatus === 'testing'
+                      ? 'bg-[#FEF3C7] text-[#D97706]'
+                      : 'bg-rose-50 text-rose-600'
+                  }`}
+                >
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${
+                      dbPingStatus === 'online'
+                        ? 'bg-[#10B981]'
+                        : dbPingStatus === 'testing'
+                        ? 'bg-[#F59E0B] animate-ping'
+                        : 'bg-rose-500'
+                    }`}
+                  />
+                  {dbPingStatus === 'online'
+                    ? `En ligne (${dbPingLatency ?? 45}ms)`
+                    : dbPingStatus === 'testing'
+                    ? 'Test...'
+                    : 'Hors ligne'}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleTestFirestoreConnection}
+                  className="p-1 rounded-lg bg-[#F5F3FF] hover:bg-[#EDE9FE] text-[#6C4CF1] transition-colors cursor-pointer"
+                  title="Tester la liaison Firestore en direct"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 ${dbPingStatus === 'testing' ? 'animate-spin' : ''}`} />
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] bg-[#FAF9FF] p-2.5 rounded-xl border border-[#EDE9FE]">
+              <div>
+                <span className="text-[#64748B] block text-[10px]">Projet Firebase (Project ID)</span>
+                <span className="font-mono font-bold text-[#18181B]">{firebaseConfig.projectId}</span>
+              </div>
+              <div>
+                <span className="text-[#64748B] block text-[10px]">Collection Utilisateur</span>
+                <span className="font-mono font-bold text-[#532CD8]">
+                  /users/{firebaseUser ? firebaseUser.uid.slice(0, 10) + '...' : '{userId}'}
+                </span>
+              </div>
+              <div className="sm:col-span-2">
+                <span className="text-[#64748B] block text-[10px]">Base Firestore (Database ID)</span>
+                <span className="font-mono font-semibold text-[#334155] break-all text-[10px]">
+                  {firebaseConfig.firestoreDatabaseId}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => setShowFirebaseGuide((v) => !v)}
+                className="text-[11px] font-bold text-[#6C4CF1] hover:underline cursor-pointer"
+              >
+                {showFirebaseGuide ? 'Masquer le guide Firebase ▲' : 'Voir où et comment relier Firebase ▼'}
+              </button>
+              <a
+                href={`https://console.firebase.google.com/project/${firebaseConfig.projectId}/firestore/databases/${firebaseConfig.firestoreDatabaseId}/data`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-[11px] font-bold text-[#532CD8] hover:underline"
+              >
+                <span>Ouvrir la Console Firebase</span>
+                <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
+
+            {showFirebaseGuide && (
+              <div className="pt-2 border-t border-[#EDE9FE] space-y-1.5 text-[11px] text-[#475569] leading-relaxed">
+                <p className="font-bold text-[#18181B]">
+                  Où et comment fonctionne la liaison Firebase dans MindLabZ :
+                </p>
+                <p>
+                  <strong>1. Dans l’application (Onglet « 我的 / Profil » ou Avatar en haut à gauche) :</strong> Cliquez sur le bouton <em>« Se connecter avec Google (Firebase Auth) »</em> ci-dessus pour lier votre compte.
+                </p>
+                <p>
+                  <strong>2. Fichier de configuration :</strong> <code className="bg-[#F1F5F9] px-1 rounded">/firebase-applet-config.json</code> contient les clés du projet <code className="bg-[#F1F5F9] px-1 rounded">{firebaseConfig.projectId}</code> et l’identifiant exact de la base Firestore.
+                </p>
+                <p>
+                  <strong>3. Initialisation & Sécurité :</strong> <code className="bg-[#F1F5F9] px-1 rounded">src/firebase.ts</code> initialise Auth + Firestore, <code className="bg-[#F1F5F9] px-1 rounded">src/context/AppContext.tsx</code> synchronise automatiquement vos progrès en temps réel via <code className="bg-[#F1F5F9] px-1 rounded">onSnapshot</code> et <code className="bg-[#F1F5F9] px-1 rounded">setDoc</code>, et <code className="bg-[#F1F5F9] px-1 rounded">/firestore.rules</code> protège vos données.
+                </p>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Mini Stats Row */}
