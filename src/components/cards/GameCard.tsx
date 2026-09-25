@@ -97,8 +97,8 @@ export const GameCard: React.FC<GameCardProps> = ({ game }) => {
           难度评级 · <strong className="text-[#18181B] font-bold">{game.difficulty}</strong>
         </span>
 
-        <button className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-gradient-to-r from-[#6C4CF1] to-[#532CD8] hover:from-[#5B3BE0] hover:to-[#4320B8] text-white text-xs font-bold shadow-[0_4px_12px_rgba(108,76,241,0.25)] transition-all btn-tactile whitespace-nowrap">
-          <Play className="w-3.5 h-3.5 fill-white" />
+        <button className="flex items-center gap-1.5 px-4 py-2 rounded-xl chameleon-btn text-xs font-bold transition-all btn-tactile whitespace-nowrap">
+          <Play className="w-3.5 h-3.5 fill-current" />
           <span>进入实验</span>
         </button>
       </div>

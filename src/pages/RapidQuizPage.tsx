@@ -156,7 +156,7 @@ export const RapidQuizPage: React.FC = () => {
 
           <button
             onClick={startQuiz}
-            className="w-full py-3.5 rounded-2xl bg-[#6C4CF1] hover:bg-[#532CD8] text-white font-bold text-sm shadow-xs transition-all btn-press"
+            className="w-full py-3.5 rounded-2xl chameleon-btn font-bold text-sm shadow-xs transition-all btn-press"
           >
             立即开始答题
           </button>
@@ -197,7 +197,7 @@ export const RapidQuizPage: React.FC = () => {
             </button>
             <button
               onClick={handleFinish}
-              className="flex-1 py-3 rounded-2xl bg-[#6C4CF1] hover:bg-[#532CD8] text-white font-bold text-xs shadow-xs transition-all btn-press"
+              className="flex-1 py-3 rounded-2xl chameleon-btn font-bold text-xs shadow-xs transition-all btn-press"
             >
               领取经验并返回
             </button>
@@ -209,7 +209,7 @@ export const RapidQuizPage: React.FC = () => {
           {/* Progress bar */}
           <div className="w-full bg-[#EDE9FE] h-1.5 rounded-full overflow-hidden">
             <div
-              className="h-full bg-[#6C4CF1] transition-all duration-300"
+              className="h-full chameleon-bar"
               style={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}
             />
           </div>
@@ -269,7 +269,7 @@ export const RapidQuizPage: React.FC = () => {
                 </p>
                 <button
                   onClick={handleNext}
-                  className="w-full mt-2 py-2.5 bg-[#6C4CF1] hover:bg-[#532CD8] text-white font-bold text-xs rounded-2xl shadow-xs transition-all flex items-center justify-center gap-1 btn-press"
+                  className="w-full mt-2 py-2.5 chameleon-btn font-bold text-xs rounded-2xl shadow-xs transition-all flex items-center justify-center gap-1 btn-press"
                 >
                   <span>{currentIndex < questions.length - 1 ? '下一题' : '查看结算报告'}</span>
                   <ArrowRight className="w-3.5 h-3.5" />

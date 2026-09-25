@@ -21,31 +21,35 @@ const ThemeColorContext = createContext<ThemeColorContextType | undefined>(undef
 
 const CYCLE_INTERVAL_SECONDS = 30;
 
-export const ThemeColorProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+/**
+ * Custom hook that cycles through the predefined array of 200+ (240) distinct color themes
+ * every 30 seconds and dynamically updates '--chameleon-primary' and '--chameleon-secondary'
+ * (along with companion glow/border variables) on the document root.
+ */
+export function useChameleonThemeCycle(initialThemes: ChameleonColor[] = CHAMELEON_PALETTE_240) {
   const [filterMode, setFilterMode] = useState<ColorFilterMode>('all');
-  const [currentId, setCurrentId] = useState<number>(1);
+  const [currentId, setCurrentId] = useState<number>(initialThemes[0]?.id ?? 1);
   const [isAutoCycling, setIsAutoCycling] = useState<boolean>(true);
   const [secondsRemaining, setSecondsRemaining] = useState<number>(CYCLE_INTERVAL_SECONDS);
 
   const filteredPalette = useMemo(() => {
-    if (filterMode === 'all') return CHAMELEON_PALETTE_240;
-    return CHAMELEON_PALETTE_240.filter((c) => c.category === filterMode);
-  }, [filterMode]);
+    if (filterMode === 'all') return initialThemes;
+    return initialThemes.filter((c) => c.category === filterMode);
+  }, [filterMode, initialThemes]);
 
   const currentColor = useMemo(() => {
     return (
-      CHAMELEON_PALETTE_240.find((c) => c.id === currentId) ||
+      initialThemes.find((c) => c.id === currentId) ||
       filteredPalette[0] ||
-      CHAMELEON_PALETTE_240[0]
+      initialThemes[0]
     );
-  }, [currentId, filteredPalette]);
+  }, [currentId, filteredPalette, initialThemes]);
 
   const colorIndex = useMemo(() => {
     const idx = filteredPalette.findIndex((c) => c.id === currentColor.id);
     return idx >= 0 ? idx : 0;
   }, [filteredPalette, currentColor]);
 
-  // Advance to the next color in the active pool (240 colors)
   const nextColor = useCallback(() => {
     setSecondsRemaining(CYCLE_INTERVAL_SECONDS);
     setCurrentId((prevId) => {
@@ -60,14 +64,14 @@ export const ThemeColorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     setSecondsRemaining(CYCLE_INTERVAL_SECONDS);
   }, []);
 
-  // When filterMode changes, ensure currentId belongs to filteredPalette
+  // Keep currentId valid if filterMode changes
   useEffect(() => {
     if (!filteredPalette.some((c) => c.id === currentId)) {
       setCurrentId(filteredPalette[0]?.id || 1);
     }
   }, [filterMode, filteredPalette, currentId]);
 
-  // 30-second automatic cycle timer
+  // Cycle through the 200+ distinct color themes every 30 seconds
   useEffect(() => {
     if (!isAutoCycling) return;
 
@@ -88,7 +92,7 @@ export const ThemeColorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return () => window.clearInterval(timer);
   }, [isAutoCycling, filteredPalette]);
 
-  // Apply discreet CSS variables to :root whenever currentColor changes
+  // Dynamically update CSS variables '--chameleon-primary' and '--chameleon-secondary'
   useEffect(() => {
     const root = document.documentElement;
     root.style.setProperty('--chameleon-primary', currentColor.primary);
@@ -99,22 +103,26 @@ export const ThemeColorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     root.style.setProperty('--chameleon-on-primary', currentColor.onPrimary);
   }, [currentColor]);
 
+  return {
+    currentColor,
+    colorIndex,
+    totalColors: initialThemes.length,
+    filterMode,
+    setFilterMode,
+    isAutoCycling,
+    setIsAutoCycling,
+    secondsRemaining,
+    nextColor,
+    selectColorById,
+    filteredPalette,
+  };
+}
+
+export const ThemeColorProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const themeCycleState = useChameleonThemeCycle(CHAMELEON_PALETTE_240);
+
   return (
-    <ThemeColorContext.Provider
-      value={{
-        currentColor,
-        colorIndex,
-        totalColors: CHAMELEON_PALETTE_240.length,
-        filterMode,
-        setFilterMode,
-        isAutoCycling,
-        setIsAutoCycling,
-        secondsRemaining,
-        nextColor,
-        selectColorById,
-        filteredPalette,
-      }}
-    >
+    <ThemeColorContext.Provider value={themeCycleState}>
       {children}
     </ThemeColorContext.Provider>
   );

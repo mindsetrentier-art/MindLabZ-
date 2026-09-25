@@ -1,10 +1,12 @@
 import "dotenv/config";
 import express from "express";
+import { createServer as createHttpServer } from "node:http";
 import path from "path";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { createServer as createViteServer } from "vite";
-import { GoogleGenAI } from "@google/genai";
+import { WebSocketServer } from "ws";
+import { GoogleGenAI, LiveServerMessage, Modality } from "@google/genai";
 
 const MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
 
@@ -111,9 +113,10 @@ function buildStructuredFallbackLaw(item: ManifestLawItem) {
 
 async function startServer() {
   const app = express();
+  const httpServer = createHttpServer(app);
   const PORT = Number(process.env.PORT) || 3000;
 
-  app.use(express.json({ limit: "1mb" }));
+  app.use(express.json({ limit: "15mb" }));
 
   const rootDir = process.cwd();
   const systemInstruction = await readFile(path.join(rootDir, "prompts/system.txt"), "utf8");
@@ -336,6 +339,188 @@ async function startServer() {
     }
   });
 
+  // 6. Audio Transcription endpoint using gemini-3.5-transcribe
+  app.post("/api/audio/transcribe", async (req, res) => {
+    try {
+      const { audioBase64, mimeType = "audio/webm" } = req.body || {};
+      if (!audioBase64 || typeof audioBase64 !== "string") {
+        return res.status(400).json({ error: "Missing audioBase64 payload" });
+      }
+
+      const ai = getAI();
+      if (!ai) {
+        return res.status(503).json({
+          error: "GEMINI_API_KEY non configurée",
+          text: "",
+        });
+      }
+
+      const cleanBase64 = audioBase64.includes(",")
+        ? audioBase64.split(",")[1]
+        : audioBase64;
+
+      const audioPart = {
+        inlineData: {
+          mimeType: mimeType.split(";")[0] || "audio/webm",
+          data: cleanBase64,
+        },
+      };
+
+      const response = await ai.models.generateContent({
+        model: "gemini-3.5-transcribe",
+        contents: {
+          parts: [
+            audioPart,
+            {
+              text: "Transcribe this audio accurately in its spoken language (French, Chinese, or English). Return only the transcribed text.",
+            },
+          ],
+        },
+      });
+
+      const transcript = (response.text || "").trim();
+      return res.json({ text: transcript, model: "gemini-3.5-transcribe" });
+    } catch (err: any) {
+      console.error("Audio transcription error:", err);
+      return res.status(500).json({
+        error: "Audio transcription failed",
+        detail: String(err?.message || err),
+      });
+    }
+  });
+
+  // 7. Real-Time Voice Conversation WebSocket Bridge using gemini-3.8-live (Live API)
+  const wss = new WebSocketServer({ noServer: true });
+
+  httpServer.on("upgrade", (req, socket, head) => {
+    if (req.url?.startsWith("/live")) {
+      wss.handleUpgrade(req, socket, head, (ws) => {
+        wss.emit("connection", ws, req);
+      });
+    }
+  });
+
+  wss.on("connection", async (clientWs) => {
+    const ai = getAI();
+    if (!ai) {
+      clientWs.send(
+        JSON.stringify({
+          error: "Clé API Gemini non configurée sur le serveur.",
+        })
+      );
+      clientWs.close();
+      return;
+    }
+
+    let liveSession: any = null;
+
+    try {
+      const sessionPromise = ai.live.connect({
+        model: "gemini-3.8-live",
+        config: {
+          responseModalities: [Modality.AUDIO],
+          speechConfig: {
+            voiceConfig: { prebuiltVoiceConfig: { voiceName: "Zephyr" } },
+          },
+          systemInstruction: `${systemInstruction}\nTu es le coach vocal temps réel MindLabZ (智心堂). Réponds de manière chaleureuse, claire et concise dans la langue de l'utilisateur (français, chinois ou anglais).`,
+          outputAudioTranscription: {},
+          inputAudioTranscription: {},
+        },
+        callbacks: {
+          onopen: () => {
+            if (clientWs.readyState === clientWs.OPEN) {
+              clientWs.send(JSON.stringify({ status: "connected", model: "gemini-3.8-live" }));
+            }
+          },
+          onmessage: (message: LiveServerMessage) => {
+            if (clientWs.readyState !== clientWs.OPEN) return;
+
+            const parts = message.serverContent?.modelTurn?.parts || [];
+            for (const part of parts) {
+              if (part.inlineData?.data) {
+                clientWs.send(JSON.stringify({ audio: part.inlineData.data }));
+              }
+            }
+
+            const outTranscript = (message.serverContent as any)?.outputTranscription?.text;
+            if (outTranscript) {
+              clientWs.send(JSON.stringify({ outputTranscript: outTranscript }));
+            }
+
+            const inTranscript = (message.serverContent as any)?.inputTranscription?.text;
+            if (inTranscript) {
+              clientWs.send(JSON.stringify({ inputTranscript: inTranscript }));
+            }
+
+            if (message.serverContent?.interrupted) {
+              clientWs.send(JSON.stringify({ interrupted: true }));
+            }
+
+            if (message.serverContent?.turnComplete) {
+              clientWs.send(JSON.stringify({ turnComplete: true }));
+            }
+          },
+          onerror: (err: any) => {
+            console.error("Gemini Live session error:", err);
+            if (clientWs.readyState === clientWs.OPEN) {
+              clientWs.send(
+                JSON.stringify({ error: String(err?.message || "Erreur Live API") })
+              );
+            }
+          },
+          onclose: () => {
+            if (clientWs.readyState === clientWs.OPEN) {
+              clientWs.close();
+            }
+          },
+        },
+      });
+
+      liveSession = await sessionPromise;
+
+      clientWs.on("message", (raw) => {
+        try {
+          const msg = JSON.parse(raw.toString());
+          if (msg.audio) {
+            sessionPromise.then((s) =>
+              s.sendRealtimeInput({
+                audio: { data: msg.audio, mimeType: "audio/pcm;rate=16000" },
+              })
+            );
+          } else if (msg.text) {
+            sessionPromise.then((s) =>
+              s.sendRealtimeInput({
+                text: msg.text,
+              })
+            );
+          }
+        } catch (parseErr) {
+          console.error("Failed to process client Live message:", parseErr);
+        }
+      });
+
+      clientWs.on("close", () => {
+        if (liveSession) {
+          try {
+            liveSession.close();
+          } catch {
+            // Ignore close errors
+          }
+        }
+      });
+    } catch (err: any) {
+      console.error("Failed to initialize Gemini Live session:", err);
+      if (clientWs.readyState === clientWs.OPEN) {
+        clientWs.send(
+          JSON.stringify({
+            error: `Impossible de démarrer Gemini 3.8 Live: ${String(err?.message || err)}`,
+          })
+        );
+        clientWs.close();
+      }
+    }
+  });
+
   // Vite middleware in dev or static files in production
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
@@ -351,8 +536,8 @@ async function startServer() {
     });
   }
 
-  app.listen(PORT, "0.0.0.0", () => {
-    console.log(`MindLabZ API & App running on http://0.0.0.0:${PORT}`);
+  httpServer.listen(PORT, "0.0.0.0", () => {
+    console.log(`MindLabZ API, Live Voice & App running on http://0.0.0.0:${PORT}`);
   });
 }
 

@@ -115,17 +115,17 @@ export const PsychologyLawCard: React.FC<PsychologyLawCardProps> = ({ law }) => 
         <div className="flex-1 mr-5">
           <div className="flex justify-between items-center text-[11px] mb-1.5">
             <span className="text-[#64748B] font-medium">认知内化度</span>
-            <span className="font-extrabold text-[#532CD8] font-numeric">{mastery}%</span>
+            <span className="font-extrabold chameleon-text font-numeric">{mastery}%</span>
           </div>
           <div className="w-full h-1.5 bg-[#EDE9FE] rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-[#6C4CF1] to-[#532CD8] rounded-full transition-all duration-500"
+              className="h-full chameleon-bar rounded-full"
               style={{ width: `${mastery}%` }}
             />
           </div>
         </div>
 
-        <div className="flex items-center gap-1 text-xs font-bold text-[#6C4CF1] group-hover:translate-x-0.5 transition-transform shrink-0">
+        <div className="flex items-center gap-1 text-xs font-bold chameleon-text group-hover:translate-x-0.5 transition-transform shrink-0">
           <span>研习</span>
           <ChevronRight className="w-4 h-4" />
         </div>

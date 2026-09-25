@@ -3,6 +3,7 @@ import { Search, Bookmark, BookOpen, Layers } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { PsychologyLawCard } from '../components/cards/PsychologyLawCard';
 import { LawCardSkeleton } from '../components/ui/Skeleton';
+import { VoiceTranscribeButton } from '../components/ui/VoiceTranscribeButton';
 import { CategoryZh } from '../types';
 import { MINDLABZ_CHAPTERS } from '../data/laws';
 
@@ -94,24 +95,30 @@ export const LearnPage: React.FC = () => {
 
       {/* Search and Filters */}
       <div className="space-y-2.5">
-        {/* Search Input Bar */}
-        <div className="relative">
-          <Search className="w-4 h-4 text-[#64748B] absolute left-4 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="搜索编号(如 LAW001、LAW039)、中英文定律名、场景..."
-            className="w-full pl-11 pr-10 py-3.5 art-card rounded-2xl text-xs font-medium text-[#18181B] placeholder-[#94A3B8] focus:outline-none focus:border-[#6C4CF1] focus:ring-2 focus:ring-[#6C4CF1]/15 transition-all"
+        {/* Search Input Bar with Voice Transcription (gemini-3.5-transcribe) */}
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 text-[#64748B] absolute left-4 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="搜索编号(如 LAW001)、中英文定律名或点击右侧麦克风语音搜索..."
+              className="w-full pl-11 pr-10 py-3.5 art-card rounded-2xl text-xs font-medium text-[#18181B] placeholder-[#94A3B8] focus:outline-none focus:border-[#6C4CF1] focus:ring-2 focus:ring-[#6C4CF1]/15 transition-all"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-[#94A3B8] hover:text-[#18181B]"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+          <VoiceTranscribeButton
+            onTranscript={(text) => setSearchQuery(text)}
+            className="h-11 px-3.5"
           />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-[#94A3B8] hover:text-[#18181B]"
-            >
-              ✕
-            </button>
-          )}
         </div>
 
         {/* Interactive Category Filter Controls */}
@@ -122,7 +129,7 @@ export const LearnPage: React.FC = () => {
               onClick={() => handleCategoryChange(cat.key)}
               className={`text-xs font-bold px-3.5 py-2 rounded-xl transition-all shrink-0 border btn-tactile whitespace-nowrap ${
                 selectedCategory === cat.key
-                  ? 'bg-[#532CD8] text-white border-[#532CD8] shadow-[0_4px_12px_rgba(83,44,216,0.25)]'
+                  ? 'chameleon-btn'
                   : 'bg-white text-[#64748B] border-[#E6E2F5] hover:bg-[#F5F3FF] hover:text-[#18181B]'
               }`}
             >
@@ -154,7 +161,7 @@ export const LearnPage: React.FC = () => {
             onClick={() => handleChapterChange('all')}
             className={`text-[11px] font-bold px-3 py-1.5 rounded-xl transition-all shrink-0 border flex items-center gap-1 btn-tactile whitespace-nowrap ${
               selectedChapter === 'all'
-                ? 'bg-[#EDE9FE] text-[#532CD8] border-[#C4B5FD]'
+                ? 'chameleon-pill-active chameleon-text'
                 : 'bg-white/80 text-[#64748B] border-[#E6E2F5] hover:bg-[#FAF9FF]'
             }`}
           >
@@ -167,7 +174,7 @@ export const LearnPage: React.FC = () => {
               onClick={() => handleChapterChange(chap)}
               className={`text-[11px] font-bold px-3 py-1.5 rounded-xl transition-all shrink-0 border btn-tactile whitespace-nowrap ${
                 selectedChapter === chap
-                  ? 'bg-[#EDE9FE] text-[#532CD8] border-[#C4B5FD]'
+                  ? 'chameleon-pill-active chameleon-text'
                   : 'bg-white/80 text-[#64748B] border-[#E6E2F5] hover:bg-[#FAF9FF]'
               }`}
             >
