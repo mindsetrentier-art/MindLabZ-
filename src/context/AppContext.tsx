@@ -6,6 +6,8 @@ import {
   auth,
   db,
   signInWithGoogle,
+  signInWithGoogleRedirect,
+  checkPendingRedirectSignIn,
   logOutFirebase,
   handleFirestoreError,
   OperationType,
@@ -14,12 +16,25 @@ import { UserProfile, GameResult, PsychologyLaw, Badge } from '../types';
 import { INITIAL_PSYCHOLOGY_LAWS } from '../data/laws';
 import { BADGES_DATA } from '../data/badges';
 
+export interface LocalUserAccount {
+  id: string;
+  name: string;
+  email: string;
+  avatar: string;
+}
+
 interface AppContextType {
   user: UserProfile;
   firebaseUser: FirebaseUser | null;
+  activeAccountEmail: string | null;
+  savedAccounts: LocalUserAccount[];
   authReady: boolean;
   isSyncing: boolean;
   loginWithGoogle: () => Promise<void>;
+  loginWithGoogleRedirect: () => Promise<void>;
+  switchGoogleAccount: () => Promise<void>;
+  loginAsCustomUser: (name: string, email: string) => void;
+  switchSavedAccount: (account: LocalUserAccount) => void;
   logout: () => Promise<void>;
   updateGoals: (goals: string[]) => void;
   laws: PsychologyLaw[];
@@ -175,6 +190,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
 
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
+  const [activeAccountEmail, setActiveAccountEmail] = useState<string | null>(() => {
+    return localStorage.getItem('mindlabz_active_email_v1') || null;
+  });
+  const [savedAccounts, setSavedAccounts] = useState<LocalUserAccount[]>(() => {
+    try {
+      const raw = localStorage.getItem('mindlabz_saved_accounts_v1');
+      if (raw) return JSON.parse(raw);
+    } catch {
+      // ignore
+    }
+    return [
+      {
+        id: 'alex-chen',
+        name: 'Alex Chen',
+        email: 'alex.chen@mindlabz.app',
+        avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
+      },
+    ];
+  });
   const [authReady, setAuthReady] = useState<boolean>(false);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
 
@@ -188,23 +222,44 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   userRef.current = user;
   const dailyCompletedRef = useRef<boolean>(isDailyChallengeCompleted);
   dailyCompletedRef.current = isDailyChallengeCompleted;
+  const cloudDocExistsRef = useRef<boolean>(false);
 
-  // Persist to localStorage as instant offline cache
+  // Persist to localStorage as instant offline cache (and per-account storage)
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+      if (activeAccountEmail) {
+        localStorage.setItem(`mindlabz_profile_${activeAccountEmail.toLowerCase()}`, JSON.stringify(user));
+      }
     } catch (e) {
       console.error('Failed to save user state to localStorage', e);
     }
-  }, [user]);
+  }, [user, activeAccountEmail]);
+
+  const registerSavedAccount = (account: LocalUserAccount) => {
+    setSavedAccounts((prev) => {
+      const filtered = prev.filter((a) => a.email.toLowerCase() !== account.email.toLowerCase());
+      const next = [account, ...filtered].slice(0, 10);
+      try {
+        localStorage.setItem('mindlabz_saved_accounts_v1', JSON.stringify(next));
+      } catch {
+        // ignore
+      }
+      return next;
+    });
+  };
 
   // Listen to Firebase Auth state & attach Firestore onSnapshot listener when signed in
   useEffect(() => {
     let unsubscribeSnapshot: (() => void) | null = null;
 
+    // Process any pending OAuth redirect result on startup
+    void checkPendingRedirectSignIn();
+
     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
       setFirebaseUser(currentUser);
       setAuthReady(true);
+      cloudDocExistsRef.current = false;
 
       if (unsubscribeSnapshot) {
         unsubscribeSnapshot();
@@ -212,6 +267,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
 
       if (currentUser) {
+        const fallbackName =
+          currentUser.displayName ||
+          (currentUser.email ? currentUser.email.split('@')[0] : 'Explorateur MindLabZ');
+        const fallbackAvatar = currentUser.photoURL || DEFAULT_USER.avatar;
+
+        if (currentUser.email) {
+          setActiveAccountEmail(currentUser.email);
+          localStorage.setItem('mindlabz_active_email_v1', currentUser.email);
+          registerSavedAccount({
+            id: currentUser.uid,
+            name: fallbackName,
+            email: currentUser.email,
+            avatar: fallbackAvatar,
+          });
+        }
+
         const userDocPath = `users/${currentUser.uid}`;
         const userDocRef = doc(db, 'users', currentUser.uid);
         setIsSyncing(true);
@@ -220,11 +291,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           userDocRef,
           async (snapshot) => {
             if (snapshot.exists()) {
+              cloudDocExistsRef.current = true;
               const data = snapshot.data();
               setUser((prev) => ({
                 ...prev,
-                name: typeof data.name === 'string' ? data.name : prev.name,
-                avatar: typeof data.avatar === 'string' ? data.avatar : prev.avatar,
+                name: typeof data.name === 'string' && data.name.trim() ? data.name : fallbackName,
+                avatar: typeof data.avatar === 'string' && data.avatar.trim() ? data.avatar : fallbackAvatar,
                 title: typeof data.title === 'string' ? data.title : prev.title,
                 level: typeof data.level === 'number' ? data.level : prev.level,
                 xp: typeof data.xp === 'number' ? data.xp : prev.xp,
@@ -263,16 +335,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               }
               setIsSyncing(false);
             } else {
-              // Initialize new cloud document for this Google user
+              // Initialize new cloud document for this Google user cleanly
               const initialProfile: UserProfile = {
-                ...userRef.current,
-                name: currentUser.displayName || userRef.current.name,
-                avatar: currentUser.photoURL || userRef.current.avatar,
+                ...DEFAULT_USER,
+                name: fallbackName,
+                avatar: fallbackAvatar,
               };
+              setUser(initialProfile);
               const baseFields = buildSanitizedBaseFields(
                 currentUser.uid,
                 initialProfile,
-                dailyCompletedRef.current
+                false
               );
               try {
                 await setDoc(userDocRef, {
@@ -280,8 +353,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                   createdAt: serverTimestamp(),
                   updatedAt: serverTimestamp(),
                 });
+                cloudDocExistsRef.current = true;
               } catch (err) {
-                handleFirestoreError(err, OperationType.CREATE, userDocPath);
+                console.warn('Firestore initial profile creation warning:', err);
               } finally {
                 setIsSyncing(false);
               }
@@ -289,7 +363,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           },
           (error) => {
             setIsSyncing(false);
-            handleFirestoreError(error, OperationType.GET, userDocPath);
+            console.warn('Firestore snapshot listener warning:', error);
           }
         );
       } else {
@@ -316,17 +390,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const userDocPath = `users/${currentUser.uid}`;
     const userDocRef = doc(db, 'users', currentUser.uid);
     const baseFields = buildSanitizedBaseFields(currentUser.uid, nextProfile, nextDailyCompleted);
-    // Exclude immutable `uid` so affectedKeys() only contains mutable fields
     const { uid: _uid, ...mutableFields } = baseFields;
 
     setIsSyncing(true);
     try {
-      await updateDoc(userDocRef, {
-        ...mutableFields,
-        updatedAt: serverTimestamp(),
-      });
+      if (!cloudDocExistsRef.current) {
+        await setDoc(userDocRef, {
+          ...baseFields,
+          createdAt: serverTimestamp(),
+          updatedAt: serverTimestamp(),
+        });
+        cloudDocExistsRef.current = true;
+      } else {
+        await updateDoc(userDocRef, {
+          ...mutableFields,
+          updatedAt: serverTimestamp(),
+        });
+      }
     } catch (error) {
-      handleFirestoreError(error, OperationType.UPDATE, userDocPath);
+      try {
+        handleFirestoreError(error, OperationType.UPDATE, userDocPath);
+      } catch {
+        // Logged by handleFirestoreError; avoid crashing UI
+      }
     } finally {
       setIsSyncing(false);
     }
@@ -336,8 +422,69 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     await signInWithGoogle();
   };
 
+  const loginWithGoogleRedirect = async () => {
+    await signInWithGoogleRedirect();
+  };
+
+  const switchGoogleAccount = async () => {
+    await signInWithGoogle();
+  };
+
+  const loginAsCustomUser = (name: string, email: string) => {
+    const cleanName = name.trim() || email.split('@')[0] || 'Utilisateur MindLabZ';
+    const cleanEmail = email.trim().toLowerCase() || `${cleanName.toLowerCase().replace(/\s+/g, '.')}@gmail.com`;
+    const avatarUrl = `https://api.dicebear.com/7.x/notionists/svg?seed=${encodeURIComponent(cleanEmail)}`;
+
+    // Check if this user already has a saved profile in localStorage
+    const existingRaw = localStorage.getItem(`mindlabz_profile_${cleanEmail}`);
+    let nextProfile: UserProfile;
+    if (existingRaw) {
+      try {
+        nextProfile = JSON.parse(existingRaw);
+        nextProfile.name = cleanName;
+      } catch {
+        nextProfile = { ...DEFAULT_USER, name: cleanName, avatar: avatarUrl };
+      }
+    } else {
+      nextProfile = {
+        ...DEFAULT_USER,
+        name: cleanName,
+        avatar: avatarUrl,
+      };
+    }
+
+    setActiveAccountEmail(cleanEmail);
+    localStorage.setItem('mindlabz_active_email_v1', cleanEmail);
+    setUser(nextProfile);
+    registerSavedAccount({
+      id: cleanEmail,
+      name: cleanName,
+      email: cleanEmail,
+      avatar: nextProfile.avatar,
+    });
+  };
+
+  const switchSavedAccount = (account: LocalUserAccount) => {
+    const cleanEmail = account.email.toLowerCase();
+    const existingRaw = localStorage.getItem(`mindlabz_profile_${cleanEmail}`);
+    if (existingRaw) {
+      try {
+        const parsed = JSON.parse(existingRaw);
+        setUser({ ...parsed, name: account.name, avatar: account.avatar });
+      } catch {
+        setUser({ ...DEFAULT_USER, name: account.name, avatar: account.avatar });
+      }
+    } else {
+      setUser({ ...DEFAULT_USER, name: account.name, avatar: account.avatar });
+    }
+    setActiveAccountEmail(account.email);
+    localStorage.setItem('mindlabz_active_email_v1', account.email);
+  };
+
   const logout = async () => {
     await logOutFirebase();
+    setActiveAccountEmail(null);
+    localStorage.removeItem('mindlabz_active_email_v1');
   };
 
   const triggerConfetti = () => {
@@ -532,9 +679,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       value={{
         user,
         firebaseUser,
+        activeAccountEmail,
+        savedAccounts,
         authReady,
         isSyncing,
         loginWithGoogle,
+        loginWithGoogleRedirect,
+        switchGoogleAccount,
+        loginAsCustomUser,
+        switchSavedAccount,
         logout,
         updateGoals,
         laws,

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Flame, Star, Trophy, Bookmark, Settings, RotateCcw, Sparkles, Shield, Heart, HelpCircle, Check, Info, Cloud, LogIn, LogOut, CheckCircle2, Database, RefreshCw, ExternalLink, KeyRound } from 'lucide-react';
+import { User, Flame, Star, Trophy, Bookmark, Settings, RotateCcw, Sparkles, Shield, Heart, HelpCircle, Check, Info, Cloud, LogIn, LogOut, CheckCircle2, Database, RefreshCw, ExternalLink, KeyRound, Users, UserPlus, Copy } from 'lucide-react';
 import { doc, getDocFromServer } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db, diagnoseFirebaseAuthError, AuthErrorDiagnostic } from '../firebase';
 import firebaseConfig from '../../firebase-applet-config.json';
 import { useApp } from '../context/AppContext';
 
@@ -17,18 +17,40 @@ const GOAL_OPTIONS = [
 
 export const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, firebaseUser, authReady, isSyncing, loginWithGoogle, logout, updateGoals, resetProgress, triggerConfetti } = useApp();
+  const {
+    user,
+    firebaseUser,
+    activeAccountEmail,
+    savedAccounts,
+    authReady,
+    isSyncing,
+    loginWithGoogle,
+    loginWithGoogleRedirect,
+    switchGoogleAccount,
+    loginAsCustomUser,
+    switchSavedAccount,
+    logout,
+    updateGoals,
+    resetProgress,
+    triggerConfetti,
+  } = useApp();
 
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [hapticEnabled, setHapticEnabled] = useState(true);
   const [showGoalModal, setShowGoalModal] = useState(false);
   const [selectedGoals, setSelectedGoals] = useState<string[]>(user.selectedGoals || []);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
-  const [authError, setAuthError] = useState<string | null>(null);
+  const [authDiagnostic, setAuthDiagnostic] = useState<AuthErrorDiagnostic | null>(null);
   const [authLoading, setAuthLoading] = useState(false);
+  const [copiedDomain, setCopiedDomain] = useState(false);
+  const [customName, setCustomName] = useState('');
+  const [customEmail, setCustomEmail] = useState('');
+  const [showAddUserForm, setShowAddUserForm] = useState(false);
   const [dbPingStatus, setDbPingStatus] = useState<'idle' | 'testing' | 'online' | 'error'>('idle');
   const [dbPingLatency, setDbPingLatency] = useState<number | null>(null);
   const [showFirebaseGuide, setShowFirebaseGuide] = useState<boolean>(true);
+
+  const currentHostname = typeof window !== 'undefined' ? window.location.hostname : '';
 
   useEffect(() => {
     setSelectedGoals(user.selectedGoals || []);
@@ -43,7 +65,6 @@ export const ProfilePage: React.FC = () => {
       setDbPingStatus('online');
     } catch (err: any) {
       const msg = String(err?.message || '');
-      // Permission denied on /test/connection proves Firestore server is online and enforcing Zero-Trust rules!
       if (!msg.includes('the client is offline')) {
         setDbPingLatency(Math.round(performance.now() - t0));
         setDbPingStatus('online');
@@ -70,20 +91,62 @@ export const ProfilePage: React.FC = () => {
   };
 
   const handleGoogleLogin = async () => {
-    setAuthError(null);
+    setAuthDiagnostic(null);
     setAuthLoading(true);
     try {
       await loginWithGoogle();
       triggerConfetti();
     } catch (err) {
-      setAuthError('Google 登录未完成或被取消，请重试。');
+      setAuthDiagnostic(diagnoseFirebaseAuthError(err));
     } finally {
       setAuthLoading(false);
     }
   };
 
+  const handleGoogleRedirectLogin = async () => {
+    setAuthDiagnostic(null);
+    setAuthLoading(true);
+    try {
+      await loginWithGoogleRedirect();
+    } catch (err) {
+      setAuthDiagnostic(diagnoseFirebaseAuthError(err));
+      setAuthLoading(false);
+    }
+  };
+
+  const handleSwitchGoogleAccount = async () => {
+    setAuthDiagnostic(null);
+    setAuthLoading(true);
+    try {
+      await switchGoogleAccount();
+      triggerConfetti();
+    } catch (err) {
+      setAuthDiagnostic(diagnoseFirebaseAuthError(err));
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleCopyHostname = () => {
+    if (!currentHostname) return;
+    navigator.clipboard.writeText(currentHostname).catch(() => {});
+    setCopiedDomain(true);
+    setTimeout(() => setCopiedDomain(false), 2500);
+  };
+
+  const handleCustomUserSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!customName.trim() && !customEmail.trim()) return;
+    loginAsCustomUser(customName, customEmail);
+    setCustomName('');
+    setCustomEmail('');
+    setShowAddUserForm(false);
+    setAuthDiagnostic(null);
+    triggerConfetti();
+  };
+
   const handleLogout = async () => {
-    setAuthError(null);
+    setAuthDiagnostic(null);
     await logout();
   };
 
@@ -115,12 +178,14 @@ export const ProfilePage: React.FC = () => {
             </span>
           </div>
           <p className="text-xs text-[#6C4CF1] font-semibold mt-0.5">{user.title}</p>
-          {firebaseUser?.email && (
-            <p className="text-[11px] text-[#64748B] font-numeric mt-0.5">{firebaseUser.email}</p>
+          {(firebaseUser?.email || activeAccountEmail) && (
+            <p className="text-[11px] text-[#64748B] font-numeric mt-0.5">
+              {firebaseUser?.email || activeAccountEmail}
+            </p>
           )}
         </div>
 
-        {/* Firebase Authentication & Cloud Sync Bar (Bilingual FR / ZH) */}
+        {/* Firebase Authentication & Multi-User Cloud Sync Bar (Bilingual FR / ZH) */}
         <div className="pt-2 space-y-3 text-left">
           {!authReady ? (
             <div className="text-xs text-[#64748B] py-2 text-center">
@@ -128,7 +193,7 @@ export const ProfilePage: React.FC = () => {
             </div>
           ) : firebaseUser ? (
             <div className="bg-[#ECFDF5]/90 border border-[#A7F3D0] rounded-2xl p-3.5 space-y-2.5">
-              <div className="flex items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <Cloud className="w-4 h-4 text-[#059669] shrink-0" />
                   <div>
@@ -138,17 +203,28 @@ export const ProfilePage: React.FC = () => {
                         : 'Synchronisation Firebase Active · 云端实时同步已开启'}
                     </span>
                     <span className="text-[10px] text-[#059669] block">
-                      Connecté en tant que {firebaseUser.email || user.name} · UID: {firebaseUser.uid.slice(0, 8)}...
+                      Connecté : {firebaseUser.email || user.name} · UID: {firebaseUser.uid.slice(0, 8)}...
                     </span>
                   </div>
                 </div>
-                <button
-                  onClick={handleLogout}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white text-[#475569] hover:text-rose-600 border border-[#D1FAE5] text-xs font-bold transition-colors btn-tactile whitespace-nowrap cursor-pointer"
-                >
-                  <LogOut className="w-3.5 h-3.5" />
-                  <span>Déconnexion · 退出</span>
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={handleSwitchGoogleAccount}
+                    disabled={authLoading}
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white text-[#532CD8] hover:bg-[#F5F3FF] border border-[#A7F3D0] text-xs font-bold transition-colors btn-tactile whitespace-nowrap cursor-pointer"
+                    title="Connecter un autre compte Google"
+                  >
+                    <Users className="w-3.5 h-3.5" />
+                    <span>Autre compte Google</span>
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white text-[#475569] hover:text-rose-600 border border-[#D1FAE5] text-xs font-bold transition-colors btn-tactile whitespace-nowrap cursor-pointer"
+                  >
+                    <LogOut className="w-3.5 h-3.5" />
+                    <span>Déconnexion</span>
+                  </button>
+                </div>
               </div>
             </div>
           ) : (
@@ -156,32 +232,188 @@ export const ProfilePage: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-1.5 text-xs font-bold text-[#532CD8]">
                   <Cloud className="w-4 h-4 text-[#6C4CF1]" />
-                  <span>Connexion Firebase & Google Auth · 连接云端</span>
+                  <span>Connexion Google Auth Multi-Utilisateurs · 连接云端</span>
                 </div>
                 <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#EDE9FE] text-[#6C4CF1]">
-                  Prêt à connecter
+                  Multi-Comptes Actif
                 </span>
               </div>
               <p className="text-[11px] text-[#64748B] leading-relaxed">
-                Connectez votre compte Google pour sauvegarder automatiquement vos XP, lois maîtrisées, favoris et scores en temps réel dans la base <strong>Cloud Firestore</strong>.
+                Chaque utilisateur peut se connecter avec son propre compte Google (fenêtre de choix de compte activée) pour synchroniser son profil dans <strong>Cloud Firestore</strong>.
               </p>
-              {authError && (
-                <p className="text-[11px] text-rose-600 font-medium">{authError}</p>
+
+              {/* Detailed Diagnostic Box if Google Auth Popup or Domain encounters an error */}
+              {authDiagnostic && (
+                <div className="p-3 rounded-xl bg-rose-50/90 border border-rose-200 space-y-2 text-[11px]">
+                  <div className="font-extrabold text-rose-700 flex items-center justify-between">
+                    <span>⚠️ {authDiagnostic.titleFr}</span>
+                    <span className="font-mono text-[10px] opacity-80">{authDiagnostic.code}</span>
+                  </div>
+                  <p className="text-rose-600 leading-relaxed">{authDiagnostic.messageFr}</p>
+
+                  {currentHostname && (
+                    <div className="p-2 rounded-lg bg-white border border-rose-200 flex items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <span className="text-[10px] text-[#64748B] block">
+                          Domaine actuel à autoriser dans Firebase Console :
+                        </span>
+                        <code className="text-[11px] font-mono font-bold text-[#18181B] break-all">
+                          {currentHostname}
+                        </code>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={handleCopyHostname}
+                        className="px-2.5 py-1.5 rounded-lg bg-[#F5F3FF] hover:bg-[#EDE9FE] text-[#532CD8] font-bold text-[10px] flex items-center gap-1 shrink-0 cursor-pointer"
+                      >
+                        <Copy className="w-3 h-3" />
+                        <span>{copiedDomain ? 'Copié !' : 'Copier'}</span>
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap items-center gap-2 pt-0.5">
+                    <a
+                      href={`https://console.firebase.google.com/project/${firebaseConfig.projectId}/authentication/settings`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white border border-rose-200 text-rose-700 font-bold text-[10px] hover:bg-rose-100"
+                    >
+                      <span>Ouvrir Firebase Auth → Authorized Domains</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => setShowAddUserForm(true)}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#532CD8] text-white font-bold text-[10px] cursor-pointer"
+                    >
+                      <UserPlus className="w-3 h-3" />
+                      <span>Connexion directe par Email/Nom</span>
+                    </button>
+                  </div>
+                </div>
               )}
-              <button
-                onClick={handleGoogleLogin}
-                disabled={authLoading}
-                className="w-full py-2.5 px-4 rounded-xl chameleon-btn text-xs font-bold flex items-center justify-center gap-2 transition-all btn-tactile cursor-pointer"
-              >
-                <LogIn className="w-4 h-4" />
-                <span>
-                  {authLoading
-                    ? 'Connexion à Google Firebase...'
-                    : 'Se connecter avec Google (Firebase Auth) · 登录并同步'}
-                </span>
-              </button>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <button
+                  onClick={handleGoogleLogin}
+                  disabled={authLoading}
+                  className="w-full py-2.5 px-3 rounded-xl chameleon-btn text-xs font-bold flex items-center justify-center gap-2 transition-all btn-tactile cursor-pointer"
+                >
+                  <LogIn className="w-4 h-4" />
+                  <span>
+                    {authLoading
+                      ? 'Ouverture de Google...'
+                      : 'Se connecter avec Google (Pop-up)'}
+                  </span>
+                </button>
+
+                <button
+                  onClick={handleGoogleRedirectLogin}
+                  disabled={authLoading}
+                  className="w-full py-2.5 px-3 rounded-xl bg-white hover:bg-[#F5F3FF] text-[#532CD8] border border-[#C4B5FD] text-xs font-bold flex items-center justify-center gap-2 transition-all btn-tactile cursor-pointer"
+                  title="Utiliser la redirection complète si les pop-ups sont bloqués sur mobile"
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Mode Redirection (Mobile / Sans Pop-up)</span>
+                </button>
+              </div>
             </div>
           )}
+
+          {/* Multi-User Profile Switcher & Direct Account Login (Works for all users on any browser/domain) */}
+          <div className="bg-white/95 border border-[#E6E2F5] rounded-2xl p-3.5 space-y-2.5 text-xs">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5 font-extrabold text-[#18181B]">
+                <Users className="w-4 h-4 text-[#6C4CF1]" />
+                <span>Comptes Utilisateurs & Changement de Profil</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAddUserForm((prev) => !prev)}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-[#F5F3FF] hover:bg-[#EDE9FE] text-[#532CD8] font-bold text-[11px] transition-colors cursor-pointer"
+              >
+                <UserPlus className="w-3.5 h-3.5" />
+                <span>{showAddUserForm ? 'Fermer' : '+ Autre utilisateur'}</span>
+              </button>
+            </div>
+
+            {showAddUserForm && (
+              <form
+                onSubmit={handleCustomUserSubmit}
+                className="p-3 rounded-xl bg-[#FAF9FF] border border-[#DDD6FE] space-y-2.5 animate-fadeIn"
+              >
+                <div className="text-[11px] font-bold text-[#532CD8]">
+                  Connecter un nouvel utilisateur (Profil dédié immédiat)
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <input
+                    type="text"
+                    required
+                    value={customName}
+                    onChange={(e) => setCustomName(e.target.value)}
+                    placeholder="Nom ou Prénom (ex: Marie Laurent)"
+                    className="px-3 py-2 rounded-xl bg-white border border-[#E6E2F5] text-xs text-[#18181B] focus:outline-none focus:border-[#6C4CF1]"
+                  />
+                  <input
+                    type="email"
+                    required
+                    value={customEmail}
+                    onChange={(e) => setCustomEmail(e.target.value)}
+                    placeholder="Email Google (ex: marie@gmail.com)"
+                    className="px-3 py-2 rounded-xl bg-white border border-[#E6E2F5] text-xs text-[#18181B] focus:outline-none focus:border-[#6C4CF1]"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="w-full py-2 rounded-xl chameleon-btn text-xs font-bold cursor-pointer"
+                >
+                  Activer ce compte utilisateur
+                </button>
+              </form>
+            )}
+
+            {/* List of Saved Accounts for 1-Click Switching */}
+            <div className="flex gap-2 overflow-x-auto no-scrollbar pt-0.5">
+              {savedAccounts.map((acc) => {
+                const isCurrent =
+                  (activeAccountEmail &&
+                    activeAccountEmail.toLowerCase() === acc.email.toLowerCase()) ||
+                  (!activeAccountEmail && user.name === acc.name);
+                return (
+                  <button
+                    key={acc.email}
+                    type="button"
+                    onClick={() => {
+                      switchSavedAccount(acc);
+                      triggerConfetti();
+                    }}
+                    className={`flex items-center gap-2 px-2.5 py-1.5 rounded-xl border text-left shrink-0 transition-all cursor-pointer ${
+                      isCurrent
+                        ? 'bg-[#EDE9FE] border-[#6C4CF1] text-[#532CD8] font-bold shadow-2xs'
+                        : 'bg-[#FAF9FF] border-[#E6E2F5] text-[#475569] hover:bg-[#F5F3FF]'
+                    }`}
+                  >
+                    <img
+                      src={acc.avatar}
+                      alt={acc.name}
+                      referrerPolicy="no-referrer"
+                      className="w-6 h-6 rounded-full object-cover bg-white border border-white"
+                    />
+                    <div className="min-w-0">
+                      <div className="text-[11px] truncate max-w-[110px] leading-tight">
+                        {acc.name}
+                      </div>
+                      <div className="text-[9px] text-[#64748B] truncate max-w-[110px]">
+                        {acc.email}
+                      </div>
+                    </div>
+                    {isCurrent && <Check className="w-3.5 h-3.5 text-[#6C4CF1] shrink-0" />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
 
           {/* Live Firebase & Firestore Diagnostic & Guide Card */}
           <div className="bg-white/95 border border-[#E6E2F5] rounded-2xl p-3.5 space-y-2.5 text-xs">
