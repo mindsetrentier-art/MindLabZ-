@@ -12,8 +12,8 @@ export const BottomNavigation: React.FC = () => {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 w-full z-40 glass-dock rounded-t-[28px] pb-safe">
-      <div className="flex justify-around items-center px-4 py-2.5 max-w-lg mx-auto">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 glass-dock backdrop-blur-[20px] rounded-t-[28px] pb-safe transition-all">
+      <div className="flex justify-around items-center px-4 py-2 max-w-md md:max-w-xl lg:max-w-2xl mx-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
           return (
@@ -21,34 +21,34 @@ export const BottomNavigation: React.FC = () => {
               key={item.to}
               to={item.to}
               className={({ isActive }) =>
-                `flex flex-col items-center justify-center min-w-[58px] py-1 px-2.5 rounded-2xl transition-all duration-300 relative group btn-tactile ${
+                `flex flex-col items-center justify-center min-w-[60px] min-h-[46px] py-1 px-3 rounded-2xl transition-all duration-200 relative group btn-tactile ${
                   isActive
-                    ? 'text-[#6C4CF1] font-bold'
-                    : 'text-[#64748B] hover:text-[#6C4CF1]'
+                    ? 'text-[#532CD8] font-bold'
+                    : 'text-[#64748B]/90 hover:text-[#6C4CF1]'
                 }`
               }
             >
               {({ isActive }) => (
                 <>
-                  {/* Subtle active background pill */}
+                  {/* Translucent active glass pill with discreet 30s chameleon border & tint */}
                   {isActive && (
-                    <div className="absolute inset-0 bg-gradient-to-b from-[#EDE9FE] to-[#F5F3FF] rounded-2xl -z-10 border border-[#DDD6FE]/80 shadow-[0_2px_8px_rgba(108,76,241,0.1)] animate-fadeIn" />
+                    <div className="absolute inset-0 backdrop-blur-md rounded-2xl -z-10 chameleon-pill-active animate-fadeIn" />
                   )}
 
                   <Icon
-                    className={`w-5 h-5 mb-0.5 transition-all duration-300 ${
+                    className={`w-5 h-5 mb-0.5 transition-all duration-200 ${
                       isActive
-                        ? 'stroke-[2.5px] text-[#6C4CF1] scale-110 -translate-y-0.5'
-                        : 'stroke-[1.8px] opacity-70 group-hover:opacity-100 group-hover:scale-105'
+                        ? 'stroke-[2.4px] chameleon-text scale-105 -translate-y-0.5'
+                        : 'stroke-[1.8px] opacity-75 group-hover:opacity-100 group-hover:scale-105'
                     }`}
                   />
-                  <span className={`text-[10px] tracking-tight ${isActive ? 'font-black' : 'font-medium'}`}>
+                  <span className={`text-[10px] tracking-tight whitespace-nowrap ${isActive ? 'font-extrabold chameleon-text' : 'font-medium'}`}>
                     {item.label}
                   </span>
 
                   {/* Active bottom glowing indicator dot */}
                   {isActive && (
-                    <span className="w-1 h-1 rounded-full bg-[#6C4CF1] shadow-[0_0_6px_#6C4CF1] mt-0.5" />
+                    <span className="w-1 h-1 rounded-full chameleon-dot mt-0.5" />
                   )}
                 </>
               )}

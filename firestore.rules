@@ -1,0 +1,215 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Pillar 0: Global Default-Deny Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Phase 3: Hardened Global Primitives
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Helper for validating bounded string arrays (e.g. lawsMastered, bookmarks, unlockedBadges, selectedGoals)
+    function isValidStringList(listVal, maxLen) {
+      return listVal is list
+        && listVal.size() <= maxLen
+        && (listVal.size() == 0 || (listVal[0] is string && listVal[0].size() >= 1 && listVal[0].size() <= 100));
+    }
+
+    // Helper for validating the 5-dimensional cognitive stats map
+    function isValidStatsMap(stats) {
+      return stats is map
+        && stats.keys().hasAll(['memory', 'attention', 'reasoning', 'knowledge', 'decision'])
+        && stats.keys().hasOnly(['memory', 'attention', 'reasoning', 'knowledge', 'decision'])
+        && stats.memory is number && stats.memory >= 0 && stats.memory <= 100
+        && stats.attention is number && stats.attention >= 0 && stats.attention <= 100
+        && stats.reasoning is number && stats.reasoning >= 0 && stats.reasoning <= 100
+        && stats.knowledge is number && stats.knowledge >= 0 && stats.knowledge <= 100
+        && stats.decision is number && stats.decision >= 0 && stats.decision <= 100;
+    }
+
+    // Helper for validating weeklyActivity bounded list
+    function isValidWeeklyActivity(activity) {
+      return activity is list
+        && activity.size() <= 14
+        && (
+          activity.size() == 0 || (
+            activity[0] is map
+            && activity[0].keys().hasAll(['day', 'date', 'minutes', 'xp', 'completed'])
+            && activity[0].keys().hasOnly(['day', 'date', 'minutes', 'xp', 'completed'])
+            && activity[0].day is string && activity[0].day.size() >= 1 && activity[0].day.size() <= 20
+            && activity[0].date is string && activity[0].date.size() >= 1 && activity[0].date.size() <= 20
+            && activity[0].minutes is number && activity[0].minutes >= 0 && activity[0].minutes <= 1440
+            && activity[0].xp is number && activity[0].xp >= 0 && activity[0].xp <= 100000
+            && activity[0].completed is bool
+          )
+        );
+    }
+
+    // Pillar 2: Standalone Entity Validation Blueprint for UserProfile
+    function isValidUserProfile(data) {
+      return data.keys().hasAll([
+          'uid',
+          'name',
+          'avatar',
+          'title',
+          'level',
+          'xp',
+          'streak',
+          'lastActiveDate',
+          'totalGames',
+          'totalQuizzes',
+          'quizPoints',
+          'lawsMastered',
+          'lawMasteryMap',
+          'bookmarks',
+          'gameHighScores',
+          'unlockedBadges',
+          'selectedGoals',
+          'hasCompletedOnboarding',
+          'isDailyChallengeCompleted',
+          'stats',
+          'weeklyActivity',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'uid',
+          'name',
+          'avatar',
+          'title',
+          'level',
+          'xp',
+          'streak',
+          'lastActiveDate',
+          'totalGames',
+          'totalQuizzes',
+          'quizPoints',
+          'lawsMastered',
+          'lawMasteryMap',
+          'bookmarks',
+          'gameHighScores',
+          'unlockedBadges',
+          'selectedGoals',
+          'hasCompletedOnboarding',
+          'isDailyChallengeCompleted',
+          'stats',
+          'weeklyActivity',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.uid is string && data.uid.size() >= 1 && data.uid.size() <= 128 && data.uid.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.uid == request.auth.uid
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 100
+        && data.avatar is string && data.avatar.size() >= 1 && data.avatar.size() <= 1000
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 60
+        && data.level is number && data.level >= 1 && data.level <= 1000
+        && data.xp is number && data.xp >= 0 && data.xp <= 10000000
+        && data.streak is number && data.streak >= 0 && data.streak <= 10000
+        && data.lastActiveDate is string && data.lastActiveDate.size() >= 1 && data.lastActiveDate.size() <= 20
+        && data.totalGames is number && data.totalGames >= 0 && data.totalGames <= 1000000
+        && data.totalQuizzes is number && data.totalQuizzes >= 0 && data.totalQuizzes <= 1000000
+        && data.quizPoints is number && data.quizPoints >= 0 && data.quizPoints <= 10000000
+        && isValidStringList(data.lawsMastered, 120)
+        && data.lawMasteryMap is map && data.lawMasteryMap.size() <= 120
+        && isValidStringList(data.bookmarks, 120)
+        && data.gameHighScores is map && data.gameHighScores.size() <= 20
+        && isValidStringList(data.unlockedBadges, 50)
+        && isValidStringList(data.selectedGoals, 20)
+        && data.hasCompletedOnboarding is bool
+        && data.isDailyChallengeCompleted is bool
+        && isValidStatsMap(data.stats)
+        && isValidWeeklyActivity(data.weeklyActivity)
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // Action-Based Update Helpers
+    function isProfilePreferencesAction() {
+      return incoming().diff(existing()).affectedKeys().hasOnly([
+        'name',
+        'avatar',
+        'title',
+        'selectedGoals',
+        'hasCompletedOnboarding',
+        'updatedAt'
+      ]);
+    }
+
+    function isTrainingProgressSyncAction() {
+      return incoming().diff(existing()).affectedKeys().hasOnly([
+        'name',
+        'avatar',
+        'title',
+        'level',
+        'xp',
+        'streak',
+        'lastActiveDate',
+        'totalGames',
+        'totalQuizzes',
+        'quizPoints',
+        'lawsMastered',
+        'lawMasteryMap',
+        'bookmarks',
+        'gameHighScores',
+        'unlockedBadges',
+        'selectedGoals',
+        'hasCompletedOnboarding',
+        'isDailyChallengeCompleted',
+        'stats',
+        'weeklyActivity',
+        'updatedAt'
+      ]);
+    }
+
+    // Collection: /users/{userId}
+    match /users/{userId} {
+      allow get: if isSignedIn() && isValidId(userId) && isOwner(userId);
+      allow list: if false;
+
+      allow create: if isVerifiedUser()
+        && isValidId(userId)
+        && isOwner(userId)
+        && isValidUserProfile(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isValidUserProfile(incoming())
+        && isVerifiedUser()
+        && isValidId(userId)
+        && isOwner(userId)
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && (
+          isProfilePreferencesAction() ||
+          isTrainingProgressSyncAction()
+        );
+
+      allow delete: if isVerifiedUser() && isValidId(userId) && isOwner(userId);
+    }
+  }
+}

@@ -1,0 +1,15 @@
+请根据提供的心理学定律基础信息（LAW），严格按照给定的 JSON Schema 生成完整的 MindLabZ 结构化知识条目。
+
+生成要求：
+1. `definition`：一句话精准定义该心理学定律（50~90字）。
+2. `mechanism`：深入浅出解释大脑认知机制或进化/神经心理学原理（100~180字）。
+3. 四大真实场景案例（每个案例 60~120字，具体生动）：
+   - `real_life_case`：日常生活场景
+   - `workplace_case`：职场协作与管理场景
+   - `relationship_case`：人际交往与亲密关系场景
+   - `business_case`：商业定价、营销与消费决策场景
+4. `recognition_signals`：3 条信号，说明当自己或他人陷入该定律时会出现哪些典型语言或行为特征。
+5. `anti_manipulation`：3 条实操对策，说明如何防御他人利用该定律操控自己，或如何克服自身认知盲区。
+6. `quiz`：包含 3 道高质量单选题（涵盖概念辨析、场景识别与反制策略），每题包含 `question`、`options`（4个选项）、`answer_index`（0-3）与 `explanation`。
+7. `game`：设计 1 个微互动认知实验场景，包含 `title`、`type`（scenario_choice / bias_detector / probability_test）、`scenario`、`option_a`、`option_b`、`rational_choice`（"A" 或 "B"）以及 `insight`。
+8. 严格输出合法 JSON，不要包含 Markdown 代码块包裹。

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AppProvider, useApp } from './context/AppContext';
+import { ThemeColorProvider } from './context/ThemeColorContext';
 import { AppShell } from './components/layout/AppShell';
 import { HomePage } from './pages/HomePage';
 import { LearnPage } from './pages/LearnPage';
@@ -44,9 +45,11 @@ const AppRoutes: React.FC = () => {
 export default function App() {
   return (
     <BrowserRouter>
-      <AppProvider>
-        <AppRoutes />
-      </AppProvider>
+      <ThemeColorProvider>
+        <AppProvider>
+          <AppRoutes />
+        </AppProvider>
+      </ThemeColorProvider>
     </BrowserRouter>
   );
 }

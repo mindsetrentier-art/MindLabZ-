@@ -75,24 +75,22 @@ export const AITutorModal: React.FC = () => {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-6 py-4 bg-gradient-to-r from-[#6C4CF1] to-[#532CD8] text-white flex items-center justify-between">
+        <div className="px-6 py-4 art-dark-banner text-white flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center shadow-inner">
-              <Bot className="w-6 h-6 text-white" />
+            <div className="w-10 h-10 rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-inner">
+              <Bot className="w-5 h-5 text-white" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <h3 className="font-extrabold text-base leading-tight">智心 AI 心理导师</h3>
-                <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full font-medium tracking-wide">Gemini 3.7 Flash</span>
-              </div>
+              <h3 className="font-extrabold text-base leading-tight">智心 AI 认知导师</h3>
               <p className="text-xs text-white/80 mt-0.5">
-                {activeContextLaw ? `当前聚焦：${activeContextLaw.nameZh}` : '随时提问心理学与认知科学'}
+                {activeContextLaw ? `当前聚焦：${activeContextLaw.nameZh}` : '认知科学与心理学深度解答'}
               </p>
             </div>
           </div>
           <button
             onClick={() => setAiTutorOpen(false)}
-            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors btn-press"
+            className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors btn-press"
+            aria-label="Close modal"
           >
             <X className="w-4 h-4 text-white" />
           </button>

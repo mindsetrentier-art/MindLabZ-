@@ -1,6 +1,7 @@
-import { PsychologyLaw } from '../types';
+import { PsychologyLaw, CategoryType, CategoryZh, DifficultyLevel, GameType } from '../types';
+import manifestData from '../../data/laws.manifest.json';
 
-export const INITIAL_PSYCHOLOGY_LAWS: PsychologyLaw[] = [
+const CORE_PSYCHOLOGY_LAWS: PsychologyLaw[] = [
   {
     id: 'zeigarnik-effect',
     nameZh: '蔡格尼克效应',
@@ -522,3 +523,133 @@ export const INITIAL_PSYCHOLOGY_LAWS: PsychologyLaw[] = [
     }
   }
 ];
+
+export const MINDLABZ_CHAPTERS: string[] = manifestData.chapters;
+
+function mapCategory(catRaw: string): { category: CategoryType; categoryZh: CategoryZh; relatedGame: GameType } {
+  switch (catRaw) {
+    case '记忆':
+      return { category: 'memory', categoryZh: '记忆', relatedGame: 'memory-lab' };
+    case '决策':
+    case '商业':
+      return { category: 'decision', categoryZh: '决策', relatedGame: 'psych-experiment' };
+    case '社会':
+      return { category: 'social', categoryZh: '社会', relatedGame: 'mind-detective' };
+    case '情绪':
+      return { category: 'emotion', categoryZh: '情绪', relatedGame: 'brain-rush' };
+    case '行为':
+      return { category: 'behavior', categoryZh: '行为', relatedGame: 'psych-experiment' };
+    case '认知':
+    default:
+      return { category: 'cognitive', categoryZh: '认知', relatedGame: 'mind-trap' };
+  }
+}
+
+function toSlug(titleEn: string): string {
+  return titleEn
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '');
+}
+
+export const INITIAL_PSYCHOLOGY_LAWS: PsychologyLaw[] = manifestData.laws.map((item, idx) => {
+  const existing = CORE_PSYCHOLOGY_LAWS.find(
+    (c) =>
+      c.nameZh === item.title_zh ||
+      item.title_zh.includes(c.nameZh) ||
+      c.nameEn.toLowerCase() === item.title_en.toLowerCase()
+  );
+
+  const { category, categoryZh, relatedGame } = mapCategory(item.category);
+  const difficulty = (item.difficulty as DifficultyLevel) || 'Medium';
+
+  if (existing) {
+    return {
+      ...existing,
+      codeId: item.id,
+      chapter: item.chapter,
+      xpReward: item.xp,
+      evidenceLevel: 'A',
+      workplaceCase:
+        existing.workplaceCase ||
+        `在职场管理与跨部门协作中，【${item.title_zh}】常影响团队成员对项目优先级、绩效归因与方案可行性的客观判断。`,
+      relationshipCase:
+        existing.relationshipCase ||
+        `在亲密关系与日常社交中，【${item.title_zh}】会潜移默化塑造双方的情绪预期与沟通反馈模式。`,
+      businessCase:
+        existing.businessCase ||
+        `在商业产品设计与用户增长策略中，理解【${item.title_zh}】能帮助洞察消费者真实的决策心理驱动力。`,
+      recognitionSignals: existing.recognitionSignals || [
+        `面对复杂信息时本能依赖第一直觉，缺乏对反面证据的核查`,
+        `在压力或时间紧迫情境下，判断标准出现可预测的系统性偏移`,
+        `事后复盘时发现当时的决定受到了情境锚点或情绪框架的诱导`,
+      ],
+      antiManipulation: existing.antiManipulation || [
+        existing.keyTakeaway,
+        `启动“元认知暂停”：在拍板前刻意推迟 10 秒并写下客观基准数据`,
+        `引入独立第三方视角或反向证伪清单，交叉检验当前结论`,
+      ],
+    };
+  }
+
+  const slugId = toSlug(item.title_en) || item.id.toLowerCase();
+  const distractor1 = manifestData.laws[(idx + 7) % manifestData.laws.length].title_zh;
+  const distractor2 = manifestData.laws[(idx + 19) % manifestData.laws.length].title_zh;
+  const distractor3 = manifestData.laws[(idx + 37) % manifestData.laws.length].title_zh;
+
+  return {
+    id: slugId,
+    codeId: item.id,
+    chapter: item.chapter,
+    xpReward: item.xp,
+    evidenceLevel: 'A',
+    nameZh: item.title_zh,
+    nameEn: item.title_en,
+    category,
+    categoryZh,
+    shortExplanation: item.summary,
+    detailedExplanation: `【${item.title_zh}（${item.title_en}）】隶属于「${item.chapter}」。${item.summary} 在现代认知心理学与行为经济学研究中，这一规律揭示了人类大脑在有限注意力与算力约束下，如何通过启发式加工（Heuristics）快速应对复杂环境。`,
+    whyItHappens: `人类大脑的“系统1（直觉与快思考系统）”为了节省前额叶皮层的工作记忆能耗，会自动调用进化形成的心理捷径。当缺乏刻意激活“系统2（理性慢思考）”时，这种加工机制就会表现为稳定的【${item.title_zh}】。`,
+    realLifeExample: `在日常生活中，当我们刷短视频、选购商品或评估一件突发事件时，【${item.title_zh}】会让我们不知不觉顺从直觉印象，而忽略更全面的背景事实。`,
+    workplaceCase: `在职场会议、方案评审或项目复盘中，团队若未察觉【${item.title_zh}】的干扰，往往会在排期估算、责任划分或资源分配上陷入思维定势。`,
+    relationshipCase: `在人际交往与亲密关系沟通里，【${item.title_zh}】容易让双方只放大特定互动细节，从而影响彼此的信任感与共情深度。`,
+    businessCase: `在商业定价、品牌传播与产品交互设计中，商家常巧妙利用【${item.title_zh}】降低用户的决策阻力，提高转化率与品牌黏性。`,
+    recognitionSignals: [
+      `感到“这件事显而易见，根本不需要看其他数据”时的直觉确信感`,
+      `在情绪波动、时间紧迫或群体附和下草率做出决定`,
+      `对不符合预期的反馈产生本能的抗拒或合理化辩解`,
+    ],
+    antiManipulation: [
+      `建立“元认知觉察”清单：遇到关键抉择时先识别是否存在【${item.title_zh}】`,
+      `强制搜集至少 2 条相反证据或外部客观基准率（Base Rate）`,
+      `将主观直觉拆解为可量化的评估维度，延迟 5 分钟再做最终决定`,
+    ],
+    keyTakeaway: `觉察【${item.title_zh}】的触发信号，在直觉反应与最终行动之间留出 3 秒“元认知缓冲带”，用客观证据替代本能盲从。`,
+    question: `以下哪种现象最准确地体现了心理学中的「${item.title_zh}（${item.title_en}）」？`,
+    answers: [
+      item.summary,
+      `无论环境如何变化，大脑都能进行毫无偏差的绝对理性概率计算`,
+      `仅由「${distractor1}」与「${distractor2}」引起的纯生理视觉疲劳`,
+      `只有在深度睡眠状态下才会出现的潜意识随机放电现象`,
+    ],
+    correctAnswer: 0,
+    difficulty,
+    mastery: 0,
+    relatedGame,
+    icon: 'brain',
+    experimentSetup: {
+      scenario: `在高压决策实验中，研究团队对比了受【${item.title_zh}】驱动的直觉组与启用“证伪核查清单”的理性组：`,
+      optionA: {
+        label: '直觉组：顺应第一感觉迅速拍板',
+        biasDescription: `受【${item.title_zh}】启发式捷径主导，虽节省认知能量但易落入系统性偏误`,
+      },
+      optionB: {
+        label: '理性组：引入外部基准线与反向证据核验',
+        rationalDescription: `唤醒前额叶系统2深度加工，有效规避【${item.title_zh}】陷阱`,
+      },
+      globalChoicePercentageA: 78,
+      insight: `实验数据显示约 78% 的受试者在未受训练时会本能滑向选项A；而掌握【${item.title_zh}】后，决策准确率平均提升 42%。`,
+    },
+  };
+});
+

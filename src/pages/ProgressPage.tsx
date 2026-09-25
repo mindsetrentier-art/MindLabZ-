@@ -41,29 +41,29 @@ export const ProgressPage: React.FC = () => {
   return (
     <div className="space-y-6 pb-6 animate-fadeIn">
       {/* 1. Header Overview Card */}
-      <div className="bg-gradient-to-r from-[#6C4CF1] to-[#532CD8] text-white rounded-3xl p-5 shadow-[0_8px_25px_rgba(108,76,241,0.25)]">
-        <div className="flex items-center justify-between mb-3">
+      <div className="art-dark-banner text-white rounded-3xl p-6 relative overflow-hidden">
+        <div className="flex items-center justify-between mb-4 relative z-10">
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full">
-              🧠 大脑认知图谱
+            <span className="text-xs font-semibold text-[#FDE68A] tracking-wide block">
+              认知能力全景图谱
             </span>
-            <h2 className="text-lg font-black mt-1">Level {user.level} · {user.title}</h2>
+            <h2 className="text-xl font-extrabold mt-0.5 tracking-tight">Level {user.level} · {user.title}</h2>
           </div>
           <div className="text-right">
-            <span className="text-xs text-white/80">总经验值</span>
-            <p className="text-lg font-black font-['Inter']">{user.xp.toLocaleString()} XP</p>
+            <span className="text-xs text-white/75">累计经验值</span>
+            <p className="text-xl font-extrabold font-numeric text-[#FDE68A]">{user.xp.toLocaleString()} XP</p>
           </div>
         </div>
 
         {/* Level XP progress bar */}
-        <div>
-          <div className="flex justify-between text-[11px] text-white/80 mb-1">
-            <span>升级进度</span>
+        <div className="relative z-10">
+          <div className="flex justify-between text-[11px] text-white/80 mb-1.5 font-numeric">
+            <span>下一等级晋升进度</span>
             <span>{user.xp % 400} / 400 XP</span>
           </div>
           <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
             <div
-              className="h-full bg-[#FFB72B] rounded-full transition-all duration-500"
+              className="h-full bg-gradient-to-r from-[#FDE68A] to-[#F59E0B] rounded-full transition-all duration-500"
               style={{ width: `${((user.xp % 400) / 400) * 100}%` }}
             />
           </div>
@@ -71,14 +71,14 @@ export const ProgressPage: React.FC = () => {
       </div>
 
       {/* 2. Five-dimensional Cognitive Radar */}
-      <div className="bg-white rounded-3xl p-6 border border-[#E6E2F5] shadow-[0_4px_20px_-2px_rgba(108,76,241,0.05)] space-y-4">
+      <div className="art-card rounded-3xl p-6 space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold text-[#18181B] flex items-center gap-1.5">
+          <h3 className="text-sm font-extrabold text-[#18181B] flex items-center gap-1.5">
             <Brain className="w-4 h-4 text-[#6C4CF1]" />
-            五维大脑能力模型
+            五维大脑认知模型
           </h3>
-          <span className="text-xs font-bold text-[#6C4CF1] bg-[#EDE9FE] border border-[#DDD6FE] px-2.5 py-0.5 rounded-full">
-            综合评级：S 级
+          <span className="text-xs font-bold text-[#532CD8]">
+            综合神经评级 · S 级
           </span>
         </div>
 

@@ -1,6 +1,6 @@
 {
   "name": "MindLabZ 智心堂",
   "description": "高端心理学与大脑认知训练应用，结合认知科学、互动微游戏与AI导师辅导。",
-  "requestFramePermissions": [],
+  "requestFramePermissions": ["geolocation"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

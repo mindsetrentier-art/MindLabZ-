@@ -1,0 +1,149 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Stores the authenticated user's cognitive training profile, XP, streak, psychology law mastery, game high scores, and preferences.",
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "description": "Immutable Firebase Auth UID of the profile owner.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "name": {
+          "type": "string",
+          "description": "Display name of the user.",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "avatar": {
+          "type": "string",
+          "description": "URL of the user's profile avatar.",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "title": {
+          "type": "string",
+          "description": "Cognitive rank title earned by the user.",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "level": {
+          "type": "number",
+          "description": "Current user level (1 to 1000)."
+        },
+        "xp": {
+          "type": "number",
+          "description": "Total experience points earned."
+        },
+        "streak": {
+          "type": "number",
+          "description": "Consecutive daily active study days."
+        },
+        "lastActiveDate": {
+          "type": "string",
+          "description": "ISO date string (YYYY-MM-DD) of last activity.",
+          "minLength": 1,
+          "maxLength": 20
+        },
+        "totalGames": {
+          "type": "number",
+          "description": "Total number of cognitive mini-games played."
+        },
+        "totalQuizzes": {
+          "type": "number",
+          "description": "Total number of rapid quizzes completed."
+        },
+        "quizPoints": {
+          "type": "number",
+          "description": "Cumulative points earned from rapid quizzes."
+        },
+        "lawsMastered": {
+          "type": "array",
+          "description": "List of mastered psychology law IDs (bounded to max 50)."
+        },
+        "lawMasteryMap": {
+          "type": "object",
+          "description": "Map of psychology law ID to mastery percentage (0-100)."
+        },
+        "bookmarks": {
+          "type": "array",
+          "description": "List of bookmarked psychology law IDs (bounded to max 50)."
+        },
+        "gameHighScores": {
+          "type": "object",
+          "description": "Map of game ID to highest score achieved."
+        },
+        "unlockedBadges": {
+          "type": "array",
+          "description": "List of unlocked achievement badge IDs (bounded to max 50)."
+        },
+        "selectedGoals": {
+          "type": "array",
+          "description": "List of selected cognitive training goals (bounded to max 20)."
+        },
+        "hasCompletedOnboarding": {
+          "type": "boolean",
+          "description": "Whether the user has completed initial onboarding."
+        },
+        "isDailyChallengeCompleted": {
+          "type": "boolean",
+          "description": "Whether the daily cognitive challenge is completed today."
+        },
+        "stats": {
+          "type": "object",
+          "description": "Five-dimensional cognitive capability scores (memory, attention, reasoning, knowledge, decision)."
+        },
+        "weeklyActivity": {
+          "type": "array",
+          "description": "7-day rolling activity log entries (bounded to max 14)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Immutable server timestamp when the profile was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the profile was last updated."
+        }
+      },
+      "required": [
+        "uid",
+        "name",
+        "avatar",
+        "title",
+        "level",
+        "xp",
+        "streak",
+        "lastActiveDate",
+        "totalGames",
+        "totalQuizzes",
+        "quizPoints",
+        "lawsMastered",
+        "lawMasteryMap",
+        "bookmarks",
+        "gameHighScores",
+        "unlockedBadges",
+        "selectedGoals",
+        "hasCompletedOnboarding",
+        "isDailyChallengeCompleted",
+        "stats",
+        "weeklyActivity",
+        "createdAt",
+        "updatedAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": {
+        "$ref": "#/entities/UserProfile"
+      },
+      "description": "Private user profile and cognitive training progress document owned strictly by {userId}."
+    }
+  }
+}

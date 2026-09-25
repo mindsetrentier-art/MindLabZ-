@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Flame, Star, Trophy, Bookmark, Settings, RotateCcw, Sparkles, Shield, Heart, HelpCircle, Check, Info } from 'lucide-react';
+import { User, Flame, Star, Trophy, Bookmark, Settings, RotateCcw, Sparkles, Shield, Heart, HelpCircle, Check, Info, Cloud, LogIn, LogOut, CheckCircle2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 const GOAL_OPTIONS = [
@@ -14,13 +14,19 @@ const GOAL_OPTIONS = [
 
 export const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
-  const { user, resetProgress, triggerConfetti } = useApp();
+  const { user, firebaseUser, authReady, isSyncing, loginWithGoogle, logout, updateGoals, resetProgress, triggerConfetti } = useApp();
 
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [hapticEnabled, setHapticEnabled] = useState(true);
   const [showGoalModal, setShowGoalModal] = useState(false);
   const [selectedGoals, setSelectedGoals] = useState<string[]>(user.selectedGoals || []);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [authLoading, setAuthLoading] = useState(false);
+
+  useEffect(() => {
+    setSelectedGoals(user.selectedGoals || []);
+  }, [user.selectedGoals]);
 
   const toggleGoal = (goal: string) => {
     setSelectedGoals(prev =>
@@ -29,52 +35,129 @@ export const ProfilePage: React.FC = () => {
   };
 
   const handleSaveGoals = () => {
+    updateGoals(selectedGoals);
     setShowGoalModal(false);
     triggerConfetti();
   };
 
+  const handleGoogleLogin = async () => {
+    setAuthError(null);
+    setAuthLoading(true);
+    try {
+      await loginWithGoogle();
+      triggerConfetti();
+    } catch (err) {
+      setAuthError('Google 登录未完成或被取消，请重试。');
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    setAuthError(null);
+    await logout();
+  };
+
   return (
     <div className="space-y-5 pb-6 animate-fadeIn">
-      {/* 1. Profile Avatar & Card */}
-      <div className="bg-white rounded-3xl p-6 border border-[#E6E2F5] shadow-[0_4px_20px_-2px_rgba(108,76,241,0.05)] text-center space-y-3 relative overflow-hidden">
-        <div className="w-20 h-20 rounded-full bg-[#EDE9FE] mx-auto overflow-hidden border-4 border-white shadow-md relative">
-          <img
-            src={user.avatar}
-            alt={user.name}
-            className="w-full h-full object-cover"
-          />
+      {/* 1. Profile Avatar & Hero Card */}
+      <div className="art-hero-surface rounded-3xl p-6 text-center space-y-3.5 relative overflow-hidden">
+        <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-[#6C4CF1] to-[#A855F7] p-0.5 mx-auto shadow-[0_8px_24px_rgba(108,76,241,0.22)] relative">
+          <div className="w-full h-full rounded-full overflow-hidden bg-white">
+            <img
+              src={user.avatar}
+              alt={user.name}
+              referrerPolicy="no-referrer"
+              className="w-full h-full object-cover"
+            />
+          </div>
+          {firebaseUser && (
+            <div className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-[#10B981] border-2 border-white flex items-center justify-center shadow-xs" title="Firebase 云端已连接">
+              <Check className="w-3.5 h-3.5 text-white stroke-[3px]" />
+            </div>
+          )}
         </div>
 
         <div>
-          <div className="flex items-center justify-center gap-1.5">
-            <h2 className="text-lg font-bold text-[#18181B]">{user.name}</h2>
-            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#6C4CF1] text-white">
+          <div className="flex items-center justify-center gap-2">
+            <h2 className="text-lg font-extrabold text-[#18181B]">{user.name}</h2>
+            <span className="text-xs font-extrabold text-[#532CD8] font-numeric">
               Lv.{user.level}
             </span>
           </div>
           <p className="text-xs text-[#6C4CF1] font-semibold mt-0.5">{user.title}</p>
+          {firebaseUser?.email && (
+            <p className="text-[11px] text-[#64748B] font-numeric mt-0.5">{firebaseUser.email}</p>
+          )}
+        </div>
+
+        {/* Firebase Authentication & Cloud Sync Bar */}
+        <div className="pt-2">
+          {!authReady ? (
+            <div className="text-xs text-[#64748B] py-2">正在检测云端连接状态...</div>
+          ) : firebaseUser ? (
+            <div className="flex items-center justify-between bg-[#ECFDF5]/80 border border-[#A7F3D0] rounded-2xl px-4 py-2.5">
+              <div className="flex items-center gap-2 text-left">
+                <Cloud className="w-4 h-4 text-[#059669] shrink-0" />
+                <div>
+                  <span className="text-xs font-bold text-[#065F46] block">
+                    {isSyncing ? '正在同步至 Firestore...' : 'Firebase 云端实时同步已开启'}
+                  </span>
+                  <span className="text-[10px] text-[#059669]">学习进度、收藏与最高分已安全备份</span>
+                </div>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white text-[#475569] hover:text-rose-600 border border-[#D1FAE5] text-xs font-bold transition-colors btn-tactile whitespace-nowrap"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>退出</span>
+              </button>
+            </div>
+          ) : (
+            <div className="bg-[#FAF9FF] border border-[#DDD6FE] rounded-2xl p-3.5 space-y-2.5">
+              <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-[#532CD8]">
+                <Cloud className="w-4 h-4 text-[#6C4CF1]" />
+                <span>连接 Firebase 云端账号</span>
+              </div>
+              <p className="text-[11px] text-[#64748B] leading-relaxed">
+                使用 Google 账号登录，将您的认知训练进度、定律掌握度与高分纪录实时保存至 Firestore 云数据库。
+              </p>
+              {authError && (
+                <p className="text-[11px] text-rose-600 font-medium">{authError}</p>
+              )}
+              <button
+                onClick={handleGoogleLogin}
+                disabled={authLoading}
+                className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-[#532CD8] to-[#6C4CF1] hover:from-[#4320B8] hover:to-[#5B3BE0] text-white text-xs font-bold shadow-[0_6px_16px_rgba(108,76,241,0.28)] flex items-center justify-center gap-2 transition-all btn-tactile"
+              >
+                <LogIn className="w-4 h-4" />
+                <span>{authLoading ? '正在连接 Google...' : '使用 Google 账号登录并同步'}</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Mini Stats Row */}
-        <div className="grid grid-cols-3 gap-2 pt-2 border-t border-[#F5F3FF]">
-          <div className="bg-[#FAF9FF] p-2.5 rounded-2xl border border-[#E6E2F5]">
+        <div className="grid grid-cols-3 gap-2.5 pt-3 border-t border-[#EDE9FE]">
+          <div className="bg-white/90 p-3 rounded-2xl border border-[#EBE7F8]">
             <span className="text-[10px] text-[#64748B] font-medium block">连击打卡</span>
-            <span className="text-sm font-bold text-[#F59E0B] font-['Inter'] flex items-center justify-center gap-0.5 mt-0.5">
-              <Flame className="w-3.5 h-3.5 fill-[#F59E0B]" />
+            <span className="text-sm font-extrabold text-[#D97706] font-numeric flex items-center justify-center gap-1 mt-0.5">
+              <Flame className="w-3.5 h-3.5 fill-[#F59E0B] text-[#F59E0B]" />
               {user.streak} 天
             </span>
           </div>
-          <div className="bg-[#FAF9FF] p-2.5 rounded-2xl border border-[#E6E2F5]">
+          <div className="bg-white/90 p-3 rounded-2xl border border-[#EBE7F8]">
             <span className="text-[10px] text-[#64748B] font-medium block">总经验值</span>
-            <span className="text-sm font-bold text-[#6C4CF1] font-['Inter'] flex items-center justify-center gap-0.5 mt-0.5">
-              <Star className="w-3.5 h-3.5 fill-[#6C4CF1]" />
-              {user.xp}
+            <span className="text-sm font-extrabold text-[#532CD8] font-numeric flex items-center justify-center gap-1 mt-0.5">
+              <Star className="w-3.5 h-3.5 fill-[#6C4CF1] text-[#6C4CF1]" />
+              {user.xp.toLocaleString()}
             </span>
           </div>
-          <div className="bg-[#FAF9FF] p-2.5 rounded-2xl border border-[#E6E2F5]">
+          <div className="bg-white/90 p-3 rounded-2xl border border-[#EBE7F8]">
             <span className="text-[10px] text-[#64748B] font-medium block">掌握定律</span>
-            <span className="text-sm font-bold text-[#10B981] font-['Inter'] flex items-center justify-center gap-0.5 mt-0.5">
-              <Trophy className="w-3.5 h-3.5 fill-[#10B981]" />
+            <span className="text-sm font-extrabold text-[#059669] font-numeric flex items-center justify-center gap-1 mt-0.5">
+              <Trophy className="w-3.5 h-3.5 fill-[#10B981] text-[#10B981]" />
               {user.lawsMastered.length} 项
             </span>
           </div>

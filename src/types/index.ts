@@ -4,8 +4,50 @@ export type CategoryZh = '认知' | '记忆' | '社会' | '决策' | '行为' | 
 
 export type DifficultyLevel = 'Easy' | 'Medium' | 'Hard';
 
+export interface StructuredLawQuizItem {
+  question: string;
+  options: string[];
+  answer_index: number;
+  explanation: string;
+}
+
+export interface StructuredLawGame {
+  title: string;
+  type: string;
+  scenario: string;
+  option_a: string;
+  option_b: string;
+  rational_choice: string;
+  insight: string;
+}
+
+export interface StructuredLawData {
+  id: string;
+  title_zh: string;
+  title_en: string;
+  category?: string;
+  chapter?: string;
+  definition: string;
+  mechanism: string;
+  real_life_case: string;
+  workplace_case: string;
+  relationship_case: string;
+  business_case: string;
+  recognition_signals: string[];
+  anti_manipulation: string[];
+  quiz: StructuredLawQuizItem[];
+  game: StructuredLawGame;
+  difficulty: DifficultyLevel;
+  xp: number;
+  evidence_level: string;
+}
+
 export interface PsychologyLaw {
   id: string;
+  codeId?: string; // e.g. LAW001 - LAW100
+  chapter?: string;
+  xpReward?: number;
+  evidenceLevel?: string;
   nameZh: string;
   nameEn: string;
   category: CategoryType;
@@ -14,6 +56,11 @@ export interface PsychologyLaw {
   detailedExplanation: string;
   whyItHappens: string;
   realLifeExample: string;
+  workplaceCase?: string;
+  relationshipCase?: string;
+  businessCase?: string;
+  recognitionSignals?: string[];
+  antiManipulation?: string[];
   keyTakeaway: string;
   question: string;
   answers: string[];
