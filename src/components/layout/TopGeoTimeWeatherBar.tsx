@@ -487,28 +487,28 @@ export const TopGeoTimeWeatherBar: React.FC<TopGeoTimeWeatherBarProps> = ({
             setRemainingMs(5000);
             setIsVisible(true);
           }}
-          className="pointer-events-auto group flex items-center gap-1.5 px-3 py-0.5 rounded-b-xl bg-white/75 hover:bg-white/95 backdrop-blur-[20px] border-x border-b border-[#DDD6FE]/90 shadow-[0_4px_14px_rgba(108,76,241,0.12)] text-[10px] font-semibold text-[#532CD8] transition-all cursor-pointer"
+          className="pointer-events-auto group flex items-center gap-1.5 px-3 py-0.5 rounded-b-xl bg-white/85 hover:bg-white backdrop-blur-[20px] border-x border-b border-stone-200/90 shadow-[0_2px_8px_rgba(28,25,23,0.04)] text-[10px] font-medium text-stone-700 transition-all cursor-pointer"
           title="Afficher la barre Date · Heure · GPS · Météo (5s)"
         >
-          <MapPin className="w-2.5 h-2.5 text-[#6C4CF1]" />
+          <MapPin className="w-2.5 h-2.5 text-stone-700" />
           <span className="font-numeric">{formattedTime}</span>
           {weather && (
             <>
               <span className="text-[#CBD5E1]">·</span>
               <WeatherIcon className={`w-2.5 h-2.5 ${weatherVisual.color}`} />
-              <span className="font-numeric font-bold text-[#18181B]">
+              <span className="font-numeric font-semibold text-stone-900">
                 {weather.temperature.toFixed(1)}°C
               </span>
             </>
           )}
-          <ChevronDown className="w-2.5 h-2.5 text-[#64748B] group-hover:translate-y-0.5 transition-transform" />
+          <ChevronDown className="w-2.5 h-2.5 text-stone-400 group-hover:translate-y-0.5 transition-transform" />
         </button>
       </div>
     );
   }
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 px-2 pt-1.5 pointer-events-none transition-all duration-300">
+    <div className="fixed top-0 left-0 right-0 z-50 px-3 pt-1.5 pointer-events-none transition-all duration-300">
       <div className="w-full max-w-md md:max-w-xl lg:max-w-2xl mx-auto pointer-events-auto">
         <div
           onClick={handleBarClick}
@@ -520,7 +520,7 @@ export const TopGeoTimeWeatherBar: React.FC<TopGeoTimeWeatherBarProps> = ({
               handleBarClick();
             }
           }}
-          className="relative overflow-hidden rounded-2xl bg-white/82 backdrop-blur-[20px] border border-white/90 shadow-[0_10px_32px_-6px_rgba(83,44,216,0.18),0_2px_8px_rgba(24,24,27,0.06)] transition-all duration-300 cursor-pointer select-none hover:bg-white/92"
+          className="relative overflow-hidden rounded-2xl bg-white/90 backdrop-blur-[20px] border border-stone-200/90 shadow-[0_4px_20px_-4px_rgba(28,25,23,0.06),0_1px_3px_rgba(28,25,23,0.02)] transition-all duration-300 cursor-pointer select-none hover:bg-white/95"
         >
           {/* Compact Primary Bar: Date, Live Time, Precise GPS Location, Real-Time Weather & Temp */}
           <div className="px-3 py-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1.5 text-xs">

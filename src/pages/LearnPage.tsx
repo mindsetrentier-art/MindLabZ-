@@ -64,52 +64,62 @@ export const LearnPage: React.FC = () => {
   }, [laws, searchQuery, selectedCategory, selectedChapter, onlyBookmarked, user.bookmarks]);
 
   return (
-    <div className="space-y-5 pb-6 animate-fadeIn">
-      {/* Top Artistic Banner */}
-      <div className="relative art-dark-banner text-white rounded-3xl p-6 overflow-hidden flex items-center justify-between">
-        <svg
-          className="absolute -right-8 -bottom-10 w-40 h-40 opacity-15 pointer-events-none"
-          viewBox="0 0 120 120"
-          fill="none"
-        >
-          <circle cx="60" cy="60" r="50" stroke="white" strokeWidth="1.5" strokeDasharray="3 3" />
-          <circle cx="60" cy="60" r="32" stroke="white" strokeWidth="1.5" />
-        </svg>
-
-        <div className="relative z-10">
-          <div className="flex items-center gap-2 text-xs text-[#FDE68A] font-semibold">
-            <span>MindLabZ 心理学知识引擎</span>
-            <span className="opacity-50">·</span>
-            <span className="font-serif-editorial italic">LAW001 – LAW100</span>
+    <div className="space-y-8 sm:space-y-10 pb-8 animate-fadeIn">
+      {/* Top Editorial Catalogue Masthead */}
+      <section className="editorial-card rounded-2xl p-7 sm:p-9 md:p-10">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-xs text-stone-500 font-medium">
+              <span className="editorial-kicker text-[10px] text-stone-700 tracking-widest">
+                Catalogue Raisonné · 100 Cognitive Laws
+              </span>
+              <span className="text-stone-300" aria-hidden="true">/</span>
+              <span className="font-serif-editorial italic text-stone-600">LAW001 – LAW100</span>
+            </div>
+            <h2 className="font-serif-editorial text-2xl sm:text-3xl font-bold text-stone-900 tracking-tight leading-tight">
+              100 心理学与思维定律全景知识库
+            </h2>
+            <p className="text-xs sm:text-sm text-stone-600 font-normal leading-relaxed max-w-2xl">
+              汇聚百条实证认知科学规律与行为心理学模型，涵盖记忆、决策启发式、社会认知与情绪动力机制。
+            </p>
           </div>
-          <h2 className="text-xl font-extrabold mt-1 tracking-tight">100 心理定律全景知识库</h2>
-          <p className="text-xs text-white/85 mt-1 font-numeric">
-            收录 <strong>{laws.length}</strong> 条定律 · <strong>10</strong> 大章节 · <strong>300</strong> 测验 · 已掌握 <strong className="text-[#FDE68A]">{user.lawsMastered.length}</strong> 条
-          </p>
-        </div>
 
-        <div className="w-12 h-12 rounded-2xl bg-white/15 backdrop-blur-md border border-white/25 flex items-center justify-center text-white shrink-0 shadow-inner relative z-10">
-          <BookOpen className="w-6 h-6" />
+          <div className="flex items-center gap-4 text-xs text-stone-500 font-numeric shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-stone-200">
+            <div>
+              <span className="text-[10px] text-stone-600 block">收录定律</span>
+              <span className="text-base font-bold text-stone-900 font-serif-editorial">{laws.length}</span>
+            </div>
+            <span className="text-stone-300">/</span>
+            <div>
+              <span className="text-[10px] text-stone-600 block">核心章节</span>
+              <span className="text-base font-bold text-stone-900 font-serif-editorial">10</span>
+            </div>
+            <span className="text-stone-300">/</span>
+            <div>
+              <span className="text-[10px] text-stone-600 block">已内化掌握</span>
+              <span className="text-base font-bold text-emerald-700 font-serif-editorial">{user.lawsMastered.length}</span>
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
 
-      {/* Search and Filters */}
-      <div className="space-y-2.5">
+      {/* Search and Filters Section */}
+      <section className="space-y-4">
         {/* Search Input Bar with Voice Transcription (gemini-3.5-transcribe) */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <div className="relative flex-1">
-            <Search className="w-4 h-4 text-[#64748B] absolute left-4 top-1/2 -translate-y-1/2" />
+            <Search className="w-4 h-4 text-stone-400 absolute left-4 top-1/2 -translate-y-1/2" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="搜索编号(如 LAW001)、中英文定律名或点击右侧麦克风语音搜索..."
-              className="w-full pl-11 pr-10 py-3.5 art-card rounded-2xl text-xs font-medium text-[#18181B] placeholder-[#94A3B8] focus:outline-none focus:border-[#6C4CF1] focus:ring-2 focus:ring-[#6C4CF1]/15 transition-all"
+              placeholder="搜索编号 (如 LAW001)、中英文定律名或点击右侧麦克风语音搜索..."
+              className="w-full pl-11 pr-10 py-3.5 bg-white border border-stone-200 rounded-xl text-xs sm:text-sm font-medium text-stone-900 placeholder-stone-400 focus:outline-none focus:border-stone-500 transition-colors"
             />
             {searchQuery && (
               <button
                 onClick={() => setSearchQuery('')}
-                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-[#94A3B8] hover:text-[#18181B]"
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-stone-400 hover:text-stone-700"
               >
                 ✕
               </button>
@@ -117,20 +127,20 @@ export const LearnPage: React.FC = () => {
           </div>
           <VoiceTranscribeButton
             onTranscript={(text) => setSearchQuery(text)}
-            className="h-11 px-3.5"
+            className="h-11 px-4 bg-white border border-stone-200 text-stone-700 hover:bg-stone-50 rounded-xl"
           />
         </div>
 
-        {/* Interactive Category Filter Controls */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+        {/* Category Filter Controls */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
           {CATEGORIES.map((cat) => (
             <button
               key={cat.key}
               onClick={() => handleCategoryChange(cat.key)}
-              className={`text-xs font-bold px-3.5 py-2 rounded-xl transition-all shrink-0 border btn-tactile whitespace-nowrap ${
+              className={`text-xs font-semibold px-3.5 py-2 rounded-xl transition-colors shrink-0 whitespace-nowrap cursor-pointer ${
                 selectedCategory === cat.key
-                  ? 'chameleon-btn'
-                  : 'bg-white text-[#64748B] border-[#E6E2F5] hover:bg-[#F5F3FF] hover:text-[#18181B]'
+                  ? 'bg-stone-900 text-white'
+                  : 'bg-white text-stone-600 border border-stone-200 hover:border-stone-400'
               }`}
             >
               {cat.label}
@@ -144,50 +154,50 @@ export const LearnPage: React.FC = () => {
               setOnlyBookmarked((prev) => !prev);
               setTimeout(() => setIsLoading(false), 180);
             }}
-            className={`text-xs font-bold px-3.5 py-2 rounded-xl transition-all shrink-0 border flex items-center gap-1.5 btn-tactile whitespace-nowrap ${
+            className={`text-xs font-semibold px-3.5 py-2 rounded-xl transition-colors shrink-0 flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
               onlyBookmarked
-                ? 'bg-[#FEF3C7] text-[#D97706] border-[#FDE68A]'
-                : 'bg-white text-[#64748B] border-[#E6E2F5] hover:bg-[#F5F3FF]'
+                ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                : 'bg-white text-stone-600 border border-stone-200 hover:border-stone-400'
             }`}
           >
-            <Bookmark className={`w-3.5 h-3.5 ${onlyBookmarked ? 'fill-[#D97706]' : ''}`} />
-            <span className="font-numeric">已收藏 ({user.bookmarks.length})</span>
+            <Bookmark className={`w-3.5 h-3.5 ${onlyBookmarked ? 'fill-amber-700' : ''}`} />
+            <span className="font-numeric">收藏 ({user.bookmarks.length})</span>
           </button>
         </div>
 
         {/* 10 Chapters Filter Row */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 text-xs">
           <button
             onClick={() => handleChapterChange('all')}
-            className={`text-[11px] font-bold px-3 py-1.5 rounded-xl transition-all shrink-0 border flex items-center gap-1 btn-tactile whitespace-nowrap ${
+            className={`text-[11px] font-medium px-3 py-1.5 rounded-lg transition-colors shrink-0 flex items-center gap-1 cursor-pointer ${
               selectedChapter === 'all'
-                ? 'chameleon-pill-active chameleon-text'
-                : 'bg-white/80 text-[#64748B] border-[#E6E2F5] hover:bg-[#FAF9FF]'
+                ? 'bg-stone-200 text-stone-900 font-bold'
+                : 'bg-stone-100 text-stone-600 hover:bg-stone-200/70'
             }`}
           >
             <Layers className="w-3 h-3" />
-            <span>全部10大章节 ({laws.length})</span>
+            <span>全部章节 ({laws.length})</span>
           </button>
           {MINDLABZ_CHAPTERS.map((chap) => (
             <button
               key={chap}
               onClick={() => handleChapterChange(chap)}
-              className={`text-[11px] font-bold px-3 py-1.5 rounded-xl transition-all shrink-0 border btn-tactile whitespace-nowrap ${
+              className={`text-[11px] font-medium px-3 py-1.5 rounded-lg transition-colors shrink-0 cursor-pointer ${
                 selectedChapter === chap
-                  ? 'chameleon-pill-active chameleon-text'
-                  : 'bg-white/80 text-[#64748B] border-[#E6E2F5] hover:bg-[#FAF9FF]'
+                  ? 'bg-stone-200 text-stone-900 font-bold'
+                  : 'bg-stone-100 text-stone-600 hover:bg-stone-200/70'
               }`}
             >
               {chap}
             </button>
           ))}
         </div>
-      </div>
+      </section>
 
-      {/* Filtered count indicator */}
-      <div className="flex items-center justify-between px-1 text-[11px] text-[#64748B] font-medium">
+      {/* Filtered Count Indicator */}
+      <div className="flex items-center justify-between px-1 text-xs text-stone-500 font-medium">
         <span>
-          当前展示 <strong className="text-[#532CD8] font-numeric">{filteredLaws.length}</strong> 条心理学定律
+          检索结果 · <strong className="text-stone-900 font-numeric">{filteredLaws.length}</strong> 条定律
         </span>
         {(selectedCategory !== 'all' || selectedChapter !== 'all' || onlyBookmarked || searchQuery) && (
           <button
@@ -197,17 +207,18 @@ export const LearnPage: React.FC = () => {
               setSelectedChapter('all');
               setOnlyBookmarked(false);
             }}
-            className="text-[#6C4CF1] font-bold hover:underline"
+            className="text-stone-800 font-semibold hover:underline cursor-pointer"
           >
-            清除筛选
+            重置筛选
           </button>
         )}
       </div>
 
-      {/* Laws List */}
-      <div className="space-y-3.5">
+      {/* Laws List (2-Column Editorial Grid on Tablets & Desktops) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
         {isLoading ? (
           <>
+            <LawCardSkeleton />
             <LawCardSkeleton />
             <LawCardSkeleton />
             <LawCardSkeleton />
@@ -217,9 +228,11 @@ export const LearnPage: React.FC = () => {
             <PsychologyLawCard key={law.id} law={law} />
           ))
         ) : (
-          <div className="bg-white rounded-3xl p-10 text-center border border-[#E6E2F5] space-y-2 shadow-xs">
-            <p className="text-sm font-bold text-[#18181B]">未找到匹配的心理学定律</p>
-            <p className="text-xs text-[#64748B]">尝试搜索 LAW001 ~ LAW100 或更换章节筛选条件</p>
+          <div className="col-span-full bg-white rounded-2xl p-12 text-center border border-stone-200 space-y-3">
+            <h3 className="font-serif-editorial text-base font-bold text-stone-900">未检索到匹配的定律</h3>
+            <p className="text-xs text-stone-500">
+              请尝试更换中英文关键词、定律编号（如 LAW001）或清除筛选分类。
+            </p>
             <button
               onClick={() => {
                 setSearchQuery('');
@@ -227,9 +240,9 @@ export const LearnPage: React.FC = () => {
                 setSelectedChapter('all');
                 setOnlyBookmarked(false);
               }}
-              className="mt-2 px-4 py-2 rounded-2xl bg-[#EDE9FE] text-[#6C4CF1] text-xs font-bold hover:bg-[#DDD6FE] transition-colors btn-press"
+              className="px-4 py-2 bg-stone-900 text-white text-xs font-semibold rounded-xl hover:bg-stone-800 transition-colors cursor-pointer"
             >
-              重置所有筛选
+              显示全部 100 定律
             </button>
           </div>
         )}

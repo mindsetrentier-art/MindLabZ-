@@ -102,134 +102,142 @@ export const RapidQuizPage: React.FC = () => {
   const currentQ = questions[currentIndex];
 
   return (
-    <div className="flex flex-col items-center justify-start min-h-[80vh] w-full max-w-lg mx-auto py-2">
-      {/* Top Header */}
-      <div className="w-full flex items-center justify-between mb-4">
+    <div className="flex flex-col items-center justify-start min-h-[75vh] w-full max-w-2xl mx-auto py-4 sm:py-6 animate-fadeIn">
+      {/* Top Header / Folio */}
+      <div className="w-full flex items-center justify-between mb-6 pb-3 border-b border-stone-200/80 text-xs text-stone-600">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-bold px-3 py-1 bg-[#EDE9FE] text-[#6C4CF1] border border-[#DDD6FE] rounded-full">
-            快问快答 10 题
+          <span className="editorial-kicker text-[10px] text-stone-800">
+            Dialectics · 快速思辨
           </span>
           {gameState === 'playing' && (
-            <span className="text-xs font-bold text-[#64748B]">
-              {currentIndex + 1} / {questions.length}
+            <span className="font-numeric font-medium text-stone-500">
+              ({currentIndex + 1} / {questions.length})
             </span>
           )}
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-3 font-numeric text-xs">
           {gameState === 'playing' && (
-            <div className="flex items-center gap-1 bg-amber-50 text-amber-700 border border-amber-200 px-3 py-1 rounded-full text-xs font-bold font-['Inter']">
-              <Clock className="w-3.5 h-3.5 text-[#F59E0B]" />
+            <div className="flex items-center gap-1 text-stone-700">
+              <Clock className="w-3.5 h-3.5 text-stone-500" />
               <span>{timeLeft}s</span>
             </div>
           )}
-          <div className="flex items-center gap-1 bg-[#EDE9FE] border border-[#DDD6FE] px-3 py-1 rounded-full text-xs font-bold text-[#6C4CF1]">
-            <Zap className="w-3.5 h-3.5 fill-[#6C4CF1]" />
+          <div className="flex items-center gap-1 text-stone-700">
+            <Zap className="w-3.5 h-3.5 text-amber-600 fill-amber-600" />
             <span>连击 x{combo}</span>
           </div>
-          <div className="flex items-center gap-1 bg-white px-3 py-1 rounded-full text-xs font-bold text-[#18181B] border border-[#E6E2F5] shadow-xs">
-            <Trophy className="w-3.5 h-3.5 text-[#F59E0B] fill-[#F59E0B]" />
-            <span>{score}</span>
+          <div className="flex items-center gap-1 text-stone-900 font-semibold">
+            <Trophy className="w-3.5 h-3.5 text-stone-700" />
+            <span>{score} 分</span>
           </div>
         </div>
       </div>
 
       {gameState === 'intro' ? (
-        <div className="w-full bg-white rounded-3xl p-6 border border-[#E6E2F5] shadow-[0_4px_20px_-2px_rgba(108,76,241,0.05)] text-center space-y-4">
-          <div className="w-16 h-16 rounded-3xl bg-[#EDE9FE] text-[#6C4CF1] flex items-center justify-center mx-auto shadow-inner">
-            <HelpCircle className="w-8 h-8" />
+        <div className="w-full editorial-card rounded-2xl p-8 sm:p-10 text-center space-y-6">
+          <div className="w-12 h-12 rounded-full bg-stone-100 text-stone-800 flex items-center justify-center mx-auto">
+            <HelpCircle className="w-6 h-6 stroke-[1.5]" />
           </div>
 
-          <h2 className="text-xl font-bold text-[#18181B]">心理快问快答 · 10 题速测</h2>
-          <p className="text-xs text-[#64748B] leading-relaxed max-w-sm mx-auto">
-            检验你对现代心理学、认知偏差与决策科学的掌握敏锐度。每题 15 秒限时，连击越高经验奖励越丰厚！
-          </p>
+          <div className="space-y-2">
+            <h2 className="font-serif-editorial text-2xl sm:text-3xl font-bold text-stone-900 tracking-tight">
+              心理快问快答 · 思辨速测
+            </h2>
+            <p className="text-xs sm:text-sm text-stone-600 leading-relaxed max-w-md mx-auto">
+              检验对实证心理学定律、启发式偏差与非理性行为的直觉洞察。每题限时 15 秒，连续答对可累积连击加成。
+            </p>
+          </div>
 
-          <div className="bg-[#FAF9FF] rounded-2xl p-4 text-left border border-[#E6E2F5]">
-            <h4 className="text-xs font-bold text-[#6C4CF1] mb-1.5">⚡ 答题规则：</h4>
-            <ul className="text-xs text-[#475569] space-y-1">
-              <li>• 共 10 道随机精选题</li>
-              <li>• 每题限时 15 秒，快速作答获得速度加分</li>
-              <li>• 连续答对触发连击乘数，解锁高额 XP</li>
+          <div className="bg-[#FAF8F5] rounded-xl p-5 text-left border border-stone-200/60 max-w-md mx-auto">
+            <h4 className="text-xs font-semibold text-stone-900 mb-2 font-serif-editorial">测试规则说明：</h4>
+            <ul className="text-xs text-stone-600 space-y-1.5 leading-relaxed">
+              <li>• 共 10 道随机心理学与决策科学思辨题</li>
+              <li>• 每题限时 15 秒，快速作答可享敏捷速度加分</li>
+              <li>• 连续答对触发连击乘数，结算转化为脑力经验 (XP)</li>
             </ul>
           </div>
 
           <button
             onClick={startQuiz}
-            className="w-full py-3.5 rounded-2xl chameleon-btn font-bold text-sm shadow-xs transition-all btn-press"
+            className="w-full max-w-sm mx-auto py-3.5 px-6 rounded-xl chameleon-btn font-semibold text-xs tracking-wide transition-all cursor-pointer block"
           >
-            立即开始答题
+            开启今日思辨测试
           </button>
         </div>
       ) : gameState === 'completed' ? (
-        <div className="w-full bg-white rounded-3xl p-6 border border-[#E6E2F5] shadow-[0_4px_20px_-2px_rgba(108,76,241,0.05)] text-center space-y-4 animate-fadeIn">
-          <div className="w-16 h-16 rounded-3xl bg-[#FEF3C7] text-[#F59E0B] flex items-center justify-center mx-auto">
-            <Trophy className="w-8 h-8 fill-[#F59E0B]" />
+        <div className="w-full editorial-card rounded-2xl p-8 sm:p-10 text-center space-y-6 animate-fadeIn">
+          <div className="w-12 h-12 rounded-full bg-amber-50 text-amber-700 flex items-center justify-center mx-auto">
+            <Trophy className="w-6 h-6 stroke-[1.5]" />
           </div>
 
-          <h2 className="text-2xl font-black text-[#18181B]">竞答完成！</h2>
-          <p className="text-xs text-[#64748B]">
-            正确率：<strong className="text-[#059669] font-bold text-sm">{Math.round((correctCount / questions.length) * 100)}%</strong> ({correctCount} / {questions.length})
-          </p>
+          <div className="space-y-1">
+            <h2 className="font-serif-editorial text-2xl sm:text-3xl font-bold text-stone-900">
+              测试完成 · 认知结算报告
+            </h2>
+            <p className="text-xs sm:text-sm text-stone-600">
+              答对率：<strong className="text-stone-900 font-semibold font-numeric">{Math.round((correctCount / questions.length) * 100)}%</strong> ({correctCount} / {questions.length} 题)
+            </p>
+          </div>
 
-          <div className="grid grid-cols-3 gap-2.5 my-4">
-            <div className="bg-[#FAF9FF] p-3 rounded-2xl border border-[#E6E2F5]">
-              <span className="text-[10px] text-[#64748B] font-medium block">总积分</span>
-              <span className="text-base font-extrabold text-[#6C4CF1] font-['Inter']">{score}</span>
+          <div className="grid grid-cols-3 gap-3 my-4 max-w-md mx-auto">
+            <div className="bg-[#FAF8F5] p-4 rounded-xl border border-stone-200/60">
+              <span className="text-[11px] text-stone-500 font-medium block">总得分</span>
+              <span className="text-lg font-bold text-stone-900 font-numeric">{score}</span>
             </div>
-            <div className="bg-[#FAF9FF] p-3 rounded-2xl border border-[#E6E2F5]">
-              <span className="text-[10px] text-[#64748B] font-medium block">最高连击</span>
-              <span className="text-base font-extrabold text-[#F59E0B] font-['Inter']">{maxCombo} 次</span>
+            <div className="bg-[#FAF8F5] p-4 rounded-xl border border-stone-200/60">
+              <span className="text-[11px] text-stone-500 font-medium block">最高连击</span>
+              <span className="text-lg font-bold text-stone-900 font-numeric">{maxCombo} 次</span>
             </div>
-            <div className="bg-[#FAF9FF] p-3 rounded-2xl border border-[#E6E2F5]">
-              <span className="text-[10px] text-[#64748B] font-medium block">获得经验</span>
-              <span className="text-base font-extrabold text-[#10B981] font-['Inter']">+{Math.round(score / 4) + 100} XP</span>
+            <div className="bg-[#FAF8F5] p-4 rounded-xl border border-stone-200/60">
+              <span className="text-[11px] text-stone-500 font-medium block">获得经验</span>
+              <span className="text-lg font-bold text-emerald-800 font-numeric">+{Math.round(score / 4) + 100} XP</span>
             </div>
           </div>
 
-          <div className="flex gap-3 pt-2">
+          <div className="flex gap-3 pt-2 max-w-md mx-auto">
             <button
               onClick={startQuiz}
-              className="flex-1 py-3 rounded-2xl bg-[#EDE9FE] text-[#6C4CF1] font-bold text-xs hover:bg-[#DDD6FE] transition-colors flex items-center justify-center gap-1.5 btn-press"
+              className="flex-1 py-3 rounded-xl bg-white border border-stone-200 hover:border-stone-400 text-stone-800 font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              <span>再测一次</span>
+              <span>重新挑战</span>
             </button>
             <button
               onClick={handleFinish}
-              className="flex-1 py-3 rounded-2xl chameleon-btn font-bold text-xs shadow-xs transition-all btn-press"
+              className="flex-1 py-3 rounded-xl chameleon-btn font-semibold text-xs transition-all cursor-pointer"
             >
-              领取经验并返回
+              录入经验并返回
             </button>
           </div>
         </div>
       ) : (
         /* Playing Question Arena */
-        <div className="w-full flex flex-col items-center space-y-4">
+        <div className="w-full flex flex-col items-center space-y-5">
           {/* Progress bar */}
-          <div className="w-full bg-[#EDE9FE] h-1.5 rounded-full overflow-hidden">
+          <div className="w-full bg-stone-200 h-1 rounded-full overflow-hidden">
             <div
               className="h-full chameleon-bar"
               style={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}
             />
           </div>
 
-          <div className="w-full bg-white rounded-3xl p-6 border border-[#E6E2F5] shadow-[0_4px_20px_-2px_rgba(108,76,241,0.05)] space-y-5">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#EDE9FE] text-[#6C4CF1] border border-[#DDD6FE]">
-                {currentQ.category}
+          <div className="w-full editorial-card rounded-2xl p-7 sm:p-9 space-y-6">
+            <div className="flex items-center justify-between text-xs pb-3 border-b border-stone-200/80">
+              <span className="font-serif-editorial italic text-stone-600">
+                {currentQ.category}领域
               </span>
-              <span className="text-[11px] text-[#64748B] font-medium">
-                难度: {currentQ.difficulty}
+              <span className="text-stone-500">
+                难度 · {currentQ.difficulty}
               </span>
             </div>
 
-            <h3 className="text-sm md:text-base font-bold text-[#18181B] leading-snug">
+            <h3 className="font-serif-editorial text-base sm:text-lg md:text-xl font-bold text-stone-900 leading-snug">
               {currentQ.question}
             </h3>
 
             {/* Options */}
-            <div className="space-y-2.5">
+            <div className="space-y-3">
               {currentQ.options.map((opt, idx) => {
                 const isSelected = selectedOption === idx;
                 const isCorrect = idx === currentQ.correctAnswer;
@@ -241,17 +249,17 @@ export const RapidQuizPage: React.FC = () => {
                     key={idx}
                     disabled={isAnswered}
                     onClick={() => handleSelectOption(idx)}
-                    className={`w-full text-left p-3.5 rounded-2xl border transition-all text-xs font-semibold flex items-center justify-between btn-press ${
+                    className={`w-full text-left p-4 rounded-xl border text-xs sm:text-sm font-medium transition-colors flex items-center justify-between cursor-pointer ${
                       showSuccess
-                        ? 'bg-emerald-50 border-emerald-400 text-emerald-900 shadow-xs'
+                        ? 'bg-emerald-50 border-emerald-400 text-emerald-900'
                         : showWrong
                         ? 'bg-rose-50 border-rose-300 text-rose-900'
-                        : 'bg-[#FAF9FF] hover:bg-[#F5F3FF] border-[#E6E2F5] text-[#18181B]'
+                        : 'bg-white hover:bg-stone-50 border-stone-200 text-stone-900'
                     }`}
                   >
                     <span>{opt}</span>
-                    {showSuccess && <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 ml-2" />}
-                    {showWrong && <XCircle className="w-4 h-4 text-rose-500 shrink-0 ml-2" />}
+                    {showSuccess && <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0 ml-2" />}
+                    {showWrong && <XCircle className="w-4 h-4 text-rose-600 shrink-0 ml-2" />}
                   </button>
                 );
               })}
@@ -259,19 +267,19 @@ export const RapidQuizPage: React.FC = () => {
 
             {/* Explanation card on answer */}
             {isAnswered && (
-              <div className="p-3.5 rounded-2xl bg-[#FAF9FF] border border-[#E6E2F5] space-y-2 animate-fadeIn">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-[#6C4CF1]">
-                  <Sparkles className="w-3.5 h-3.5 text-[#F59E0B]" />
-                  <span>解析说明</span>
+              <div className="p-4 rounded-xl bg-[#FAF8F5] border border-stone-200/80 space-y-3 animate-fadeIn">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-stone-900 font-serif-editorial">
+                  <Sparkles className="w-3.5 h-3.5 text-stone-600" />
+                  <span>理论解析与反思</span>
                 </div>
-                <p className="text-xs text-[#475569] leading-relaxed">
+                <p className="text-xs sm:text-sm text-stone-700 leading-relaxed">
                   {currentQ.explanation}
                 </p>
                 <button
                   onClick={handleNext}
-                  className="w-full mt-2 py-2.5 chameleon-btn font-bold text-xs rounded-2xl shadow-xs transition-all flex items-center justify-center gap-1 btn-press"
+                  className="w-full mt-2 py-3 chameleon-btn font-semibold text-xs rounded-xl transition-all flex items-center justify-center gap-1 cursor-pointer"
                 >
-                  <span>{currentIndex < questions.length - 1 ? '下一题' : '查看结算报告'}</span>
+                  <span>{currentIndex < questions.length - 1 ? '继续下一题' : '查看结算报告'}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>

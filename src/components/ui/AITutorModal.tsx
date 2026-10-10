@@ -365,13 +365,13 @@ export const AITutorModal: React.FC = () => {
   const sampleQuestions = activeContextLaw
     ? [
         `请用生活中的真实故事通俗解释【${activeContextLaw.nameZh}】？`,
-        `如何在日常工作或学习中利用【${activeContextLaw.nameZh}】提高效率？`,
+        `如何在认知手记中运用【${activeContextLaw.nameZh}】进行 CBT 辩证？`,
         `如何防止自己掉入【${activeContextLaw.nameZh}】的思维陷阱？`,
       ]
     : [
+        '如何用 CBT 认知重构与心智手记平息当下的情绪内耗？',
         '为什么我们总是在最后一刻才开始赶工（拖延与蔡格尼克）？',
-        '如何利用“双系统理论”在冲动消费前按下暂停键？',
-        '为什么第一印象（首因效应）如此顽固，该如何扭转？',
+        '如何利用“双系统理论”在冲动消费或决策前按下暂停键？',
       ];
 
   return (
@@ -380,64 +380,64 @@ export const AITutorModal: React.FC = () => {
       onClick={() => setAiTutorOpen(false)}
     >
       <div
-        className="relative w-full max-w-lg bg-white rounded-3xl shadow-2xl border border-[#E6E2F5] overflow-hidden flex flex-col max-h-[88vh] transition-all"
+        className="relative w-full max-w-xl bg-white rounded-2xl shadow-2xl border border-stone-200 overflow-hidden flex flex-col max-h-[88vh] transition-all"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-5 py-4 art-dark-banner text-white space-y-3">
+        <div className="px-6 py-5 bg-stone-900 text-white space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center shadow-inner">
-                <Bot className="w-5 h-5 text-white" />
+              <div className="w-10 h-10 rounded-xl bg-stone-800 border border-stone-700 flex items-center justify-center">
+                <Bot className="w-5 h-5 text-stone-200" />
               </div>
               <div>
-                <h3 className="font-extrabold text-base leading-tight">
+                <h3 className="font-serif-editorial font-bold text-base leading-tight">
                   智心 AI 认知导师 · Studio Vocal
                 </h3>
-                <p className="text-xs text-white/80 mt-0.5">
+                <p className="text-xs text-stone-400 mt-0.5">
                   {activeContextLaw
                     ? `当前聚焦：${activeContextLaw.nameZh}`
-                    : 'Transcription (gemini-3.5-transcribe) & Live Voice (gemini-3.8-live)'}
+                    : 'Transcription & Live Voice Consultation'}
                 </p>
               </div>
             </div>
             <button
               onClick={() => setAiTutorOpen(false)}
-              className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors btn-press cursor-pointer"
+              className="w-8 h-8 rounded-lg bg-stone-800 hover:bg-stone-700 text-stone-300 hover:text-white flex items-center justify-center transition-colors cursor-pointer"
               aria-label="Close modal"
             >
-              <X className="w-4 h-4 text-white" />
+              <X className="w-4 h-4" />
             </button>
           </div>
 
-          {/* Mode Selector Tabs: Chat + Transcription vs Live Voice Conversation */}
-          <div className="grid grid-cols-2 gap-1.5 p-1 bg-black/20 backdrop-blur-md rounded-2xl border border-white/15">
+          {/* Mode Selector Tabs */}
+          <div className="grid grid-cols-2 gap-1.5 p-1 bg-stone-800/90 rounded-xl border border-stone-700">
             <button
               type="button"
               onClick={() => {
                 stopLiveSession();
                 setMode('chat');
               }}
-              className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
                 mode === 'chat'
-                  ? 'bg-white text-[#532CD8] shadow-sm'
-                  : 'text-white/85 hover:text-white'
+                  ? 'bg-stone-100 text-stone-900 font-semibold shadow-xs'
+                  : 'text-stone-300 hover:text-white'
               }`}
             >
               <MessageSquare className="w-3.5 h-3.5" />
-              <span>Chat & Dictée Audio</span>
+              <span>问答与语音转文字</span>
             </button>
             <button
               type="button"
               onClick={() => setMode('live')}
-              className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              className={`flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
                 mode === 'live'
-                  ? 'bg-white text-[#532CD8] shadow-sm'
-                  : 'text-white/85 hover:text-white'
+                  ? 'bg-stone-100 text-stone-900 font-semibold shadow-xs'
+                  : 'text-stone-300 hover:text-white'
               }`}
             >
               <AudioLines className="w-3.5 h-3.5" />
-              <span>Conversation Live IA</span>
+              <span>实时语音通话 (Live)</span>
             </button>
           </div>
         </div>
@@ -454,15 +454,15 @@ export const AITutorModal: React.FC = () => {
                   }`}
                 >
                   {msg.role === 'assistant' && (
-                    <div className="w-8 h-8 rounded-xl bg-[#EDE9FE] text-[#6C4CF1] flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
-                      <Brain className="w-4 h-4" />
+                    <div className="w-8 h-8 rounded-lg bg-stone-100 border border-stone-200 text-stone-700 flex items-center justify-center shrink-0 mt-0.5">
+                      <Brain className="w-4 h-4 stroke-[1.5]" />
                     </div>
                   )}
                   <div
-                    className={`p-3.5 rounded-2xl max-w-[82%] leading-relaxed text-xs font-medium ${
+                    className={`p-4 rounded-xl max-w-[84%] leading-relaxed text-xs sm:text-[13px] ${
                       msg.role === 'user'
-                        ? 'chameleon-btn rounded-tr-none shadow-xs'
-                        : 'bg-white text-[#18181B] border border-[#E6E2F5] rounded-tl-none shadow-xs whitespace-pre-wrap'
+                        ? 'chameleon-btn rounded-tr-none'
+                        : 'bg-white text-stone-900 border border-stone-200 rounded-tl-none whitespace-pre-wrap'
                     }`}
                   >
                     {msg.content}
@@ -473,11 +473,9 @@ export const AITutorModal: React.FC = () => {
               {loading && (
                 <div className="space-y-2">
                   <AITutorSkeleton />
-                  <div className="flex gap-2 justify-start items-center text-[11px] text-[#64748B] pl-10 py-1">
-                    <RefreshCw className="w-3 h-3 text-[#6C4CF1] animate-spin" />
-                    <span className="animate-pulse">
-                      AI 导师正在检索认知神经科学知识库...
-                    </span>
+                  <div className="flex gap-2 justify-start items-center text-[11px] text-stone-500 pl-10 py-1">
+                    <RefreshCw className="w-3 h-3 text-stone-600 animate-spin" />
+                    <span>AI 导师正在检索认知科学文献与案例库...</span>
                   </div>
                 </div>
               )}
@@ -485,12 +483,12 @@ export const AITutorModal: React.FC = () => {
 
             {/* Transcription Status Notice */}
             {transcribeNotice && (
-              <div className="px-4 py-1.5 bg-[#F5F3FF] border-t border-[#EDE9FE] text-[11px] text-[#532CD8] font-medium flex items-center justify-between">
+              <div className="px-4 py-2 bg-stone-100 border-t border-stone-200 text-xs text-stone-700 font-medium flex items-center justify-between">
                 <span>{transcribeNotice}</span>
                 <button
                   type="button"
                   onClick={() => setTranscribeNotice(null)}
-                  className="text-[#64748B] hover:text-[#18181B]"
+                  className="text-stone-400 hover:text-stone-700"
                 >
                   <X className="w-3 h-3" />
                 </button>
@@ -498,16 +496,16 @@ export const AITutorModal: React.FC = () => {
             )}
 
             {/* Suggestion Chips */}
-            <div className="px-4 py-2.5 bg-white border-t border-[#F5F3FF] flex gap-2 overflow-x-auto no-scrollbar">
+            <div className="px-4 py-2.5 bg-white border-t border-stone-100 flex gap-2 overflow-x-auto no-scrollbar">
               {sampleQuestions.map((q, idx) => (
                 <button
                   key={idx}
                   disabled={loading}
                   onClick={() => handleAsk(q)}
-                  className="text-xs shrink-0 px-3 py-1.5 rounded-full bg-[#FAF9FF] text-[#6C4CF1] hover:bg-[#EDE9FE] transition-colors border border-[#E6E2F5] flex items-center gap-1.5 btn-press cursor-pointer"
+                  className="text-xs shrink-0 px-3 py-1.5 rounded-lg bg-[#FAF8F5] text-stone-700 hover:text-stone-900 hover:border-stone-400 transition-colors border border-stone-200 flex items-center gap-1.5 cursor-pointer"
                 >
-                  <Lightbulb className="w-3 h-3 text-[#F59E0B]" />
-                  <span className="truncate max-w-[220px] font-medium">{q}</span>
+                  <Lightbulb className="w-3 h-3 text-amber-600" />
+                  <span className="truncate max-w-[240px] font-medium">{q}</span>
                 </button>
               ))}
             </div>

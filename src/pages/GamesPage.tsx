@@ -26,54 +26,59 @@ export const GamesPage: React.FC = () => {
     : PSYCHOLOGY_GAMES.filter(g => g.category === selectedCat);
 
   return (
-    <div className="space-y-5 pb-6 animate-fadeIn">
-      {/* Top Artistic Banner */}
-      <div className="relative art-dark-banner text-white rounded-3xl p-6 overflow-hidden flex items-center justify-between">
-        <svg
-          className="absolute -right-8 -bottom-10 w-40 h-40 opacity-15 pointer-events-none"
-          viewBox="0 0 120 120"
-          fill="none"
-        >
-          <circle cx="60" cy="60" r="50" stroke="white" strokeWidth="1.5" strokeDasharray="4 4" />
-          <circle cx="60" cy="60" r="30" stroke="white" strokeWidth="1.5" />
-        </svg>
-
-        <div className="relative z-10">
-          <div className="flex items-center gap-2 text-xs text-[#FDE68A] font-semibold">
-            <span>认知神经科学实验室</span>
-            <span className="opacity-50">·</span>
-            <span className="font-serif-editorial italic">Cognitive Arena</span>
+    <div className="space-y-8 sm:space-y-10 pb-12 animate-fadeIn max-w-5xl mx-auto">
+      {/* Top Editorial Laboratory Masthead */}
+      <section className="editorial-card rounded-2xl p-7 sm:p-9 md:p-10">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-xs text-stone-500 font-medium">
+              <span className="editorial-kicker text-[10px] text-stone-700 tracking-widest">
+                Cognitive Arena · Neuro-Lab
+              </span>
+              <span className="text-stone-300" aria-hidden="true">/</span>
+              <span className="font-serif-editorial italic text-stone-600">Behavioral Experiments</span>
+            </div>
+            <h2 className="font-serif-editorial text-2xl sm:text-3xl font-bold text-stone-900 tracking-tight leading-tight">
+              短时专注与心智模型实验工坊
+            </h2>
+            <p className="text-xs sm:text-sm text-stone-600 font-normal leading-relaxed max-w-2xl">
+              结合斯特鲁普效应、N-Back 工作记忆与启发式决策偏差，在互动博弈中体察大脑思维边界并锻炼敏锐反思能力。
+            </p>
           </div>
-          <h2 className="text-xl font-extrabold mt-1 tracking-tight">短时专注 · 大脑机能训练</h2>
-          <p className="text-xs text-white/80 mt-1 font-numeric">
-            累计完成训练 <strong>{user.totalGames}</strong> 场 · 持续激活前额叶工作记忆
-          </p>
-        </div>
 
-        <div className="w-12 h-12 rounded-2xl bg-white/15 backdrop-blur-md border border-white/25 flex items-center justify-center text-white shrink-0 shadow-inner relative z-10">
-          <Zap className="w-6 h-6 fill-white" />
+          <div className="flex items-center gap-4 text-xs text-stone-500 font-numeric shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-stone-200">
+            <div>
+              <span className="text-[10px] text-stone-600 block">实验项目</span>
+              <span className="text-base font-bold text-stone-900 font-serif-editorial">5 款</span>
+            </div>
+            <span className="text-stone-300">/</span>
+            <div>
+              <span className="text-[10px] text-stone-600 block">累计完成</span>
+              <span className="text-base font-bold text-stone-900 font-serif-editorial">{user.totalGames} 场</span>
+            </div>
+          </div>
         </div>
-      </div>
+      </section>
 
-      {/* Interactive Category Filter Buttons */}
-      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
+      {/* Category Filter Controls */}
+      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
         {GAME_CATEGORIES.map((cat) => (
           <button
             key={cat}
             onClick={() => handleSelectCat(cat)}
-            className={`text-xs font-bold px-3.5 py-2 rounded-xl transition-all shrink-0 border btn-tactile whitespace-nowrap ${
+            className={`text-xs font-semibold px-4 py-2 rounded-xl transition-colors shrink-0 whitespace-nowrap cursor-pointer ${
               selectedCat === cat
-                ? 'bg-[#532CD8] text-white border-[#532CD8] shadow-[0_4px_12px_rgba(83,44,216,0.25)]'
-                : 'bg-white text-[#64748B] border-[#E6E2F5] hover:bg-[#F5F3FF] hover:text-[#18181B]'
+                ? 'bg-stone-900 text-white'
+                : 'bg-white text-stone-600 border border-stone-200 hover:border-stone-400'
             }`}
           >
-            {cat}
+            {cat === '全部' ? '全部实验' : `${cat}训练`}
           </button>
         ))}
       </div>
 
-      {/* Games List */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Games Grid (Spacious Editorial Layout) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-7">
         {isLoading ? (
           <>
             <GameCardSkeleton />

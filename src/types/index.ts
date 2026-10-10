@@ -170,3 +170,53 @@ export interface UserProfile {
   stats: UserStats;
   weeklyActivity: DayActivity[];
 }
+
+export type JournalTemplateType =
+  | 'cbt-restructure'
+  | 'flow-reflection'
+  | 'emotional-decentering'
+  | 'decision-debiasing'
+  | 'free-insight';
+
+export type EmotionValence = 'positive' | 'neutral' | 'challenging' | 'mixed';
+
+export interface JournalEmotionState {
+  primary: string;
+  secondary?: string;
+  intensity: number; // 1 - 10
+  valence: EmotionValence;
+  energyLevel?: number; // 1 - 5
+}
+
+export interface CognitiveJournalEntry {
+  id: string;
+  userId: string;
+  date: string; // YYYY-MM-DD
+  time?: string; // HH:mm
+  title: string;
+  templateType: JournalTemplateType;
+  emotion: JournalEmotionState;
+  relatedLawId?: string;
+  relatedLawName?: string;
+  structuredData: Record<string, string>;
+  tags: string[];
+  insightRating?: number; // 1 - 5
+  createdAt?: any;
+  updatedAt?: any;
+}
+
+export interface JournalTemplateMeta {
+  id: JournalTemplateType;
+  title: string;
+  titleEn: string;
+  description: string;
+  badge: string;
+  iconName: string;
+  defaultQuestions: {
+    key: string;
+    label: string;
+    placeholder: string;
+    hint?: string;
+  }[];
+}
+

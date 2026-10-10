@@ -12,9 +12,15 @@ import {
   handleFirestoreError,
   OperationType,
 } from '../firebase';
-import { UserProfile, GameResult, PsychologyLaw, Badge } from '../types';
+import { UserProfile, GameResult, PsychologyLaw, Badge, CognitiveJournalEntry } from '../types';
 import { INITIAL_PSYCHOLOGY_LAWS } from '../data/laws';
 import { BADGES_DATA } from '../data/badges';
+import {
+  subscribeToJournals,
+  saveJournalEntry,
+  deleteJournalEntry,
+  loadLocalJournals,
+} from '../services/journalService';
 
 export interface LocalUserAccount {
   id: string;
@@ -54,6 +60,15 @@ interface AppContextType {
   setAiTutorOpen: (open: boolean) => void;
   activeContextLaw: PsychologyLaw | null;
   setActiveContextLaw: (law: PsychologyLaw | null) => void;
+  journals: CognitiveJournalEntry[];
+  saveJournal: (entry: Omit<CognitiveJournalEntry, 'createdAt' | 'updatedAt'>) => Promise<CognitiveJournalEntry>;
+  deleteJournal: (entryId: string) => Promise<void>;
+  composerOpen: boolean;
+  setComposerOpen: (open: boolean) => void;
+  composerPreload: Partial<CognitiveJournalEntry> | null;
+  openComposerWithPreload: (preload?: Partial<CognitiveJournalEntry>) => void;
+  breathingOpen: boolean;
+  setBreathingOpen: (open: boolean) => void;
 }
 
 const STORAGE_KEY = 'mindlabz_user_profile_v1';
@@ -217,6 +232,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isDailyChallengeCompleted, setIsDailyChallengeCompleted] = useState<boolean>(false);
   const [aiTutorOpen, setAiTutorOpen] = useState<boolean>(false);
   const [activeContextLaw, setActiveContextLaw] = useState<PsychologyLaw | null>(null);
+
+  // Cognitive Journal State
+  const [journals, setJournals] = useState<CognitiveJournalEntry[]>(() => {
+    return loadLocalJournals(null);
+  });
+  const [composerOpen, setComposerOpen] = useState<boolean>(false);
+  const [composerPreload, setComposerPreload] = useState<Partial<CognitiveJournalEntry> | null>(null);
+
+  // Focused Breathing State
+  const [breathingOpen, setBreathingOpen] = useState<boolean>(false);
+
+  const openComposerWithPreload = (preload?: Partial<CognitiveJournalEntry>) => {
+    setComposerPreload(preload || null);
+    setComposerOpen(true);
+  };
 
   const userRef = useRef<UserProfile>(user);
   userRef.current = user;
@@ -661,6 +691,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
   };
 
+  // Subscribe to Firestore cognitive journals when user changes
+  useEffect(() => {
+    const unsub = subscribeToJournals(
+      firebaseUser?.uid,
+      (latestEntries) => {
+        setJournals(latestEntries);
+      },
+      (err) => {
+        console.warn('Subscription error to journals:', err);
+      }
+    );
+    return () => unsub();
+  }, [firebaseUser?.uid]);
+
+  const saveJournal = async (entry: Omit<CognitiveJournalEntry, 'createdAt' | 'updatedAt'>) => {
+    const saved = await saveJournalEntry(firebaseUser?.uid, entry);
+    // Award XP for metacognitive reflection
+    addXP(50, '完成认知觉察手记');
+    triggerConfetti();
+    return saved;
+  };
+
+  const deleteJournal = async (entryId: string) => {
+    await deleteJournalEntry(firebaseUser?.uid, entryId);
+  };
+
   const resetProgress = () => {
     localStorage.removeItem(STORAGE_KEY);
     const resetProfile: UserProfile = {
@@ -707,6 +763,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setAiTutorOpen,
         activeContextLaw,
         setActiveContextLaw,
+        journals,
+        saveJournal,
+        deleteJournal,
+        composerOpen,
+        setComposerOpen,
+        composerPreload,
+        openComposerWithPreload,
+        breathingOpen,
+        setBreathingOpen,
       }}
     >
       {children}

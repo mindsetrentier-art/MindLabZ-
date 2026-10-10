@@ -39,50 +39,65 @@ export const ProgressPage: React.FC = () => {
   const gridCircles = [0.25, 0.5, 0.75, 1.0];
 
   return (
-    <div className="space-y-6 pb-6 animate-fadeIn">
-      {/* 1. Header Overview Card */}
-      <div className="art-dark-banner text-white rounded-3xl p-6 relative overflow-hidden">
-        <div className="flex items-center justify-between mb-4 relative z-10">
-          <div>
-            <span className="text-xs font-semibold text-[#FDE68A] tracking-wide block">
-              认知能力全景图谱
-            </span>
-            <h2 className="text-xl font-extrabold mt-0.5 tracking-tight">Level {user.level} · {user.title}</h2>
+    <div className="space-y-8 sm:space-y-10 pb-12 animate-fadeIn max-w-4xl mx-auto">
+      {/* 1. Header Editorial Atlas Masthead */}
+      <section className="editorial-card rounded-2xl p-7 sm:p-9 md:p-10 space-y-5">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-4 border-b border-stone-200/80">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2 text-xs text-stone-500 font-medium">
+              <span className="editorial-kicker text-[10px] text-stone-700 tracking-widest">
+                Cognitive Atlas · Issue No. 100
+              </span>
+              <span className="text-stone-300" aria-hidden="true">/</span>
+              <span className="font-serif-editorial italic text-stone-600">Personal Analytics</span>
+            </div>
+            <h2 className="font-serif-editorial text-2xl sm:text-3xl font-bold text-stone-900 tracking-tight">
+              Level {user.level} · {user.title}
+            </h2>
+            <p className="text-xs sm:text-sm text-stone-600 font-normal leading-relaxed">
+              根据在 100 心理学定律研习、互动思辨实验及微测试中的实操表现，构建的多维神经认知能力图谱。
+            </p>
           </div>
-          <div className="text-right">
-            <span className="text-xs text-white/75">累计经验值</span>
-            <p className="text-xl font-extrabold font-numeric text-[#FDE68A]">{user.xp.toLocaleString()} XP</p>
+
+          <div className="text-left md:text-right shrink-0 font-numeric">
+            <span className="text-xs text-stone-500 font-medium block">累计脑力经验</span>
+            <p className="text-2xl font-bold text-stone-900 font-serif-editorial">{user.xp.toLocaleString()} <span className="text-xs font-normal text-stone-500 font-sans">XP</span></p>
           </div>
         </div>
 
         {/* Level XP progress bar */}
-        <div className="relative z-10">
-          <div className="flex justify-between text-[11px] text-white/80 mb-1.5 font-numeric">
+        <div className="space-y-2">
+          <div className="flex justify-between text-xs text-stone-500 font-numeric">
             <span>下一等级晋升进度</span>
-            <span>{user.xp % 400} / 400 XP</span>
+            <span className="font-semibold text-stone-800">{user.xp % 400} / 400 XP</span>
           </div>
-          <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
+          <div className="w-full h-1.5 bg-stone-200 rounded-full overflow-hidden">
             <div
-              className="h-full bg-gradient-to-r from-[#FDE68A] to-[#F59E0B] rounded-full transition-all duration-500"
+              className="h-full chameleon-bar rounded-full"
               style={{ width: `${((user.xp % 400) / 400) * 100}%` }}
             />
           </div>
         </div>
-      </div>
+      </section>
 
       {/* 2. Five-dimensional Cognitive Radar */}
-      <div className="art-card rounded-3xl p-6 space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-extrabold text-[#18181B] flex items-center gap-1.5">
-            <Brain className="w-4 h-4 text-[#6C4CF1]" />
-            五维大脑认知模型
-          </h3>
-          <span className="text-xs font-bold text-[#532CD8]">
+      <section className="editorial-card rounded-2xl p-7 sm:p-9 space-y-6">
+        <div className="flex items-center justify-between pb-3 border-b border-stone-200/80">
+          <div>
+            <span className="editorial-kicker text-[10px] text-stone-500 block mb-0.5">
+              01 · Neural Dimensions
+            </span>
+            <h3 className="font-serif-editorial text-lg sm:text-xl font-bold text-stone-900 flex items-center gap-2">
+              <Brain className="w-4 h-4 text-stone-700" />
+              五维大脑心智认知雷达
+            </h3>
+          </div>
+          <span className="text-xs font-semibold text-stone-700 font-numeric">
             综合神经评级 · S 级
           </span>
         </div>
 
-        <div className="flex flex-col items-center">
+        <div className="flex flex-col items-center py-4">
           <svg width={size} height={size} className="overflow-visible">
             {/* Background Grid Rings */}
             {gridCircles.map((scale, idx) => (
@@ -95,9 +110,9 @@ export const ProgressPage: React.FC = () => {
                   })
                   .join(' ')}
                 fill="none"
-                stroke="#E6E2F5"
+                stroke="#E7E5E4"
                 strokeWidth="1"
-                strokeDasharray={idx === gridCircles.length - 1 ? 'none' : '3 3'}
+                strokeDasharray={idx === gridCircles.length - 1 ? 'none' : '2 2'}
               />
             ))}
 
@@ -111,7 +126,7 @@ export const ProgressPage: React.FC = () => {
                   y1={center}
                   x2={x}
                   y2={y}
-                  stroke="#E6E2F5"
+                  stroke="#E7E5E4"
                   strokeWidth="1"
                 />
               );
@@ -120,27 +135,28 @@ export const ProgressPage: React.FC = () => {
             {/* User Stat Filled Polygon */}
             <polygon
               points={points}
-              fill="rgba(108, 76, 241, 0.2)"
-              stroke="#6C4CF1"
-              strokeWidth="2.5"
-              className="drop-shadow-[0_0_8px_rgba(108,76,241,0.25)] transition-all duration-700"
+              fill="rgba(83, 44, 216, 0.12)"
+              stroke="#532CD8"
+              strokeWidth="2"
+              className="transition-all duration-500"
             />
 
             {/* Value dots & Labels */}
             {dimensions.map((dim, i) => {
               const { x, y } = getCoordinates(dim.value, i, dimensions.length);
-              const labelPos = getCoordinates(125, i, dimensions.length);
+              const labelPos = getCoordinates(126, i, dimensions.length);
               return (
                 <g key={i}>
-                  <circle cx={x} cy={y} r="4" fill="#6C4CF1" stroke="#fff" strokeWidth="1.5" />
+                  <circle cx={x} cy={y} r="3.5" fill="#532CD8" stroke="#fff" strokeWidth="1.5" />
                   <text
                     x={labelPos.x}
                     y={labelPos.y}
-                    fontSize="10"
-                    fontWeight="bold"
-                    fill="#64748B"
+                    fontSize="11"
+                    fontWeight="500"
+                    fill="#44403C"
                     textAnchor="middle"
                     dominantBaseline="central"
+                    className="font-numeric"
                   >
                     {dim.label} {dim.value}
                   </text>
@@ -149,65 +165,75 @@ export const ProgressPage: React.FC = () => {
             })}
           </svg>
         </div>
-      </div>
+      </section>
 
       {/* 3. 7-Day Activity Chart */}
-      <div className="bg-white rounded-3xl p-6 border border-[#E6E2F5] shadow-[0_4px_20px_-2px_rgba(108,76,241,0.05)] space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold text-[#18181B] flex items-center gap-1.5">
-            <Flame className="w-4 h-4 text-[#F59E0B]" />
-            本周学习与训练趋势
-          </h3>
-          <span className="text-xs font-semibold text-[#64748B]">连续打卡 7 天</span>
+      <section className="editorial-card rounded-2xl p-7 sm:p-9 space-y-6">
+        <div className="flex items-center justify-between pb-3 border-b border-stone-200/80">
+          <div>
+            <span className="editorial-kicker text-[10px] text-stone-500 block mb-0.5">
+              02 · Rhythm & Routine
+            </span>
+            <h3 className="font-serif-editorial text-lg sm:text-xl font-bold text-stone-900 flex items-center gap-2">
+              <Flame className="w-4 h-4 text-amber-600" />
+              本周研习打卡与经验曲线
+            </h3>
+          </div>
+          <span className="text-xs font-semibold text-stone-700 font-numeric">连续研习 {user.streak} 天</span>
         </div>
 
-        <div className="grid grid-cols-7 gap-2 pt-4 items-end h-32">
+        <div className="grid grid-cols-7 gap-3 pt-4 items-end h-36 max-w-lg mx-auto">
           {user.weeklyActivity.map((day, idx) => {
             const heightPercent = Math.min(100, Math.round((day.xp / 500) * 100));
             return (
-              <div key={idx} className="flex flex-col items-center gap-1.5 h-full justify-end">
-                <span className="text-[9px] font-bold text-[#6C4CF1] font-['Inter']">{day.xp}</span>
-                <div className="w-full max-w-[28px] bg-[#EDE9FE] rounded-t-xl overflow-hidden h-20 flex items-end">
+              <div key={idx} className="flex flex-col items-center gap-2 h-full justify-end">
+                <span className="text-[10px] font-semibold text-stone-600 font-numeric">{day.xp}</span>
+                <div className="w-full max-w-[28px] bg-stone-100 rounded-t-lg overflow-hidden h-24 flex items-end border border-stone-200/60">
                   <div
-                    className="w-full bg-gradient-to-t from-[#532CD8] to-[#6C4CF1] rounded-t-xl transition-all duration-500"
+                    className="w-full chameleon-bar rounded-t-lg transition-all duration-500"
                     style={{ height: `${heightPercent}%` }}
                   />
                 </div>
-                <span className="text-[10px] font-medium text-[#64748B]">{day.day}</span>
+                <span className="text-[11px] font-medium text-stone-600">{day.day}</span>
               </div>
             );
           })}
         </div>
-      </div>
+      </section>
 
       {/* 4. Badges & Achievements Grid */}
-      <div className="bg-white rounded-3xl p-6 border border-[#E6E2F5] shadow-[0_4px_20px_-2px_rgba(108,76,241,0.05)] space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold text-[#18181B] flex items-center gap-1.5">
-            <Award className="w-4 h-4 text-[#F59E0B]" />
-            成就勋章殿堂
-          </h3>
-          <span className="text-xs font-bold text-[#6C4CF1]">
-            已解锁 {user.unlockedBadges.length} / {badges.length}
+      <section className="editorial-card rounded-2xl p-7 sm:p-9 space-y-6">
+        <div className="flex items-center justify-between pb-3 border-b border-stone-200/80">
+          <div>
+            <span className="editorial-kicker text-[10px] text-stone-500 block mb-0.5">
+              03 · Honors & Distinctions
+            </span>
+            <h3 className="font-serif-editorial text-lg sm:text-xl font-bold text-stone-900 flex items-center gap-2">
+              <Award className="w-4 h-4 text-stone-700" />
+              成就勋章展厅
+            </h3>
+          </div>
+          <span className="text-xs font-semibold text-stone-700 font-numeric">
+            已达成 {user.unlockedBadges.length} / {badges.length}
           </span>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 pt-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
           {badges.map((badge) => {
             const isUnlocked = user.unlockedBadges.includes(badge.id);
 
             return (
               <div
                 key={badge.id}
-                className={`p-3.5 rounded-2xl border transition-all flex flex-col justify-between ${
+                className={`p-4 rounded-xl border transition-colors flex flex-col justify-between ${
                   isUnlocked
-                    ? 'bg-[#FAF9FF] border-[#DDD6FE] shadow-xs'
-                    : 'bg-[#F8F9FA] border-[#E6E2F5] opacity-60'
+                    ? 'bg-[#FAF8F5] border-stone-300/80'
+                    : 'bg-white border-stone-200/70 opacity-60'
                 }`}
               >
                 <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xl">
                       {badge.icon === 'flame' && '🔥'}
                       {badge.icon === 'target' && '🎯'}
                       {badge.icon === 'zap' && '⚡'}
@@ -216,27 +242,27 @@ export const ProgressPage: React.FC = () => {
                       {badge.icon === 'shield-check' && '🛡️'}
                     </span>
                     {isUnlocked ? (
-                      <span className="text-[10px] font-bold text-[#059669] bg-[#ECFDF5] border border-[#A7F3D0] px-2 py-0.5 rounded-full">
-                        已达成
+                      <span className="text-[10px] font-medium text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+                        已内化
                       </span>
                     ) : (
-                      <Lock className="w-3.5 h-3.5 text-[#94A3B8]" />
+                      <Lock className="w-3.5 h-3.5 text-stone-400" />
                     )}
                   </div>
 
-                  <h4 className="text-xs font-bold text-[#18181B] mb-0.5">{badge.name}</h4>
-                  <p className="text-[10px] text-[#64748B] leading-tight">{badge.description}</p>
+                  <h4 className="text-xs font-bold text-stone-900 mb-1 font-serif-editorial">{badge.name}</h4>
+                  <p className="text-xs text-stone-600 leading-relaxed">{badge.description}</p>
                 </div>
 
-                <div className="mt-2 pt-2 border-t border-[#F5F3FF] flex justify-between items-center text-[10px]">
-                  <span className="text-[#6C4CF1] font-bold font-['Inter']">+{badge.xpBonus} XP</span>
-                  {isUnlocked && <span className="text-[#94A3B8] font-medium">{badge.unlockedAt || '已获得'}</span>}
+                <div className="mt-3 pt-2.5 border-t border-stone-200/70 flex justify-between items-center text-xs font-numeric">
+                  <span className="text-stone-800 font-semibold">+{badge.xpBonus} XP</span>
+                  {isUnlocked && <span className="text-stone-500 font-sans text-[11px]">{badge.unlockedAt || '已获得'}</span>}
                 </div>
               </div>
             );
           })}
         </div>
-      </div>
+      </section>
     </div>
   );
 };

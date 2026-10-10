@@ -136,6 +136,96 @@
         "createdAt",
         "updatedAt"
       ]
+    },
+    "CognitiveJournal": {
+      "title": "CognitiveJournal",
+      "description": "Structured daily cognitive journal log recording emotional state, cognitive distortions, metacognitive insights, and reframing exercises.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier of the journal entry.",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "userId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the journal entry owner.",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "date": {
+          "type": "string",
+          "description": "ISO date string (YYYY-MM-DD) of the entry.",
+          "minLength": 1,
+          "maxLength": 20
+        },
+        "time": {
+          "type": "string",
+          "description": "Time string (HH:mm) of the entry.",
+          "maxLength": 10
+        },
+        "title": {
+          "type": "string",
+          "description": "Title or headline of the journal insight.",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "templateType": {
+          "type": "string",
+          "description": "Template archetype used (e.g. cbt-restructure, flow-reflection, emotional-decentering, decision-debiasing, free-insight).",
+          "minLength": 1,
+          "maxLength": 40
+        },
+        "emotion": {
+          "type": "object",
+          "description": "Structured daily emotional state payload including primary emotion, intensity, and valence."
+        },
+        "relatedLawId": {
+          "type": "string",
+          "description": "Optional psychology law ID attached to the entry.",
+          "maxLength": 60
+        },
+        "relatedLawName": {
+          "type": "string",
+          "description": "Optional human-readable psychology law name.",
+          "maxLength": 100
+        },
+        "structuredData": {
+          "type": "object",
+          "description": "Structured key-value response mapping for the selected template."
+        },
+        "tags": {
+          "type": "array",
+          "description": "Bounded array of category tags for filtering (up to 10 items)."
+        },
+        "insightRating": {
+          "type": "number",
+          "description": "Subjective lucidity/insight score (1 to 5)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the entry was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the entry was last updated."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "date",
+        "title",
+        "templateType",
+        "emotion",
+        "structuredData",
+        "tags",
+        "createdAt",
+        "updatedAt"
+      ]
     }
   },
   "firestore": {
@@ -144,6 +234,12 @@
         "$ref": "#/entities/UserProfile"
       },
       "description": "Private user profile and cognitive training progress document owned strictly by {userId}."
+    },
+    "/users/{userId}/cognitiveJournals/{journalId}": {
+      "schema": {
+        "$ref": "#/entities/CognitiveJournal"
+      },
+      "description": "Private structured cognitive journal logs owned strictly by {userId}."
     }
   }
 }

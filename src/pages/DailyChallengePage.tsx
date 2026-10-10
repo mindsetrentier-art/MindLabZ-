@@ -77,110 +77,122 @@ export const DailyChallengePage: React.FC = () => {
   const currentQ = questions[currentIndex];
 
   return (
-    <div className="flex flex-col items-center justify-start min-h-[80vh] w-full max-w-lg mx-auto py-2">
-      {/* Top Header */}
-      <div className="w-full flex items-center justify-between mb-4">
+    <div className="flex flex-col items-center justify-start min-h-[75vh] w-full max-w-2xl mx-auto py-4 sm:py-6 animate-fadeIn">
+      {/* Top Folio Header */}
+      <div className="w-full flex items-center justify-between mb-6 pb-3 border-b border-stone-200/80 text-xs text-stone-600">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-bold px-3 py-1 bg-[#6C4CF1] text-white rounded-full flex items-center gap-1">
-            <Target className="w-3.5 h-3.5" />
-            今日挑战 · 3分钟极速挑战
+          <span className="editorial-kicker text-[10px] text-stone-800">
+            Daily Challenge · 今日特刊挑战
           </span>
+          {gameState === 'playing' && (
+            <span className="font-numeric font-medium text-stone-500">
+              ({currentIndex + 1} / {questions.length})
+            </span>
+          )}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 font-numeric text-xs">
           {gameState === 'playing' && (
-            <div className="flex items-center gap-1 bg-amber-50 text-amber-700 px-3 py-1 rounded-full text-xs font-bold font-['Inter']">
-              <Clock className="w-3.5 h-3.5 text-[#FFB72B]" />
+            <div className="flex items-center gap-1 text-stone-700">
+              <Clock className="w-3.5 h-3.5 text-stone-500" />
               <span>{formatTime(timeLeft)}</span>
             </div>
           )}
-          <div className="flex items-center gap-1 bg-white px-3 py-1 rounded-full text-xs font-bold text-[#1B192E] border border-[#E8E5F0]">
-            <Trophy className="w-3.5 h-3.5 text-[#FFB72B] fill-[#FFB72B]" />
-            <span>{score}</span>
+          <div className="flex items-center gap-1 text-stone-900 font-semibold">
+            <Trophy className="w-3.5 h-3.5 text-stone-700" />
+            <span>{score} 分</span>
           </div>
         </div>
       </div>
 
       {gameState === 'intro' ? (
-        <div className="w-full bg-white rounded-3xl p-6 border border-white/80 shadow-[0_4px_25px_rgba(23,21,42,0.06)] text-center space-y-4">
-          <div className="w-16 h-16 rounded-3xl bg-[#6C4CF1]/10 text-[#6C4CF1] flex items-center justify-center mx-auto shadow-inner">
-            <Target className="w-8 h-8" />
+        <div className="w-full editorial-card rounded-2xl p-8 sm:p-10 text-center space-y-6">
+          <div className="w-12 h-12 rounded-full bg-stone-100 text-stone-800 flex items-center justify-center mx-auto">
+            <Target className="w-6 h-6 stroke-[1.5]" />
           </div>
 
-          <h2 className="text-xl font-bold text-[#1B192E]">今日挑战 · 3分钟极速自测</h2>
-          <p className="text-xs text-[#5E5D6D] leading-relaxed max-w-sm mx-auto">
-            每天只需要 3 分钟，完成 10 道心理学与认知思维实战题目，点亮今日连续打卡并赢取丰厚经验！
-          </p>
+          <div className="space-y-2">
+            <h2 className="font-serif-editorial text-2xl sm:text-3xl font-bold text-stone-900 tracking-tight">
+              今日认知挑战 · 3分钟极速自测
+            </h2>
+            <p className="text-xs sm:text-sm text-stone-600 leading-relaxed max-w-md mx-auto">
+              每天投入 3 分钟，完成 10 道经典心理学与心智决策题目，点亮今日连续学习记录并赢取丰厚经验。
+            </p>
+          </div>
 
-          <div className="bg-[#F6F1FF] rounded-2xl p-4 text-left border border-[#E4DFFD]">
-            <h4 className="text-xs font-bold text-[#532CD8] mb-1.5">⚡ 今日挑战奖励：</h4>
-            <ul className="text-xs text-[#484555] space-y-1">
-              <li>• 完成即领 <strong>+500 XP</strong> 大脑训练经验</li>
-              <li>• 延续连续学习连击天数（Streak +1）</li>
-              <li>• 实时更新个人五维认知雷达图谱</li>
+          <div className="bg-[#FAF8F5] rounded-xl p-5 text-left border border-stone-200/60 max-w-md mx-auto">
+            <h4 className="text-xs font-semibold text-stone-900 mb-2 font-serif-editorial">今日挑战奖励细则：</h4>
+            <ul className="text-xs text-stone-600 space-y-1.5 leading-relaxed">
+              <li>• 完成即领 <strong className="text-stone-900 font-numeric">+500 XP</strong> 大脑训练经验</li>
+              <li>• 延续连续研习天数（Streak +1）</li>
+              <li>• 实时校准五维认知神经能力图谱</li>
             </ul>
           </div>
 
           <button
             onClick={handleStart}
-            className="w-full py-3.5 rounded-2xl bg-[#6C4CF1] hover:bg-[#532CD8] text-white font-bold text-sm shadow-md transition-all btn-press"
+            className="w-full max-w-sm mx-auto py-3.5 px-6 rounded-xl chameleon-btn font-semibold text-xs tracking-wide transition-all cursor-pointer block"
           >
-            开始今日挑战
+            开启今日挑战特刊
           </button>
         </div>
       ) : gameState === 'completed' ? (
-        <div className="w-full bg-white rounded-3xl p-6 border border-white/80 shadow-xl text-center space-y-4 animate-fadeIn">
-          <div className="w-16 h-16 rounded-3xl bg-[#10B981]/15 text-[#059669] flex items-center justify-center mx-auto">
-            <CheckCircle2 className="w-8 h-8" />
+        <div className="w-full editorial-card rounded-2xl p-8 sm:p-10 text-center space-y-6 animate-fadeIn">
+          <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-800 flex items-center justify-center mx-auto">
+            <CheckCircle2 className="w-6 h-6 stroke-[1.5]" />
           </div>
 
-          <h2 className="text-2xl font-black text-[#1B192E]">今日挑战达成！</h2>
-          <p className="text-xs text-[#5E5D6D]">
-            正确率：<strong className="text-[#059669] font-bold text-sm">{Math.round((correctCount / questions.length) * 100)}%</strong> ({correctCount} / {questions.length})
-          </p>
+          <div className="space-y-1">
+            <h2 className="font-serif-editorial text-2xl sm:text-3xl font-bold text-stone-900">
+              今日挑战达成 · 认知报告已归档
+            </h2>
+            <p className="text-xs sm:text-sm text-stone-600">
+              答对率：<strong className="text-stone-900 font-semibold font-numeric">{Math.round((correctCount / questions.length) * 100)}%</strong> ({correctCount} / {questions.length} 题)
+            </p>
+          </div>
 
-          <div className="bg-[#ECFDF5] p-4 rounded-2xl text-left border border-[#A7F3D0] space-y-1">
-            <div className="flex justify-between items-center text-xs font-bold text-[#059669]">
+          <div className="bg-[#FAF8F5] p-5 rounded-xl text-left border border-stone-200/60 space-y-1.5 max-w-md mx-auto">
+            <div className="flex justify-between items-center text-xs font-semibold text-stone-900">
               <span>今日挑战达成奖励</span>
-              <span className="text-base font-bold text-[#059669] font-['Inter']">+500 XP 🔥</span>
+              <span className="font-numeric text-emerald-800 font-bold">+500 XP</span>
             </div>
-            <p className="text-[11px] text-[#065F46]">
-              打卡成功！连续学习天数已刷新，大脑认知神经回路更加坚固。
+            <p className="text-xs text-stone-600 leading-relaxed">
+              研习打卡成功！连续学习天数已刷新，前额叶工作回路已有效内化。
             </p>
           </div>
 
           <button
             onClick={() => navigate('/')}
-            className="w-full py-3.5 rounded-2xl bg-[#6C4CF1] hover:bg-[#532CD8] text-white font-bold text-xs shadow-md transition-all"
+            className="w-full max-w-sm mx-auto py-3.5 px-6 rounded-xl chameleon-btn font-semibold text-xs transition-all cursor-pointer block"
           >
-            返回首页
+            返回特刊首页
           </button>
         </div>
       ) : (
         /* Playing */
-        <div className="w-full flex flex-col items-center space-y-4">
-          <div className="w-full bg-[#F6F1FF] h-1.5 rounded-full overflow-hidden">
+        <div className="w-full flex flex-col items-center space-y-5">
+          <div className="w-full bg-stone-200 h-1 rounded-full overflow-hidden">
             <div
-              className="h-full bg-[#6C4CF1] transition-all duration-300"
+              className="h-full chameleon-bar"
               style={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}
             />
           </div>
 
-          <div className="w-full bg-white rounded-3xl p-6 border border-white/90 shadow-[0_8px_30px_rgba(23,21,42,0.06)] space-y-5">
-            <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#F0EBFF] text-[#532CD8]">
-                {currentQ.category}
+          <div className="w-full editorial-card rounded-2xl p-7 sm:p-9 space-y-6">
+            <div className="flex items-center justify-between text-xs pb-3 border-b border-stone-200/80">
+              <span className="font-serif-editorial italic text-stone-600">
+                {currentQ.category}领域
               </span>
-              <span className="text-[11px] text-[#5E5D6D]">
+              <span className="text-stone-500 font-numeric">
                 第 {currentIndex + 1} / {questions.length} 题
               </span>
             </div>
 
-            <h3 className="text-sm md:text-base font-bold text-[#1B192E] leading-snug">
+            <h3 className="font-serif-editorial text-base sm:text-lg md:text-xl font-bold text-stone-900 leading-snug">
               {currentQ.question}
             </h3>
 
-            <div className="space-y-2.5">
+            <div className="space-y-3">
               {currentQ.options.map((opt, idx) => {
                 const isSelected = selectedOption === idx;
                 const isCorrect = idx === currentQ.correctAnswer;
@@ -192,36 +204,36 @@ export const DailyChallengePage: React.FC = () => {
                     key={idx}
                     disabled={isAnswered}
                     onClick={() => handleSelectOption(idx)}
-                    className={`w-full text-left p-3.5 rounded-2xl border transition-all text-xs font-semibold flex items-center justify-between btn-press ${
+                    className={`w-full text-left p-4 rounded-xl border text-xs sm:text-sm font-medium transition-colors flex items-center justify-between cursor-pointer ${
                       showSuccess
-                        ? 'bg-emerald-50 border-emerald-400 text-emerald-900 shadow-sm'
+                        ? 'bg-emerald-50 border-emerald-400 text-emerald-900'
                         : showWrong
-                        ? 'bg-red-50 border-red-400 text-red-900'
-                        : 'bg-[#FCFBFE] hover:bg-[#F6F1FF] border-[#E8E5F0] text-[#1B192E]'
+                        ? 'bg-rose-50 border-rose-300 text-rose-900'
+                        : 'bg-white hover:bg-stone-50 border-stone-200 text-stone-900'
                     }`}
                   >
                     <span>{opt}</span>
-                    {showSuccess && <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 ml-2" />}
-                    {showWrong && <XCircle className="w-4 h-4 text-red-500 shrink-0 ml-2" />}
+                    {showSuccess && <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0 ml-2" />}
+                    {showWrong && <XCircle className="w-4 h-4 text-rose-600 shrink-0 ml-2" />}
                   </button>
                 );
               })}
             </div>
 
             {isAnswered && (
-              <div className="p-3.5 rounded-2xl bg-[#F6F1FF] border border-[#E4DFFD] space-y-2 animate-fadeIn">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-[#532CD8]">
-                  <Sparkles className="w-3.5 h-3.5 text-[#FFB72B]" />
-                  <span>核心解析</span>
+              <div className="p-4 rounded-xl bg-[#FAF8F5] border border-stone-200/80 space-y-3 animate-fadeIn">
+                <div className="flex items-center gap-1.5 text-xs font-semibold text-stone-900 font-serif-editorial">
+                  <Sparkles className="w-3.5 h-3.5 text-stone-600" />
+                  <span>核心理论解析</span>
                 </div>
-                <p className="text-xs text-[#484555] leading-relaxed">
+                <p className="text-xs sm:text-sm text-stone-700 leading-relaxed">
                   {currentQ.explanation}
                 </p>
                 <button
                   onClick={handleNext}
-                  className="w-full mt-2 py-2.5 bg-[#6C4CF1] hover:bg-[#532CD8] text-white font-bold text-xs rounded-xl shadow-sm transition-all flex items-center justify-center gap-1"
+                  className="w-full mt-2 py-3 chameleon-btn font-semibold text-xs rounded-xl transition-all flex items-center justify-center gap-1 cursor-pointer"
                 >
-                  <span>{currentIndex < questions.length - 1 ? '下一题' : '提交挑战报告'}</span>
+                  <span>{currentIndex < questions.length - 1 ? '继续下一题' : '提交挑战报告'}</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>

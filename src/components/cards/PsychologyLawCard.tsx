@@ -1,21 +1,12 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bookmark, ChevronRight, Sparkles, Brain, CheckCircle2 } from 'lucide-react';
+import { Bookmark, ChevronRight, CheckCircle2 } from 'lucide-react';
 import { PsychologyLaw } from '../../types';
 import { useApp } from '../../context/AppContext';
 
 interface PsychologyLawCardProps {
   law: PsychologyLaw;
 }
-
-const CATEGORY_THEMES: Record<string, { accent: string; text: string; bar: string; tint: string }> = {
-  '记忆': { accent: '#6C4CF1', text: 'text-[#6C4CF1]', bar: 'bg-[#6C4CF1]', tint: 'from-[#6C4CF1]/8 to-transparent' },
-  '认知': { accent: '#2563EB', text: 'text-[#2563EB]', bar: 'bg-[#2563EB]', tint: 'from-[#2563EB]/8 to-transparent' },
-  '决策': { accent: '#D97706', text: 'text-[#D97706]', bar: 'bg-[#D97706]', tint: 'from-[#D97706]/8 to-transparent' },
-  '社会': { accent: '#059669', text: 'text-[#059669]', bar: 'bg-[#059669]', tint: 'from-[#059669]/8 to-transparent' },
-  '情绪': { accent: '#DB2777', text: 'text-[#DB2777]', bar: 'bg-[#DB2777]', tint: 'from-[#DB2777]/8 to-transparent' },
-  '行为': { accent: '#7C3AED', text: 'text-[#7C3AED]', bar: 'bg-[#7C3AED]', tint: 'from-[#7C3AED]/8 to-transparent' },
-};
 
 export const PsychologyLawCard: React.FC<PsychologyLawCardProps> = ({ law }) => {
   const navigate = useNavigate();
@@ -24,49 +15,38 @@ export const PsychologyLawCard: React.FC<PsychologyLawCardProps> = ({ law }) => 
   const bookmarked = isBookmarked(law.id);
   const mastery = user.lawMasteryMap[law.id] || 0;
   const isMastered = mastery >= 80;
-  const theme = CATEGORY_THEMES[law.categoryZh] || CATEGORY_THEMES['认知'];
 
   return (
-    <div
+    <article
       onClick={() => navigate(`/law/${law.id}`)}
-      className="group art-card art-card-hover rounded-3xl p-5 cursor-pointer overflow-hidden"
+      className="group editorial-card editorial-card-hover rounded-2xl p-6 sm:p-7 cursor-pointer relative"
     >
-      {/* Subtle top-left category wash */}
-      <div className={`absolute top-0 left-0 w-48 h-28 bg-gradient-to-br ${theme.tint} pointer-events-none`} />
-
-      {/* Left vertical artistic accent indicator */}
-      <div className={`absolute left-0 top-6 bottom-6 w-1 rounded-r-full ${theme.bar} opacity-75 group-hover:opacity-100 transition-opacity`} />
-
-      {/* Top row: Unboxed Editorial Metadata & Bookmark Action */}
-      <div className="flex items-center justify-between mb-2.5 relative z-10">
-        <div className="flex items-center gap-2 text-xs flex-wrap">
+      {/* Top Editorial Rubric / Unboxed Metadata */}
+      <div className="flex items-center justify-between gap-3 mb-3 pb-3 border-b border-stone-200/60">
+        <div className="flex items-center gap-2 text-xs text-stone-600 flex-wrap">
           {law.codeId && (
-            <>
-              <span className="font-extrabold font-numeric text-[11px] px-2 py-0.5 rounded-md bg-[#F5F3FF] text-[#532CD8] border border-[#DDD6FE]">
-                {law.codeId}
-              </span>
-              <span className="text-[#CBD5E1]" aria-hidden="true">·</span>
-            </>
+            <span className="font-mono text-[11px] font-semibold text-stone-900 tracking-wider">
+              {law.codeId}
+            </span>
           )}
-          <span className={`font-bold tracking-wide ${theme.text}`}>
+          <span className="text-stone-300" aria-hidden="true">/</span>
+          <span className="font-medium text-stone-900">
             {law.categoryZh}定律
           </span>
-          <span className="text-[#CBD5E1]" aria-hidden="true">·</span>
-          <span className="text-[#64748B] font-medium">
-            {law.difficulty}
-          </span>
+          <span className="text-stone-300" aria-hidden="true">·</span>
+          <span>{law.difficulty}</span>
           {law.xpReward && (
             <>
-              <span className="text-[#CBD5E1]" aria-hidden="true">·</span>
-              <span className="text-[#D97706] font-bold font-numeric">+{law.xpReward} XP</span>
+              <span className="text-stone-300" aria-hidden="true">·</span>
+              <span className="font-numeric font-medium text-amber-700">+{law.xpReward} XP</span>
             </>
           )}
           {isMastered && (
             <>
-              <span className="text-[#CBD5E1]" aria-hidden="true">·</span>
-              <span className="inline-flex items-center gap-1 font-bold text-[#059669]">
-                <CheckCircle2 className="w-3.5 h-3.5 fill-[#10B981] text-white" />
-                <span>已掌握</span>
+              <span className="text-stone-300" aria-hidden="true">·</span>
+              <span className="inline-flex items-center gap-1 font-medium text-emerald-700">
+                <CheckCircle2 className="w-3.5 h-3.5 fill-emerald-600 text-white" />
+                <span>已内化</span>
               </span>
             </>
           )}
@@ -77,59 +57,58 @@ export const PsychologyLawCard: React.FC<PsychologyLawCardProps> = ({ law }) => 
             e.stopPropagation();
             toggleBookmark(law.id);
           }}
-          className="w-9 h-9 -mr-1 -mt-1 rounded-2xl flex items-center justify-center hover:bg-[#F5F3FF] text-[#64748B] hover:text-[#6C4CF1] transition-colors btn-tactile"
+          className="w-8 h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-900 hover:bg-stone-100 transition-colors btn-tactile -mr-1"
           aria-label="收藏定律"
+          title="收藏本定律"
         >
           <Bookmark
-            className={`w-4 h-4 ${bookmarked ? 'fill-[#6C4CF1] text-[#6C4CF1]' : 'stroke-[1.8px]'}`}
+            className={`w-4 h-4 ${bookmarked ? 'fill-stone-900 text-stone-900' : 'stroke-[1.6px]'}`}
           />
         </button>
       </div>
 
-      {/* Main Titles with Editorial Serif Pairing */}
-      <div className="mb-3 relative z-10">
-        <div className="flex items-baseline justify-between gap-2">
-          <h3 className="text-[17px] font-extrabold text-[#18181B] group-hover:text-[#6C4CF1] transition-colors leading-snug tracking-tight">
+      {/* Main Headline & Subtitle */}
+      <div className="mb-4">
+        <div className="flex items-baseline justify-between gap-3">
+          <h3 className="font-serif-editorial text-lg sm:text-xl font-bold text-stone-900 group-hover:text-[#532CD8] transition-colors leading-snug tracking-tight">
             {law.nameZh}
           </h3>
           {law.chapter && (
-            <span className="text-[10px] font-semibold text-[#64748B] shrink-0">
+            <span className="text-[11px] font-medium text-stone-600 shrink-0 font-serif-editorial italic">
               {law.chapter}
             </span>
           )}
         </div>
-        <p className="text-xs text-[#64748B] font-serif-editorial italic tracking-wide mt-0.5">
+        <p className="text-xs text-stone-600 font-serif-editorial italic tracking-wide mt-1">
           {law.nameEn}
         </p>
       </div>
 
-      {/* Editorial Quote Block */}
-      <div className="relative z-10 pl-3.5 py-2 mb-4 border-l-2 border-[#DDD6FE] bg-[#FAF9FF]/80 rounded-r-xl pr-3">
-        <p className="text-xs text-[#334155] leading-relaxed line-clamp-2 font-medium">
+      {/* Literary Definition / Pull Quote */}
+      <div className="mb-5 bg-[#FAF8F5]/80 rounded-xl p-4 border border-stone-200/50">
+        <p className="text-xs sm:text-[13px] text-stone-700 leading-relaxed font-normal line-clamp-2">
           “{law.shortExplanation}”
         </p>
       </div>
 
-      {/* Footer: Mastery Bar & Disclosure */}
-      <div className="flex items-center justify-between pt-3 border-t border-[#F1EFFA] relative z-10">
-        <div className="flex-1 mr-5">
-          <div className="flex justify-between items-center text-[11px] mb-1.5">
-            <span className="text-[#64748B] font-medium">认知内化度</span>
-            <span className="font-extrabold chameleon-text font-numeric">{mastery}%</span>
-          </div>
-          <div className="w-full h-1.5 bg-[#EDE9FE] rounded-full overflow-hidden">
+      {/* Footer: Mastery Progress & Subtle Disclosure */}
+      <div className="flex items-center justify-between pt-3 border-t border-stone-200/60 text-xs">
+        <div className="flex items-center gap-3 flex-1 mr-4">
+          <span className="text-[11px] text-stone-600 font-medium">心智内化</span>
+          <div className="w-24 sm:w-32 h-1 bg-stone-200 rounded-full overflow-hidden">
             <div
               className="h-full chameleon-bar rounded-full"
               style={{ width: `${mastery}%` }}
             />
           </div>
+          <span className="font-numeric text-[11px] font-semibold text-stone-700">{mastery}%</span>
         </div>
 
-        <div className="flex items-center gap-1 text-xs font-bold chameleon-text group-hover:translate-x-0.5 transition-transform shrink-0">
-          <span>研习</span>
-          <ChevronRight className="w-4 h-4" />
+        <div className="flex items-center gap-1 text-xs font-semibold text-stone-900 group-hover:text-[#532CD8] transition-colors shrink-0">
+          <span>阅读解析</span>
+          <ChevronRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5" />
         </div>
       </div>
-    </div>
+    </article>
   );
 };

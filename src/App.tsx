@@ -12,10 +12,21 @@ import { RapidQuizPage } from './pages/RapidQuizPage';
 import { DailyChallengePage } from './pages/DailyChallengePage';
 import { ProgressPage } from './pages/ProgressPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { JournalPage } from './pages/JournalPage';
+import { BreathingPage } from './pages/BreathingPage';
 import { OnboardingModal } from './pages/OnboardingModal';
+import { JournalComposerModal } from './components/journal/JournalComposerModal';
+import { FocusedBreathingModal } from './components/breathing/FocusedBreathingModal';
 
 const AppRoutes: React.FC = () => {
-  const { user } = useApp();
+  const {
+    user,
+    composerOpen,
+    setComposerOpen,
+    composerPreload,
+    breathingOpen,
+    setBreathingOpen,
+  } = useApp();
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   return (
@@ -25,6 +36,8 @@ const AppRoutes: React.FC = () => {
           <Route path="/" element={<HomePage />} />
           <Route path="/learn" element={<LearnPage />} />
           <Route path="/law/:id" element={<LawDetailPage />} />
+          <Route path="/journal" element={<JournalPage />} />
+          <Route path="/breathing" element={<BreathingPage />} />
           <Route path="/games" element={<GamesPage />} />
           <Route path="/game/:id" element={<GamePlayPage />} />
           <Route path="/quiz" element={<RapidQuizPage />} />
@@ -33,6 +46,17 @@ const AppRoutes: React.FC = () => {
           <Route path="/profile" element={<ProfilePage />} />
         </Routes>
       </AppShell>
+
+      <FocusedBreathingModal
+        isOpen={breathingOpen}
+        onClose={() => setBreathingOpen(false)}
+      />
+
+      <JournalComposerModal
+        isOpen={composerOpen}
+        onClose={() => setComposerOpen(false)}
+        initialEntry={composerPreload}
+      />
 
       <OnboardingModal
         isOpen={showOnboarding}

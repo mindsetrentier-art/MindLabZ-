@@ -19,10 +19,13 @@ import {
   Home,
   RefreshCw,
   Gamepad2,
+  PenLine,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { LawDetailSkeleton } from '../components/ui/Skeleton';
 import { StructuredLawData, StructuredLawQuizItem } from '../types';
+import { OverlappingStack, OverlappingItem } from '../components/ui/OverlappingStack';
+import { THINKER_ITEMS } from '../components/ui/OverlappingStackLabModal';
 
 export const LawDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -37,6 +40,7 @@ export const LawDetailPage: React.FC = () => {
     setAiTutorOpen,
     setActiveContextLaw,
     triggerConfetti,
+    openComposerWithPreload,
   } = useApp();
 
   const [isLoading, setIsLoading] = useState(true);
@@ -227,126 +231,175 @@ export const LawDetailPage: React.FC = () => {
     setAiTutorOpen(true);
   };
 
+  // Related cognitive laws & models for OverlappingStack component
+  const relatedLawItems: OverlappingItem[] = laws
+    .filter((l) => l.id !== law.id && (l.categoryZh === law.categoryZh || l.chapter === law.chapter))
+    .slice(0, 8)
+    .map((l, idx) => {
+      const colors = [
+        'bg-indigo-600 text-white',
+        'bg-stone-800 text-white',
+        'bg-amber-600 text-white',
+        'bg-teal-700 text-white',
+        'bg-rose-700 text-white',
+        'bg-purple-700 text-white',
+        'bg-blue-800 text-white',
+        'bg-emerald-700 text-white',
+      ];
+      return {
+        id: l.id,
+        name: l.nameZh,
+        subname: l.nameEn || `${l.categoryZh}心理学`,
+        badge: l.codeId,
+        color: colors[idx % colors.length],
+        onClick: () => navigate(`/law/${l.id}`),
+      };
+    });
+
   return (
-    <div className="space-y-5 pb-8 animate-fadeIn">
-      {/* 1. Header Editorial Card with Law Code (LAW001), Chapter, Titles & Actions */}
-      <div className="art-hero-surface rounded-3xl p-6 relative overflow-hidden">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2 text-xs flex-wrap">
+    <div className="space-y-8 sm:space-y-10 pb-12 animate-fadeIn max-w-4xl mx-auto">
+      {/* 1. Header Editorial Lead Article Cover */}
+      <article className="editorial-card rounded-2xl p-7 sm:p-10 md:p-12 space-y-6">
+        {/* Top Folio / Rubric */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-stone-200/80">
+          <div className="flex items-center gap-2.5 text-xs text-stone-500 font-medium flex-wrap">
             {law.codeId && (
-              <span className="font-extrabold font-numeric px-2.5 py-0.5 rounded-lg bg-[#532CD8] text-white">
+              <span className="font-mono text-xs font-bold text-stone-900 tracking-wider">
                 {law.codeId}
               </span>
             )}
-            <span className="font-bold text-[#532CD8]">{law.categoryZh}心理学</span>
-            <span className="text-[#CBD5E1]" aria-hidden="true">·</span>
-            <span className="font-medium text-[#64748B]">{structuredLaw?.difficulty || law.difficulty}</span>
-            <span className="text-[#CBD5E1]" aria-hidden="true">·</span>
-            <span className="font-bold text-[#059669] font-numeric">
+            <span className="text-stone-300" aria-hidden="true">/</span>
+            <span className="font-semibold text-stone-800">
+              {law.categoryZh}心理学
+            </span>
+            <span className="text-stone-300" aria-hidden="true">·</span>
+            <span>难度 {structuredLaw?.difficulty || law.difficulty}</span>
+            <span className="text-stone-300" aria-hidden="true">·</span>
+            <span className="font-numeric font-medium text-stone-700">
               证据等级 {structuredLaw?.evidence_level || law.evidenceLevel || 'A'}
             </span>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 self-start sm:self-auto">
             <button
               onClick={() => fetchStructuredLaw(law.codeId || law.id, true)}
               disabled={isGeneratingAI}
-              className="px-2.5 h-9 rounded-2xl flex items-center gap-1 bg-[#FAF9FF] text-[#6C4CF1] border border-[#DDD6FE] hover:bg-[#EDE9FE] text-[11px] font-bold transition-colors btn-tactile"
-              title="使用 Gemini Structured Output 实时生成深度结构化内容"
+              className="px-3 h-8 rounded-lg flex items-center gap-1.5 bg-stone-100 hover:bg-stone-200/80 text-stone-700 text-xs font-medium transition-colors cursor-pointer"
+              title="使用 Gemini 实时生成深度结构化内容"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isGeneratingAI ? 'animate-spin' : ''}`} />
-              <span>{isGeneratingAI ? 'AI生成中...' : 'AI深度生成'}</span>
+              <span>{isGeneratingAI ? '生成中...' : '深度解析'}</span>
             </button>
 
             <button
               onClick={handleToggleAudio}
-              className={`w-9 h-9 rounded-2xl flex items-center justify-center transition-colors border btn-tactile ${
+              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer border ${
                 isPlayingAudio
-                  ? 'bg-[#6C4CF1] text-white border-[#6C4CF1] animate-pulse'
-                  : 'bg-white text-[#6C4CF1] border-[#E6E2F5] hover:bg-[#EDE9FE]'
+                  ? 'bg-stone-900 text-white border-stone-900'
+                  : 'bg-white text-stone-700 border-stone-200 hover:border-stone-400'
               }`}
               title="语音朗读"
             >
-              {isPlayingAudio ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+              {isPlayingAudio ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
             </button>
 
             <button
               onClick={() => toggleBookmark(law.id)}
-              className="w-9 h-9 rounded-2xl flex items-center justify-center bg-white text-[#6C4CF1] border border-[#E6E2F5] hover:bg-[#EDE9FE] transition-colors btn-tactile"
-              title="收藏"
+              className="w-8 h-8 rounded-lg flex items-center justify-center bg-white text-stone-700 border border-stone-200 hover:border-stone-400 transition-colors cursor-pointer"
+              title="收藏本定律"
             >
-              <Bookmark className={`w-4 h-4 ${bookmarked ? 'fill-[#6C4CF1] text-[#6C4CF1]' : ''}`} />
+              <Bookmark className={`w-3.5 h-3.5 ${bookmarked ? 'fill-stone-900 text-stone-900' : ''}`} />
+            </button>
+
+            {/* Cognitive Journal quick action */}
+            <button
+              onClick={() =>
+                openComposerWithPreload({
+                  relatedLawId: law.id,
+                  relatedLawName: `${law.nameZh} (${law.nameEn})`,
+                  templateType: 'cbt-restructure',
+                  title: `关于【${law.nameZh}】的心智反思与觉察`,
+                  tags: [law.nameZh, law.categoryZh, '认知重构'],
+                })
+              }
+              className="px-2.5 h-8 rounded-lg flex items-center gap-1.5 bg-stone-900 hover:bg-stone-800 text-white text-xs font-medium transition-colors cursor-pointer btn-tactile"
+              title="对此定律记录心智觉察手记 (+50 XP)"
+            >
+              <PenLine className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">记录觉察手记</span>
             </button>
           </div>
         </div>
 
         {law.chapter && (
-          <p className="text-[11px] font-bold text-[#6C4CF1] mb-1">
-            所属章节：{law.chapter}
+          <p className="text-xs text-stone-500 font-serif-editorial italic">
+            Chapter Archive · {law.chapter}
           </p>
         )}
 
-        <h1 className="text-2xl font-extrabold text-[#18181B] tracking-tight mb-1">
-          {law.nameZh}
-        </h1>
-        <p className="text-sm font-serif-editorial italic text-[#64748B] tracking-wide mb-4">
-          {law.nameEn}
-        </p>
-
-        {/* Module 1: Core Definition Quote */}
-        <div className="p-4 rounded-2xl bg-[#FAF9FF]/90 border-l-4 border-[#6C4CF1] text-xs font-medium text-[#18181B] leading-relaxed shadow-xs">
-          “{displayDefinition}”
+        <div className="space-y-2">
+          <h1 className="font-serif-editorial text-2xl sm:text-3xl md:text-4xl font-bold text-stone-900 tracking-tight leading-tight">
+            {law.nameZh}
+          </h1>
+          <p className="font-serif-editorial italic text-stone-500 text-sm sm:text-base tracking-wide">
+            {law.nameEn}
+          </p>
         </div>
 
-        {/* Current Mastery & XP */}
-        <div className="mt-4 pt-3 border-t border-[#EDE9FE] flex items-center justify-between">
-          <span className="text-xs text-[#64748B] font-medium">
-            当前定律内化度 · 奖励 <strong className="text-[#D97706] font-numeric">+{structuredLaw?.xp || law.xpReward || 20} XP</strong>
+        {/* Literary Definition Quote Box */}
+        <div className="bg-[#FAF8F5]/90 border-l-2 border-stone-900 p-5 sm:p-6 rounded-r-xl">
+          <p className="font-serif-editorial text-sm sm:text-base text-stone-800 leading-relaxed font-normal">
+            “{displayDefinition}”
+          </p>
+        </div>
+
+        {/* Current Mastery & Reward Progress */}
+        <div className="pt-4 border-t border-stone-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <span className="text-stone-500">
+            当前心智内化度 · 研习奖励 <strong className="text-stone-800 font-numeric font-semibold">+{structuredLaw?.xp || law.xpReward || 20} XP</strong>
           </span>
-          <div className="flex items-center gap-2.5">
-            <div className="w-28 h-2 bg-[#EDE9FE] rounded-full overflow-hidden">
+          <div className="flex items-center gap-3">
+            <div className="w-36 h-1 bg-stone-200 rounded-full overflow-hidden">
               <div
-                className="h-full bg-gradient-to-r from-[#6C4CF1] to-[#532CD8] rounded-full transition-all duration-500"
+                className="h-full chameleon-bar rounded-full"
                 style={{ width: `${mastery}%` }}
               />
             </div>
-            <span className="text-xs font-extrabold text-[#532CD8] font-numeric">{mastery}%</span>
+            <span className="font-numeric font-semibold text-stone-800">{mastery}%</span>
           </div>
         </div>
-      </div>
+      </article>
 
       {/* 2. Module 2: Cognitive & Neural Mechanism */}
-      <div className="art-card rounded-3xl p-6 space-y-4">
+      <section className="editorial-card rounded-2xl p-7 sm:p-10 space-y-4">
         <div>
-          <span className="text-[10px] font-bold text-[#6C4CF1] font-numeric tracking-wider block mb-1">
-            01 · COGNITIVE & NEURAL MECHANISM
+          <span className="editorial-kicker text-[10px] text-stone-500 block mb-1">
+            01 · Cognitive & Neural Mechanism
           </span>
-          <h3 className="text-sm font-extrabold text-[#18181B] flex items-center gap-2 mb-2">
-            <Brain className="w-4 h-4 text-[#6C4CF1]" />
-            认知科学底层机制
+          <h3 className="font-serif-editorial text-lg sm:text-xl font-bold text-stone-900 flex items-center gap-2">
+            <Brain className="w-4 h-4 text-stone-700" />
+            认知科学底层机制与神经根基
           </h3>
-          <p className="text-xs text-[#334155] leading-relaxed">
-            {displayMechanism}
-          </p>
         </div>
-      </div>
+        <p className="text-xs sm:text-sm text-stone-700 leading-relaxed sm:leading-loose">
+          {displayMechanism}
+        </p>
+      </section>
 
-      {/* 3. Module 3: 4 Real-World Cases (Life, Workplace, Relationship, Business) */}
-      <div className="art-card rounded-3xl p-6 space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <span className="text-[10px] font-bold text-[#D97706] font-numeric tracking-wider block mb-0.5">
-              02 · 4 PANORAMIC CASES
-            </span>
-            <h3 className="text-sm font-extrabold text-[#18181B] flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-[#F59E0B]" />
-              四大核心场景全息案例
-            </h3>
-          </div>
+      {/* 3. Module 3: 4 Real-World Cases */}
+      <section className="editorial-card rounded-2xl p-7 sm:p-10 space-y-5">
+        <div>
+          <span className="editorial-kicker text-[10px] text-stone-500 block mb-1">
+            02 · Panoramic Case Studies
+          </span>
+          <h3 className="font-serif-editorial text-lg sm:text-xl font-bold text-stone-900 flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-stone-700" />
+            四大核心应用场景案例
+          </h3>
         </div>
 
-        {/* 4 Case Category Tabs */}
-        <div className="grid grid-cols-4 gap-1.5 bg-[#FAF9FF] p-1.5 rounded-2xl border border-[#EBE7F8]">
+        {/* 4 Case Tabs */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 border-b border-stone-200/80 pb-3">
           {[
             { key: 'life', label: '日常生活', icon: Home },
             { key: 'workplace', label: '职场协作', icon: Briefcase },
@@ -359,10 +412,10 @@ export const LawDetailPage: React.FC = () => {
               <button
                 key={tab.key}
                 onClick={() => setActiveCaseTab(tab.key as any)}
-                className={`py-2 px-2 rounded-xl text-[11px] font-bold flex items-center justify-center gap-1 transition-all btn-tactile ${
+                className={`py-2 px-3 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
                   active
-                    ? 'bg-[#6C4CF1] text-white shadow-xs'
-                    : 'text-[#64748B] hover:text-[#18181B]'
+                    ? 'bg-stone-900 text-white font-semibold'
+                    : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
                 }`}
               >
                 <Icon className="w-3.5 h-3.5 shrink-0" />
@@ -372,111 +425,108 @@ export const LawDetailPage: React.FC = () => {
           })}
         </div>
 
-        <div className="p-4 rounded-2xl bg-[#FFFBEB] border border-[#FEF3C7] text-xs text-[#475569] leading-relaxed animate-fadeIn">
+        <div className="bg-[#FAF8F5]/90 rounded-xl p-5 border border-stone-200/60 text-xs sm:text-sm text-stone-700 leading-relaxed">
           {cases[activeCaseTab]}
         </div>
-      </div>
+      </section>
 
       {/* 4. Module 4 & 5: Recognition Signals & Anti-Manipulation Defense */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Recognition Signals */}
-        <div className="art-card rounded-3xl p-5 space-y-3">
+        <section className="editorial-card rounded-2xl p-6 sm:p-7 space-y-4">
           <div>
-            <span className="text-[10px] font-bold text-[#E11D48] font-numeric tracking-wider block mb-0.5">
-              03 · RECOGNITION SIGNALS
+            <span className="editorial-kicker text-[10px] text-stone-500 block mb-1">
+              03 · Recognition Signals
             </span>
-            <h3 className="text-sm font-extrabold text-[#18181B] flex items-center gap-1.5">
-              <Eye className="w-4 h-4 text-[#E11D48]" />
-              3 大触发识别信号
+            <h3 className="font-serif-editorial text-base sm:text-lg font-bold text-stone-900 flex items-center gap-1.5">
+              <Eye className="w-4 h-4 text-stone-700" />
+              三大触发识别信号
             </h3>
           </div>
-          <ul className="space-y-2">
+          <ul className="space-y-2.5">
             {recognitionSignals.map((sig, idx) => (
               <li
                 key={idx}
-                className="p-3 rounded-2xl bg-rose-50/70 border border-rose-100 text-xs text-[#334155] leading-relaxed flex items-start gap-2"
+                className="p-3.5 rounded-xl bg-[#FAF8F5] border border-stone-200/60 text-xs text-stone-700 leading-relaxed flex items-start gap-2.5"
               >
-                <span className="w-4 h-4 rounded-full bg-rose-200/80 text-rose-800 font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5 font-numeric">
-                  {idx + 1}
+                <span className="font-mono text-xs font-bold text-stone-400 shrink-0 mt-0.5">
+                  0{idx + 1}
                 </span>
                 <span>{sig}</span>
               </li>
             ))}
           </ul>
-        </div>
+        </section>
 
         {/* Anti-Manipulation */}
-        <div className="art-card rounded-3xl p-5 space-y-3">
+        <section className="editorial-card rounded-2xl p-6 sm:p-7 space-y-4">
           <div>
-            <span className="text-[10px] font-bold text-[#059669] font-numeric tracking-wider block mb-0.5">
-              04 · ANTI-MANIPULATION
+            <span className="editorial-kicker text-[10px] text-stone-500 block mb-1">
+              04 · Defense Strategy
             </span>
-            <h3 className="text-sm font-extrabold text-[#18181B] flex items-center gap-1.5">
-              <ShieldAlert className="w-4 h-4 text-[#10B981]" />
-              反操控与防御指南
+            <h3 className="font-serif-editorial text-base sm:text-lg font-bold text-stone-900 flex items-center gap-1.5">
+              <ShieldAlert className="w-4 h-4 text-stone-700" />
+              反操控与破局防御
             </h3>
           </div>
-          <ul className="space-y-2">
+          <ul className="space-y-2.5">
             {antiManipulation.map((defense, idx) => (
               <li
                 key={idx}
-                className="p-3 rounded-2xl bg-[#ECFDF5]/70 border border-[#A7F3D0] text-xs text-[#065F46] leading-relaxed flex items-start gap-2"
+                className="p-3.5 rounded-xl bg-[#FAF8F5] border border-stone-200/60 text-xs text-stone-700 leading-relaxed flex items-start gap-2.5"
               >
-                <span className="w-4 h-4 rounded-full bg-[#10B981] text-white font-bold text-[10px] flex items-center justify-center shrink-0 mt-0.5 font-numeric">
-                  ✓
-                </span>
+                <span className="text-emerald-700 font-bold shrink-0 mt-0.5">✓</span>
                 <span>{defense}</span>
               </li>
             ))}
           </ul>
-        </div>
+        </section>
       </div>
 
-      {/* 5. Module 6: Law Interactive Decision Mini-Game (law.game) */}
-      <div className="art-card rounded-3xl p-6 space-y-4">
+      {/* 5. Module 6: Law Interactive Decision Mini-Game */}
+      <section className="editorial-card rounded-2xl p-7 sm:p-10 space-y-5">
         <div className="flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-bold text-[#6C4CF1] font-numeric tracking-wider block">
-              05 · INTERACTIVE DECISION LAB
+            <span className="editorial-kicker text-[10px] text-stone-500 block mb-1">
+              05 · Dialectical Decision Lab
             </span>
-            <h3 className="text-sm font-extrabold text-[#18181B] flex items-center gap-1.5">
-              <Gamepad2 className="w-4 h-4 text-[#6C4CF1]" />
+            <h3 className="font-serif-editorial text-lg sm:text-xl font-bold text-stone-900 flex items-center gap-2">
+              <Gamepad2 className="w-4 h-4 text-stone-700" />
               {lawGame.title}
             </h3>
           </div>
-          <span className="text-xs font-extrabold text-[#D97706] font-numeric">+30 XP</span>
+          <span className="font-numeric text-xs font-semibold text-stone-700">+30 XP</span>
         </div>
 
-        <p className="text-xs text-[#334155] leading-relaxed bg-[#FAF9FF] p-4 rounded-2xl border border-[#EBE7F8]">
+        <div className="bg-[#FAF8F5] p-5 rounded-xl border border-stone-200/60 text-xs sm:text-sm text-stone-800 leading-relaxed">
           {lawGame.scenario}
-        </p>
+        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-2.5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
           {(['A', 'B'] as const).map((choiceKey) => {
             const optionText = choiceKey === 'A' ? lawGame.option_a : lawGame.option_b;
             const isSelected = selectedGameChoice === choiceKey;
-            const isRational =
-              choiceKey === (lawGame.rational_choice || 'B').toUpperCase();
+            const isRational = choiceKey === (lawGame.rational_choice || 'B').toUpperCase();
 
             return (
               <button
                 key={choiceKey}
                 onClick={() => handleGameChoice(choiceKey)}
                 disabled={selectedGameChoice !== null}
-                className={`p-4 rounded-2xl border text-left text-xs font-semibold transition-all btn-press ${
+                className={`p-4 rounded-xl border text-left text-xs font-medium transition-colors cursor-pointer ${
                   selectedGameChoice === null
-                    ? 'bg-white hover:bg-[#F5F3FF] border-[#E6E2F5] text-[#18181B]'
+                    ? 'bg-white hover:bg-stone-50 border-stone-200 text-stone-900'
                     : isRational
                     ? 'bg-emerald-50 border-emerald-400 text-emerald-900'
                     : isSelected
                     ? 'bg-amber-50 border-amber-300 text-amber-900'
-                    : 'bg-white/60 border-[#E6E2F5] text-[#64748B]'
+                    : 'bg-stone-50/60 border-stone-200 text-stone-500'
                 }`}
               >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="font-extrabold text-[#532CD8]">方案 {choiceKey}</span>
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="font-mono font-bold text-xs text-stone-900">选项 {choiceKey}</span>
                   {selectedGameChoice !== null && isRational && (
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-600 text-white">
+                    <span className="text-[10px] font-medium text-emerald-800">
                       系统2 理性解
                     </span>
                   )}
@@ -488,36 +538,36 @@ export const LawDetailPage: React.FC = () => {
         </div>
 
         {selectedGameChoice && (
-          <div className="p-4 rounded-2xl bg-[#FAF9FF] border border-[#DDD6FE] text-xs text-[#532CD8] leading-relaxed animate-fadeIn">
-            <strong className="font-bold block mb-1">🔬 实验洞察：</strong>
+          <div className="p-4 rounded-xl bg-stone-100/80 border border-stone-200 text-xs text-stone-800 leading-relaxed animate-fadeIn">
+            <strong className="block mb-1 font-semibold">实验洞察与反思：</strong>
             {lawGame.insight}
           </div>
         )}
-      </div>
+      </section>
 
-      {/* 6. Module 7: 3-Question Structured Quiz (law.quiz) */}
-      <div className="art-card rounded-3xl p-6 space-y-4">
+      {/* 6. Module 7: 3-Question Structured Quiz */}
+      <section className="editorial-card rounded-2xl p-7 sm:p-10 space-y-5">
         <div className="flex items-center justify-between">
           <div>
-            <span className="text-[10px] font-bold text-[#6C4CF1] font-numeric tracking-wider block">
-              06 · 3-STEP MASTERY QUIZ
+            <span className="editorial-kicker text-[10px] text-stone-500 block mb-1">
+              06 · Three-Step Dialectic Quiz
             </span>
-            <h3 className="text-sm font-extrabold text-[#18181B]">
-              定律深度自测（第 {activeQuizIdx + 1} / {quizList.length} 题）
+            <h3 className="font-serif-editorial text-lg sm:text-xl font-bold text-stone-900">
+              定律深度思辨自测（{activeQuizIdx + 1} / {quizList.length}）
             </h3>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 font-numeric text-xs">
             {quizList.map((_, idx) => (
               <button
                 key={idx}
                 onClick={() => setActiveQuizIdx(idx)}
-                className={`w-6 h-6 rounded-lg text-[11px] font-extrabold font-numeric transition-all ${
+                className={`w-7 h-7 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
                   activeQuizIdx === idx
-                    ? 'bg-[#6C4CF1] text-white'
+                    ? 'bg-stone-900 text-white'
                     : quizAnswers[idx] !== undefined
-                    ? 'bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0]'
-                    : 'bg-[#F5F3FF] text-[#64748B]'
+                    ? 'bg-emerald-100 text-emerald-900'
+                    : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
                 }`}
               >
                 {idx + 1}
@@ -526,11 +576,11 @@ export const LawDetailPage: React.FC = () => {
           </div>
         </div>
 
-        <p className="text-xs font-semibold text-[#18181B] leading-relaxed">
+        <p className="text-xs sm:text-sm font-semibold text-stone-900 leading-relaxed">
           {currentQuiz.question}
         </p>
 
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           {currentQuiz.options.map((ans, idx) => {
             const isSelected = selectedQuizOption === idx;
             const isCorrect = idx === currentQuiz.answer_index;
@@ -542,56 +592,83 @@ export const LawDetailPage: React.FC = () => {
                 key={idx}
                 disabled={isCurrentQuizAnswered}
                 onClick={() => handleQuizSelect(idx)}
-                className={`w-full text-left p-3.5 rounded-2xl text-xs font-semibold border transition-all flex items-center justify-between btn-press ${
+                className={`w-full text-left p-3.5 rounded-xl text-xs font-medium border transition-colors flex items-center justify-between cursor-pointer ${
                   showSuccess
-                    ? 'bg-emerald-50 border-emerald-400 text-emerald-900 shadow-xs'
+                    ? 'bg-emerald-50 border-emerald-400 text-emerald-900'
                     : showWrong
                     ? 'bg-rose-50 border-rose-300 text-rose-900'
-                    : 'bg-[#FAF9FF] hover:bg-[#F5F3FF] border-[#E6E2F5] text-[#18181B]'
+                    : 'bg-white hover:bg-stone-50 border-stone-200 text-stone-900'
                 }`}
               >
                 <span>{ans}</span>
-                {showSuccess && <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />}
-                {showWrong && <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />}
+                {showSuccess && <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />}
+                {showWrong && <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />}
               </button>
             );
           })}
         </div>
 
         {isCurrentQuizAnswered && (
-          <div className="p-3.5 bg-[#FAF9FF] border border-[#E6E2F5] rounded-2xl text-xs text-[#532CD8] space-y-2 animate-fadeIn">
-            <p className="font-medium leading-relaxed">
-              💡 <strong>解析：</strong>
+          <div className="p-4 bg-stone-100/80 border border-stone-200 rounded-xl text-xs text-stone-800 space-y-2 animate-fadeIn">
+            <p className="leading-relaxed">
+              <strong>解析：</strong>
               {currentQuiz.explanation}
             </p>
             {activeQuizIdx < quizList.length - 1 && (
               <button
                 onClick={() => setActiveQuizIdx((prev) => prev + 1)}
-                className="px-4 py-2 rounded-xl bg-[#6C4CF1] text-white font-bold text-xs btn-press"
+                className="px-4 py-2 rounded-lg bg-stone-900 text-white font-medium text-xs hover:bg-stone-800 transition-colors cursor-pointer"
               >
                 继续下一题 ({activeQuizIdx + 2}/{quizList.length}) →
               </button>
             )}
           </div>
         )}
-      </div>
+      </section>
 
-      {/* 7. Bottom Action Bar (Play Related Game & Ask AI Coach) */}
-      <div className="flex gap-3 pt-2">
+      {/* 7. Module 8: Related Cognitive Laws & Thinkers Stack (1/3 Overlap Spread & Collapse) */}
+      <section className="editorial-card rounded-2xl p-6 sm:p-8 space-y-4 bg-white border border-stone-200 shadow-xs">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-stone-200/70 pb-3">
+          <div>
+            <span className="editorial-kicker text-[10px] text-stone-500 block mb-0.5">
+              07 · Related Principles & Observers
+            </span>
+            <h3 className="font-serif-editorial text-base sm:text-lg font-bold text-stone-900">
+              同领域关联思维模型与思辨巨擘
+            </h3>
+          </div>
+          <span className="text-[11px] text-stone-500 font-sans">
+            1/3 叠放 · 点击依次散开并显露名称
+          </span>
+        </div>
+
+        <OverlappingStack
+          items={relatedLawItems.length >= 4 ? relatedLawItems : THINKER_ITEMS}
+          maxVisible={4}
+          overlapRatio={1 / 3}
+          size="md"
+          layout="wrap"
+          staggerMs={40}
+          showToggleHint={true}
+        />
+      </section>
+
+      {/* 8. Bottom Editorial Actions */}
+      <div className="flex flex-col sm:flex-row gap-3 pt-2">
         <button
           onClick={handleAskAITutor}
-          className="flex-1 py-3.5 rounded-2xl bg-white border border-[#E6E2F5] hover:bg-[#FAF9FF] text-[#6C4CF1] font-bold text-xs shadow-xs flex items-center justify-center gap-1.5 transition-all btn-press"
+          className="flex-1 py-3.5 px-4 rounded-xl bg-white border border-stone-200 hover:border-stone-400 text-stone-800 font-semibold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
         >
-          <MessageSquarePlus className="w-4 h-4 text-[#6C4CF1]" />
-          <span>向 AI 心理教练提问</span>
+          <MessageSquarePlus className="w-4 h-4 text-stone-700" />
+          <span>向 AI 认知导师咨询深度案例</span>
         </button>
 
         <button
           onClick={() => navigate(`/game/${law.relatedGame}`)}
-          className="flex-1 py-3.5 rounded-2xl bg-[#6C4CF1] hover:bg-[#532CD8] text-white font-bold text-xs shadow-xs flex items-center justify-center gap-1.5 transition-all btn-press"
+          className="flex-1 py-3.5 px-4 rounded-xl chameleon-btn font-semibold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
         >
-          <Play className="w-4 h-4 fill-white" />
-          <span>进入训练场实战演练</span>
+          <Play className="w-3.5 h-3.5 fill-current" />
+          <span>进入认知竞技场实战演练</span>
         </button>
       </div>
     </div>

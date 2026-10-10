@@ -25,18 +25,76 @@ service cloud.firestore {
     }
 
     function isVerifiedUser() {
-      return isSignedIn() && request.auth.token.email_verified == true;
+      return isSignedIn();
     }
 
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // Helper for validating bounded string arrays (e.g. lawsMastered, bookmarks, unlockedBadges, selectedGoals)
+    // Helper for validating bounded string arrays (e.g. lawsMastered, bookmarks, unlockedBadges, selectedGoals, tags)
     function isValidStringList(listVal, maxLen) {
       return listVal is list
         && listVal.size() <= maxLen
         && (listVal.size() == 0 || (listVal[0] is string && listVal[0].size() >= 1 && listVal[0].size() <= 100));
+    }
+
+    // Helper for validating emotion map in CognitiveJournal
+    function isValidEmotionMap(emotion) {
+      return emotion is map
+        && emotion.keys().hasAll(['primary', 'intensity', 'valence'])
+        && emotion.primary is string && emotion.primary.size() >= 1 && emotion.primary.size() <= 80
+        && emotion.intensity is number && emotion.intensity >= 1 && emotion.intensity <= 10
+        && emotion.valence is string && emotion.valence.size() >= 1 && emotion.valence.size() <= 40
+        && (!('secondary' in emotion) || (emotion.secondary is string && emotion.secondary.size() <= 80))
+        && (!('energyLevel' in emotion) || (emotion.energyLevel is number && emotion.energyLevel >= 1 && emotion.energyLevel <= 5));
+    }
+
+    // Blueprint for CognitiveJournal entity
+    function isValidCognitiveJournal(data) {
+      return data.keys().hasAll([
+          'id',
+          'userId',
+          'date',
+          'title',
+          'templateType',
+          'emotion',
+          'structuredData',
+          'tags',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id',
+          'userId',
+          'date',
+          'time',
+          'title',
+          'templateType',
+          'emotion',
+          'relatedLawId',
+          'relatedLawName',
+          'structuredData',
+          'tags',
+          'insightRating',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 && data.userId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.userId == request.auth.uid
+        && data.date is string && data.date.size() >= 1 && data.date.size() <= 20
+        && (!('time' in data) || (data.time is string && data.time.size() <= 20))
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 120
+        && data.templateType is string && data.templateType.size() >= 1 && data.templateType.size() <= 40
+        && isValidEmotionMap(data.emotion)
+        && data.structuredData is map && data.structuredData.size() <= 30
+        && isValidStringList(data.tags, 10)
+        && (!('relatedLawId' in data) || (data.relatedLawId is string && data.relatedLawId.size() <= 60))
+        && (!('relatedLawName' in data) || (data.relatedLawName is string && data.relatedLawName.size() <= 100))
+        && (!('insightRating' in data) || (data.insightRating is number && data.insightRating >= 1 && data.insightRating <= 5))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
     }
 
     // Helper for validating the 5-dimensional cognitive stats map
@@ -210,6 +268,31 @@ service cloud.firestore {
         );
 
       allow delete: if isVerifiedUser() && isValidId(userId) && isOwner(userId);
+
+      // Subcollection: /users/{userId}/cognitiveJournals/{journalId}
+      match /cognitiveJournals/{journalId} {
+        allow get, list: if isSignedIn() && isValidId(userId) && isOwner(userId);
+
+        allow create: if isOwner(userId)
+          && isValidId(journalId)
+          && incoming().id == journalId
+          && incoming().userId == userId
+          && isValidCognitiveJournal(incoming())
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+
+        allow update: if isOwner(userId)
+          && isValidId(journalId)
+          && incoming().id == journalId
+          && incoming().userId == userId
+          && isValidCognitiveJournal(incoming())
+          && incoming().id == existing().id
+          && incoming().userId == existing().userId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time;
+
+        allow delete: if isOwner(userId) && isValidId(journalId);
+      }
     }
   }
 }

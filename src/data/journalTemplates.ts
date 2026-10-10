@@ -1,0 +1,343 @@
+import { JournalTemplateMeta, JournalTemplateType } from '../types';
+
+export const JOURNAL_TEMPLATES: JournalTemplateMeta[] = [
+  {
+    id: 'cbt-restructure',
+    title: 'CBT 认知重构',
+    titleEn: 'Cognitive Restructuring (ABCDE)',
+    description: '通过经典的 ABCDE 辩证模型，觉察并破除自动消极思维，以客观理性重构积极信念。',
+    badge: 'CBT 辩证模型',
+    iconName: 'Brain',
+    defaultQuestions: [
+      {
+        key: 'activatingEvent',
+        label: 'A · 诱发事件 (Activating Event)',
+        placeholder: '客观描述发生了什么事实？何时、何地、涉及何人？尽量剥离主观臆断与情绪色彩...',
+        hint: '记录摄像头能拍下的客观真相，避免使用“总是”、“彻底完了”等夸大词汇。',
+      },
+      {
+        key: 'automaticThought',
+        label: 'B · 自动思维 (Automatic Thoughts)',
+        placeholder: '事件发生瞬间，脑海中跳出的第一反应念头、内心旁白或最坏预期是什么？',
+        hint: '捕捉潜意识的瞬间评判，例如：“我肯定搞砸了”、“大家都在看我笑话”。',
+      },
+      {
+        key: 'cognitiveDistortion',
+        label: 'C · 识别认知扭曲 (Distortions Identified)',
+        placeholder: '识别是否存在非黑即白、灾难化推演、读心术、过度概括、情绪化推理等认知陷阱...',
+        hint: '给扭曲命名，是夺回大脑主导权的第一步。',
+      },
+      {
+        key: 'rationalDispute',
+        label: 'D · 理性辩驳 (Rational Dispute)',
+        placeholder: '有何真凭实据支持或反驳该念头？如果从第三人称冷静审视，更合理的解释是什么？',
+        hint: '苏格拉底式发问：支持证据是什么？最坏结果真会致命吗？我有应对能力吗？',
+      },
+      {
+        key: 'reframedPerspective',
+        label: 'E · 心智重构视角 (Reframed Perspective)',
+        placeholder: '综合客观事实后，更均衡、温和且具有建设性的全新信念是什么？',
+        hint: '形成兼具真实性与力量感的新认知：“虽然存在挑战，但我拥有逐步解决的经验与资源”。',
+      },
+      {
+        key: 'actionCommitment',
+        label: '微行动承诺 (Micro-Action Commitment)',
+        placeholder: '为了巩固这个新信念，今天我可以立即付诸实践的一个最小行动是什么？',
+        hint: '极简行动，例如深呼吸三次、发出一条坦诚沟通信息、整理桌面5分钟。',
+      },
+    ],
+  },
+  {
+    id: 'flow-reflection',
+    title: '心流与心智复盘',
+    titleEn: 'Flow & Mental Model Reflection',
+    description: '复盘深度沉浸的高能心流状态，总结心智模型与环境配置，为认知习惯提供长效正向反馈。',
+    badge: '心流心智复盘',
+    iconName: 'Waves',
+    defaultQuestions: [
+      {
+        key: 'flowTrigger',
+        label: '心流触发契机 (Flow Ingress)',
+        placeholder: '今天在哪个时间段进入了心流？当时的任务清晰度、挑战难度与心智专注度如何？',
+        hint: '分析进入沉浸状态的外部微环境与内在动机。',
+      },
+      {
+        key: 'mentalModelApplied',
+        label: '运用的心智模型 (Mental Model Deployed)',
+        placeholder: '本次专注或解决问题时，调用了哪种认知模型（如第一性原理、双曲贴现、帕金森法则）？',
+        hint: '连接心理学规律，将隐性直觉显性化为可复用的知识资产。',
+      },
+      {
+        key: 'unexpectedLearning',
+        label: '意外收获与盲区反思 (Unexpected Insight)',
+        placeholder: '过程中打破了以往的哪些经验盲区？发现了什么前所未见的新规律？',
+        hint: '记录反直觉的洞见，这往往是认知突破的源头。',
+      },
+      {
+        key: 'tomorrowAnchor',
+        label: '明日认知锚点 (Tomorrow Anchor)',
+        placeholder: '如何将今天的心流模式复制到明日的工作或研习中？写下一句专注意图。',
+        hint: '设定明日触发仪式与优先级。',
+      },
+    ],
+  },
+  {
+    id: 'emotional-decentering',
+    title: '情绪解离与觉察',
+    titleEn: 'Emotional Decentering & Acceptance',
+    description: '以“觉察者”视角注视汹涌情绪，身体体感定位，实践不评判接纳与自我慈悲。',
+    badge: '正念解离接纳',
+    iconName: 'Feather',
+    defaultQuestions: [
+      {
+        key: 'bodySensation',
+        label: '生理体感觉察 (Somatic Localisation)',
+        placeholder: '闭目倾听身体：胸腔、腹部、肩颈或太阳穴有紧绷、沉重、空洞或温热感吗？',
+        hint: '情绪首先是身体的电生理信号，命名感觉即可降低杏仁核活跃度。',
+      },
+      {
+        key: 'thoughtObserver',
+        label: '退后一步·观察者视角 (Decentered Observation)',
+        placeholder: '向自己轻声确认：“我觉察到内心正在升起这种情绪，但我本身并不是情绪本身”...',
+        hint: '你是广袤澄澈的天空，情绪只是掠过天际的风暴与浮云。',
+      },
+      {
+        key: 'socraticQuestion',
+        label: '慈悲视角的智慧回响 (Compassionate Perspective)',
+        placeholder: '如果我最好的挚友正在经历同样的煎熬，我会对他说些什么温暖而充满力量的话？',
+        hint: '以旁观者的仁慈重新拥抱自己的脆弱。',
+      },
+      {
+        key: 'selfCompassion',
+        label: '当下接纳絮语 (Self-Compassion Mantra)',
+        placeholder: '写下一句对当下的接纳与宽容：“允许此时此刻的不完美，我正在竭尽所能”...',
+        hint: '温柔是对抗内耗最坚韧的盾牌。',
+      },
+    ],
+  },
+  {
+    id: 'decision-debiasing',
+    title: '决策去偏差后视',
+    titleEn: 'Decision De-biasing & Post-Mortem',
+    description: '审查系统一的非理性直觉偏误，通过反事实推演与事前验尸法校准关键心智决策。',
+    badge: '决策偏差审查',
+    iconName: 'Scale',
+    defaultQuestions: [
+      {
+        key: 'decisionContext',
+        label: '决策背景与核心赌注 (Decision Stakes)',
+        placeholder: '当前面临的关键决策是什么？可支配选项与潜在风险收益比如何？',
+        hint: '清晰界定问题本身往往等于解决了问题的一半。',
+      },
+      {
+        key: 'intuitiveImpulse',
+        label: '系统一直觉冲动 (System 1 Impulse)',
+        placeholder: '内在本能第一反应最渴望的选择是什么？这种渴望是出于渴望奖赏还是规避损失？',
+        hint: '审视直觉是否受到便利性法则或短期即时满足驱动。',
+      },
+      {
+        key: 'potentialBias',
+        label: '审查潜在认知偏差 (Bias Audit)',
+        placeholder: '是否有沉没成本效应、确认偏误、聚光灯效应、框架效应或过度自信倾向？',
+        hint: '检查自己是否只搜集支持现有偏好的信息。',
+      },
+      {
+        key: 'calibratedPrinciple',
+        label: '校准后的决策心智准则 (Calibrated Principle)',
+        placeholder: '如果做一次“事前验尸”假设该决定失败，原因为何？据此校准后的理性法则是？',
+        hint: '沉淀为长期可复用的决策清单法则。',
+      },
+    ],
+  },
+  {
+    id: 'free-insight',
+    title: '自由心智顿悟',
+    titleEn: 'Free Metacognitive Insight',
+    description: '随时记录浮现于灵感中的认知火花、心理学思辨心得与哲理顿悟，随心沉淀。',
+    badge: '自由灵感手记',
+    iconName: 'Sparkles',
+    defaultQuestions: [
+      {
+        key: 'content',
+        label: '心智思辨随笔 (Insight Stream)',
+        placeholder: '在此自由抒写你今天的反思、读书心得、与他人的心理碰撞或突然涌现的顿悟...',
+        hint: '不拘形式，让文字自由流淌，探索思维未曾触及的幽深边界。',
+      },
+      {
+        key: 'coreTakeaway',
+        label: '提炼心智格言 (Core Axiom / Epigram)',
+        placeholder: '如果将今天的思辨提炼为一句个人认知箴言，它会是？',
+        hint: '好句子如同一枚思维图钉，能牢牢钉住混沌的经验。',
+      },
+    ],
+  },
+];
+
+export interface EmotionPresetOption {
+  label: string;
+  nameZh: string;
+  nameEn: string;
+  valence: 'positive' | 'neutral' | 'challenging' | 'mixed';
+  defaultEnergy: number;
+  colorClass: string;
+  bgLightClass: string;
+  description: string;
+}
+
+export const EMOTION_PRESETS: EmotionPresetOption[] = [
+  {
+    label: '澄明通透',
+    nameZh: '澄明通透',
+    nameEn: 'Clarity',
+    valence: 'positive',
+    defaultEnergy: 3,
+    colorClass: 'text-emerald-700 border-emerald-300 bg-emerald-50/70',
+    bgLightClass: 'bg-emerald-50',
+    description: '思维清晰无阻碍，注意力聚焦通透。',
+  },
+  {
+    label: '专注心流',
+    nameZh: '专注心流',
+    nameEn: 'Flow',
+    valence: 'positive',
+    defaultEnergy: 4,
+    colorClass: 'text-blue-700 border-blue-300 bg-blue-50/70',
+    bgLightClass: 'bg-blue-50',
+    description: '完全沉浸于当前任务，忘却时间与杂念。',
+  },
+  {
+    label: '从容平和',
+    nameZh: '从容平和',
+    nameEn: 'Equanimity',
+    valence: 'positive',
+    defaultEnergy: 2,
+    colorClass: 'text-teal-700 border-teal-300 bg-teal-50/70',
+    bgLightClass: 'bg-teal-50',
+    description: '内心如止水，对外界波动从容接纳。',
+  },
+  {
+    label: '振奋雀跃',
+    nameZh: '振奋雀跃',
+    nameEn: 'Elation',
+    valence: 'positive',
+    defaultEnergy: 5,
+    colorClass: 'text-amber-700 border-amber-300 bg-amber-50/70',
+    bgLightClass: 'bg-amber-50',
+    description: '思维敏捷活跃，充满探索与创造的愉悦。',
+  },
+  {
+    label: '敬畏释怀',
+    nameZh: '敬畏释怀',
+    nameEn: 'Awe & Release',
+    valence: 'positive',
+    defaultEnergy: 3,
+    colorClass: 'text-indigo-700 border-indigo-300 bg-indigo-50/70',
+    bgLightClass: 'bg-indigo-50',
+    description: '体验到浩瀚宏大，放下执念，心胸豁然开朗。',
+  },
+  {
+    label: '焦虑紧绷',
+    nameZh: '焦虑紧绷',
+    nameEn: 'Anxiety',
+    valence: 'challenging',
+    defaultEnergy: 4,
+    colorClass: 'text-rose-700 border-rose-300 bg-rose-50/70',
+    bgLightClass: 'bg-rose-50',
+    description: '对未知产生不可控担忧，身体微有紧迫感。',
+  },
+  {
+    label: '思维内耗',
+    nameZh: '思维内耗',
+    nameEn: 'Overthinking',
+    valence: 'challenging',
+    defaultEnergy: 3,
+    colorClass: 'text-purple-700 border-purple-300 bg-purple-50/70',
+    bgLightClass: 'bg-purple-50',
+    description: '反复反刍细枝末节，大脑陷入无收益循环。',
+  },
+  {
+    label: '消沉低落',
+    nameZh: '消沉低落',
+    nameEn: 'Melancholy',
+    valence: 'challenging',
+    defaultEnergy: 1,
+    colorClass: 'text-slate-700 border-slate-300 bg-slate-100/70',
+    bgLightClass: 'bg-slate-100',
+    description: '情绪动能偏低，需要温暖关怀与自我慈悲。',
+  },
+  {
+    label: '疲惫倦怠',
+    nameZh: '疲惫倦怠',
+    nameEn: 'Burnout / Fatigue',
+    valence: 'challenging',
+    defaultEnergy: 1,
+    colorClass: 'text-amber-800 border-amber-300 bg-stone-100/80',
+    bgLightClass: 'bg-stone-100',
+    description: '认知储备消耗过大，渴求深度休息与留白。',
+  },
+  {
+    label: '纠结矛盾',
+    nameZh: '纠结矛盾',
+    nameEn: 'Ambivalence',
+    valence: 'mixed',
+    defaultEnergy: 2,
+    colorClass: 'text-violet-700 border-violet-300 bg-violet-50/70',
+    bgLightClass: 'bg-violet-50',
+    description: '多重价值冲突，理性与情感正在对话。',
+  },
+];
+
+export const JOURNAL_SAMPLE_ENTRIES = [
+  {
+    id: 'sample-journal-1',
+    userId: 'default-user',
+    date: new Date().toISOString().split('T')[0],
+    time: '14:20',
+    title: '关于演讲前的聚光灯效应与自动思维重构',
+    templateType: 'cbt-restructure' as JournalTemplateType,
+    emotion: {
+      primary: '焦虑紧绷',
+      secondary: '聚光灯错觉',
+      intensity: 7,
+      valence: 'challenging' as const,
+      energyLevel: 4,
+    },
+    relatedLawId: 'spotlight-effect',
+    relatedLawName: '聚光灯效应 (Spotlight Effect)',
+    structuredData: {
+      activatingEvent: '下午即将向跨部门团队汇报季度认知实验成果，有20多位同事出席。',
+      automaticThought: '如果PPT翻页卡壳或者回答不出尖锐问题，所有人都会觉得我很不专业。',
+      cognitiveDistortion: '聚光灯效应 + 灾难化推演 + 读心术。将自我关注投射到所有人身上。',
+      rationalDispute: '根据聚光灯效应实证研究，听众对演讲者微小瑕疵的注意程度不到演讲者自我预估的20%。大家更关注内容给他们带来的价值，而非挑刺。',
+      reframedPerspective: '这并非一场对个人的审判，而是一次分享与共同探讨认知工具的沙龙。我已准备充分，即使遇到未知问题，坦诚记录探讨更显专业求实。',
+      actionCommitment: '做三次4-7-8腹式呼吸，聚焦于如何帮听众解决一个具体痛点，而非关注自己的发音。',
+    },
+    tags: ['职场汇报', '聚光灯效应', 'CBT重构', '公开演讲'],
+    insightRating: 5,
+  },
+  {
+    id: 'sample-journal-2',
+    userId: 'default-user',
+    date: new Date(Date.now() - 86400000).toISOString().split('T')[0],
+    time: '10:45',
+    title: '深度写作两小时：蔡格尼克效应的巧妙逆向运用',
+    templateType: 'flow-reflection' as JournalTemplateType,
+    emotion: {
+      primary: '专注心流',
+      secondary: '笃定充盈',
+      intensity: 9,
+      valence: 'positive' as const,
+      energyLevel: 4,
+    },
+    relatedLawId: 'zeigarnik-effect',
+    relatedLawName: '蔡格尼克效应 (Zeigarnik Effect)',
+    structuredData: {
+      flowTrigger: '关闭了即时通讯软件的所有弹窗，手机静音置于视线之外，播放轻柔白噪音。',
+      mentalModelApplied: '蔡格尼克效应与番茄钟结合：在文章最顺畅时故意停下，留下悬念让潜意识在后台继续运转。',
+      unexpectedLearning: '原以为需要整块4小时才能下笔，实际上只要先开始写出头100个粗糙字，阻抗就会瞬间瓦解。完成优于完美。',
+      tomorrowAnchor: '明天清晨利用同样的“未完成任务诱发力”，在昨晚写好的提纲第一段直接破题。',
+    },
+    tags: ['深度工作', '心流', '蔡格尼克效应', '习惯养成'],
+    insightRating: 5,
+  },
+];
