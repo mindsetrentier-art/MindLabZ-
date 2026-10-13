@@ -85,6 +85,9 @@ interface AppContextType {
   openComposerWithPreload: (preload?: Partial<CognitiveJournalEntry>) => void;
   breathingOpen: boolean;
   setBreathingOpen: (open: boolean) => void;
+  pwaModalOpen: boolean;
+  setPwaModalOpen: (open: boolean) => void;
+  openPwaModal: () => void;
 }
 
 const STORAGE_KEY = 'mindlabz_user_profile_v1';
@@ -266,6 +269,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   // Focused Breathing State
   const [breathingOpen, setBreathingOpen] = useState<boolean>(false);
+
+  // PWA & Desktop App Icon Installation Modal
+  const [pwaModalOpen, setPwaModalOpen] = useState<boolean>(false);
+  const openPwaModal = () => setPwaModalOpen(true);
 
   const openComposerWithPreload = (preload?: Partial<CognitiveJournalEntry>) => {
     setComposerPreload(preload || null);
@@ -928,6 +935,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         openComposerWithPreload,
         breathingOpen,
         setBreathingOpen,
+        pwaModalOpen,
+        setPwaModalOpen,
+        openPwaModal,
       }}
     >
       {children}

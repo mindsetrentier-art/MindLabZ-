@@ -521,6 +521,9 @@ async function startServer() {
     }
   });
 
+  // Serve public static assets (PWA icons, manifest, service worker)
+  app.use(express.static(path.join(process.cwd(), "public")));
+
   // Vite middleware in dev or static files in production
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({

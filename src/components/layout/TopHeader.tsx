@@ -13,7 +13,7 @@ interface TopHeaderProps {
 export const TopHeader: React.FC<TopHeaderProps> = ({ title, showBack, hasTopBar = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, firebaseUser, isSyncing, openAuthModal, setAiTutorOpen, setBreathingOpen } = useApp();
+  const { user, firebaseUser, isSyncing, openAuthModal, openPwaModal, setAiTutorOpen, setBreathingOpen } = useApp();
 
   return (
     <header
@@ -70,7 +70,19 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ title, showBack, hasTopBar
               </div>
             ) : (
               <div className="flex flex-col min-w-0">
-                <div className="flex items-baseline gap-2">
+                <div className="flex items-center gap-2">
+                  <div
+                    onClick={openPwaModal}
+                    className="w-6 h-6 rounded-lg overflow-hidden border border-amber-400/40 p-0.5 bg-stone-900 shadow-xs cursor-pointer hover:scale-105 transition-transform shrink-0"
+                    title="Installer l'icône de l'application sur votre bureau / écran d'accueil"
+                  >
+                    <img
+                      src="/app-icon.png"
+                      alt="MindLabZ App Icon"
+                      className="w-full h-full object-cover rounded-md"
+                      referrerPolicy="no-referrer"
+                    />
+                  </div>
                   <span className="font-serif-editorial text-base sm:text-lg font-bold text-stone-900 tracking-tight whitespace-nowrap truncate leading-tight">
                     MindLabZ · 智心堂
                   </span>

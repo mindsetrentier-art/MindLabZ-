@@ -28,6 +28,7 @@ export const ProfilePage: React.FC = () => {
     setAuthDiagnostic,
     authLoading,
     openAuthModal,
+    openPwaModal,
     loginWithGoogle,
     loginWithGoogleRedirect,
     switchGoogleAccount,
@@ -559,6 +560,64 @@ export const ProfilePage: React.FC = () => {
                 </p>
               </div>
             )}
+          </div>
+        </div>
+      </section>
+
+      {/* App Icon & Desktop Installation (PWA) Showcase Card */}
+      <section className="editorial-card rounded-2xl p-6 sm:p-8 space-y-5">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-stone-200/80">
+          <div>
+            <span className="editorial-kicker text-[10px] text-stone-500 block mb-0.5">
+              OFFICIAL APPLICATION ICON · PWA ÉCRAN D'ACCUEIL
+            </span>
+            <h3 className="font-serif-editorial text-lg sm:text-xl font-bold text-stone-900">
+              Icône de l'Application & Installation sur le Bureau
+            </h3>
+          </div>
+          <button
+            onClick={openPwaModal}
+            className="chameleon-btn text-xs font-semibold px-4 py-2 rounded-xl flex items-center gap-1.5 cursor-pointer shadow-xs"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Installer l'icône sur le bureau / mobile</span>
+          </button>
+        </div>
+
+        <div className="flex flex-col sm:flex-row items-center gap-6 p-4 rounded-xl bg-[#FAF8F5] border border-stone-200/80">
+          <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl p-1 bg-stone-900 border border-amber-400/40 shadow-md shrink-0 overflow-hidden group cursor-pointer" onClick={openPwaModal}>
+            <img
+              src="/app-icon.png"
+              alt="Icône MindLabZ"
+              className="w-full h-full object-cover rounded-xl group-hover:scale-105 transition-transform"
+              referrerPolicy="no-referrer"
+            />
+          </div>
+
+          <div className="space-y-1.5 text-center sm:text-left flex-1 min-w-0">
+            <div className="flex items-center justify-center sm:justify-start gap-2">
+              <span className="font-serif-editorial text-base font-bold text-stone-900">MindLabZ · 智心堂</span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-stone-200 text-stone-800">iOS & Android Ready</span>
+            </div>
+            <p className="text-xs text-stone-600 leading-relaxed">
+              Emblème minimaliste haut de gamme en or brossé et ardoise matte, optimisé pour les écrans tactiles et le bureau de votre téléphone. L'icône se lance directement en mode application autonome (PWA).
+            </p>
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 pt-1">
+              <button
+                onClick={openPwaModal}
+                className="text-xs font-semibold text-stone-800 hover:text-stone-950 underline cursor-pointer"
+              >
+                Guide d'installation pour iPhone (Safari) et Android (Chrome) →
+              </button>
+              <span className="text-stone-300">·</span>
+              <a
+                href="/app-icon.png"
+                download="MindLabZ-App-Icon.png"
+                className="text-xs text-stone-600 hover:text-stone-900 font-medium cursor-pointer"
+              >
+                Télécharger l'image HD (1024px)
+              </a>
+            </div>
           </div>
         </div>
       </section>

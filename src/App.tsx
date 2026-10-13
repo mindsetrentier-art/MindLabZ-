@@ -18,6 +18,7 @@ import { OnboardingModal } from './pages/OnboardingModal';
 import { JournalComposerModal } from './components/journal/JournalComposerModal';
 import { FocusedBreathingModal } from './components/breathing/FocusedBreathingModal';
 import { GoogleAuthModal } from './components/auth/GoogleAuthModal';
+import { PwaInstallModal } from './components/pwa/PwaInstallModal';
 
 const AppRoutes: React.FC = () => {
   const {
@@ -27,6 +28,8 @@ const AppRoutes: React.FC = () => {
     composerPreload,
     breathingOpen,
     setBreathingOpen,
+    pwaModalOpen,
+    setPwaModalOpen,
   } = useApp();
   const [showOnboarding, setShowOnboarding] = useState(false);
 
@@ -60,6 +63,11 @@ const AppRoutes: React.FC = () => {
       />
 
       <GoogleAuthModal />
+
+      <PwaInstallModal
+        isOpen={pwaModalOpen}
+        onClose={() => setPwaModalOpen(false)}
+      />
 
       <OnboardingModal
         isOpen={showOnboarding}
