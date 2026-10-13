@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Flame, Star, Trophy, Bookmark, Settings, RotateCcw, Sparkles, Shield, Heart, HelpCircle, Check, Info, Cloud, LogIn, LogOut, CheckCircle2, Database, RefreshCw, ExternalLink, KeyRound, Users, UserPlus, Copy, PenLine, ArrowRight } from 'lucide-react';
+import { User, Flame, Star, Trophy, Bookmark, Settings, RotateCcw, Sparkles, Shield, ShieldCheck, Heart, HelpCircle, Check, Info, Cloud, LogIn, LogOut, CheckCircle2, Database, RefreshCw, ExternalLink, KeyRound, Users, UserPlus, Copy, PenLine, ArrowRight } from 'lucide-react';
 import { doc, getDocFromServer } from 'firebase/firestore';
 import { db, diagnoseFirebaseAuthError, AuthErrorDiagnostic } from '../firebase';
 import firebaseConfig from '../../firebase-applet-config.json';
@@ -24,6 +24,10 @@ export const ProfilePage: React.FC = () => {
     savedAccounts,
     authReady,
     isSyncing,
+    authDiagnostic,
+    setAuthDiagnostic,
+    authLoading,
+    openAuthModal,
     loginWithGoogle,
     loginWithGoogleRedirect,
     switchGoogleAccount,
@@ -42,8 +46,6 @@ export const ProfilePage: React.FC = () => {
   const [showGoalModal, setShowGoalModal] = useState(false);
   const [selectedGoals, setSelectedGoals] = useState<string[]>(user.selectedGoals || []);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
-  const [authDiagnostic, setAuthDiagnostic] = useState<AuthErrorDiagnostic | null>(null);
-  const [authLoading, setAuthLoading] = useState(false);
   const [copiedDomain, setCopiedDomain] = useState(false);
   const [customName, setCustomName] = useState('');
   const [customEmail, setCustomEmail] = useState('');
@@ -93,39 +95,28 @@ export const ProfilePage: React.FC = () => {
   };
 
   const handleGoogleLogin = async () => {
-    setAuthDiagnostic(null);
-    setAuthLoading(true);
     try {
-      await loginWithGoogle();
+      await loginWithGoogle('popup');
       triggerConfetti();
-    } catch (err) {
-      setAuthDiagnostic(diagnoseFirebaseAuthError(err));
-    } finally {
-      setAuthLoading(false);
+    } catch {
+      // Diagnostic is already handled by AppContext
     }
   };
 
   const handleGoogleRedirectLogin = async () => {
-    setAuthDiagnostic(null);
-    setAuthLoading(true);
     try {
       await loginWithGoogleRedirect();
-    } catch (err) {
-      setAuthDiagnostic(diagnoseFirebaseAuthError(err));
-      setAuthLoading(false);
+    } catch {
+      // Diagnostic is already handled by AppContext
     }
   };
 
   const handleSwitchGoogleAccount = async () => {
-    setAuthDiagnostic(null);
-    setAuthLoading(true);
     try {
       await switchGoogleAccount();
       triggerConfetti();
-    } catch (err) {
-      setAuthDiagnostic(diagnoseFirebaseAuthError(err));
-    } finally {
-      setAuthLoading(false);
+    } catch {
+      // Diagnostic is already handled by AppContext
     }
   };
 
@@ -248,13 +239,21 @@ export const ProfilePage: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <button
+                    onClick={openAuthModal}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-stone-900 text-white hover:bg-stone-800 text-xs font-medium transition-colors cursor-pointer"
+                    title="Ouvrir l'assistant de synchronisation et transfert"
+                  >
+                    <Cloud className="w-3.5 h-3.5" />
+                    <span>Gérer Cloud & Sync</span>
+                  </button>
+                  <button
                     onClick={handleSwitchGoogleAccount}
                     disabled={authLoading}
                     className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white text-stone-800 hover:bg-stone-50 border border-stone-200 text-xs font-medium transition-colors cursor-pointer"
                     title="Connecter un autre compte Google"
                   >
                     <Users className="w-3.5 h-3.5" />
-                    <span>Autre compte Google</span>
+                    <span>Autre compte</span>
                   </button>
                   <button
                     onClick={handleLogout}
@@ -357,6 +356,15 @@ export const ProfilePage: React.FC = () => {
                   <span>Mode Redirection (Sans Pop-up)</span>
                 </button>
               </div>
+
+              <button
+                type="button"
+                onClick={openAuthModal}
+                className="w-full py-2.5 px-3 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer"
+              >
+                <ShieldCheck className="w-4 h-4 text-emerald-400" />
+                <span>Assistant de Connexion Multi-Appareils & Diagnostic</span>
+              </button>
             </div>
           )}
 

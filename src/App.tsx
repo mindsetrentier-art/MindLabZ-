@@ -17,6 +17,7 @@ import { BreathingPage } from './pages/BreathingPage';
 import { OnboardingModal } from './pages/OnboardingModal';
 import { JournalComposerModal } from './components/journal/JournalComposerModal';
 import { FocusedBreathingModal } from './components/breathing/FocusedBreathingModal';
+import { GoogleAuthModal } from './components/auth/GoogleAuthModal';
 
 const AppRoutes: React.FC = () => {
   const {
@@ -57,6 +58,8 @@ const AppRoutes: React.FC = () => {
         onClose={() => setComposerOpen(false)}
         initialEntry={composerPreload}
       />
+
+      <GoogleAuthModal />
 
       <OnboardingModal
         isOpen={showOnboarding}

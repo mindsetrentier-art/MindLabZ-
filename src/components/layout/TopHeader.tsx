@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Flame, Star, ArrowLeft, Sparkles, Wind } from 'lucide-react';
+import { Flame, Star, ArrowLeft, Sparkles, Wind, Cloud } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { ChameleonColorControl } from '../ui/ChameleonColorPopover';
 
@@ -13,7 +13,7 @@ interface TopHeaderProps {
 export const TopHeader: React.FC<TopHeaderProps> = ({ title, showBack, hasTopBar = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, firebaseUser, isSyncing, loginWithGoogle, setAiTutorOpen, setBreathingOpen } = useApp();
+  const { user, firebaseUser, isSyncing, openAuthModal, setAiTutorOpen, setBreathingOpen } = useApp();
 
   return (
     <header
@@ -87,7 +87,40 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ title, showBack, hasTopBar
         </div>
 
         {/* Gamification Stats & Quick Actions (Clean Unboxed Editorial Metadata) */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-2.5">
+          {/* Cloud Auth / Google Connection Trigger */}
+          <button
+            onClick={openAuthModal}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border transition-all btn-tactile cursor-pointer ${
+              firebaseUser
+                ? 'bg-emerald-50/90 border-emerald-300/80 text-emerald-800 hover:bg-emerald-100 shadow-xs'
+                : 'bg-white border-stone-200/90 text-stone-700 hover:border-stone-400 hover:bg-stone-50'
+            }`}
+            title={
+              firebaseUser
+                ? `Connecté à Firebase (${firebaseUser.email || 'Cloud Invité'})`
+                : 'Se connecter avec Google / Firebase Cloud'
+            }
+            aria-label="Connexion Google Firebase"
+          >
+            <Cloud
+              className={`w-3.5 h-3.5 ${
+                firebaseUser
+                  ? isSyncing
+                    ? 'text-amber-600 animate-pulse'
+                    : 'text-emerald-700'
+                  : 'text-stone-500'
+              }`}
+            />
+            <span className="text-[11px] font-semibold whitespace-nowrap hidden sm:inline">
+              {firebaseUser
+                ? firebaseUser.isAnonymous
+                  ? 'Cloud Invité'
+                  : 'Google Cloud'
+                : 'Connexion'}
+            </span>
+          </button>
+
           {/* Discreet 240-Color 30s Auto-Cycle Control */}
           <ChameleonColorControl />
 

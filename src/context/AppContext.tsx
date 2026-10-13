@@ -7,8 +7,12 @@ import {
   db,
   signInWithGoogle,
   signInWithGoogleRedirect,
+  signInAsGuestCloud,
   checkPendingRedirectSignIn,
   logOutFirebase,
+  diagnoseFirebaseAuthError,
+  AuthErrorDiagnostic,
+  isMobileBrowser,
   handleFirestoreError,
   OperationType,
 } from '../firebase';
@@ -36,11 +40,23 @@ interface AppContextType {
   savedAccounts: LocalUserAccount[];
   authReady: boolean;
   isSyncing: boolean;
-  loginWithGoogle: () => Promise<void>;
+  authDiagnostic: AuthErrorDiagnostic | null;
+  setAuthDiagnostic: (diag: AuthErrorDiagnostic | null) => void;
+  authLoading: boolean;
+  authModalOpen: boolean;
+  setAuthModalOpen: (open: boolean) => void;
+  openAuthModal: () => void;
+  closeAuthModal: () => void;
+  authToastMessage: string | null;
+  setAuthToastMessage: (msg: string | null) => void;
+  loginWithGoogle: (mode?: 'popup' | 'redirect') => Promise<void>;
   loginWithGoogleRedirect: () => Promise<void>;
+  loginAsGuestCloud: () => Promise<void>;
   switchGoogleAccount: () => Promise<void>;
   loginAsCustomUser: (name: string, email: string) => void;
   switchSavedAccount: (account: LocalUserAccount) => void;
+  exportProfileDataJson: () => string;
+  importProfileDataJson: (jsonStr: string) => boolean;
   logout: () => Promise<void>;
   updateGoals: (goals: string[]) => void;
   laws: PsychologyLaw[];
@@ -72,6 +88,7 @@ interface AppContextType {
 }
 
 const STORAGE_KEY = 'mindlabz_user_profile_v1';
+
 
 // Validation constants synchronized with firebase-blueprint.json & firestore.rules
 const MAX_NAME_LEN = 100;
@@ -226,6 +243,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
   const [authReady, setAuthReady] = useState<boolean>(false);
   const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [authDiagnostic, setAuthDiagnostic] = useState<AuthErrorDiagnostic | null>(null);
+  const [authLoading, setAuthLoading] = useState<boolean>(false);
+  const [authModalOpen, setAuthModalOpen] = useState<boolean>(false);
+  const [authToastMessage, setAuthToastMessage] = useState<string | null>(null);
+
+  const openAuthModal = () => setAuthModalOpen(true);
+  const closeAuthModal = () => setAuthModalOpen(false);
 
   const [laws] = useState<PsychologyLaw[]>(INITIAL_PSYCHOLOGY_LAWS);
   const [badges] = useState<Badge[]>(BADGES_DATA);
@@ -282,9 +306,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Listen to Firebase Auth state & attach Firestore onSnapshot listener when signed in
   useEffect(() => {
     let unsubscribeSnapshot: (() => void) | null = null;
+    let isMounted = true;
 
-    // Process any pending OAuth redirect result on startup
-    void checkPendingRedirectSignIn();
+    // Process any pending OAuth redirect result on startup with full diagnostic capture
+    void (async () => {
+      try {
+        const outcome = await checkPendingRedirectSignIn();
+        if (!isMounted) return;
+        if (outcome.error) {
+          const diag = diagnoseFirebaseAuthError(outcome.error);
+          setAuthDiagnostic(diag);
+          setAuthToastMessage(`Authentification : ${diag.titleFr}`);
+        } else if (outcome.credential) {
+          setAuthToastMessage('Connexion Google réussie ! Vos données sont synchronisées.');
+          triggerConfetti();
+        }
+      } catch (err) {
+        if (!isMounted) return;
+        const diag = diagnoseFirebaseAuthError(err);
+        setAuthDiagnostic(diag);
+      }
+    })();
 
     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
       setFirebaseUser(currentUser);
@@ -297,9 +339,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
 
       if (currentUser) {
-        const fallbackName =
-          currentUser.displayName ||
-          (currentUser.email ? currentUser.email.split('@')[0] : 'Explorateur MindLabZ');
+        const isAnon = currentUser.isAnonymous;
+        const fallbackName = isAnon
+          ? 'Explorateur Cloud (Mobile/Web)'
+          : (currentUser.displayName ||
+             (currentUser.email ? currentUser.email.split('@')[0] : 'Explorateur MindLabZ'));
         const fallbackAvatar = currentUser.photoURL || DEFAULT_USER.avatar;
 
         if (currentUser.email) {
@@ -312,6 +356,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             avatar: fallbackAvatar,
           });
         }
+
 
         const userDocPath = `users/${currentUser.uid}`;
         const userDocRef = doc(db, 'users', currentUser.uid);
@@ -448,16 +493,115 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
-  const loginWithGoogle = async () => {
-    await signInWithGoogle();
+  const loginWithGoogle = async (mode?: 'popup' | 'redirect') => {
+    setAuthDiagnostic(null);
+    setAuthLoading(true);
+    try {
+      if (mode === 'redirect' || (!mode && isMobileBrowser())) {
+        await signInWithGoogleRedirect();
+      } else {
+        try {
+          await signInWithGoogle();
+          setAuthToastMessage('Connexion Google réussie !');
+          triggerConfetti();
+        } catch (popupErr: any) {
+          const errCode = String(popupErr?.code || popupErr?.message || '');
+          if (errCode.includes('popup-blocked') || isMobileBrowser()) {
+            console.warn('Popup bloqué ou mobile détecté, bascule vers redirection...', popupErr);
+            await signInWithGoogleRedirect();
+            return;
+          }
+          throw popupErr;
+        }
+      }
+    } catch (err: any) {
+      const diag = diagnoseFirebaseAuthError(err);
+      setAuthDiagnostic(diag);
+      throw err;
+    } finally {
+      setAuthLoading(false);
+    }
   };
 
   const loginWithGoogleRedirect = async () => {
-    await signInWithGoogleRedirect();
+    setAuthDiagnostic(null);
+    setAuthLoading(true);
+    try {
+      await signInWithGoogleRedirect();
+    } catch (err: any) {
+      const diag = diagnoseFirebaseAuthError(err);
+      setAuthDiagnostic(diag);
+      setAuthLoading(false);
+      throw err;
+    }
+  };
+
+  const loginAsGuestCloud = async () => {
+    setAuthDiagnostic(null);
+    setAuthLoading(true);
+    try {
+      await signInAsGuestCloud();
+      setAuthToastMessage('Session Cloud Firestore instantanée activée !');
+      triggerConfetti();
+    } catch (err: any) {
+      const diag = diagnoseFirebaseAuthError(err);
+      setAuthDiagnostic(diag);
+      throw err;
+    } finally {
+      setAuthLoading(false);
+    }
   };
 
   const switchGoogleAccount = async () => {
-    await signInWithGoogle();
+    await loginWithGoogle('popup');
+  };
+
+  const exportProfileDataJson = (): string => {
+    const payload = {
+      mindlabzVersion: '1.0',
+      exportedAt: new Date().toISOString(),
+      user,
+      journals,
+      activeAccountEmail,
+    };
+    return JSON.stringify(payload, null, 2);
+  };
+
+  const importProfileDataJson = (jsonStr: string): boolean => {
+    try {
+      const parsed = JSON.parse(jsonStr);
+      if (!parsed || typeof parsed !== 'object') return false;
+      if (parsed.user && typeof parsed.user === 'object') {
+        const nextUser: UserProfile = {
+          ...DEFAULT_USER,
+          ...parsed.user,
+          stats: {
+            ...DEFAULT_USER.stats,
+            ...(parsed.user.stats || {}),
+          },
+        };
+        setUser(nextUser);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(nextUser));
+        if (activeAccountEmail) {
+          localStorage.setItem(`mindlabz_profile_${activeAccountEmail.toLowerCase()}`, JSON.stringify(nextUser));
+        }
+        if (auth.currentUser) {
+          void syncProfileToFirestore(nextUser);
+        }
+      }
+      if (Array.isArray(parsed.journals) && parsed.journals.length > 0) {
+        setJournals(parsed.journals);
+        parsed.journals.forEach((entry: any) => {
+          void saveJournalEntry(auth.currentUser?.uid, entry);
+        });
+      }
+      setAuthToastMessage('Profil et données importés avec succès !');
+      triggerConfetti();
+      return true;
+    } catch (e) {
+      console.error('Failed to import user profile JSON:', e);
+      return false;
+    }
   };
 
   const loginAsCustomUser = (name: string, email: string) => {
@@ -739,11 +883,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         savedAccounts,
         authReady,
         isSyncing,
+        authDiagnostic,
+        setAuthDiagnostic,
+        authLoading,
+        authModalOpen,
+        setAuthModalOpen,
+        openAuthModal,
+        closeAuthModal,
+        authToastMessage,
+        setAuthToastMessage,
         loginWithGoogle,
         loginWithGoogleRedirect,
+        loginAsGuestCloud,
         switchGoogleAccount,
         loginAsCustomUser,
         switchSavedAccount,
+        exportProfileDataJson,
+        importProfileDataJson,
         logout,
         updateGoals,
         laws,
