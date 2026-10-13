@@ -531,6 +531,21 @@ async function startServer() {
       appType: "spa",
     });
     app.use(vite.middlewares);
+
+    // Guaranteed SPA fallback for all subroute navigation requests in development
+    app.use("*", async (req, res, next) => {
+      const url = req.originalUrl;
+      if (url.startsWith("/api") || url.startsWith("/live")) {
+        return next();
+      }
+      try {
+        const rawIndex = await readFile(path.join(rootDir, "index.html"), "utf8");
+        const transformedHtml = await vite.transformIndexHtml(url, rawIndex);
+        res.status(200).set({ "Content-Type": "text/html" }).end(transformedHtml);
+      } catch (e) {
+        next(e);
+      }
+    });
   } else {
     const distPath = path.join(process.cwd(), "dist");
     app.use(express.static(distPath));
