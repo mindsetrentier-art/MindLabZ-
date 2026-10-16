@@ -83,14 +83,25 @@ export type GameType =
   | 'mind-trap' 
   | 'brain-rush' 
   | 'mind-detective' 
-  | 'psych-experiment';
+  | 'psych-experiment'
+  | 'first-impression'
+  | 'anchoring-lab'
+  | 'majority-answer'
+  | 'peak-end'
+  | 'emotion-detective'
+  | 'attribution-shift'
+  | 'zero-price-trap'
+  | 'micro-habit'
+  | 'bystander-breaker'
+  | 'falsification-challenge';
 
 export interface GameDefinition {
   id: GameType;
   name: string;
+  nameEn?: string;
   nameZh: string;
   description: string;
-  category: '记忆' | '注意力' | '速度' | '逻辑' | '决策' | '心理实验';
+  category: '记忆' | '注意力' | '速度' | '逻辑' | '决策' | '心理实验' | '认知' | '情绪' | '习惯' | '社会';
   difficulty: DifficultyLevel;
   bestScore: number;
   icon: string;
@@ -98,7 +109,10 @@ export interface GameDefinition {
   conceptLearned: string;
   relatedLawId?: string;
   accentColor: string;
+  numberPrefix?: string; // e.g. "01", "02" ... "10"
 }
+
+export type GameDifficulty = '低' | '中' | '高' | '高级';
 
 export interface GameResult {
   score: number;
@@ -108,6 +122,7 @@ export interface GameResult {
   comboMax: number;
   conceptLearned: string;
   lawId?: string;
+  difficulty?: GameDifficulty;
 }
 
 export interface QuizQuestion {
@@ -169,6 +184,8 @@ export interface UserProfile {
   hasCompletedOnboarding: boolean;
   stats: UserStats;
   weeklyActivity: DayActivity[];
+  completedGames?: string[];
+  gameCompletionCount?: Record<string, number>;
 }
 
 export type JournalTemplateType =

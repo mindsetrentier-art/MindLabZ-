@@ -136,6 +136,8 @@ const DEFAULT_USER: UserProfile = {
   unlockedBadges: ['streak-7', 'cognitive-hunter', 'speed-quiz-master'],
   selectedGoals: ['空间与序列记忆 (Memory)', '专注力与抗干扰 (Attention)', '理性决策与去偏见 (Decision)'],
   hasCompletedOnboarding: true,
+  completedGames: [],
+  gameCompletionCount: {},
   stats: {
     memory: 82,
     attention: 88,
@@ -192,6 +194,8 @@ function buildSanitizedBaseFields(
     selectedGoals: sanitizeStringList(profile.selectedGoals, 20),
     hasCompletedOnboarding: Boolean(profile.hasCompletedOnboarding),
     isDailyChallengeCompleted: Boolean(isDailyChallengeCompleted),
+    completedGames: sanitizeStringList(profile.completedGames, 100),
+    gameCompletionCount: profile.gameCompletionCount || {},
     stats: {
       memory: Math.max(0, Math.min(100, Math.round(profile.stats?.memory ?? 80))),
       attention: Math.max(0, Math.min(100, Math.round(profile.stats?.attention ?? 80))),
@@ -719,16 +723,37 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const newHigh = Math.max(currentHigh, result.score);
       const newTotalGames = prev.totalGames + 1;
 
+      // Track completion for 10 mini-games rule
+      const completedGames = prev.completedGames ? [...prev.completedGames] : [];
+      const gameCompletionCount = { ...(prev.gameCompletionCount || {}) };
+      const prevCount = gameCompletionCount[gameId] || 0;
+      const isFirstTime = prevCount === 0 || !completedGames.includes(gameId);
+
+      if (!completedGames.includes(gameId)) {
+        completedGames.push(gameId);
+      }
+      gameCompletionCount[gameId] = prevCount + 1;
+
+      // Calculate XP according to prompt requirements:
+      // First time: +30–45 XP (default 38-40 XP, or result.xpGained if higher)
+      // Repeat: original reward's 25% (+8–11 XP)
+      let actualXpGained = result.xpGained;
+      if (isFirstTime) {
+        actualXpGained = Math.max(35, Math.min(60, result.xpGained || 38));
+      } else {
+        actualXpGained = Math.max(8, Math.min(15, Math.round((result.xpGained || 38) * 0.25)));
+      }
+
       const updatedStats = { ...prev.stats };
-      if (gameId === 'memory-lab') {
+      if (gameId === 'memory-lab' || gameId === 'first-impression' || gameId === 'peak-end') {
         updatedStats.memory = Math.min(100, Math.round(updatedStats.memory * 0.9 + result.accuracy * 0.1));
-      } else if (gameId === 'mind-trap') {
+      } else if (gameId === 'mind-trap' || gameId === 'falsification-challenge' || gameId === 'micro-habit') {
         updatedStats.reasoning = Math.min(100, Math.round(updatedStats.reasoning * 0.9 + result.accuracy * 0.1));
-      } else if (gameId === 'brain-rush') {
+      } else if (gameId === 'brain-rush' || gameId === 'emotion-detective') {
         updatedStats.attention = Math.min(100, Math.round(updatedStats.attention * 0.9 + result.accuracy * 0.1));
-      } else if (gameId === 'mind-detective') {
+      } else if (gameId === 'mind-detective' || gameId === 'attribution-shift' || gameId === 'bystander-breaker') {
         updatedStats.knowledge = Math.min(100, Math.round(updatedStats.knowledge * 0.9 + result.accuracy * 0.1));
-      } else if (gameId === 'psych-experiment') {
+      } else if (gameId === 'psych-experiment' || gameId === 'anchoring-lab' || gameId === 'majority-answer' || gameId === 'zero-price-trap') {
         updatedStats.decision = Math.min(100, Math.round(updatedStats.decision * 0.9 + result.accuracy * 0.1));
       }
 
@@ -739,8 +764,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (gameId === 'memory-lab' && result.score >= 10000 && !unlockedBadges.includes('memory-palace-grandmaster')) {
         unlockedBadges.push('memory-palace-grandmaster');
       }
+      if (completedGames.length >= 5 && !unlockedBadges.includes('cognitive-hunter')) {
+        unlockedBadges.push('cognitive-hunter');
+      }
 
-      const newXp = prev.xp + result.xpGained;
+      const newXp = prev.xp + actualXpGained;
       const newLevel = Math.max(prev.level, Math.floor(newXp / 400) + 1);
 
       return {
@@ -752,6 +780,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           ...prev.gameHighScores,
           [gameId]: newHigh,
         },
+        completedGames,
+        gameCompletionCount,
         stats: updatedStats,
         unlockedBadges,
       };

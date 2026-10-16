@@ -20,8 +20,8 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
   // Determine if we should show back button or special title in header
   const getHeaderConfig = () => {
     const path = location.pathname;
-    if (path === '/') return { showBack: false };
-    if (path === '/learn') return { title: '心理学定律库', showBack: false };
+    if (path === '/' || path === '') return { showBack: false };
+    if (path === '/learn' || path === '/search') return { title: '心智定律库 · 艺术典藏', showBack: false };
     if (path === '/games') return { title: '认知训练游戏', showBack: false };
     if (path === '/quiz') return { title: '心理快问快答', showBack: false };
     if (path === '/progress') return { title: '认知能力图谱', showBack: true };

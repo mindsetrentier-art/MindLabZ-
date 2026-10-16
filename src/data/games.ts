@@ -1,12 +1,175 @@
 import { GameDefinition } from '../types';
 
 export const PSYCHOLOGY_GAMES: GameDefinition[] = [
+  // 10 经典心理学实战小游戏 (01 - 10)
+  {
+    id: 'first-impression',
+    numberPrefix: '01',
+    name: 'First Impression',
+    nameEn: 'Primacy Effect & Confirmation Bias',
+    nameZh: '第一眼判断',
+    description: '通过人物初印象和后续反转信息，练习避免过早下结论，破除首因效应。',
+    category: '认知',
+    difficulty: 'Medium',
+    bestScore: 2800,
+    icon: 'eye',
+    estimatedTime: '90秒',
+    conceptLearned: '首因效应（Primacy Effect）与确认偏误的延迟判断策略',
+    relatedLawId: 'primacy-effect',
+    accentColor: '#6366F1'
+  },
+  {
+    id: 'anchoring-lab',
+    numberPrefix: '02',
+    name: 'Anchoring Lab',
+    nameEn: 'Anchoring & Adjustment Heuristic',
+    nameZh: '锚点实验室',
+    description: '体验第一个数字如何劫持后续估值，学习剥离价格先验锚并建立独立比较参照系。',
+    category: '决策',
+    difficulty: 'Medium',
+    bestScore: 3200,
+    icon: 'anchor',
+    estimatedTime: '90秒',
+    conceptLearned: '锚定效应（Anchoring Effect）与去锚定理性评估法',
+    relatedLawId: 'anchoring-effect',
+    accentColor: '#3B82F6'
+  },
+  {
+    id: 'majority-answer',
+    numberPrefix: '03',
+    name: 'Majority Answer',
+    nameEn: 'Conformity & Social Proof',
+    nameZh: '多数人的答案',
+    description: '面对强势群聊舆论与大众假象，敏锐甄别客观事实证据，练习不盲从的独立思考。',
+    category: '社会',
+    difficulty: 'Hard',
+    bestScore: 3500,
+    icon: 'users',
+    estimatedTime: '100秒',
+    conceptLearned: '阿希从众效应（Asch Conformity）与群体压力抵抗力',
+    relatedLawId: 'social-proof',
+    accentColor: '#EC4899'
+  },
+  {
+    id: 'peak-end',
+    numberPrefix: '04',
+    name: 'Peak-End Rule',
+    nameEn: 'Memory Heuristics & Kahneman Law',
+    nameZh: '峰值与结尾',
+    description: '作为体验设计师排列体验波形，直观感受高峰与收尾时刻如何决定全局记忆评价。',
+    category: '记忆',
+    difficulty: 'Medium',
+    bestScore: 3000,
+    icon: 'activity',
+    estimatedTime: '80秒',
+    conceptLearned: '峰终定律（Peak-End Rule）与体验心理学设计',
+    relatedLawId: 'peak-end-rule',
+    accentColor: '#F59E0B'
+  },
+  {
+    id: 'emotion-detective',
+    numberPrefix: '05',
+    name: 'Emotion Detective',
+    nameEn: 'Affect Heuristic & Fact Parsing',
+    nameZh: '情绪侦探',
+    description: '学习从职场争执与亲密沟通中，敏锐剥离主观情绪宣泄、无端推测与客观事实。',
+    category: '情绪',
+    difficulty: 'Medium',
+    bestScore: 3400,
+    icon: 'heart-pulse',
+    estimatedTime: '90秒',
+    conceptLearned: '情绪启发（Affect Heuristic）与事实/推论精准分离技术',
+    relatedLawId: 'halo-effect',
+    accentColor: '#EF4444'
+  },
+  {
+    id: 'attribution-shift',
+    numberPrefix: '06',
+    name: 'Attribution Shift',
+    nameEn: 'Fundamental Attribution Error',
+    nameZh: '换位不读心',
+    description: '打破“把一次偶发失误直接归咎为人品道德败坏”的心理习惯，发掘隐蔽情境。',
+    category: '社会',
+    difficulty: 'Medium',
+    bestScore: 3100,
+    icon: 'shuffle',
+    estimatedTime: '90秒',
+    conceptLearned: '基本归因错误（Fundamental Attribution Error）与同理心重构',
+    relatedLawId: 'fundamental-attribution-error',
+    accentColor: '#8B5CF6'
+  },
+  {
+    id: 'zero-price-trap',
+    numberPrefix: '07',
+    name: 'Zero-Price Trap',
+    nameEn: 'Zero-Price Effect & Mental Accounting',
+    nameZh: '免费陷阱',
+    description: '识别“0元免费”如何劫持多巴胺神经决策，精准计算被忽视的隐性时间与机会成本。',
+    category: '决策',
+    difficulty: 'Hard',
+    bestScore: 3600,
+    icon: 'gift',
+    estimatedTime: '100秒',
+    conceptLearned: '零价格效应（Zero-Price Effect）与非理性心理账户',
+    relatedLawId: 'sunk-cost-fallacy',
+    accentColor: '#10B981'
+  },
+  {
+    id: 'micro-habit',
+    numberPrefix: '08',
+    name: 'Micro-Habit Designer',
+    nameEn: 'Habit Loop & Choice Architecture',
+    nameZh: '微习惯设计师',
+    description: '将宏大目标拆解为2分钟无痛微行动，巧妙配置环境提示与即时多巴胺闭环。',
+    category: '习惯',
+    difficulty: 'Easy',
+    bestScore: 2900,
+    icon: 'sparkles',
+    estimatedTime: '100秒',
+    conceptLearned: '习惯回路（Habit Loop: 提示-渴求-反应-奖励）与环境选择架构',
+    relatedLawId: 'delay-discounting',
+    accentColor: '#14B8A6'
+  },
+  {
+    id: 'bystander-breaker',
+    numberPrefix: '09',
+    name: 'Bystander Breaker',
+    nameEn: 'Bystander Effect & Responsibility Diffusion',
+    nameZh: '旁观者破局',
+    description: '在集体沉默与冷眼旁观的危急时刻，学习发出精确到人的点名指令，破除责任稀释。',
+    category: '社会',
+    difficulty: 'Hard',
+    bestScore: 3800,
+    icon: 'life-buoy',
+    estimatedTime: '90秒',
+    conceptLearned: '旁观者效应（Bystander Effect）与多元无知破局指令法',
+    relatedLawId: 'bystander-effect',
+    accentColor: '#F97316'
+  },
+  {
+    id: 'falsification-challenge',
+    numberPrefix: '10',
+    name: 'Falsification Challenge',
+    nameEn: 'Wason 2-4-6 & Popper Falsification',
+    nameZh: '反证挑战',
+    description: '体验经典沃森2-4-6规则发现实验，主动寻找“黑天鹅”反例，打破求证偏执。',
+    category: '逻辑',
+    difficulty: 'Hard',
+    bestScore: 4000,
+    icon: 'search-check',
+    estimatedTime: '110秒',
+    conceptLearned: '可证伪思维（Falsificationism）与确认偏误防御机制',
+    relatedLawId: 'confirmation-bias',
+    accentColor: '#6366F1'
+  },
+
+  // 经典神经竞技实验室 (原有矩阵/反应游戏)
   {
     id: 'memory-lab',
     name: 'Memory Lab',
     nameEn: 'Spatial & Sequence Memory',
     nameZh: '记忆宫殿矩阵',
-    description: '强化空间布局与序列记忆能力，训练工作记忆容量（Working Memory）突破米勒 7±2 定律。',
+    description: '强化空间布局与序列记忆能力，训练工作记忆容量突破米勒 7±2 定律。',
     category: '记忆',
     difficulty: 'Medium',
     bestScore: 8450,
@@ -15,7 +178,7 @@ export const PSYCHOLOGY_GAMES: GameDefinition[] = [
     conceptLearned: '工作记忆容量与空间网格编码（Spatial Grid Cells）',
     relatedLawId: 'primacy-effect',
     accentColor: '#6C4CF1'
-  } as any,
+  },
   {
     id: 'mind-trap',
     name: 'Mind Trap',
@@ -30,7 +193,7 @@ export const PSYCHOLOGY_GAMES: GameDefinition[] = [
     conceptLearned: '双系统理论（System 1 vs System 2）与抑制控制（Inhibitory Control）',
     relatedLawId: 'stroop-effect',
     accentColor: '#E11D48'
-  } as any,
+  },
   {
     id: 'brain-rush',
     name: 'Brain Rush',
@@ -45,7 +208,7 @@ export const PSYCHOLOGY_GAMES: GameDefinition[] = [
     conceptLearned: '选择性注意与鸡尾酒会过滤机制（Broadbent Filter Model）',
     relatedLawId: 'cocktail-party-effect',
     accentColor: '#10B981'
-  } as any,
+  },
   {
     id: 'mind-detective',
     name: 'Mind Detective',
@@ -60,13 +223,13 @@ export const PSYCHOLOGY_GAMES: GameDefinition[] = [
     conceptLearned: '社会知觉与启发式归因偏误（Attribution Bias）',
     relatedLawId: 'halo-effect',
     accentColor: '#F59E0B'
-  } as any,
+  },
   {
     id: 'psych-experiment',
     name: 'Psych Experiment',
     nameEn: 'Interactive Classic Psychology Lab',
     nameZh: '经典心理实验模拟器',
-    description: '亲身体验卡尼曼前景理论、选择过载、蔡格尼克效应等划时代行为经济学经典实验。',
+    description: '亲身体验卡尼曼前景理论、选择过载、最后通牒等划时代行为经济学经典实验。',
     category: '心理实验',
     difficulty: 'Easy',
     bestScore: 9200,
@@ -75,5 +238,5 @@ export const PSYCHOLOGY_GAMES: GameDefinition[] = [
     conceptLearned: '行为经济学与前景理论（Prospect Theory）',
     relatedLawId: 'zeigarnik-effect',
     accentColor: '#3B82F6'
-  } as any
+  }
 ];

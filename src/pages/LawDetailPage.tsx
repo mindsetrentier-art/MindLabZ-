@@ -26,6 +26,7 @@ import { LawDetailSkeleton } from '../components/ui/Skeleton';
 import { StructuredLawData, StructuredLawQuizItem } from '../types';
 import { OverlappingStack, OverlappingItem } from '../components/ui/OverlappingStack';
 import { THINKER_ITEMS } from '../components/ui/OverlappingStackLabModal';
+import { KineticCutoutHero } from '../components/ui/KineticCutoutHero';
 
 export const LawDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -258,6 +259,17 @@ export const LawDetailPage: React.FC = () => {
 
   return (
     <div className="space-y-8 sm:space-y-10 pb-12 animate-fadeIn max-w-4xl mx-auto">
+      {/* 0. Kinetic Cutout Typography Detail Header: Photo emerges from letterforms with scroll zoom */}
+      <section className="rounded-3xl overflow-hidden shadow-2xl border border-amber-400/35 bg-[#0B0918]">
+        <KineticCutoutHero
+          mainTitle={law.nameZh}
+          subtitle={`${law.codeId || 'LAW'} · ${law.nameEn}`}
+          tagline={`${law.categoryZh}心理学 · 经典定律实证解析`}
+          storageKey={`mindlabz_law_hero_${law.id}`}
+          heightClass="min-h-[160vh]"
+        />
+      </section>
+
       {/* 1. Header Editorial Lead Article Cover */}
       <article className="editorial-card rounded-2xl p-7 sm:p-10 md:p-12 space-y-6">
         {/* Top Folio / Rubric */}
