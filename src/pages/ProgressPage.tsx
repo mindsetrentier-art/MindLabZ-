@@ -2,9 +2,10 @@ import React, { useState } from 'react';
 import { Trophy, Flame, Brain, Award, Star, CheckCircle2, Lock, Sparkles, TrendingUp, RefreshCw } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { RadarSkeleton, Skeleton } from '../components/ui/Skeleton';
+import { DailyAiInsightWidget } from '../components/analytics/DailyAiInsightWidget';
 
 export const ProgressPage: React.FC = () => {
-  const { user, laws, badges } = useApp();
+  const { user, laws, badges, journals, openComposerWithPreload } = useApp();
 
   // Radar points calculation for 5 dimensions
   const stats = user.stats;
@@ -80,7 +81,13 @@ export const ProgressPage: React.FC = () => {
         </div>
       </section>
 
-      {/* 2. Five-dimensional Cognitive Radar */}
+      {/* 2. Daily AI Deep Emotional Analysis & Mind Insight Summary */}
+      <DailyAiInsightWidget
+        entries={journals}
+        onOpenComposer={openComposerWithPreload}
+      />
+
+      {/* 3. Five-dimensional Cognitive Radar */}
       <section className="editorial-card rounded-2xl p-7 sm:p-9 space-y-6">
         <div className="flex items-center justify-between pb-3 border-b border-stone-200/80">
           <div>

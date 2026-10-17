@@ -26,6 +26,7 @@ import {
   EMOTION_PRESETS,
   EmotionPresetOption,
 } from '../../data/journalTemplates';
+import { analyzeJournalEntry } from '../../services/aiJournalAnalysisService';
 
 interface JournalComposerModalProps {
   isOpen: boolean;
@@ -193,7 +194,7 @@ export const JournalComposerModal: React.FC<JournalComposerModalProps> = ({
 
     setIsSubmitting(true);
     try {
-      const entryPayload: Omit<CognitiveJournalEntry, 'createdAt' | 'updatedAt'> = {
+      const entryPayload: CognitiveJournalEntry = {
         id: initialEntry?.id || `journal-${Date.now()}`,
         userId: firebaseUser?.uid || 'guest-user',
         date,
@@ -215,6 +216,14 @@ export const JournalComposerModal: React.FC<JournalComposerModalProps> = ({
         tags: tags.length > 0 ? tags : ['认知觉察'],
         insightRating,
       };
+
+      // Trigger AI deep emotional analysis module right upon recording
+      try {
+        const analysis = await analyzeJournalEntry(entryPayload);
+        entryPayload.aiAnalysis = analysis;
+      } catch (aiErr) {
+        console.warn('AI emotional analysis fallback on submit:', aiErr);
+      }
 
       await saveJournal(entryPayload);
       setIsSubmitting(false);
@@ -752,7 +761,7 @@ export const JournalComposerModal: React.FC<JournalComposerModalProps> = ({
         <div className="px-6 sm:px-8 py-4 border-t border-stone-200 bg-white flex items-center justify-between shrink-0">
           <div className="flex items-center gap-2 text-[11px] text-stone-600">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span>自动保存至云端 Firestore · 获得 +50 认知经验 (XP)</span>
+            <span>保存后 AI 自动深度解构情绪，同步生成每日洞察至【进度】页面 · +50 XP</span>
           </div>
 
           <div className="flex items-center gap-3">
@@ -773,12 +782,12 @@ export const JournalComposerModal: React.FC<JournalComposerModalProps> = ({
               {isSubmitting ? (
                 <>
                   <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <span>保存至云端...</span>
+                  <span>AI 正在深度解构情感与心智...</span>
                 </>
               ) : (
                 <>
-                  <Check className="w-3.5 h-3.5" />
-                  <span>保存心智手记 (+50 XP)</span>
+                  <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                  <span>保存并生成 AI 心理洞察 (+50 XP)</span>
                 </>
               )}
             </button>

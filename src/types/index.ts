@@ -205,6 +205,24 @@ export interface JournalEmotionState {
   energyLevel?: number; // 1 - 5
 }
 
+export interface DailyJournalAiInsight {
+  emotionalValence: string;
+  emotionalDimensions: {
+    primaryEmotion: string;
+    intensityScore: number; // 1 - 10
+    stressLevel: number; // 1 - 10
+    metacognitiveAwareness: number; // 1 - 10
+    resilienceScore: number; // 1 - 10
+  };
+  cognitiveDistortionsIdentified: string[];
+  psychologicalMechanism: string;
+  dailyInsightSummary: string;
+  actionableMicroAdvice: string[];
+  recommendedLawId?: string;
+  recommendedLawName?: string;
+  analyzedAt: string;
+}
+
 export interface CognitiveJournalEntry {
   id: string;
   userId: string;
@@ -218,6 +236,7 @@ export interface CognitiveJournalEntry {
   structuredData: Record<string, string>;
   tags: string[];
   insightRating?: number; // 1 - 5
+  aiAnalysis?: DailyJournalAiInsight;
   createdAt?: any;
   updatedAt?: any;
 }

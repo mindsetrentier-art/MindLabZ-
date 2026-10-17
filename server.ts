@@ -259,6 +259,153 @@ async function startServer() {
   app.post("/api/chat", handleAIChat);
   app.post("/api/ai/ask", handleAIChat);
 
+  // 4.1 AI-Powered Deep Emotional Analysis & Daily Psychological Insight
+  app.post("/api/journal/analyze", async (req, res) => {
+    try {
+      const { entry } = req.body || {};
+      if (!entry || !entry.title) {
+        return res.status(400).json({ error: "Missing journal entry payload" });
+      }
+
+      const structuredSummary = Object.entries(entry.structuredData || {})
+        .map(([k, v]) => `- ${k}: ${v}`)
+        .join("\n");
+
+      const prompt = `你是一位世界顶级的临床心理学家与认知神经科学专家（智心堂心理导师）。请对用户刚刚记录的心智健康手记进行深度情感分析与心理机制解构，并生成一份温厚、深刻且极具指导性的“每日心理洞察摘要”。
+
+【用户手记详情】
+- 标题: ${entry.title}
+- 日期: ${entry.date} ${entry.time || ""}
+- 手记模板: ${entry.templateType}
+- 用户标注情绪: 主情绪【${entry.emotion?.primary || "平静"}】 (强度 ${entry.emotion?.intensity || 5}/10, 效价: ${entry.emotion?.valence || "neutral"}, 能量状态: ${entry.emotion?.energyLevel || 3}/5)
+${entry.emotion?.secondary ? `- 次级情绪: ${entry.emotion.secondary}` : ""}
+- 用户标签: ${(entry.tags || []).join(", ")}
+${entry.relatedLawName ? `- 关联心理学定律: ${entry.relatedLawName}` : ""}
+- 问答内容与心智复盘:
+${structuredSummary || "（自由觉察内容）"}
+
+请严格以 JSON 格式输出，不要包含 Markdown 代码块标记（不要写 \`\`\`json），直接输出合法的 JSON 对象，格式如下：
+{
+  "emotionalValence": "简洁提炼当前情绪转化趋势（例如：由焦虑内耗向理性重构迈进、深度心流与平静觉察）",
+  "emotionalDimensions": {
+    "primaryEmotion": "提炼的核心情绪名称",
+    "intensityScore": 1到10的整数情绪唤醒度,
+    "stressLevel": 1到10的心理压力值估测,
+    "metacognitiveAwareness": 1到10的元认知觉察深度（思考自己思考的能力）,
+    "resilienceScore": 1到10的心理韧性复原力指数
+  },
+  "cognitiveDistortionsIdentified": ["识别出的潜在思维偏误，如：全或无思维、灾难化推演、读心谬误、确认偏误、情绪推理、应该句式（若无则列出1-2项值得留意的认知盲区）"],
+  "psychologicalMechanism": "从神经心理学与认知科学原理（如杏仁核警报、前额叶理性刹车、负面偏差、系统1直觉启发式等）分析为何会产生这种情绪与心理反应（100-150字）",
+  "dailyInsightSummary": "为用户量身定制的每日深度心理洞察摘要：肯定其自我觉察勇气，温和指出思维图式中的突破点，给予沉淀内省的心智复盘（150-200字）",
+  "actionableMicroAdvice": [
+    "微行动建议1（15字内，具体可行）",
+    "微行动建议2（15字内，具体可行）",
+    "微行动建议3（15字内，具体可行）"
+  ],
+  "recommendedLawId": "推荐对照研习的心理学定律ID，如 LAW001、LAW003、LAW010、LAW017 等",
+  "recommendedLawName": "推荐定律名称，如 首因效应、情绪ABC理论、峰终定律、认知失调 等",
+  "analyzedAt": "${new Date().toISOString()}"
+}`;
+
+      const ai = getAI();
+      if (!ai) {
+        // High-fidelity psychological fallback
+        const isPositive = entry.emotion?.valence === "positive";
+        const isChallenging = entry.emotion?.valence === "challenging";
+        const primary = entry.emotion?.primary || "沉思";
+
+        const fallbackInsight = {
+          emotionalValence: isPositive
+            ? "心流平静 · 正向理性构建"
+            : isChallenging
+            ? "情绪觉察 · 正在启动理性重构"
+            : "中和平衡 · 客观心智觉知",
+          emotionalDimensions: {
+            primaryEmotion: primary,
+            intensityScore: Math.min(10, Math.max(1, entry.emotion?.intensity || 6)),
+            stressLevel: isChallenging ? 7 : isPositive ? 2 : 4,
+            metacognitiveAwareness: 8,
+            resilienceScore: isPositive ? 8 : 7,
+          },
+          cognitiveDistortionsIdentified: isChallenging
+            ? ["负面滤镜偏误", "情绪推理（以感受代替客观证据）"]
+            : ["过早认知闭合倾向"],
+          psychologicalMechanism:
+            "人类神经系统在遭遇不确定性或压力唤醒时，边缘系统（尤其是杏仁核）会快速抢占认知资源，诱导大脑采用节能的直觉启发式图式。通过此刻的手记书写，您成功激活了背外侧前额叶（dlPFC），将混沌的内部体感转化为具象语言符号，实现了生理层面的情绪降温。",
+          dailyInsightSummary: `在这篇手记中，您对【${entry.title}】展现出了高度宝贵的自我觉察。当情绪被命名并被审视时，它就失去了暗中操纵决策的神秘力量。您记录的感受并非“事实本身”，而是大脑根据过往经验快速生成的推论假设。今天的记录证明您已经具备了跳出第一直觉、开启元认知俯瞰的优秀心智素养。`,
+          actionableMicroAdvice: [
+            "深呼吸4次，感受脚底与地面的触碰，完成3秒身体着陆",
+            "问自己：如果最好的朋友处于相同境遇，我会怎样对他说？",
+            "今晚睡前列出今日3件即便微小但也真实发生的好事",
+          ],
+          recommendedLawId: isChallenging ? "LAW017" : "LAW005",
+          recommendedLawName: isChallenging ? "情绪ABC理论" : "峰终定律",
+          analyzedAt: new Date().toISOString(),
+        };
+
+        return res.json({ analysis: fallbackInsight, isFallback: true });
+      }
+
+      const response = await ai.models.generateContent({
+        model: MODEL,
+        contents: prompt,
+        config: {
+          systemInstruction:
+            "你是一个兼具深厚学术造诣与人文关怀的心理学专家。你只返回合法的 JSON 对象，不加任何解释性文字或 Markdown 标记。",
+        },
+      });
+
+      let rawText = (response.text || "").trim();
+      if (rawText.startsWith("```json")) {
+        rawText = rawText.replace(/^```json\s*/i, "").replace(/\s*```$/, "");
+      } else if (rawText.startsWith("```")) {
+        rawText = rawText.replace(/^```\s*/i, "").replace(/\s*```$/, "");
+      }
+
+      let analysisJson;
+      try {
+        analysisJson = JSON.parse(rawText);
+      } catch (parseErr) {
+        console.warn("AI response JSON parse error, using fallback parser:", parseErr);
+        // attempt regex extraction
+        const match = rawText.match(/\{[\s\S]*\}/);
+        if (match) {
+          analysisJson = JSON.parse(match[0]);
+        } else {
+          throw new Error("Unable to parse AI response into JSON");
+        }
+      }
+
+      return res.json({ analysis: analysisJson, isFallback: false });
+    } catch (err: any) {
+      console.error("Journal analysis error:", err);
+      // Return safe structured fallback
+      const fallback = {
+        emotionalValence: "情绪觉察与心智复盘",
+        emotionalDimensions: {
+          primaryEmotion: req.body?.entry?.emotion?.primary || "觉察",
+          intensityScore: 6,
+          stressLevel: 4,
+          metacognitiveAwareness: 8,
+          resilienceScore: 7,
+        },
+        cognitiveDistortionsIdentified: ["过度概括倾向", "应该句式"],
+        psychologicalMechanism:
+          "手记书写促进了前额叶皮层对情绪中枢杏仁核的下行抑制。通过客观复盘，思维盲区逐渐显性化，大脑建立了新的神经反射通路。",
+        dailyInsightSummary:
+          "每一次坦诚直面内心思绪的手记书写，都是在为心智肌肉做一次深度力量训练。保持这种客观觉察，您正在逐步建立不易受环境摆布的理性韧性体系。",
+        actionableMicroAdvice: [
+          "记录后给自己泡一杯温水，静坐5分钟享受思维沉淀",
+          "在关键决定前刻意暂停3秒，启动元认知双重校验",
+        ],
+        recommendedLawId: "LAW001",
+        recommendedLawName: "首因效应与认知锚定",
+        analyzedAt: new Date().toISOString(),
+      };
+      return res.json({ analysis: fallback, isFallback: true });
+    }
+  });
+
   // 5. Real-time GPS Location Reverse Geocoding, Weather & Google Maps Grounding
   app.post("/api/location-telemetry", async (req, res) => {
     try {

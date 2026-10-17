@@ -36,6 +36,7 @@ import {
   THINKER_ITEMS,
 } from '../components/ui/OverlappingStackLabModal';
 import { KineticCutoutHero } from '../components/ui/KineticCutoutHero';
+import { AmbientSoundscapeControl } from '../components/ui/AmbientSoundscapeControl';
 import { gameAudio } from '../utils/gameAudio';
 
 export const HomePage: React.FC = () => {
@@ -138,16 +139,21 @@ export const HomePage: React.FC = () => {
 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 relative z-10">
           <div className="flex-1 space-y-4 max-w-2xl">
-            {/* Museum Cover Rubric & Volume Index */}
-            <div className="flex items-center gap-2.5 text-xs text-stone-300 font-mono flex-wrap">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/15 text-amber-300 border border-amber-300/30 font-semibold tracking-wider text-[11px] shadow-xs">
-                <Palette className="w-3.5 h-3.5 text-amber-400" />
-                <span>MINDLABZ · 认知艺术殿堂</span>
-              </span>
-              <span className="text-stone-500" aria-hidden="true">/</span>
-              <span className="font-serif-editorial italic text-stone-300 text-xs">
-                Issue No. 100 · The Cognitive Architecture
-              </span>
+            {/* Museum Cover Rubric & Volume Index & Ambient Soundscape */}
+            <div className="flex items-center justify-between gap-3 text-xs text-stone-300 font-mono flex-wrap">
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/15 text-amber-300 border border-amber-300/30 font-semibold tracking-wider text-[11px] shadow-xs">
+                  <Palette className="w-3.5 h-3.5 text-amber-400" />
+                  <span>MINDLABZ · 认知艺术殿堂</span>
+                </span>
+                <span className="text-stone-500" aria-hidden="true">/</span>
+                <span className="font-serif-editorial italic text-stone-300 text-xs">
+                  Issue No. 100 · The Cognitive Architecture
+                </span>
+              </div>
+
+              {/* Ambient Soundscape Switch for Deep Psychological Immersion */}
+              <AmbientSoundscapeControl />
             </div>
 
             {/* High-End Serif Lead Headline */}
