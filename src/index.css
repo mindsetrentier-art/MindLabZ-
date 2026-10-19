@@ -521,6 +521,50 @@
   animation: soundWave4 0.85s ease-in-out infinite 0.2s;
 }
 
+/* Print Styles for PDF Report Export */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 10mm 12mm;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #1c1917 !important;
+  }
+
+  /* Hide app chrome, navigation, ambient audio bars, and buttons during print */
+  nav,
+  header,
+  footer,
+  .no-print,
+  button,
+  .btn-tactile,
+  .fixed:not(#mindlabz-print-container) {
+    display: none !important;
+  }
+
+  #mindlabz-printable-report {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: #ffffff !important;
+    color: #1c1917 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .print-avoid-break {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+}
+
 
 
 

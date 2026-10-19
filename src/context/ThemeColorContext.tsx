@@ -3,7 +3,7 @@ import { CHAMELEON_PALETTE_240, ChameleonColor, ColorCategory } from '../data/co
 
 export type ColorFilterMode = 'all' | ColorCategory;
 
-interface ThemeColorContextType {
+export interface ThemeColorContextType {
   currentColor: ChameleonColor;
   colorIndex: number;
   totalColors: number;
@@ -21,29 +21,24 @@ const ThemeColorContext = createContext<ThemeColorContextType | undefined>(undef
 
 const CYCLE_INTERVAL_SECONDS = 30;
 
-/**
- * Custom hook that cycles through the predefined array of 200+ (240) distinct color themes
- * every 30 seconds and dynamically updates '--chameleon-primary' and '--chameleon-secondary'
- * (along with companion glow/border variables) on the document root.
- */
-export function useChameleonThemeCycle(initialThemes: ChameleonColor[] = CHAMELEON_PALETTE_240) {
+export const ThemeColorProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [filterMode, setFilterMode] = useState<ColorFilterMode>('all');
-  const [currentId, setCurrentId] = useState<number>(initialThemes[0]?.id ?? 1);
+  const [currentId, setCurrentId] = useState<number>(CHAMELEON_PALETTE_240[0]?.id ?? 1);
   const [isAutoCycling, setIsAutoCycling] = useState<boolean>(true);
   const [secondsRemaining, setSecondsRemaining] = useState<number>(CYCLE_INTERVAL_SECONDS);
 
   const filteredPalette = useMemo(() => {
-    if (filterMode === 'all') return initialThemes;
-    return initialThemes.filter((c) => c.category === filterMode);
-  }, [filterMode, initialThemes]);
+    if (filterMode === 'all') return CHAMELEON_PALETTE_240;
+    return CHAMELEON_PALETTE_240.filter((c) => c.category === filterMode);
+  }, [filterMode]);
 
   const currentColor = useMemo(() => {
     return (
-      initialThemes.find((c) => c.id === currentId) ||
+      CHAMELEON_PALETTE_240.find((c) => c.id === currentId) ||
       filteredPalette[0] ||
-      initialThemes[0]
+      CHAMELEON_PALETTE_240[0]
     );
-  }, [currentId, filteredPalette, initialThemes]);
+  }, [currentId, filteredPalette]);
 
   const colorIndex = useMemo(() => {
     const idx = filteredPalette.findIndex((c) => c.id === currentColor.id);
@@ -71,7 +66,7 @@ export function useChameleonThemeCycle(initialThemes: ChameleonColor[] = CHAMELE
     }
   }, [filterMode, filteredPalette, currentId]);
 
-  // Cycle through the 200+ distinct color themes every 30 seconds
+  // Cycle through the distinct color themes every 30 seconds
   useEffect(() => {
     if (!isAutoCycling) return;
 
@@ -92,8 +87,9 @@ export function useChameleonThemeCycle(initialThemes: ChameleonColor[] = CHAMELE
     return () => window.clearInterval(timer);
   }, [isAutoCycling, filteredPalette]);
 
-  // Dynamically update CSS variables '--chameleon-primary' and '--chameleon-secondary'
+  // Dynamically update CSS variables on document root
   useEffect(() => {
+    if (typeof document === 'undefined') return;
     const root = document.documentElement;
     root.style.setProperty('--chameleon-primary', currentColor.primary);
     root.style.setProperty('--chameleon-secondary', currentColor.secondary);
@@ -103,10 +99,10 @@ export function useChameleonThemeCycle(initialThemes: ChameleonColor[] = CHAMELE
     root.style.setProperty('--chameleon-on-primary', currentColor.onPrimary);
   }, [currentColor]);
 
-  return {
+  const contextValue = useMemo<ThemeColorContextType>(() => ({
     currentColor,
     colorIndex,
-    totalColors: initialThemes.length,
+    totalColors: CHAMELEON_PALETTE_240.length,
     filterMode,
     setFilterMode,
     isAutoCycling,
@@ -115,14 +111,19 @@ export function useChameleonThemeCycle(initialThemes: ChameleonColor[] = CHAMELE
     nextColor,
     selectColorById,
     filteredPalette,
-  };
-}
-
-export const ThemeColorProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const themeCycleState = useChameleonThemeCycle(CHAMELEON_PALETTE_240);
+  }), [
+    currentColor,
+    colorIndex,
+    filterMode,
+    isAutoCycling,
+    secondsRemaining,
+    nextColor,
+    selectColorById,
+    filteredPalette,
+  ]);
 
   return (
-    <ThemeColorContext.Provider value={themeCycleState}>
+    <ThemeColorContext.Provider value={contextValue}>
       {children}
     </ThemeColorContext.Provider>
   );
@@ -135,3 +136,6 @@ export const useThemeColor = (): ThemeColorContextType => {
   }
   return ctx;
 };
+
+// Backward compatibility alias if needed
+export const useChameleonThemeCycle = useThemeColor;

@@ -15,6 +15,7 @@ import {
   Activity,
   Heart,
   Quote,
+  FileDown,
 } from 'lucide-react';
 import { CognitiveJournalEntry, DailyJournalAiInsight } from '../../types';
 import { analyzeJournalEntry } from '../../services/aiJournalAnalysisService';
@@ -24,11 +25,13 @@ import { gameAudio } from '../../utils/gameAudio';
 interface DailyAiInsightWidgetProps {
   entries: CognitiveJournalEntry[];
   onOpenComposer?: () => void;
+  onExportPdf?: () => void;
 }
 
 export const DailyAiInsightWidget: React.FC<DailyAiInsightWidgetProps> = ({
   entries,
   onOpenComposer,
+  onExportPdf,
 }) => {
   const navigate = useNavigate();
   const { openComposerWithPreload, saveJournal } = useApp();
@@ -200,10 +203,24 @@ export const DailyAiInsightWidget: React.FC<DailyAiInsightWidgetProps> = ({
           </h3>
         </div>
 
-        <div className="flex items-center gap-2.5">
-          <span className="text-[11px] text-stone-500 font-numeric">
+        <div className="flex items-center gap-2">
+          <span className="text-[11px] text-stone-500 font-numeric hidden sm:inline">
             关联手记：<strong className="text-stone-800">{latestEntry.title}</strong>
           </span>
+
+          {onExportPdf && (
+            <button
+              onClick={() => {
+                gameAudio.playTap();
+                onExportPdf();
+              }}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-stone-200 bg-white hover:bg-stone-50 text-stone-700 text-xs font-semibold transition-all shadow-2xs cursor-pointer active:scale-95"
+              title="生成包含此心理健康摘要与训练进度的 PDF 总结报告"
+            >
+              <FileDown className="w-3.5 h-3.5 text-amber-600" />
+              <span>导出 PDF 报告</span>
+            </button>
+          )}
 
           <button
             onClick={handleTriggerAnalysis}

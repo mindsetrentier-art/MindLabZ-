@@ -27,6 +27,7 @@ import { VoiceTranscribeButton } from '../components/ui/VoiceTranscribeButton';
 import { CategoryZh, PsychologyLaw } from '../types';
 import { MINDLABZ_CHAPTERS } from '../data/laws';
 import { gameAudio } from '../utils/gameAudio';
+import { OverlappingCardStack } from '../components/ui/OverlappingCardStack';
 
 interface CategoryOption {
   key: 'all' | CategoryZh;
@@ -479,6 +480,18 @@ export const LearnPage: React.FC = () => {
             </button>
           ))}
         </div>
+      </section>
+
+      {/* Interactive Overlapping Card Stack Deck: 课程分类 · 学习收藏 · 词汇集 */}
+      <section className="bg-white/90 p-5 sm:p-6 rounded-3xl border border-stone-200/90 shadow-2xs space-y-3">
+        <OverlappingCardStack
+          scenario="courses"
+          maxVisible={3}
+          overlapRatio={1 / 3}
+          size="md"
+          layout="row"
+          showScenarioTabs={true}
+        />
       </section>
 
       {/* 5. Filtered Count & Active Status Ribbon */}

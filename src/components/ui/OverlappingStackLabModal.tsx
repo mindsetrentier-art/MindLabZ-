@@ -17,6 +17,12 @@ import {
   OverlappingItem,
   OverlappingStackSize,
   OverlappingStackLayout,
+  OverlappingCardStack,
+  OverlappingScenario,
+  COURSE_CATEGORIES,
+  FAVORITES_COLLECTION,
+  VOCABULARY_SET,
+  PROFILE_ACHIEVEMENTS,
 } from './OverlappingStack';
 
 // Presets for the component showcase
@@ -231,10 +237,13 @@ export const OverlappingStackLabModal: React.FC<OverlappingStackLabModalProps> =
   isOpen,
   onClose,
 }) => {
+  const [componentMode, setComponentMode] = useState<'card' | 'avatar'>('card');
+  const [scenario, setScenario] = useState<OverlappingScenario>('courses');
   const [selectedPreset, setSelectedPreset] = useState<'thinkers' | 'biases' | 'learners' | 'emotions'>('thinkers');
   const [size, setSize] = useState<OverlappingStackSize>('md');
+  const [cardSize, setCardSize] = useState<'sm' | 'md' | 'lg'>('md');
   const [overlapRatio, setOverlapRatio] = useState<number>(1 / 3); // 1/3 as strictly required
-  const [maxVisible, setMaxVisible] = useState<number>(4);
+  const [maxVisible, setMaxVisible] = useState<number>(3); // 3 as strictly required: "收起时显示前三张和 +N 剩余数量"
   const [layout, setLayout] = useState<OverlappingStackLayout>('row');
   const [staggerMs, setStaggerMs] = useState<number>(45);
 
@@ -261,123 +270,221 @@ export const OverlappingStackLabModal: React.FC<OverlappingStackLabModalProps> =
       onClick={onClose}
     >
       <div
-        className="w-full max-w-2xl bg-[#FAF8F5] rounded-2xl shadow-2xl border border-stone-200 overflow-hidden flex flex-col max-h-[90vh]"
+        className="w-full max-w-3xl bg-[#FAF8F5] rounded-3xl shadow-2xl border border-stone-200 overflow-hidden flex flex-col max-h-[92vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-6 py-4.5 border-b border-stone-200 bg-white">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-stone-200 bg-white">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-stone-100 flex items-center justify-center text-stone-800">
-              <Layers className="w-4 h-4" />
+            <div className="w-9 h-9 rounded-xl bg-stone-100 flex items-center justify-center text-stone-800 shadow-2xs">
+              <Layers className="w-5 h-5 text-stone-700" />
             </div>
             <div>
               <h3 className="font-serif-editorial text-base sm:text-lg font-bold text-stone-900 leading-tight">
-                重叠排列组件交互工坊
+                重叠式卡片组件交互调试工坊
               </h3>
               <p className="text-[11px] text-stone-500">
-                1/3 几何重叠 · 末尾剩余数量 · 点击依次散开并显示名称 · 再次点击收回
+                1/3 几何覆盖 · 收起显示前 3 张 + 尾部余量 · 点击依次展开并显示名称 · 再次点击平滑收回
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors cursor-pointer"
+            className="p-2 rounded-xl text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Modal Body */}
-        <div className="p-6 overflow-y-auto space-y-6">
+        <div className="p-6 overflow-y-auto space-y-5">
+          {/* Component Mode Switcher: Card Stack vs Avatar Stack */}
+          <div className="flex items-center justify-between bg-white p-2.5 rounded-2xl border border-stone-200 shadow-2xs">
+            <span className="text-xs font-semibold text-stone-700 pl-2">
+              组件呈现形态：
+            </span>
+            <div className="flex items-center gap-1.5 p-1 bg-stone-100 rounded-xl">
+              <button
+                type="button"
+                onClick={() => setComponentMode('card')}
+                className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                  componentMode === 'card'
+                    ? 'bg-white text-stone-900 shadow-xs'
+                    : 'text-stone-600 hover:text-stone-900'
+                }`}
+              >
+                🗂️ 重叠式卡片组件 (Card Stack)
+              </button>
+              <button
+                type="button"
+                onClick={() => setComponentMode('avatar')}
+                className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                  componentMode === 'avatar'
+                    ? 'bg-white text-stone-900 shadow-xs'
+                    : 'text-stone-600 hover:text-stone-900'
+                }`}
+              >
+                👤 头像徽章模式 (Avatar Stack)
+              </button>
+            </div>
+          </div>
+
           {/* 1. Live Interactive Demonstration */}
-          <div className="bg-white rounded-xl p-5 sm:p-6 border border-stone-200 shadow-xs space-y-4">
+          <div className="bg-white rounded-2xl p-5 sm:p-6 border border-stone-200 shadow-xs space-y-4">
             <div className="flex items-center justify-between border-b border-stone-100 pb-3">
               <span className="text-xs font-semibold text-stone-700 flex items-center gap-1.5">
                 <Play className="w-3.5 h-3.5 text-emerald-600 fill-current" />
-                <span>实时交互预览（点击任意位置散开 / 再次点击收回）</span>
+                <span>实时交互画布（点击任意卡片展开 / 再次点击平滑收回）</span>
               </span>
-              <span className="text-[11px] text-stone-400 font-numeric">
-                共 {currentItems.length} 个元素 · 折叠展示前 {maxVisible} 个 + 尾部余量
+              <span className="text-[11px] text-stone-500 font-numeric">
+                1/3 覆盖 · 折叠收起显示前 3 张 + 余量徽标
               </span>
             </div>
 
-            {/* OverlappingStack rendered here */}
+            {/* Overlapping Component Render */}
             <div className="py-2">
-              <OverlappingStack
-                items={currentItems}
-                maxVisible={maxVisible}
-                overlapRatio={overlapRatio}
-                size={size}
-                layout={layout}
-                staggerMs={staggerMs}
-                showToggleHint={true}
-              />
+              {componentMode === 'card' ? (
+                <OverlappingCardStack
+                  scenario={scenario}
+                  maxVisible={maxVisible}
+                  overlapRatio={overlapRatio}
+                  size={cardSize}
+                  layout={layout}
+                  showScenarioTabs={true}
+                />
+              ) : (
+                <OverlappingStack
+                  items={currentItems}
+                  maxVisible={maxVisible}
+                  overlapRatio={overlapRatio}
+                  size={size}
+                  layout={layout}
+                  staggerMs={staggerMs}
+                  showToggleHint={true}
+                />
+              )}
             </div>
 
-            <div className="text-[11px] text-stone-500 bg-stone-50 p-2.5 rounded-lg border border-stone-200/60 leading-relaxed">
+            <div className="text-[11px] text-stone-600 bg-stone-50 p-3 rounded-xl border border-stone-200/80 leading-relaxed">
               💡 <strong>核心规则实现验证：</strong>
-              <ul className="list-disc list-inside mt-1 space-y-0.5 text-stone-600">
-                <li>折叠态时元素互相压住 <strong>三分之一（33.3%）</strong>，层次分明带微阴影与白边分界。</li>
-                <li>末尾自动呈现 <strong>+{Math.max(0, currentItems.length - maxVisible)}</strong> 剩余数量徽标。</li>
-                <li>点击时以 <strong>{staggerMs}ms</strong> 延迟依次平滑散开，并<strong>显露完整名称与身份注解</strong>。</li>
-                <li>再次点击任意处或收回按钮即可<strong>依次平滑收回为 1/3 叠放态</strong>。</li>
+              <ul className="list-disc list-inside mt-1 space-y-1 text-stone-600">
+                <li>
+                  <strong>1/3 重叠：</strong>卡片之间相互覆盖约三分之一（负外边距为卡片宽度的 1/3）。
+                </li>
+                <li>
+                  <strong>收起前三张 + 剩余：</strong>收起时仅显示前三张，末尾显示 <strong>+N 剩余数量</strong> 卡片。
+                </li>
+                <li>
+                  <strong>依次展开显示名称：</strong>点击后卡片以毫秒阶梯依次滑开，显露完整<strong>名称、副标与详情</strong>。
+                </li>
+                <li>
+                  <strong>平滑收回：</strong>再次点击任意卡片或收回按钮，卡片平滑滑回叠放状态。
+                </li>
+                <li>
+                  <strong>四大核心应用场景：</strong>可用于<strong>课程分类、学习收藏、词汇集和个人资料</strong>。
+                </li>
               </ul>
             </div>
           </div>
 
           {/* 2. Controls & Configuration */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Presets */}
+            {/* Presets or Scenarios */}
             <div className="bg-white p-4 rounded-xl border border-stone-200 space-y-2.5">
               <label className="text-xs font-semibold text-stone-800 block">
-                选择示范数据预设
+                {componentMode === 'card' ? '选择卡片应用场景 (四大多元场景)' : '选择示范数据预设'}
               </label>
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                {[
-                  { key: 'thinkers', label: '心理学家巨擘', count: THINKER_ITEMS.length },
-                  { key: 'biases', label: '核心心智模型', count: MENTAL_MODEL_ITEMS.length },
-                  { key: 'learners', label: '今日研习学者', count: ACTIVE_LEARNER_ITEMS.length },
-                  { key: 'emotions', label: '觉察情绪光谱', count: EMOTION_ITEMS.length },
-                ].map((item) => (
-                  <button
-                    key={item.key}
-                    onClick={() => setSelectedPreset(item.key as any)}
-                    className={`py-2 px-2.5 rounded-lg text-left transition-all cursor-pointer font-medium ${
-                      selectedPreset === item.key
-                        ? 'bg-stone-900 text-white shadow-xs'
-                        : 'bg-stone-50 text-stone-700 hover:bg-stone-100 border border-stone-200/80'
-                    }`}
-                  >
-                    <div className="flex justify-between items-center">
-                      <span>{item.label}</span>
-                      <span className="text-[10px] opacity-70">({item.count})</span>
-                    </div>
-                  </button>
-                ))}
-              </div>
+
+              {componentMode === 'card' ? (
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  {[
+                    { key: 'courses', label: '课程分类 (Courses)', count: COURSE_CATEGORIES.length },
+                    { key: 'favorites', label: '学习收藏 (Bookmarks)', count: FAVORITES_COLLECTION.length },
+                    { key: 'vocabulary', label: '词汇集 (Vocabulary)', count: VOCABULARY_SET.length },
+                    { key: 'profile', label: '个人资料 (Profile)', count: PROFILE_ACHIEVEMENTS.length },
+                  ].map((item) => (
+                    <button
+                      key={item.key}
+                      onClick={() => setScenario(item.key as any)}
+                      className={`py-2 px-2.5 rounded-lg text-left transition-all cursor-pointer font-medium ${
+                        scenario === item.key
+                          ? 'bg-stone-900 text-white shadow-xs'
+                          : 'bg-stone-50 text-stone-700 hover:bg-stone-100 border border-stone-200/80'
+                      }`}
+                    >
+                      <div className="flex justify-between items-center">
+                        <span className="truncate">{item.label}</span>
+                        <span className="text-[10px] opacity-70">({item.count})</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  {[
+                    { key: 'thinkers', label: '心理学家巨擘', count: THINKER_ITEMS.length },
+                    { key: 'biases', label: '核心心智模型', count: MENTAL_MODEL_ITEMS.length },
+                    { key: 'learners', label: '今日研习学者', count: ACTIVE_LEARNER_ITEMS.length },
+                    { key: 'emotions', label: '觉察情绪光谱', count: EMOTION_ITEMS.length },
+                  ].map((item) => (
+                    <button
+                      key={item.key}
+                      onClick={() => setSelectedPreset(item.key as any)}
+                      className={`py-2 px-2.5 rounded-lg text-left transition-all cursor-pointer font-medium ${
+                        selectedPreset === item.key
+                          ? 'bg-stone-900 text-white shadow-xs'
+                          : 'bg-stone-50 text-stone-700 hover:bg-stone-100 border border-stone-200/80'
+                      }`}
+                    >
+                      <div className="flex justify-between items-center">
+                        <span>{item.label}</span>
+                        <span className="text-[10px] opacity-70">({item.count})</span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Size & Layout Controls */}
             <div className="bg-white p-4 rounded-xl border border-stone-200 space-y-3">
               <div className="space-y-1.5">
                 <div className="flex justify-between items-center text-xs">
-                  <span className="font-semibold text-stone-800">尺寸规格</span>
-                  <span className="text-stone-400 font-mono text-[11px]">{size.toUpperCase()}</span>
+                  <span className="font-semibold text-stone-800">
+                    {componentMode === 'card' ? '卡片尺寸规格' : '头像尺寸规格'}
+                  </span>
+                  <span className="text-stone-400 font-mono text-[11px]">
+                    {componentMode === 'card' ? cardSize.toUpperCase() : size.toUpperCase()}
+                  </span>
                 </div>
                 <div className="flex gap-1.5">
-                  {(['sm', 'md', 'lg', 'xl'] as OverlappingStackSize[]).map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => setSize(s)}
-                      className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                        size === s
-                          ? 'bg-stone-900 text-white'
-                          : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
-                      }`}
-                    >
-                      {s.toUpperCase()}
-                    </button>
-                  ))}
+                  {componentMode === 'card'
+                    ? (['sm', 'md', 'lg'] as const).map((s) => (
+                        <button
+                          key={s}
+                          onClick={() => setCardSize(s)}
+                          className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                            cardSize === s
+                              ? 'bg-stone-900 text-white'
+                              : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                          }`}
+                        >
+                          {s.toUpperCase()}
+                        </button>
+                      ))
+                    : (['sm', 'md', 'lg', 'xl'] as OverlappingStackSize[]).map((s) => (
+                        <button
+                          key={s}
+                          onClick={() => setSize(s)}
+                          className={`flex-1 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                            size === s
+                              ? 'bg-stone-900 text-white'
+                              : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                          }`}
+                        >
+                          {s.toUpperCase()}
+                        </button>
+                      ))}
                 </div>
               </div>
 

@@ -1,11 +1,28 @@
 import React, { useState } from 'react';
-import { Trophy, Flame, Brain, Award, Star, CheckCircle2, Lock, Sparkles, TrendingUp, RefreshCw } from 'lucide-react';
+import {
+  Trophy,
+  Flame,
+  Brain,
+  Award,
+  Star,
+  CheckCircle2,
+  Lock,
+  Sparkles,
+  TrendingUp,
+  RefreshCw,
+  FileDown,
+  FileText,
+  Printer,
+} from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { RadarSkeleton, Skeleton } from '../components/ui/Skeleton';
 import { DailyAiInsightWidget } from '../components/analytics/DailyAiInsightWidget';
+import { ProgressPdfExportModal } from '../components/analytics/ProgressPdfExportModal';
+import { gameAudio } from '../utils/gameAudio';
 
 export const ProgressPage: React.FC = () => {
   const { user, laws, badges, journals, openComposerWithPreload } = useApp();
+  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
 
   // Radar points calculation for 5 dimensions
   const stats = user.stats;
@@ -60,9 +77,24 @@ export const ProgressPage: React.FC = () => {
             </p>
           </div>
 
-          <div className="text-left md:text-right shrink-0 font-numeric">
-            <span className="text-xs text-stone-500 font-medium block">累计脑力经验</span>
-            <p className="text-2xl font-bold text-stone-900 font-serif-editorial">{user.xp.toLocaleString()} <span className="text-xs font-normal text-stone-500 font-sans">XP</span></p>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 shrink-0">
+            <div className="text-left md:text-right font-numeric">
+              <span className="text-xs text-stone-500 font-medium block">累计脑力经验</span>
+              <p className="text-2xl font-bold text-stone-900 font-serif-editorial">{user.xp.toLocaleString()} <span className="text-xs font-normal text-stone-500 font-sans">XP</span></p>
+            </div>
+
+            {/* Export PDF Report Button */}
+            <button
+              onClick={() => {
+                gameAudio.playTap();
+                setIsPdfModalOpen(true);
+              }}
+              className="px-4 py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white font-bold text-xs flex items-center gap-2 shadow-md hover:shadow-lg transition-all cursor-pointer active:scale-95 shrink-0"
+              title="生成可打印或保存的心理健康分析与训练进度 PDF 总结报告"
+            >
+              <FileDown className="w-4 h-4 text-amber-300" />
+              <span>导出 PDF 评估报告</span>
+            </button>
           </div>
         </div>
 
@@ -85,6 +117,7 @@ export const ProgressPage: React.FC = () => {
       <DailyAiInsightWidget
         entries={journals}
         onOpenComposer={openComposerWithPreload}
+        onExportPdf={() => setIsPdfModalOpen(true)}
       />
 
       {/* 3. Five-dimensional Cognitive Radar */}
@@ -270,6 +303,15 @@ export const ProgressPage: React.FC = () => {
           })}
         </div>
       </section>
+
+      {/* 5. PDF Summary Report Export Modal */}
+      <ProgressPdfExportModal
+        isOpen={isPdfModalOpen}
+        onClose={() => setIsPdfModalOpen(false)}
+        user={user}
+        badges={badges}
+        journals={journals}
+      />
     </div>
   );
 };

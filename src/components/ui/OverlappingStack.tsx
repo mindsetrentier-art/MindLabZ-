@@ -103,9 +103,11 @@ const SIZE_CONFIGS: Record<
   },
 };
 
+export * from './OverlappingCardStack';
+
 export const OverlappingStack: React.FC<OverlappingStackProps> = ({
   items,
-  maxVisible = 4,
+  maxVisible = 3, // Shows first 3 items when collapsed + remainder count
   overlapRatio = 1 / 3, // Exactly one-third overlap as requested!
   size = 'md',
   variant = 'avatar',

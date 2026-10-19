@@ -14,6 +14,13 @@ import {
   ShieldAlert,
   ChevronDown,
   BookOpen,
+  Headphones,
+  CloudRain,
+  Trees,
+  Radio,
+  Waves,
+  Music,
+  Compass,
 } from 'lucide-react';
 import {
   BREATHING_TECHNIQUES,
@@ -21,6 +28,12 @@ import {
   BreathingPhase,
 } from '../../data/breathingTechniques';
 import { breathingAudio } from '../../utils/breathingAudio';
+import {
+  ambientSound,
+  SOUNDSCAPE_PRESETS,
+  SoundscapeInfo,
+} from '../../utils/ambientSoundEngine';
+import { MeditationAudioLibrary } from './MeditationAudioLibrary';
 import { useApp } from '../../context/AppContext';
 
 export interface FocusedBreathingProps {
@@ -71,6 +84,51 @@ export const FocusedBreathing: React.FC<FocusedBreathingProps> = ({
   // Pre-session emotional check-in
   const [preState, setPreState] = useState<string>('紧绷杂念');
   const [postState, setPostState] = useState<string>('澄澈宁静');
+
+  // Ambient Background Meditation Soundscape State
+  const [isAmbientPlaying, setIsAmbientPlaying] = useState<boolean>(ambientSound.isPlaying());
+  const [activeAmbientId, setActiveAmbientId] = useState<string>(ambientSound.getActiveSoundscapeId());
+  const [ambientVolume, setAmbientVolume] = useState<number>(ambientSound.getVolume());
+  const [isAudioLibraryOpen, setIsAudioLibraryOpen] = useState<boolean>(false);
+
+  useEffect(() => {
+    const unsubscribe = ambientSound.subscribe((playing, currentId, vol) => {
+      setIsAmbientPlaying(playing);
+      setActiveAmbientId(currentId);
+      setAmbientVolume(vol);
+    });
+    return unsubscribe;
+  }, []);
+
+  const currentAmbientPreset =
+    SOUNDSCAPE_PRESETS.find((s) => s.id === activeAmbientId) || SOUNDSCAPE_PRESETS[0];
+
+  const handleSelectAmbient = (id: string) => {
+    if (activeAmbientId === id && isAmbientPlaying) {
+      ambientSound.stop();
+    } else {
+      ambientSound.play(id);
+    }
+  };
+
+  const getPresetSmallIcon = (iconName: SoundscapeInfo['iconName'], className: string) => {
+    switch (iconName) {
+      case 'rain':
+        return <CloudRain className={className} />;
+      case 'forest':
+        return <Trees className={className} />;
+      case 'whitenoise':
+        return <Radio className={className} />;
+      case 'ocean':
+        return <Waves className={className} />;
+      case 'zen':
+        return <Sparkles className={className} />;
+      case 'cosmic':
+        return <Compass className={className} />;
+      default:
+        return <Headphones className={className} />;
+    }
+  };
 
   // References for RAF loop
   const animFrameRef = useRef<number | null>(null);
@@ -224,6 +282,16 @@ export const FocusedBreathing: React.FC<FocusedBreathingProps> = ({
       setIsRunning(true);
       // Play initial chime for current phase
       triggerPhaseAudio(currentPhase.phase);
+
+      // Auto-sync background ambient soundscape if configured
+      try {
+        const autoSync = localStorage.getItem('mindlabz_ambient_autosync') !== 'false';
+        if (autoSync && !ambientSound.isPlaying()) {
+          ambientSound.play();
+        }
+      } catch {
+        // ignore
+      }
     } else {
       setIsRunning(false);
     }
@@ -310,8 +378,40 @@ export const FocusedBreathing: React.FC<FocusedBreathingProps> = ({
           </p>
         </div>
 
-        {/* Audio Mute & Duration Pills */}
-        <div className="flex items-center gap-2 self-start sm:self-center shrink-0">
+        {/* Audio Mute & Ambient Soundscape & Duration Pills */}
+        <div className="flex flex-wrap items-center gap-2 self-start sm:self-center shrink-0">
+          {/* Ambient Soundscape Quick Pill */}
+          <button
+            onClick={() => setIsAudioLibraryOpen(true)}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-medium transition-all cursor-pointer ${
+              isAmbientPlaying
+                ? 'bg-emerald-50 text-emerald-800 border-emerald-300 shadow-xs'
+                : 'bg-white text-stone-700 border-stone-200 hover:bg-stone-50'
+            }`}
+            title="点击打开背景冥想音频库（雨声、森林、白噪音等）"
+          >
+            {isAmbientPlaying ? (
+              <div className="flex items-center gap-0.5 h-3">
+                <span className="w-0.5 bg-emerald-500 rounded-full animate-soundWave1" />
+                <span className="w-0.5 bg-emerald-500 rounded-full animate-soundWave2" />
+                <span className="w-0.5 bg-emerald-500 rounded-full animate-soundWave3" />
+              </div>
+            ) : (
+              <Headphones className="w-3.5 h-3.5 text-stone-500" />
+            )}
+            <span className="text-[11px] font-semibold">
+              {currentAmbientPreset ? currentAmbientPreset.name.split('·')[0].trim() : '自然音景'}
+            </span>
+            <span
+              className={`text-[9px] px-1 py-0.2 rounded font-mono ${
+                isAmbientPlaying ? 'bg-emerald-600 text-white' : 'bg-stone-100 text-stone-400'
+              }`}
+            >
+              {isAmbientPlaying ? 'ON' : 'OFF'}
+            </span>
+          </button>
+
+          {/* Technique Chime Mute */}
           <button
             onClick={handleToggleMute}
             className={`p-2 rounded-xl border transition-colors cursor-pointer ${
@@ -389,6 +489,81 @@ export const FocusedBreathing: React.FC<FocusedBreathingProps> = ({
           </div>
         </div>
       )}
+
+      {/* 2.5 Quick Ambient Meditation Sound Bar */}
+      <div className="bg-white/80 p-3 sm:p-4 rounded-2xl border border-stone-200/90 shadow-2xs space-y-2.5">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Headphones className="w-4 h-4 text-stone-700" />
+            <span className="text-xs font-bold text-stone-800">
+              背景冥想自然环境音（Ambient Soundscape）：
+            </span>
+            <span className="text-[10px] text-stone-500 hidden sm:inline">
+              轻触即刻切换自然声景，提升专注沉浸感
+            </span>
+          </div>
+
+          <button
+            onClick={() => setIsAudioLibraryOpen(true)}
+            className="text-[11px] font-semibold text-emerald-700 hover:text-emerald-800 flex items-center gap-1 cursor-pointer transition-colors"
+          >
+            <span>音频库详情</span>
+            <ChevronDown className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2">
+          {SOUNDSCAPE_PRESETS.map((preset) => {
+            const isCurrentActive = activeAmbientId === preset.id;
+            const isCurrentPlaying = isCurrentActive && isAmbientPlaying;
+
+            return (
+              <button
+                key={preset.id}
+                onClick={() => handleSelectAmbient(preset.id)}
+                className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between ${
+                  isCurrentActive
+                    ? isCurrentPlaying
+                      ? 'bg-stone-900 text-white border-stone-800 shadow-sm ring-2 ring-emerald-500/40'
+                      : 'bg-stone-800 text-stone-100 border-stone-700'
+                    : 'bg-white hover:bg-stone-50 text-stone-800 border-stone-200 hover:border-stone-300'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <div
+                    className="p-1 rounded-lg bg-stone-100 text-stone-800"
+                    style={{
+                      backgroundColor: isCurrentActive ? 'rgba(255,255,255,0.15)' : undefined,
+                      color: isCurrentActive ? preset.accentColor : undefined,
+                    }}
+                  >
+                    {getPresetSmallIcon(preset.iconName, 'w-3.5 h-3.5')}
+                  </div>
+                  {isCurrentPlaying ? (
+                    <div className="flex items-center gap-0.5 h-2.5">
+                      <span className="w-0.5 bg-emerald-400 rounded-full animate-soundWave1" />
+                      <span className="w-0.5 bg-emerald-400 rounded-full animate-soundWave2" />
+                      <span className="w-0.5 bg-emerald-400 rounded-full animate-soundWave3" />
+                    </div>
+                  ) : isCurrentActive ? (
+                    <span className="text-[9px] text-stone-400 font-mono">待播放</span>
+                  ) : null}
+                </div>
+                <div className="text-xs font-bold leading-tight truncate">
+                  {preset.name.split('·')[0].trim()}
+                </div>
+                <div
+                  className={`text-[9px] truncate ${
+                    isCurrentActive ? 'text-stone-300' : 'text-stone-500'
+                  }`}
+                >
+                  {preset.tag}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       {/* 3. The Core Respiration Visualizer Card */}
       <div className="relative editorial-card rounded-3xl p-6 sm:p-10 md:p-12 overflow-hidden flex flex-col items-center justify-center min-h-[380px] sm:min-h-[440px] bg-gradient-to-b from-stone-50/80 to-[#FAF8F5]">
@@ -628,6 +803,13 @@ export const FocusedBreathing: React.FC<FocusedBreathingProps> = ({
           <span>来源依据：{technique.scientificOrigin}</span>
         </div>
       </div>
+
+      {/* 6. Modal Ambient Audio Library */}
+      <MeditationAudioLibrary
+        variant="modal"
+        isOpen={isAudioLibraryOpen}
+        onClose={() => setIsAudioLibraryOpen(false)}
+      />
     </div>
   );
 };

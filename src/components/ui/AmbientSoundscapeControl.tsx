@@ -15,6 +15,7 @@ import {
   Headphones,
   Sliders,
   Check,
+  Radio,
 } from 'lucide-react';
 import { ambientSound, SOUNDSCAPE_PRESETS, SoundscapeInfo } from '../../utils/ambientSoundEngine';
 import { gameAudio } from '../../utils/gameAudio';
@@ -87,6 +88,8 @@ export const AmbientSoundscapeControl: React.FC<AmbientSoundscapeControlProps> =
         return <Compass className={className} />;
       case 'rain':
         return <CloudRain className={className} />;
+      case 'whitenoise':
+        return <Radio className={className} />;
       default:
         return <Headphones className={className} />;
     }

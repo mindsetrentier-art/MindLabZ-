@@ -5,6 +5,7 @@ import { doc, getDocFromServer } from 'firebase/firestore';
 import { db, diagnoseFirebaseAuthError, AuthErrorDiagnostic } from '../firebase';
 import firebaseConfig from '../../firebase-applet-config.json';
 import { useApp } from '../context/AppContext';
+import { OverlappingCardStack } from '../components/ui/OverlappingCardStack';
 
 const GOAL_OPTIONS = [
   '空间与序列记忆 (Memory)',
@@ -675,6 +676,33 @@ export const ProfilePage: React.FC = () => {
             </button>
           </div>
         )}
+      </section>
+
+      {/* Overlapping Card Stack Deck: 个人资料与荣誉成就卡片 */}
+      <section className="editorial-card rounded-2xl p-7 sm:p-9 space-y-4 bg-white border border-stone-200">
+        <div className="pb-2 border-b border-stone-200/80">
+          <span className="editorial-kicker text-[10px] text-amber-700 font-bold block mb-0.5">
+            HONOR DECK · 重叠式卡片展馆
+          </span>
+          <h3 className="font-serif-editorial text-lg sm:text-xl font-bold text-stone-900 flex items-center gap-2">
+            <Trophy className="w-4 h-4 text-amber-600" />
+            荣誉徽章与成就卡组（1/3 叠放 · 点击依次展开）
+          </h3>
+          <p className="text-xs text-stone-500 mt-1">
+            卡片之间相互覆盖约 1/3，收起时显示前 3 张及剩余余量；点击后依次平滑展开并显示详细成就名称与等级，再次点击平滑收回。
+          </p>
+        </div>
+
+        <div className="pt-1">
+          <OverlappingCardStack
+            scenario="profile"
+            maxVisible={3}
+            overlapRatio={1 / 3}
+            size="md"
+            layout="row"
+            showScenarioTabs={true}
+          />
+        </div>
       </section>
 
       {/* 2. Training Goals Section */}

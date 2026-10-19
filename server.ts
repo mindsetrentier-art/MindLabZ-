@@ -674,6 +674,8 @@ ${structuredSummary || "（自由觉察内容）"}
   // Vite middleware in dev or static files in production
   if (process.env.NODE_ENV !== "production") {
     const vite = await createViteServer({
+      root: rootDir,
+      configFile: path.join(rootDir, "vite.config.ts"),
       server: { middlewareMode: true },
       appType: "spa",
     });

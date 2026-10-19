@@ -9,10 +9,19 @@ export interface SoundscapeInfo {
   tag: string;
   description: string;
   accentColor: string;
-  iconName: 'forest' | 'zen' | 'ocean' | 'cosmic' | 'rain';
+  iconName: 'forest' | 'zen' | 'ocean' | 'cosmic' | 'rain' | 'whitenoise';
 }
 
 export const SOUNDSCAPE_PRESETS: SoundscapeInfo[] = [
+  {
+    id: 'rain',
+    name: '静心细雨 · 润物无声',
+    subtitle: 'Mindful Gentle Rainfall',
+    tag: '沉浸专注',
+    description: '淅淅沥沥的屋檐细雨，阻隔外界杂音干扰，创造温润安静的心理学研习结界。',
+    accentColor: '#38BDF8',
+    iconName: 'rain',
+  },
   {
     id: 'forest',
     name: '静谧森林 · 松风鸟语',
@@ -23,13 +32,13 @@ export const SOUNDSCAPE_PRESETS: SoundscapeInfo[] = [
     iconName: 'forest',
   },
   {
-    id: 'zen',
-    name: '禅意空间 · 颂钵清音',
-    subtitle: 'Zen Temple Singing Bowl & Chime',
-    tag: '正念冥想',
-    description: '432Hz 黄金律藏音颂钵长音回荡，泛音涟漪层叠，营造深度专注与心智内省空间。',
-    accentColor: '#F59E0B',
-    iconName: 'zen',
+    id: 'whitenoise',
+    name: '纯净心流 · 柔和白噪',
+    subtitle: 'Pure Soft White & Pink Noise',
+    tag: '专注抗扰',
+    description: '平缓恒定的宽频柔和白噪音与粉红噪声，阻断周边突发杂音干扰，帮助前额叶迅速进入无干扰呼吸专注。',
+    accentColor: '#94A3B8',
+    iconName: 'whitenoise',
   },
   {
     id: 'ocean',
@@ -41,6 +50,15 @@ export const SOUNDSCAPE_PRESETS: SoundscapeInfo[] = [
     iconName: 'ocean',
   },
   {
+    id: 'zen',
+    name: '禅意空间 · 颂钵清音',
+    subtitle: 'Zen Temple Singing Bowl & Chime',
+    tag: '正念冥想',
+    description: '432Hz 黄金律藏音颂钵长音回荡，泛音涟漪层叠，营造深度专注与心智内省空间。',
+    accentColor: '#F59E0B',
+    iconName: 'zen',
+  },
+  {
     id: 'cosmic',
     name: '星空冥想 · Alpha脑波',
     subtitle: 'Cosmic Alpha Binaural Waves',
@@ -48,15 +66,6 @@ export const SOUNDSCAPE_PRESETS: SoundscapeInfo[] = [
     description: '柔和双耳差频诱导 10Hz Alpha 专注脑波，置身浩瀚星空冥想，助推高效认知训练。',
     accentColor: '#8B5CF6',
     iconName: 'cosmic',
-  },
-  {
-    id: 'rain',
-    name: '静心细雨 · 润物无声',
-    subtitle: 'Mindful Gentle Rainfall',
-    tag: '沉浸专注',
-    description: '淅淅沥沥的屋檐细雨，阻隔外界杂音干扰，创造温润安静的心理学研习结界。',
-    accentColor: '#38BDF8',
-    iconName: 'rain',
   },
 ];
 
@@ -222,18 +231,20 @@ class AmbientSoundEngine {
     }
 
     switch (id) {
+      case 'rain':
+        return this.createRainSoundscape();
       case 'forest':
         return this.createForestSoundscape();
+      case 'whitenoise':
+        return this.createWhiteNoiseSoundscape();
       case 'zen':
         return this.createZenSoundscape();
       case 'ocean':
         return this.createOceanSoundscape();
       case 'cosmic':
         return this.createCosmicSoundscape();
-      case 'rain':
-        return this.createRainSoundscape();
       default:
-        return this.createForestSoundscape();
+        return this.createRainSoundscape();
     }
   }
 
@@ -603,6 +614,57 @@ class AmbientSoundEngine {
 
     noiseSource.connect(filter);
     filter.connect(soundGain);
+    noiseSource.start();
+
+    return {
+      stop: () => {
+        try {
+          soundGain.gain.linearRampToValueAtTime(0.0001, ctx.currentTime + 0.8);
+          setTimeout(() => {
+            try {
+              noiseSource.stop();
+              soundGain.disconnect();
+            } catch {
+              // ignore
+            }
+          }, 850);
+        } catch {
+          // ignore
+        }
+      },
+    };
+  }
+
+  /**
+   * 6. PURE WHITE & PINK NOISE: Soothing wideband noise bed for deep focus & acoustic masking
+   */
+  private createWhiteNoiseSoundscape(): { stop: () => void } {
+    if (!this.ctx || !this.masterGain) return { stop: () => {} };
+    const ctx = this.ctx;
+
+    const soundGain = ctx.createGain();
+    soundGain.gain.setValueAtTime(0.001, ctx.currentTime);
+    soundGain.gain.linearRampToValueAtTime(0.32, ctx.currentTime + 1.2);
+    soundGain.connect(this.masterGain);
+
+    const noiseBuffer = this.createNoiseBuffer(5);
+    const noiseSource = ctx.createBufferSource();
+    noiseSource.buffer = noiseBuffer;
+    noiseSource.loop = true;
+
+    // Dual cascade filters to shape into warm, gentle pink-white sound without harsh hiss
+    const lowpass = ctx.createBiquadFilter();
+    lowpass.type = 'lowpass';
+    lowpass.frequency.setValueAtTime(850, ctx.currentTime);
+    lowpass.Q.setValueAtTime(0.65, ctx.currentTime);
+
+    const highpass = ctx.createBiquadFilter();
+    highpass.type = 'highpass';
+    highpass.frequency.setValueAtTime(75, ctx.currentTime);
+
+    noiseSource.connect(highpass);
+    highpass.connect(lowpass);
+    lowpass.connect(soundGain);
     noiseSource.start();
 
     return {

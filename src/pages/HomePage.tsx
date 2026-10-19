@@ -30,7 +30,7 @@ import { PsychologyLawCard } from '../components/cards/PsychologyLawCard';
 import { GameCard } from '../components/cards/GameCard';
 import { Skeleton, HomeHeroSkeleton, LawCardSkeleton, GameCardSkeleton } from '../components/ui/Skeleton';
 import { PSYCHOLOGY_GAMES } from '../data/games';
-import { OverlappingStack } from '../components/ui/OverlappingStack';
+import { OverlappingStack, OverlappingCardStack } from '../components/ui/OverlappingStack';
 import {
   OverlappingStackLabModal,
   THINKER_ITEMS,
@@ -613,22 +613,22 @@ export const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* 6. Interactive Overlapping Stack Feature: Thinker Gallery */}
+      {/* 6. Interactive Overlapping Card Stack Feature: Multiverse Knowledge Deck */}
       <section className="art-museum-mat rounded-2xl p-7 sm:p-9 space-y-6 bg-white border border-stone-200/90 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-stone-200/70">
           <div>
             <div className="flex items-center gap-2 text-xs text-stone-500 font-medium mb-1">
               <span className="editorial-kicker text-[10px] text-amber-700 font-bold tracking-widest">
-                Curatorial Stacking Component · 先驱学者
+                Interactive Overlapping Card Deck · 重叠式卡片组件
               </span>
               <span className="text-stone-300">/</span>
-              <span className="font-serif-editorial italic text-stone-600">Sequential Spread</span>
+              <span className="font-serif-editorial italic text-stone-600">1/3 叠放 · 展开显名 · 平滑收回</span>
             </div>
             <h3 className="font-serif-editorial text-lg sm:text-xl font-bold text-stone-900 tracking-tight">
-              认知学派思想家与先驱学者
+              多维认知智识卡组（覆盖 1/3 · 3 张叠放 + 剩余余量）
             </h3>
             <p className="text-xs text-stone-600 mt-1 max-w-xl leading-relaxed">
-              元素默认互相压住 1/3，尾部聚拢剩余数量。点击即可依次优雅散开并显露学者姓名，再次点击平滑收回。
+              卡片之间相互覆盖约三分之一；收起时显示前三张和 +N 剩余数量；点击后依次平滑展开并显示完整名称；再次点击平滑收回。
             </p>
           </div>
 
@@ -646,16 +646,15 @@ export const HomePage: React.FC = () => {
           </div>
         </div>
 
-        {/* Live OverlappingStack Component Instance */}
+        {/* Live OverlappingCardStack Component with all 4 scenarios */}
         <div className="pt-1">
-          <OverlappingStack
-            items={THINKER_ITEMS}
-            maxVisible={4}
+          <OverlappingCardStack
+            scenario="courses"
+            maxVisible={3}
             overlapRatio={1 / 3}
-            size="lg"
-            layout="wrap"
-            staggerMs={45}
-            showToggleHint={true}
+            size="md"
+            layout="row"
+            showScenarioTabs={true}
           />
         </div>
       </section>
