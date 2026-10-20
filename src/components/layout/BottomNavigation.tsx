@@ -12,8 +12,8 @@ export const BottomNavigation: React.FC = () => {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-40 glass-dock pb-safe transition-all">
-      <div className="flex justify-around items-center px-5 sm:px-8 md:px-10 lg:px-12 py-2.5 max-w-2xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto">
+    <nav className="fixed bottom-0 left-0 right-0 z-40 glass-dock pb-[max(0.5rem,env(safe-area-inset-bottom))] transition-all">
+      <div className="flex justify-around items-center px-2 sm:px-6 md:px-10 lg:px-12 py-1.5 sm:py-2.5 max-w-2xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
           return (
@@ -21,7 +21,7 @@ export const BottomNavigation: React.FC = () => {
               key={item.to}
               to={item.to}
               className={({ isActive }) =>
-                `flex flex-col items-center justify-center min-w-[56px] min-h-[46px] py-1 px-3 rounded-xl transition-colors duration-150 relative group ${
+                `flex flex-col items-center justify-center min-w-[50px] sm:min-w-[56px] min-h-[44px] py-1 px-2 sm:px-3 rounded-xl transition-all duration-150 relative group active:scale-95 touch-manipulation ${
                   isActive
                     ? 'text-stone-900 font-bold'
                     : 'text-stone-500 hover:text-stone-900'

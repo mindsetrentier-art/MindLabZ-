@@ -266,65 +266,66 @@ export const OverlappingStackLabModal: React.FC<OverlappingStackLabModalProps> =
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-stone-900/60 backdrop-blur-sm animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-5 bg-stone-900/60 backdrop-blur-sm animate-fadeIn"
       onClick={onClose}
     >
       <div
-        className="w-full max-w-3xl bg-[#FAF8F5] rounded-3xl shadow-2xl border border-stone-200 overflow-hidden flex flex-col max-h-[92vh]"
+        className="w-full max-w-3xl bg-[#FAF8F5] rounded-2xl sm:rounded-3xl shadow-2xl border border-stone-200 overflow-hidden flex flex-col max-h-[92vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-stone-200 bg-white">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-stone-100 flex items-center justify-center text-stone-800 shadow-2xs">
-              <Layers className="w-5 h-5 text-stone-700" />
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-stone-200 bg-white">
+          <div className="flex items-center gap-2 sm:gap-2.5 min-w-0">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-stone-100 flex items-center justify-center text-stone-800 shadow-2xs shrink-0">
+              <Layers className="w-4 h-4 sm:w-5 sm:h-5 text-stone-700" />
             </div>
-            <div>
-              <h3 className="font-serif-editorial text-base sm:text-lg font-bold text-stone-900 leading-tight">
+            <div className="min-w-0">
+              <h3 className="font-serif-editorial text-sm sm:text-base md:text-lg font-bold text-stone-900 leading-tight truncate">
                 重叠式卡片组件交互调试工坊
               </h3>
-              <p className="text-[11px] text-stone-500">
-                1/3 几何覆盖 · 收起显示前 3 张 + 尾部余量 · 点击依次展开并显示名称 · 再次点击平滑收回
+              <p className="text-[10px] sm:text-[11px] text-stone-500 truncate">
+                1/3 叠放 · 收起显示前 3 张 + 尾部余量 · 点击展开显示名称 · 再次点击平滑收回
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-xl text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors cursor-pointer"
+            className="p-1.5 sm:p-2 rounded-xl text-stone-400 hover:text-stone-700 hover:bg-stone-100 transition-colors cursor-pointer shrink-0"
+            aria-label="Close"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Modal Body */}
-        <div className="p-6 overflow-y-auto space-y-5">
+        <div className="p-3 sm:p-6 overflow-y-auto space-y-4 sm:space-y-5">
           {/* Component Mode Switcher: Card Stack vs Avatar Stack */}
-          <div className="flex items-center justify-between bg-white p-2.5 rounded-2xl border border-stone-200 shadow-2xs">
-            <span className="text-xs font-semibold text-stone-700 pl-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-white p-2 sm:p-2.5 rounded-2xl border border-stone-200 shadow-2xs">
+            <span className="text-xs font-semibold text-stone-700 pl-1 sm:pl-2">
               组件呈现形态：
             </span>
-            <div className="flex items-center gap-1.5 p-1 bg-stone-100 rounded-xl">
+            <div className="grid grid-cols-2 gap-1.5 p-1 bg-stone-100 rounded-xl w-full sm:w-auto">
               <button
                 type="button"
                 onClick={() => setComponentMode('card')}
-                className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                className={`px-2.5 sm:px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer text-center truncate ${
                   componentMode === 'card'
                     ? 'bg-white text-stone-900 shadow-xs'
                     : 'text-stone-600 hover:text-stone-900'
                 }`}
               >
-                🗂️ 重叠式卡片组件 (Card Stack)
+                🗂️ 卡片组件 (Card)
               </button>
               <button
                 type="button"
                 onClick={() => setComponentMode('avatar')}
-                className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
+                className={`px-2.5 sm:px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer text-center truncate ${
                   componentMode === 'avatar'
                     ? 'bg-white text-stone-900 shadow-xs'
                     : 'text-stone-600 hover:text-stone-900'
                 }`}
               >
-                👤 头像徽章模式 (Avatar Stack)
+                👤 头像模式 (Avatar)
               </button>
             </div>
           </div>
@@ -396,7 +397,7 @@ export const OverlappingStackLabModal: React.FC<OverlappingStackLabModalProps> =
               </label>
 
               {componentMode === 'card' ? (
-                <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                   {[
                     { key: 'courses', label: '课程分类 (Courses)', count: COURSE_CATEGORIES.length },
                     { key: 'favorites', label: '学习收藏 (Bookmarks)', count: FAVORITES_COLLECTION.length },
@@ -406,7 +407,7 @@ export const OverlappingStackLabModal: React.FC<OverlappingStackLabModalProps> =
                     <button
                       key={item.key}
                       onClick={() => setScenario(item.key as any)}
-                      className={`py-2 px-2.5 rounded-lg text-left transition-all cursor-pointer font-medium ${
+                      className={`py-2 px-2.5 rounded-lg text-left transition-all cursor-pointer font-medium active:scale-95 touch-manipulation ${
                         scenario === item.key
                           ? 'bg-stone-900 text-white shadow-xs'
                           : 'bg-stone-50 text-stone-700 hover:bg-stone-100 border border-stone-200/80'
@@ -420,7 +421,7 @@ export const OverlappingStackLabModal: React.FC<OverlappingStackLabModalProps> =
                   ))}
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                   {[
                     { key: 'thinkers', label: '心理学家巨擘', count: THINKER_ITEMS.length },
                     { key: 'biases', label: '核心心智模型', count: MENTAL_MODEL_ITEMS.length },
@@ -430,7 +431,7 @@ export const OverlappingStackLabModal: React.FC<OverlappingStackLabModalProps> =
                     <button
                       key={item.key}
                       onClick={() => setSelectedPreset(item.key as any)}
-                      className={`py-2 px-2.5 rounded-lg text-left transition-all cursor-pointer font-medium ${
+                      className={`py-2 px-2.5 rounded-lg text-left transition-all cursor-pointer font-medium active:scale-95 touch-manipulation ${
                         selectedPreset === item.key
                           ? 'bg-stone-900 text-white shadow-xs'
                           : 'bg-stone-50 text-stone-700 hover:bg-stone-100 border border-stone-200/80'

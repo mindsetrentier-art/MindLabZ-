@@ -59,24 +59,25 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
           hasTopBar={geoBarVisible}
         />
 
-        {/* Dynamic Route Content with Generous Whitespace */}
+        {/* Dynamic Route Content with Generous Responsive Spacing */}
         <main
-          className={`flex-1 w-full px-5 sm:px-8 md:px-10 lg:px-12 transition-all duration-300 ${
-            geoBarVisible ? (geoBarExpanded ? 'pt-56' : 'pt-32') : 'pt-24'
+          className={`flex-1 w-full px-3.5 sm:px-6 md:px-10 lg:px-12 transition-all duration-300 ${
+            geoBarVisible ? (geoBarExpanded ? 'pt-64' : 'pt-24 sm:pt-28') : 'pt-16 sm:pt-20'
           }`}
         >
           {children}
         </main>
 
-        {/* Floating Action Button: AI Tutor Editorial Jewel (Restrained, Tasteful) */}
+        {/* Floating Action Button: AI Tutor Editorial Jewel (Mobile-Adaptive) */}
         {!isPlayingGame && (
           <button
             onClick={() => setAiTutorOpen(true)}
-            className="fixed right-6 md:right-10 bottom-24 z-30 group flex items-center gap-2 px-4 py-2.5 rounded-full chameleon-btn transition-all btn-tactile shadow-md"
+            className="fixed right-4 sm:right-6 md:right-10 bottom-20 sm:bottom-24 z-30 group flex items-center justify-center gap-1.5 sm:gap-2 w-11 h-11 sm:w-auto sm:h-auto sm:px-4 sm:py-2.5 rounded-full chameleon-btn transition-all btn-tactile shadow-lg border border-white/20 active:scale-95 cursor-pointer"
             title="咨询 AI 认知导师"
+            aria-label="咨询 AI 认知导师"
           >
-            <Sparkles className="w-4 h-4" />
-            <span className="text-xs font-semibold tracking-wide">AI 认知导师</span>
+            <Sparkles className="w-4 h-4 shrink-0" />
+            <span className="text-xs font-semibold tracking-wide hidden sm:inline">AI 认知导师</span>
           </button>
         )}
 

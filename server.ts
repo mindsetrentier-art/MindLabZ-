@@ -417,16 +417,19 @@ ${structuredSummary || "（自由觉察内容）"}
         return res.status(400).json({ error: "Valid latitude and longitude are required" });
       }
 
-      // Parallel fetch: Open-Meteo real-time weather + BigDataCloud/Nominatim reverse geocoding
-      const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,weather_code,wind_speed_10m&timezone=auto`;
+      // Parallel fetch: Open-Meteo 7-day weather + Air Quality/Pollution/Pollen + Reverse Geocoding
+      const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,wind_speed_10m_max,precipitation_probability_max,uv_index_max&timezone=auto`;
+      const airQualityUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=european_aqi,us_aqi,pm10,pm2_5,nitrogen_dioxide,ozone,sulphur_dioxide,alder_pollen,birch_pollen,grass_pollen,olive_pollen,ragweed_pollen,mugwort_pollen&timezone=auto`;
       const geoUrl = `https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=fr`;
 
-      const [weatherResp, geoResp] = await Promise.allSettled([
+      const [weatherResp, airResp, geoResp] = await Promise.allSettled([
         fetch(weatherUrl).then((r) => (r.ok ? r.json() : null)),
+        fetch(airQualityUrl).then((r) => (r.ok ? r.json() : null)),
         fetch(geoUrl).then((r) => (r.ok ? r.json() : null)),
       ]);
 
       const weatherData = weatherResp.status === "fulfilled" ? weatherResp.value : null;
+      const airData = airResp.status === "fulfilled" ? airResp.value : null;
       const geoData = geoResp.status === "fulfilled" ? geoResp.value : null;
 
       let mapsSummary: string | null = null;
@@ -467,14 +470,30 @@ ${structuredSummary || "（自由觉察内容）"}
                 });
               }
             }
-          } catch (mapsErr) {
-            console.warn("Maps grounding optional enrichment skipped:", mapsErr);
+          } catch (_mapsErr) {
+            // Graceful fallback if Gemini API quota is reached or network unavailable
+            if (!mapsSummary && geoData) {
+              const locality = geoData.locality || geoData.city;
+              const country = geoData.countryName;
+              if (locality) {
+                mapsSummary = `Coordonnées GPS synchronisées à ${locality}${country ? `, ${country}` : ''}.`;
+              }
+            }
           }
         }
       }
 
+      if (mapsLinks.length === 0) {
+        mapsLinks.push({
+          title: "Explorer la position sur Google Maps",
+          uri: `https://www.google.com/maps/search/?api=1&query=${lat},${lon}`,
+        });
+      }
+
       return res.json({
         weather: weatherData?.current || null,
+        daily: weatherData?.daily || null,
+        airQuality: airData?.current || null,
         timezone: weatherData?.timezone || null,
         geo: geoData || null,
         mapsSummary,

@@ -63,7 +63,7 @@ export const ChameleonColorControl: React.FC = () => {
 
       {/* Discreet Popover for inspecting the 240 colors (Dark, Fluo, Spectrum) */}
       {open && (
-        <div className="absolute right-0 mt-2 w-80 sm:w-88 rounded-2xl bg-white/92 backdrop-blur-[20px] border border-[#DDD6FE] shadow-[0_18px_48px_-8px_rgba(24,24,27,0.18)] p-3.5 z-50 animate-fadeIn">
+        <div className="fixed sm:absolute right-3 sm:right-0 top-16 sm:top-full mt-2 w-[calc(100vw-24px)] max-w-sm sm:w-88 rounded-2xl bg-white/95 backdrop-blur-[20px] border border-[#DDD6FE] shadow-[0_18px_48px_-8px_rgba(24,24,27,0.18)] p-3.5 z-50 animate-fadeIn max-h-[85vh] overflow-y-auto">
           {/* Header */}
           <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-[#EDE9FE]">
             <div className="flex items-center gap-2">

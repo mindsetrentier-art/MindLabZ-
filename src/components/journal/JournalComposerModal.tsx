@@ -252,15 +252,15 @@ export const JournalComposerModal: React.FC<JournalComposerModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 md:p-6 bg-stone-900/60 backdrop-blur-md animate-fadeIn overflow-y-auto"
+      className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-5 md:p-6 bg-stone-900/60 backdrop-blur-md animate-fadeIn overflow-y-auto"
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-3xl my-auto bg-[#FAF8F5] rounded-2xl shadow-2xl border border-stone-200 overflow-hidden flex flex-col max-h-[92vh]"
+        className="relative w-full max-w-3xl my-auto bg-[#FAF8F5] rounded-2xl shadow-2xl border border-stone-200 overflow-hidden flex flex-col max-h-[94vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top Folio Header */}
-        <div className="px-6 sm:px-8 py-5 border-b border-stone-200 bg-white flex items-center justify-between shrink-0">
+        <div className="px-4 sm:px-8 py-4 sm:py-5 border-b border-stone-200 bg-white flex items-center justify-between shrink-0">
           <div>
             <div className="flex items-center gap-2">
               <span className="editorial-kicker text-[10px]">
@@ -271,14 +271,14 @@ export const JournalComposerModal: React.FC<JournalComposerModalProps> = ({
                 {firebaseUser ? 'Firestore Cloud Synced' : 'Local Storage Mode'}
               </span>
             </div>
-            <h2 className="font-serif-editorial text-xl sm:text-2xl font-bold text-stone-900 tracking-tight mt-0.5">
+            <h2 className="font-serif-editorial text-lg sm:text-2xl font-bold text-stone-900 tracking-tight mt-0.5">
               {initialEntry?.id ? '编辑心智手记' : '撰写认知觉察手记'}
             </h2>
           </div>
 
           <button
             onClick={onClose}
-            className="w-9 h-9 rounded-full flex items-center justify-center bg-stone-100 hover:bg-stone-200 text-stone-600 transition-colors btn-tactile"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center bg-stone-100 hover:bg-stone-200 text-stone-600 transition-colors btn-tactile cursor-pointer shrink-0"
             aria-label="关闭"
           >
             <X className="w-4 h-4" />
@@ -286,7 +286,7 @@ export const JournalComposerModal: React.FC<JournalComposerModalProps> = ({
         </div>
 
         {/* Scrollable Form Body */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 sm:p-8 space-y-8">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-8 space-y-6 sm:space-y-8">
           {errorMsg && (
             <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
               <Info className="w-4 h-4 shrink-0 text-rose-600" />

@@ -679,7 +679,7 @@ export const ProfilePage: React.FC = () => {
       </section>
 
       {/* Overlapping Card Stack Deck: 个人资料与荣誉成就卡片 */}
-      <section className="editorial-card rounded-2xl p-7 sm:p-9 space-y-4 bg-white border border-stone-200">
+      <section className="editorial-card rounded-2xl p-4 sm:p-7 md:p-9 space-y-4 bg-white border border-stone-200">
         <div className="pb-2 border-b border-stone-200/80">
           <span className="editorial-kicker text-[10px] text-amber-700 font-bold block mb-0.5">
             HONOR DECK · 重叠式卡片展馆

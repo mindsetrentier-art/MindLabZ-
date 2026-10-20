@@ -117,12 +117,12 @@ export const HomePage: React.FC = () => {
           mainTitle="MINDLABZ"
           subtitle="智 心 堂 · 认知艺术典藏"
           tagline="ISSUE NO. 100 · THE ARCHITECTURE OF MIND"
-          heightClass="min-h-[190vh]"
+          heightClass="min-h-[125vh] sm:min-h-[180vh]"
         />
       </section>
 
       {/* 1. Grand Museum Salon Cover & Curatorial Hero */}
-      <section className="relative rounded-3xl overflow-hidden art-salon-canvas p-7 sm:p-10 md:p-12 text-white shadow-2xl transition-all">
+      <section className="relative rounded-3xl overflow-hidden art-salon-canvas p-5 sm:p-8 md:p-12 text-white shadow-2xl transition-all">
         {/* Decorative Golden Fibonacci & Celestial Geometry */}
         <div className="absolute inset-0 opacity-10 pointer-events-none overflow-hidden">
           <svg className="w-full h-full" viewBox="0 0 900 450" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -614,7 +614,7 @@ export const HomePage: React.FC = () => {
       </section>
 
       {/* 6. Interactive Overlapping Card Stack Feature: Multiverse Knowledge Deck */}
-      <section className="art-museum-mat rounded-2xl p-7 sm:p-9 space-y-6 bg-white border border-stone-200/90 shadow-sm">
+      <section className="art-museum-mat rounded-2xl p-4 sm:p-7 md:p-9 space-y-5 sm:space-y-6 bg-white border border-stone-200/90 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-stone-200/70">
           <div>
             <div className="flex items-center gap-2 text-xs text-stone-500 font-medium mb-1">

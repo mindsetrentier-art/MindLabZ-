@@ -1,4 +1,4 @@
-import React, { useState, useId } from 'react';
+import React, { useState, useEffect, useId } from 'react';
 import {
   Layers,
   ChevronRight,
@@ -496,6 +496,19 @@ export const OverlappingCardStack: React.FC<OverlappingCardStackProps> = ({
   const [selectedCard, setSelectedCard] = useState<OverlappingCardItem | null>(null);
   const componentId = useId();
 
+  // Responsive mobile screen detection
+  const [isMobile, setIsMobile] = useState(() =>
+    typeof window !== 'undefined' ? window.innerWidth < 640 : false
+  );
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 640);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Determine current active dataset
   const currentScenarioConfig = SCENARIO_PRESETS[activeScenario];
   const items = customItems || currentScenarioConfig.items;
@@ -509,9 +522,10 @@ export const OverlappingCardStack: React.FC<OverlappingCardStackProps> = ({
   const hasRemainder = !isExpanded && remainingCount > 0;
 
   const config = SIZE_CONFIGS[size];
-  // Overlap calculation: each card covers approximately one-third (1/3) of previous card
-  // Overlap distance in px = cardWidth * overlapRatio
-  const overlapDistancePx = Math.round(config.cardWidth * overlapRatio);
+  // Responsive card dimension: 126px on mobile, config.cardWidth on desktop
+  const effectiveCardWidth = isMobile ? 126 : config.cardWidth;
+  // Overlap calculation: strictly 1/3 of card width!
+  const overlapDistancePx = Math.round(effectiveCardWidth * overlapRatio);
 
   const handleToggle = (e?: React.MouseEvent) => {
     e?.stopPropagation();
@@ -551,7 +565,7 @@ export const OverlappingCardStack: React.FC<OverlappingCardStackProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         {/* Scenario Switcher Tabs */}
         {showScenarioTabs && !customItems && (
-          <div className="flex items-center gap-1 p-1 bg-stone-100/90 rounded-xl border border-stone-200/80 shadow-2xs overflow-x-auto scrollbar-none">
+          <div className="flex items-center gap-1.5 p-1 bg-stone-100/90 rounded-xl border border-stone-200/80 shadow-2xs overflow-x-auto no-scrollbar max-w-full touch-pan-x shrink-0">
             {(
               [
                 { key: 'courses', label: '课程分类' },
@@ -566,7 +580,7 @@ export const OverlappingCardStack: React.FC<OverlappingCardStackProps> = ({
                   key={tab.key}
                   type="button"
                   onClick={() => handleScenarioChange(tab.key)}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer whitespace-nowrap ${
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg transition-all cursor-pointer whitespace-nowrap active:scale-95 touch-manipulation ${
                     active
                       ? 'bg-white text-stone-900 shadow-xs border border-stone-200/80'
                       : 'text-stone-600 hover:text-stone-900 hover:bg-stone-200/50'
@@ -593,11 +607,11 @@ export const OverlappingCardStack: React.FC<OverlappingCardStackProps> = ({
         <button
           type="button"
           onClick={handleToggle}
-          className="inline-flex items-center gap-2 self-start sm:self-auto px-3.5 py-1.5 text-xs font-semibold text-stone-800 bg-stone-100 hover:bg-stone-200/80 border border-stone-200/90 rounded-xl transition-all cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-3.5 py-2 sm:py-1.5 text-xs font-semibold text-stone-800 bg-stone-100 hover:bg-stone-200/80 border border-stone-200/90 rounded-xl transition-all cursor-pointer shadow-2xs hover:shadow-xs active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-400 touch-manipulation"
           aria-expanded={isExpanded}
           aria-label={isExpanded ? '点击平滑收回重叠卡片' : '点击依次展开卡片并显示名称'}
         >
-          <Layers className="w-3.5 h-3.5 text-stone-600" />
+          <Layers className="w-3.5 h-3.5 text-stone-600 shrink-0" />
           <span>
             {isExpanded
               ? '再次点击平滑收回 (1/3重叠)'
@@ -617,23 +631,23 @@ export const OverlappingCardStack: React.FC<OverlappingCardStackProps> = ({
       <div
         role="region"
         aria-label="重叠式卡片交互展示区"
-        className={`relative p-3 sm:p-4 rounded-3xl transition-all duration-400 border ${
+        className={`relative p-3 sm:p-4 rounded-2xl sm:rounded-3xl transition-all duration-400 border ${
           isExpanded
             ? 'bg-stone-50/80 border-stone-200/80 shadow-xs'
             : 'bg-stone-50/40 border-stone-200/50 hover:bg-stone-50/70 hover:border-stone-300/80'
         }`}
       >
         {/* Instruction subtext */}
-        <div className="flex items-center justify-between text-[11px] text-stone-500 mb-3 px-1">
-          <div className="flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-stone-400" />
-            <span>
+        <div className="flex items-center justify-between text-[11px] text-stone-500 mb-2.5 px-1">
+          <div className="flex items-center gap-1.5 min-w-0">
+            <span className="w-1.5 h-1.5 rounded-full bg-stone-400 shrink-0" />
+            <span className="truncate">
               {isExpanded
-                ? '已全部展开 · 再次点击任意空白处或收起按钮平滑收拢'
-                : '当前重叠 1/3 · 展示前 3 张 + 剩余卡片 · 点击展开'}
+                ? '已展开全部卡片 · 再次点击平滑收回'
+                : '1/3 重叠覆盖 · 前 3 张 + 剩余卡片 · 点击展开'}
             </span>
           </div>
-          <span className="text-[10px] font-mono text-stone-400">
+          <span className="text-[10px] font-mono text-stone-400 shrink-0 ml-2">
             {isExpanded ? `EXPANDED · ${totalCount}` : `COLLAPSED · 3 + ${Math.max(0, remainingCount)}`}
           </span>
         </div>
@@ -648,9 +662,9 @@ export const OverlappingCardStack: React.FC<OverlappingCardStackProps> = ({
           className={`relative transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] cursor-pointer ${
             isExpanded
               ? layout === 'wrap'
-                ? 'flex flex-wrap gap-4 sm:gap-5'
-                : 'flex flex-row overflow-x-auto pb-4 gap-4 scrollbar-none items-stretch'
-              : 'flex flex-row items-center overflow-x-auto sm:overflow-visible pb-2'
+                ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4.5 w-full'
+                : 'flex flex-row overflow-x-auto pb-4 gap-3 sm:gap-4 scrollbar-none items-stretch touch-pan-x'
+              : 'flex flex-row items-center overflow-x-auto scrollbar-none pb-2.5 pt-1 touch-pan-x'
           }`}
         >
           {visibleCards.map((card, index) => {
@@ -685,15 +699,19 @@ export const OverlappingCardStack: React.FC<OverlappingCardStackProps> = ({
                   zIndex: isExpanded ? 10 : index + 1,
                   transitionDelay: `${transitionDelayMs}ms`,
                 }}
-                className={`group relative rounded-2xl transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] shrink-0 flex flex-col justify-between overflow-hidden shadow-sm border border-black/10 select-none ${
-                  config.widthClass
-                } ${config.heightClass} ${config.paddingClass} ${
+                className={`group relative rounded-2xl transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] shrink-0 flex flex-col justify-between overflow-hidden shadow-sm border border-black/10 select-none touch-manipulation ${
+                  isExpanded && layout === 'wrap'
+                    ? 'w-full min-h-[190px] sm:min-h-[220px] p-4 sm:p-5'
+                    : isMobile
+                    ? 'w-[126px] min-w-[126px] h-[184px] p-3'
+                    : `${config.widthClass} ${config.heightClass} ${config.paddingClass}`
+                } ${
                   card.colorGradient || 'bg-gradient-to-br from-stone-800 to-stone-950 text-white'
                 } ${
                   isHovered && !isExpanded
                     ? 'scale-105 -translate-y-2 shadow-xl z-40 ring-2 ring-white/60'
                     : isHovered && isExpanded
-                    ? 'scale-[1.03] -translate-y-1 shadow-lg ring-2 ring-stone-900/30'
+                    ? 'scale-[1.02] -translate-y-1 shadow-lg ring-2 ring-stone-900/30'
                     : ''
                 }`}
               >
@@ -714,7 +732,7 @@ export const OverlappingCardStack: React.FC<OverlappingCardStackProps> = ({
                     </span>
                   </div>
 
-                  <div className="w-8 h-8 rounded-xl bg-white/15 backdrop-blur-xs flex items-center justify-center shrink-0 border border-white/20 shadow-2xs">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-white/15 backdrop-blur-xs flex items-center justify-center shrink-0 border border-white/20 shadow-2xs">
                     {card.icon}
                   </div>
                 </div>
@@ -722,14 +740,18 @@ export const OverlappingCardStack: React.FC<OverlappingCardStackProps> = ({
                 {/* Card Middle: Primary Name (名称) & Subname */}
                 <div className="relative z-10 space-y-1 my-auto">
                   <h4
-                    className={`font-serif-editorial leading-snug tracking-tight text-white ${config.titleClass}`}
+                    className={`font-serif-editorial leading-snug tracking-tight text-white ${
+                      isMobile ? 'text-xs font-bold' : config.titleClass
+                    }`}
                   >
                     {card.name}
                   </h4>
 
                   {card.subname && (
                     <p
-                      className={`text-white/80 font-sans tracking-normal font-normal line-clamp-1 ${config.subnameClass}`}
+                      className={`text-white/80 font-sans tracking-normal font-normal line-clamp-1 ${
+                        isMobile ? 'text-[9.5px]' : config.subnameClass
+                      }`}
                     >
                       {card.subname}
                     </p>
@@ -742,17 +764,19 @@ export const OverlappingCardStack: React.FC<OverlappingCardStackProps> = ({
                     }}
                     className={`transition-all duration-400 ease-out ${
                       isExpanded
-                        ? 'opacity-90 max-h-20 translate-y-0 mt-2 text-white/85'
+                        ? 'opacity-90 max-h-24 translate-y-0 mt-2 text-white/85'
                         : 'opacity-0 max-h-0 -translate-y-2 pointer-events-none overflow-hidden'
                     }`}
                   >
-                    <p className={config.descClass}>{card.description}</p>
+                    <p className={isMobile ? 'text-[10px] line-clamp-3' : config.descClass}>
+                      {card.description}
+                    </p>
                   </div>
                 </div>
 
                 {/* Card Bottom: Badge or Meta Tag */}
                 <div className="relative z-10 pt-2 border-t border-white/15 flex items-center justify-between text-[10px]">
-                  <span className="font-medium text-white/90 truncate max-w-[110px]">
+                  <span className="font-medium text-white/90 truncate max-w-[85px] sm:max-w-[110px]">
                     {card.badge || card.meta}
                   </span>
 
@@ -788,24 +812,26 @@ export const OverlappingCardStack: React.FC<OverlappingCardStackProps> = ({
                 marginLeft: `-${overlapDistancePx}px`,
                 zIndex: maxVisible + 1,
               }}
-              className={`group relative rounded-2xl flex flex-col items-center justify-center p-3 transition-all duration-300 hover:scale-105 -translate-y-0 hover:-translate-y-1 cursor-pointer bg-white border border-stone-300/90 shadow-md shrink-0 ${
-                config.widthClass
-              } ${config.heightClass}`}
+              className={`group relative rounded-2xl flex flex-col items-center justify-center transition-all duration-300 hover:scale-105 active:scale-95 cursor-pointer bg-white border border-stone-300/90 shadow-md shrink-0 touch-manipulation ${
+                isMobile
+                  ? 'w-[126px] min-w-[126px] h-[184px] p-2.5'
+                  : `${config.widthClass} ${config.heightClass} p-3`
+              }`}
               title={`点击展开剩余 ${remainingCount} 张卡片并显示名称`}
             >
-              <div className="w-11 h-11 rounded-full bg-stone-100 flex items-center justify-center text-stone-700 font-bold font-numeric text-base group-hover:bg-stone-900 group-hover:text-white transition-colors shadow-2xs border border-stone-200">
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-stone-100 flex items-center justify-center text-stone-700 font-bold font-numeric text-sm sm:text-base group-hover:bg-stone-900 group-hover:text-white transition-colors shadow-2xs border border-stone-200">
                 +{remainingCount}
               </div>
 
-              <span className="text-xs font-bold text-stone-900 mt-2.5">
+              <span className="text-[11px] sm:text-xs font-bold text-stone-900 mt-2 text-center">
                 +{remainingCount} 剩余未展
               </span>
 
-              <span className="text-[10px] text-stone-500 font-medium text-center mt-1">
+              <span className="text-[9.5px] sm:text-[10px] text-stone-500 font-medium text-center mt-0.5">
                 点击依次展开
               </span>
 
-              <span className="mt-3 px-2 py-0.5 rounded-full bg-stone-100 text-stone-700 text-[9px] font-medium border border-stone-200 group-hover:bg-stone-200">
+              <span className="mt-2 sm:mt-3 px-2 py-0.5 rounded-full bg-stone-100 text-stone-700 text-[8.5px] sm:text-[9px] font-medium border border-stone-200 group-hover:bg-stone-200">
                 1/3 叠层
               </span>
             </div>
@@ -818,13 +844,17 @@ export const OverlappingCardStack: React.FC<OverlappingCardStackProps> = ({
               style={{
                 transitionDelay: `${visibleCards.length * 45}ms`,
               }}
-              className={`group relative rounded-2xl flex flex-col items-center justify-center p-4 transition-all duration-400 ease-out border border-dashed border-stone-300 hover:border-stone-900/60 bg-white/70 hover:bg-stone-100/90 text-stone-700 shrink-0 cursor-pointer ${
-                config.widthClass
-              } ${config.heightClass}`}
+              className={`group relative rounded-2xl flex flex-col items-center justify-center p-4 transition-all duration-400 ease-out border border-dashed border-stone-300 hover:border-stone-900/60 bg-white/70 hover:bg-stone-100/90 text-stone-700 shrink-0 cursor-pointer touch-manipulation active:scale-95 ${
+                layout === 'wrap'
+                  ? 'w-full min-h-[140px] sm:min-h-[190px]'
+                  : isMobile
+                  ? 'w-[126px] min-w-[126px] h-[184px]'
+                  : `${config.widthClass} ${config.heightClass}`
+              }`}
               title="再次点击平滑收回重叠卡片"
             >
-              <div className="w-10 h-10 rounded-full bg-stone-200 group-hover:bg-stone-900 group-hover:text-white flex items-center justify-center transition-colors shadow-2xs mb-2">
-                <ChevronLeft className="w-5 h-5" />
+              <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-stone-200 group-hover:bg-stone-900 group-hover:text-white flex items-center justify-center transition-colors shadow-2xs mb-2">
+                <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
               </div>
               <span className="text-xs font-bold text-stone-900">平滑收回叠放</span>
               <span className="text-[10px] text-stone-500 text-center mt-1">
