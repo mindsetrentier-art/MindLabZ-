@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { AppProvider, useApp } from './context/AppContext';
 import { ThemeColorProvider } from './context/ThemeColorContext';
+import { BiometricLockProvider, useBiometricLock } from './context/BiometricLockContext';
 import { AppShell } from './components/layout/AppShell';
 import { HomePage } from './pages/HomePage';
 import { LearnPage } from './pages/LearnPage';
@@ -21,6 +22,7 @@ import { FocusedBreathingModal } from './components/breathing/FocusedBreathingMo
 import { GoogleAuthModal } from './components/auth/GoogleAuthModal';
 import { PwaInstallModal } from './components/pwa/PwaInstallModal';
 import { PwaUpdateToast } from './components/pwa/PwaUpdateToast';
+import { BiometricSetupModal } from './components/journal/BiometricSetupModal';
 
 const AppRoutes: React.FC = () => {
   const navigate = useNavigate();
@@ -35,6 +37,7 @@ const AppRoutes: React.FC = () => {
     pwaModalOpen,
     setPwaModalOpen,
   } = useApp();
+  const { showSetupModal, setShowSetupModal } = useBiometricLock();
   const [showOnboarding, setShowOnboarding] = useState(false);
 
   // Seamless 404 Recovery: Check for redirect query params or session storage from static hosting
@@ -87,6 +90,11 @@ const AppRoutes: React.FC = () => {
 
       <GoogleAuthModal />
 
+      <BiometricSetupModal
+        isOpen={showSetupModal}
+        onClose={() => setShowSetupModal(false)}
+      />
+
       <PwaInstallModal
         isOpen={pwaModalOpen}
         onClose={() => setPwaModalOpen(false)}
@@ -105,7 +113,9 @@ export default function App() {
     <BrowserRouter>
       <ThemeColorProvider>
         <AppProvider>
-          <AppRoutes />
+          <BiometricLockProvider>
+            <AppRoutes />
+          </BiometricLockProvider>
         </AppProvider>
       </ThemeColorProvider>
     </BrowserRouter>

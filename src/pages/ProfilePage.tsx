@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Flame, Star, Trophy, Bookmark, Settings, RotateCcw, Sparkles, Shield, ShieldCheck, Heart, HelpCircle, Check, Info, Cloud, LogIn, LogOut, CheckCircle2, Database, RefreshCw, ExternalLink, KeyRound, Users, UserPlus, Copy, PenLine, ArrowRight } from 'lucide-react';
+import { User, Flame, Star, Trophy, Bookmark, Settings, RotateCcw, Sparkles, Shield, ShieldCheck, Heart, HelpCircle, Check, Info, Cloud, LogIn, LogOut, CheckCircle2, Database, RefreshCw, ExternalLink, KeyRound, Users, UserPlus, Copy, PenLine, ArrowRight, Lock, Unlock, Fingerprint, ScanFace } from 'lucide-react';
 import { doc, getDocFromServer } from 'firebase/firestore';
 import { db, diagnoseFirebaseAuthError, AuthErrorDiagnostic } from '../firebase';
 import firebaseConfig from '../../firebase-applet-config.json';
 import { useApp } from '../context/AppContext';
+import { useBiometricLock } from '../context/BiometricLockContext';
 import { OverlappingCardStack } from '../components/ui/OverlappingCardStack';
+import { setupNetlifyBadgeRemover } from '../utils/netlifyBadgeRemover';
 
 const GOAL_OPTIONS = [
   '空间与序列记忆 (Memory)',
@@ -55,6 +57,44 @@ export const ProfilePage: React.FC = () => {
   const [dbPingStatus, setDbPingStatus] = useState<'idle' | 'testing' | 'online' | 'error'>('idle');
   const [dbPingLatency, setDbPingLatency] = useState<number | null>(null);
   const [showFirebaseGuide, setShowFirebaseGuide] = useState<boolean>(true);
+
+  // Biometric Lock Context & state
+  const {
+    isSupported: isBiometricSupported,
+    isPlatformAvailable: isBiometricPlatformAvailable,
+    biometricLabel,
+    biometricIcon,
+    isEnabled: isBiometricEnabled,
+    isLocked: isBiometricLocked,
+    hasCredential,
+    hasFallbackPin,
+    autoLockSetting,
+    setAutoLockSetting,
+    lockVault,
+    unlockVault,
+    unlockWithBiometrics,
+    disableBiometricLock,
+    updateFallbackPin,
+    testBiometricPrompt,
+    setShowSetupModal,
+  } = useBiometricLock();
+
+  const [testStatus, setTestStatus] = useState<{
+    testing: boolean;
+    message: string | null;
+    success?: boolean;
+  }>({ testing: false, message: null });
+  const [showChangePinModal, setShowChangePinModal] = useState(false);
+  const [showDisableConfirmModal, setShowDisableConfirmModal] = useState(false);
+  const [disablePinInput, setDisablePinInput] = useState('');
+  const [disablePinError, setDisablePinError] = useState<string | null>(null);
+
+  const [oldPinInput, setOldPinInput] = useState('');
+  const [newPinInput, setNewPinInput] = useState('');
+  const [confirmNewPinInput, setConfirmNewPinInput] = useState('');
+  const [changePinError, setChangePinError] = useState<string | null>(null);
+  const [changePinSuccess, setChangePinSuccess] = useState<string | null>(null);
+  const [netlifyCleanSuccess, setNetlifyCleanSuccess] = useState<boolean>(false);
 
   const currentHostname = typeof window !== 'undefined' ? window.location.hostname : '';
 
@@ -143,6 +183,58 @@ export const ProfilePage: React.FC = () => {
   const handleLogout = async () => {
     setAuthDiagnostic(null);
     await logout();
+  };
+
+  const handleTestBiometrics = async () => {
+    setTestStatus({ testing: true, message: null });
+    const res = await testBiometricPrompt();
+    setTestStatus({ testing: false, message: res.message, success: res.success });
+    if (res.success) {
+      triggerConfetti();
+    }
+  };
+
+  const handleDisableConfirm = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setDisablePinError(null);
+    const ok = await disableBiometricLock(disablePinInput);
+    if (ok) {
+      setShowDisableConfirmModal(false);
+      setDisablePinInput('');
+      setDisablePinError(null);
+      triggerConfetti();
+    } else {
+      setDisablePinError('密码验证错误，无法停用隐私保护。');
+    }
+  };
+
+  const handleChangePinSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setChangePinError(null);
+    setChangePinSuccess(null);
+    if (newPinInput.length < 4) {
+      setChangePinError('新密码至少需要 4 位字符');
+      return;
+    }
+    if (newPinInput !== confirmNewPinInput) {
+      setChangePinError('两次输入的新密码不一致，请核对');
+      return;
+    }
+    const ok = await updateFallbackPin(oldPinInput, newPinInput);
+    if (ok) {
+      setChangePinSuccess('备用安全密码已成功修改');
+      triggerConfetti();
+      setTimeout(() => {
+        setShowChangePinModal(false);
+        setOldPinInput('');
+        setNewPinInput('');
+        setConfirmNewPinInput('');
+        setChangePinError(null);
+        setChangePinSuccess(null);
+      }, 1200);
+    } else {
+      setChangePinError('原安全密码验证失败，请重新输入');
+    }
   };
 
   return (
@@ -678,6 +770,291 @@ export const ProfilePage: React.FC = () => {
         )}
       </section>
 
+      {/* Biometric Privacy Vault & WebAuthn Section */}
+      <section className="editorial-card rounded-2xl p-7 sm:p-9 space-y-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-stone-200/80">
+          <div>
+            <span className="editorial-kicker text-[10px] text-stone-500 block mb-0.5">
+              W3C WEBAUTHN SPECIFICATION · 芯片级隐私安全隔区
+            </span>
+            <h3 className="font-serif-editorial text-lg sm:text-xl font-bold text-stone-900 flex items-center gap-2">
+              {biometricIcon === 'faceid' ? (
+                <ScanFace className="w-5 h-5 text-indigo-700" />
+              ) : (
+                <Fingerprint className="w-5 h-5 text-indigo-700" />
+              )}
+              <span>心智手记生物识别保险箱 ({biometricLabel})</span>
+            </h3>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {isBiometricEnabled ? (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 shadow-2xs">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                已开启实时防护
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-stone-100 text-stone-600 border border-stone-200">
+                未启用保护
+              </span>
+            )}
+          </div>
+        </div>
+
+        <p className="text-xs text-stone-600 leading-relaxed">
+          采用现代 Web Authentication (WebAuthn) API 规范，将心理觉察与认知日记锁定于您本机的硬件芯片中。支持 Apple Face ID、Touch ID、Windows Hello 或指纹传感器验证，防止未经授权的翻阅。
+        </p>
+
+        {/* Status & Quick Diagnostic Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          {/* Card 1: Hardware Authenticator */}
+          <div className="p-4 rounded-xl bg-[#FAF8F5] border border-stone-200/90 space-y-1.5">
+            <div className="flex items-center justify-between text-stone-500 text-[10px] font-mono">
+              <span>HARDWARE SENSOR</span>
+              <ShieldCheck className={`w-3.5 h-3.5 ${isBiometricPlatformAvailable ? 'text-emerald-600' : 'text-stone-400'}`} />
+            </div>
+            <div className="font-serif-editorial font-bold text-sm text-stone-900">
+              {isBiometricPlatformAvailable ? `支持 ${biometricLabel}` : '数字安全 PIN 码模式'}
+            </div>
+            <div className="text-[11px] text-stone-500">
+              {isBiometricPlatformAvailable
+                ? '检测到本机芯片安全隔区 (Secure Enclave / TPM)'
+                : '设备未检测到平台生物传感器，使用加盐密码保护'}
+            </div>
+          </div>
+
+          {/* Card 2: Vault Lock Status */}
+          <div className="p-4 rounded-xl bg-[#FAF8F5] border border-stone-200/90 space-y-1.5">
+            <div className="flex items-center justify-between text-stone-500 text-[10px] font-mono">
+              <span>CURRENT STATUS</span>
+              {isBiometricEnabled ? (
+                isBiometricLocked ? (
+                  <Lock className="w-3.5 h-3.5 text-amber-600" />
+                ) : (
+                  <Unlock className="w-3.5 h-3.5 text-emerald-600" />
+                )
+              ) : (
+                <Lock className="w-3.5 h-3.5 text-stone-400" />
+              )}
+            </div>
+            <div className="font-serif-editorial font-bold text-sm text-stone-900">
+              {isBiometricEnabled
+                ? isBiometricLocked
+                  ? '已处于锁定状态'
+                  : '已解锁 (活动会话)'
+                : '未锁定 (开放状态)'}
+            </div>
+            <div className="text-[11px] text-stone-500">
+              {isBiometricEnabled
+                ? isBiometricLocked
+                  ? '需生物或 PIN 认证才能进入手记'
+                  : '当前可正常查阅手记'
+                : '所有心智手记处于公开浏览状态'}
+            </div>
+          </div>
+
+          {/* Card 3: Credential Registry */}
+          <div className="p-4 rounded-xl bg-[#FAF8F5] border border-stone-200/90 space-y-1.5">
+            <div className="flex items-center justify-between text-stone-500 text-[10px] font-mono">
+              <span>SECURITY CREDENTIAL</span>
+              <KeyRound className="w-3.5 h-3.5 text-indigo-600" />
+            </div>
+            <div className="font-serif-editorial font-bold text-sm text-stone-900">
+              {hasCredential ? '硬件公钥已注册' : hasFallbackPin ? '仅 PIN 密码保护' : '未配置安全凭证'}
+            </div>
+            <div className="text-[11px] text-stone-500">
+              {hasCredential
+                ? '公钥验证在本地芯片完成'
+                : '建议配置 WebAuthn 硬件公钥与备用 PIN'}
+            </div>
+          </div>
+        </div>
+
+        {/* Master Controls & Test Row */}
+        <div className="p-4 sm:p-5 rounded-2xl bg-white border border-stone-200 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h4 className="font-serif-editorial font-bold text-stone-900 text-sm">
+                生物识别防护与保险箱控制
+              </h4>
+              <p className="text-xs text-stone-500">
+                管理主开关、立即锁闭保险箱或测试本机生物识别响应
+              </p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {!isBiometricEnabled ? (
+                <button
+                  type="button"
+                  onClick={() => setShowSetupModal(true)}
+                  className="px-4 py-2 rounded-xl bg-stone-900 text-white hover:bg-stone-800 text-xs font-bold transition-all shadow-xs flex items-center gap-2 cursor-pointer btn-tactile"
+                >
+                  {biometricIcon === 'faceid' ? (
+                    <ScanFace className="w-4 h-4 text-indigo-300" />
+                  ) : (
+                    <Fingerprint className="w-4 h-4 text-indigo-300" />
+                  )}
+                  <span>开启 {biometricLabel} 保护</span>
+                </button>
+              ) : (
+                <>
+                  {isBiometricLocked ? (
+                    <button
+                      type="button"
+                      onClick={() => unlockWithBiometrics()}
+                      className="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer btn-tactile"
+                    >
+                      <Unlock className="w-3.5 h-3.5" />
+                      <span>立即验证解锁</span>
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => lockVault()}
+                      className="px-3.5 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer btn-tactile"
+                    >
+                      <Lock className="w-3.5 h-3.5" />
+                      <span>立即锁定手记</span>
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => setShowChangePinModal(true)}
+                    className="px-3 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <KeyRound className="w-3.5 h-3.5 text-stone-600" />
+                    <span>修改 PIN 码</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowDisableConfirmModal(true)}
+                    className="px-3 py-2 rounded-xl bg-white hover:bg-rose-50 text-rose-700 border border-rose-200 text-xs font-medium transition-colors flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <span>停用保险箱</span>
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+
+          {/* Test Platform Authenticator Button */}
+          <div className="pt-2 border-t border-stone-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="space-y-0.5">
+              <span className="text-xs font-semibold text-stone-800 block">
+                硬件传感器连通性测试
+              </span>
+              <span className="text-[11px] text-stone-500 block">
+                直接调用浏览器的 WebAuthn 平台认证弹窗，测试 {biometricLabel} 传感响应
+              </span>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleTestBiometrics}
+              disabled={testStatus.testing}
+              className="px-3.5 py-2 rounded-xl bg-[#FAF8F5] hover:bg-stone-200/80 border border-stone-300 text-stone-800 text-xs font-semibold transition-colors flex items-center justify-center gap-2 cursor-pointer shrink-0 disabled:opacity-50"
+            >
+              {testStatus.testing ? (
+                <RefreshCw className="w-3.5 h-3.5 animate-spin text-stone-600" />
+              ) : biometricIcon === 'faceid' ? (
+                <ScanFace className="w-3.5 h-3.5 text-indigo-600" />
+              ) : (
+                <Fingerprint className="w-3.5 h-3.5 text-indigo-600" />
+              )}
+              <span>{testStatus.testing ? '正在等待传感器...' : `测试 ${biometricLabel} 硬件响应`}</span>
+            </button>
+          </div>
+
+          {/* Test Status Banner */}
+          {testStatus.message && (
+            <div
+              className={`p-3 rounded-xl border text-xs flex items-center justify-between gap-2 animate-fadeIn ${
+                testStatus.success
+                  ? 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                  : 'bg-amber-50 text-amber-800 border-amber-200'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <ShieldCheck
+                  className={`w-4 h-4 shrink-0 ${
+                    testStatus.success ? 'text-emerald-600' : 'text-amber-600'
+                  }`}
+                />
+                <span>{testStatus.message}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setTestStatus({ testing: false, message: null })}
+                className="text-[11px] opacity-70 hover:opacity-100 underline cursor-pointer"
+              >
+                关闭
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Auto-Lock Settings Row */}
+        {isBiometricEnabled && (
+          <div className="p-4 sm:p-5 rounded-2xl bg-[#FAF8F5] border border-stone-200/80 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-xs font-semibold text-stone-900 block">
+                  自动锁定策略 (Auto-Lock Strategy)
+                </span>
+                <span className="text-[11px] text-stone-500">
+                  选择手记在切屏或闲置多久后自动上锁
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {[
+                { id: 'always', label: '立即锁定', sub: '切出标签或切屏时' },
+                { id: '5m', label: '5 分钟后', sub: '闲置无交互 5 分钟' },
+                { id: '15m', label: '15 分钟后', sub: '闲置无交互 15 分钟' },
+                { id: 'never', label: '仅手动锁定', sub: '不自动锁定' },
+              ].map((opt) => {
+                const isCurrent = autoLockSetting === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    onClick={() => setAutoLockSetting(opt.id as any)}
+                    className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer ${
+                      isCurrent
+                        ? 'bg-stone-900 text-white border-stone-900 shadow-2xs font-semibold'
+                        : 'bg-white text-stone-700 border-stone-200 hover:bg-stone-50'
+                    }`}
+                  >
+                    <div className="text-xs">{opt.label}</div>
+                    <div
+                      className={`text-[10px] mt-0.5 ${
+                        isCurrent ? 'text-stone-300' : 'text-stone-400'
+                      }`}
+                    >
+                      {opt.sub}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Security & Zero-Knowledge Trust Note */}
+        <div className="p-3.5 rounded-xl bg-stone-50 border border-stone-200/70 flex items-start gap-3 text-xs text-stone-600">
+          <Shield className="w-4 h-4 text-stone-500 shrink-0 mt-0.5" />
+          <div className="leading-relaxed space-y-0.5">
+            <span className="font-semibold text-stone-800 block">零知识加密设计 · 纯本地硬件验证</span>
+            <p className="text-[11px] text-stone-500">
+              根据 W3C Web Authentication 规范，生物特征（指纹、面容）始终严格留存于设备硬件安全芯片（Apple Secure Enclave / Android Titan / Windows TPM）内。MindLabZ 云端绝不接收或存储任何生物特征或明文 PIN。
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Overlapping Card Stack Deck: 个人资料与荣誉成就卡片 */}
       <section className="editorial-card rounded-2xl p-4 sm:p-7 md:p-9 space-y-4 bg-white border border-stone-200">
         <div className="pb-2 border-b border-stone-200/80">
@@ -788,6 +1165,27 @@ export const ProfilePage: React.FC = () => {
             </button>
           </div>
 
+          <div className="flex items-center justify-between py-1 border-b border-stone-100">
+            <div>
+              <span className="text-xs font-semibold text-stone-900 block">清除 Netlify / 底部遮挡标识</span>
+              <span className="text-[11px] text-stone-500">
+                自动清除外部平台注入的 "POWERED BY Netlify" 浮层，确保底部导航无遮挡
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setupNetlifyBadgeRemover();
+                setNetlifyCleanSuccess(true);
+                triggerConfetti();
+                setTimeout(() => setNetlifyCleanSuccess(false), 3000);
+              }}
+              className="text-xs font-semibold px-3 py-1.5 bg-[#FAF8F5] hover:bg-stone-200 text-stone-800 border border-stone-300 rounded-lg transition-colors cursor-pointer shrink-0"
+            >
+              {netlifyCleanSuccess ? '✓ 已深度清除' : '立即清除遮挡'}
+            </button>
+          </div>
+
           <div className="pt-2 flex items-center justify-between">
             <div>
               <span className="text-xs font-semibold text-rose-700 block">重置学习进度</span>
@@ -878,6 +1276,161 @@ export const ProfilePage: React.FC = () => {
                 确认重置
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Change Fallback PIN Modal */}
+      {showChangePinModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-sm bg-white rounded-2xl p-6 sm:p-7 shadow-2xl border border-stone-200 space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-serif-editorial text-base font-bold text-stone-900 flex items-center gap-2">
+                <KeyRound className="w-4 h-4 text-stone-700" />
+                修改备用安全 PIN 码
+              </h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowChangePinModal(false);
+                  setChangePinError(null);
+                  setChangePinSuccess(null);
+                }}
+                className="text-stone-400 hover:text-stone-700 text-xs cursor-pointer"
+              >
+                取消
+              </button>
+            </div>
+
+            <p className="text-xs text-stone-500 leading-relaxed">
+              备用密码用于在生物识别无法响应时解锁心智手记。
+            </p>
+
+            <form onSubmit={handleChangePinSubmit} className="space-y-3">
+              <div>
+                <label className="text-[11px] font-medium text-stone-600 block mb-1">
+                  当前原安全密码
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={oldPinInput}
+                  onChange={(e) => setOldPinInput(e.target.value)}
+                  placeholder="输入当前使用的 PIN 码"
+                  className="w-full px-3 py-2 rounded-xl bg-stone-50 border border-stone-200 text-xs text-stone-900 focus:outline-none focus:border-stone-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-medium text-stone-600 block mb-1">
+                  新安全密码 (至少 4 位)
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={newPinInput}
+                  onChange={(e) => setNewPinInput(e.target.value)}
+                  placeholder="输入新的安全 PIN 码"
+                  className="w-full px-3 py-2 rounded-xl bg-stone-50 border border-stone-200 text-xs text-stone-900 focus:outline-none focus:border-stone-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-[11px] font-medium text-stone-600 block mb-1">
+                  再次确认新密码
+                </label>
+                <input
+                  type="password"
+                  required
+                  value={confirmNewPinInput}
+                  onChange={(e) => setConfirmNewPinInput(e.target.value)}
+                  placeholder="再次输入新 PIN 码"
+                  className="w-full px-3 py-2 rounded-xl bg-stone-50 border border-stone-200 text-xs text-stone-900 focus:outline-none focus:border-stone-500"
+                />
+              </div>
+
+              {changePinError && (
+                <div className="text-xs text-rose-600 bg-rose-50 p-2.5 rounded-xl border border-rose-200">
+                  {changePinError}
+                </div>
+              )}
+
+              {changePinSuccess && (
+                <div className="text-xs text-emerald-700 bg-emerald-50 p-2.5 rounded-xl border border-emerald-200 flex items-center gap-1.5">
+                  <Check className="w-3.5 h-3.5" />
+                  <span>{changePinSuccess}</span>
+                </div>
+              )}
+
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => setShowChangePinModal(false)}
+                  className="flex-1 py-2.5 bg-stone-100 text-stone-700 font-semibold text-xs rounded-xl border border-stone-200 hover:bg-stone-200 cursor-pointer"
+                >
+                  取消
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 chameleon-btn text-xs font-semibold rounded-xl cursor-pointer"
+                >
+                  确认保存
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Disable Vault Confirmation Dialog */}
+      {showDisableConfirmModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fadeIn">
+          <div className="w-full max-w-sm bg-white rounded-2xl p-6 sm:p-7 shadow-2xl border border-stone-200 space-y-4">
+            <h3 className="font-serif-editorial text-base font-bold text-rose-700 flex items-center gap-2">
+              <Lock className="w-4 h-4 text-rose-600" />
+              停用心智手记生物识别保险箱
+            </h3>
+            <p className="text-xs text-stone-500 leading-relaxed">
+              停用后，所有心智手记将无需 {biometricLabel} 或 PIN 即可直接查阅。请输入安全密码确认操作：
+            </p>
+
+            <form onSubmit={handleDisableConfirm} className="space-y-3">
+              <input
+                type="password"
+                required
+                autoFocus
+                value={disablePinInput}
+                onChange={(e) => setDisablePinInput(e.target.value)}
+                placeholder="输入当前安全密码"
+                className="w-full px-3 py-2.5 rounded-xl bg-stone-50 border border-stone-200 text-xs text-stone-900 focus:outline-none focus:border-stone-500"
+              />
+
+              {disablePinError && (
+                <div className="text-xs text-rose-600 bg-rose-50 p-2.5 rounded-xl border border-rose-200">
+                  {disablePinError}
+                </div>
+              )}
+
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowDisableConfirmModal(false);
+                    setDisablePinInput('');
+                    setDisablePinError(null);
+                  }}
+                  className="flex-1 py-2.5 bg-stone-100 text-stone-700 font-semibold text-xs rounded-xl border border-stone-200 hover:bg-stone-200 cursor-pointer"
+                >
+                  取消
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-semibold text-xs rounded-xl cursor-pointer"
+                >
+                  确认解除
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

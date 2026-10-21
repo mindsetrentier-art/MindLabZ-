@@ -2,6 +2,18 @@
   publish = "dist"
   command = "npm run build"
 
+[build.environment]
+  NETLIFY_USE_DRAWER = "false"
+
+[context.deploy-preview.environment]
+  NETLIFY_USE_DRAWER = "false"
+
+[context.branch-deploy.environment]
+  NETLIFY_USE_DRAWER = "false"
+
+[context.production.environment]
+  NETLIFY_USE_DRAWER = "false"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"

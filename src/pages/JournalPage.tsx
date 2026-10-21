@@ -14,11 +14,18 @@ import {
   BookOpen,
   Info,
   Wind,
+  Lock,
+  ShieldCheck,
+  Fingerprint,
+  ScanFace,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useBiometricLock } from '../context/BiometricLockContext';
 import { CognitiveJournalEntry, JournalTemplateType, EmotionValence } from '../types';
 import { JournalCard } from '../components/journal/JournalCard';
 import { JournalAnalyticsWidget } from '../components/journal/JournalAnalyticsWidget';
+import { JournalComposerModal } from '../components/journal/JournalComposerModal';
+import { BiometricVaultLockScreen } from '../components/journal/BiometricVaultLockScreen';
 import { JOURNAL_TEMPLATES } from '../data/journalTemplates';
 
 export const JournalPage: React.FC = () => {
@@ -33,10 +40,24 @@ export const JournalPage: React.FC = () => {
     setBreathingOpen,
   } = useApp();
 
+  const {
+    isEnabled: isBiometricEnabled,
+    isLocked: isBiometricLocked,
+    biometricLabel,
+    biometricIcon,
+    lockVault,
+    setShowSetupModal,
+  } = useBiometricLock();
+
   const [editingEntry, setEditingEntry] = useState<CognitiveJournalEntry | null>(null);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedTemplateFilter, setSelectedTemplateFilter] = useState<string>('all');
   const [selectedValenceFilter, setSelectedValenceFilter] = useState<string>('all');
+
+  // If biometric vault is enabled and locked, show the secure Apple-grade lock screen
+  if (isBiometricEnabled && isBiometricLocked) {
+    return <BiometricVaultLockScreen />;
+  }
 
   const handleOpenNew = (templateId?: JournalTemplateType) => {
     openComposerWithPreload(templateId ? { templateType: templateId } : {});
@@ -78,7 +99,63 @@ export const JournalPage: React.FC = () => {
   }, [journals, selectedTemplateFilter, selectedValenceFilter, searchQuery]);
 
   return (
-    <div className="space-y-8 sm:space-y-10 pb-16 animate-fadeIn max-w-5xl mx-auto">
+    <div className="space-y-6 sm:space-y-8 pb-16 animate-fadeIn max-w-5xl mx-auto">
+      {/* 0. Biometric Privacy Banner */}
+      {isBiometricEnabled ? (
+        <div className="flex items-center justify-between gap-3 px-4 py-2.5 rounded-2xl bg-emerald-50/90 border border-emerald-200/90 text-emerald-900 text-xs shadow-xs animate-fadeIn">
+          <div className="flex items-center gap-2">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+            </span>
+            <ShieldCheck className="w-4 h-4 text-emerald-700" />
+            <span className="font-bold">
+              隐私保险箱已安全解锁 · 受 {biometricLabel} 与硬件芯片实时保护
+            </span>
+          </div>
+
+          <button
+            onClick={() => lockVault()}
+            className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-white hover:bg-emerald-100/60 border border-emerald-300 text-emerald-950 font-bold text-xs transition-colors shadow-2xs cursor-pointer active:scale-95"
+            title="立即重新锁定心智手记"
+          >
+            <Lock className="w-3.5 h-3.5 text-emerald-700" />
+            <span>立即上锁</span>
+          </button>
+        </div>
+      ) : (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-2xl bg-gradient-to-r from-stone-900 via-stone-850 to-indigo-950 text-white shadow-md">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center shrink-0">
+              {biometricIcon === 'faceid' ? (
+                <ScanFace className="w-5 h-5 text-indigo-200" />
+              ) : (
+                <Fingerprint className="w-5 h-5 text-indigo-200" />
+              )}
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5 font-bold text-xs text-white">
+                <span>保护您的心理反思隐私：开启 {biometricLabel}</span>
+                <span className="text-[10px] px-1.5 py-0.2 rounded bg-indigo-500/30 text-indigo-200 border border-indigo-400/30 font-mono">
+                  WebAuthn
+                </span>
+              </div>
+              <p className="text-[11px] text-stone-300 mt-0.5">
+                利用设备安全芯片（FaceID/TouchID）加锁，敏感心智手记离开应用即自动保护。
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setShowSetupModal(true)}
+            className="self-start sm:self-center px-4 py-2 rounded-xl bg-white text-stone-900 text-xs font-bold hover:bg-stone-100 transition-all shadow-xs flex items-center gap-1.5 shrink-0 cursor-pointer active:scale-95"
+          >
+            <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
+            <span>开启生物识别保护</span>
+          </button>
+        </div>
+      )}
+
       {/* 1. Magazine Masthead & Lead Deck */}
       <section className="editorial-card rounded-2xl p-7 sm:p-10 md:p-12 space-y-6">
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 border-b border-stone-200/80 pb-6">

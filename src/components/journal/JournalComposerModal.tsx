@@ -14,8 +14,14 @@ import {
   Info,
   Sliders,
   Calendar,
+  Lock,
+  ShieldCheck,
+  Fingerprint,
+  ScanFace,
+  KeyRound,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
+import { useBiometricLock } from '../../context/BiometricLockContext';
 import {
   CognitiveJournalEntry,
   JournalTemplateType,
@@ -99,6 +105,31 @@ export const JournalComposerModal: React.FC<JournalComposerModalProps> = ({
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Biometric Privacy Vault protection
+  const {
+    isEnabled: isBiometricEnabled,
+    isLocked: isBiometricLocked,
+    biometricLabel,
+    biometricIcon,
+    unlockWithBiometrics,
+    unlockWithPin,
+    isAuthenticating,
+  } = useBiometricLock();
+
+  const [modalPinInput, setModalPinInput] = useState('');
+  const [modalPinError, setModalPinError] = useState<string | null>(null);
+
+  const handleModalPinUnlock = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setModalPinError(null);
+    const ok = await unlockWithPin(modalPinInput);
+    if (!ok) {
+      setModalPinError('安全密码错误，请重新输入');
+    } else {
+      setModalPinInput('');
+    }
+  };
 
   // Synchronize when initialEntry changes
   useEffect(() => {
@@ -249,6 +280,92 @@ export const JournalComposerModal: React.FC<JournalComposerModalProps> = ({
         return <Sparkles className="w-4 h-4" />;
     }
   };
+
+  if (!isOpen) return null;
+
+  // If vault is locked, present an authentication gate so sensitive contents cannot be viewed or saved
+  if (isBiometricEnabled && isBiometricLocked) {
+    return (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-stone-900/60 backdrop-blur-md animate-fadeIn"
+        onClick={onClose}
+      >
+        <div
+          className="relative w-full max-w-md bg-white rounded-3xl shadow-2xl border border-stone-200 p-7 sm:p-8 space-y-6 text-center"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 p-2 rounded-full hover:bg-stone-100 text-stone-400 hover:text-stone-700 transition-colors"
+          >
+            <X className="w-4 h-4" />
+          </button>
+
+          <div className="w-16 h-16 rounded-2xl bg-stone-900 text-white flex items-center justify-center mx-auto shadow-md">
+            {biometricIcon === 'faceid' ? (
+              <ScanFace className="w-8 h-8 text-indigo-300" />
+            ) : (
+              <Fingerprint className="w-8 h-8 text-indigo-300" />
+            )}
+          </div>
+
+          <div className="space-y-1.5">
+            <h3 className="font-serif-editorial text-xl font-bold text-stone-900">
+              心智手记隐私保险箱已锁定
+            </h3>
+            <p className="text-xs text-stone-500 leading-relaxed">
+              当前心智手记受到 {biometricLabel} 与硬件芯片实时保护。请先验证以继续撰写或编辑。
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <button
+              type="button"
+              onClick={() => unlockWithBiometrics()}
+              disabled={isAuthenticating}
+              className="w-full py-3 px-4 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer btn-tactile disabled:opacity-50"
+            >
+              {biometricIcon === 'faceid' ? (
+                <ScanFace className="w-4 h-4 text-indigo-300" />
+              ) : (
+                <Fingerprint className="w-4 h-4 text-indigo-300" />
+              )}
+              <span>{isAuthenticating ? '正在验证中...' : `使用 ${biometricLabel} 解锁`}</span>
+            </button>
+
+            <div className="relative flex py-1 items-center">
+              <div className="flex-grow border-t border-stone-200" />
+              <span className="flex-shrink mx-3 text-[10px] uppercase font-mono text-stone-400">
+                或输入备用安全密码
+              </span>
+              <div className="flex-grow border-t border-stone-200" />
+            </div>
+
+            <form onSubmit={handleModalPinUnlock} className="space-y-2">
+              <input
+                type="password"
+                value={modalPinInput}
+                onChange={(e) => setModalPinInput(e.target.value)}
+                placeholder="输入 4-12 位安全 PIN 码"
+                className="w-full px-3 py-2.5 rounded-xl bg-stone-50 border border-stone-200 text-xs text-stone-900 focus:outline-none focus:border-stone-500 text-center tracking-widest"
+              />
+              {modalPinError && (
+                <p className="text-xs text-rose-600 bg-rose-50 p-2 rounded-lg border border-rose-200">
+                  {modalPinError}
+                </p>
+              )}
+              <button
+                type="submit"
+                className="w-full py-2.5 rounded-xl bg-[#FAF8F5] hover:bg-stone-100 border border-stone-200 text-stone-800 text-xs font-semibold transition-colors cursor-pointer"
+              >
+                密码解锁
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div

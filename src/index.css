@@ -565,6 +565,44 @@
   }
 }
 
+/* ============================================================
+   Netlify Injected Floating Badge & Drawer Complete Suppression
+   Guarantees that bottom navigation dock and features are never obscured
+   ============================================================ */
+#netlify-badge,
+#netlify-identity-widget,
+#netlify-deploy-preview-badge,
+.netlify-badge,
+netlify-drawer,
+netlify-toolbar,
+[data-netlify-deploy-id],
+iframe[src*="netlify"],
+iframe[id*="netlify"],
+iframe[title*="Netlify" i],
+div[class*="netlify-feedback"],
+div[class*="netlify-drawer"],
+div[id*="netlify"],
+a[href*="netlify.com"][style*="fixed"],
+a[href*="netlify.com"][style*="absolute"],
+a[href*="netlify.com"]:has(img),
+img[src*="netlify"],
+div[style*="fixed"][style*="bottom"]:has(a[href*="netlify"]),
+div[style*="fixed"][style*="bottom"]:has(img[src*="netlify"]),
+div[style*="fixed"][style*="bottom"][class*="netlify"] {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  height: 0 !important;
+  width: 0 !important;
+  position: absolute !important;
+  left: -9999px !important;
+  top: -9999px !important;
+  z-index: -9999 !important;
+  clip: rect(0, 0, 0, 0) !important;
+}
+
+
 
 
 
