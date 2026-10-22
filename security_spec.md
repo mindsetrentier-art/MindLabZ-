@@ -26,3 +26,7 @@
 10. **Payload 10 (Unbounded Array Overflow)**: User `user_A` submits `bookmarks` or `lawsMastered` with 60 items (exceeding max 50) or non-string first element. -> `PERMISSION_DENIED`
 11. **Payload 11 (Value Poisoning on Numeric Stats)**: User `user_A` updates `xp` to `-500` or `"infinite"`, or sets `stats.memory` to `999`. -> `PERMISSION_DENIED`
 12. **Payload 12 (Cross-User Read & Collection Scraping)**: Authenticated user `user_A` attempts `get` on `/users/user_B` or `list` on `/users`. -> `PERMISSION_DENIED`
+13. **Payload 13 (Leaderboard Score Forgery)**: User `user_A` attempts to submit `/gameLeaderboards/score_1` with `userId: "user_B"`. -> `PERMISSION_DENIED`
+14. **Payload 14 (Leaderboard Timestamp Tampering)**: User `user_A` attempts to submit leaderboard score with client-manipulated `createdAt` or `updatedAt`. -> `PERMISSION_DENIED`
+15. **Payload 15 (Leaderboard Ghost Field Injection)**: User `user_A` submits leaderboard score containing unapproved property `cheatMultiplier: 100`. -> `PERMISSION_DENIED`
+

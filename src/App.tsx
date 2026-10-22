@@ -23,12 +23,15 @@ import { GoogleAuthModal } from './components/auth/GoogleAuthModal';
 import { PwaInstallModal } from './components/pwa/PwaInstallModal';
 import { PwaUpdateToast } from './components/pwa/PwaUpdateToast';
 import { BiometricSetupModal } from './components/journal/BiometricSetupModal';
+import { BadgeUnlockedModal } from './components/profile/BadgeUnlockedModal';
 
 const AppRoutes: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const {
     user,
+    newUnlockedBadge,
+    setNewUnlockedBadge,
     composerOpen,
     setComposerOpen,
     composerPreload,
@@ -103,6 +106,15 @@ const AppRoutes: React.FC = () => {
       <OnboardingModal
         isOpen={showOnboarding}
         onClose={() => setShowOnboarding(false)}
+      />
+
+      <BadgeUnlockedModal
+        badge={newUnlockedBadge}
+        onClose={() => setNewUnlockedBadge(null)}
+        onViewAll={() => {
+          setNewUnlockedBadge(null);
+          navigate('/profile');
+        }}
       />
     </>
   );

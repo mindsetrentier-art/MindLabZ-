@@ -70,9 +70,10 @@ export const COURSE_CATEGORIES: OverlappingCardItem[] = [
     badge: '8 讲进阶',
     meta: '已更新至第 8 讲 · 1.2k 人修读',
     description: '破除系统一启发式直觉陷阱，重构批判性元认知与思维框架。',
-    colorGradient: 'from-indigo-600 via-indigo-700 to-indigo-950 text-white',
+    colorGradient: 'from-indigo-900 via-indigo-950 to-stone-950 text-white',
     accentColor: '#4F46E5',
     icon: <Brain className="w-5 h-5 text-indigo-300" />,
+    image: 'https://images.unsplash.com/photo-1507413245164-6160d8298b31?auto=format&fit=crop&w=700&q=80',
   },
   {
     id: 'course-memory',
@@ -82,9 +83,10 @@ export const COURSE_CATEGORIES: OverlappingCardItem[] = [
     badge: '6 讲实战',
     meta: '艾宾浩斯曲线与组块记忆术',
     description: '基于突触可塑性与空间联想，打造永久存储的高速认知索引。',
-    colorGradient: 'from-cyan-600 via-teal-700 to-slate-900 text-white',
+    colorGradient: 'from-cyan-900 via-teal-950 to-slate-950 text-white',
     accentColor: '#0891B2',
     icon: <Sparkles className="w-5 h-5 text-cyan-300" />,
+    image: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=700&q=80',
   },
   {
     id: 'course-behavior',
@@ -94,9 +96,10 @@ export const COURSE_CATEGORIES: OverlappingCardItem[] = [
     badge: '10 讲完结',
     meta: '前景理论与纳什均衡实操',
     description: '拆解心理账户、损失厌恶与禀赋效应，洞悉非理性决策暗流。',
-    colorGradient: 'from-emerald-600 via-emerald-800 to-stone-950 text-white',
+    colorGradient: 'from-emerald-900 via-emerald-950 to-stone-950 text-white',
     accentColor: '#059669',
     icon: <Zap className="w-5 h-5 text-emerald-300" />,
+    image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=700&q=80',
   },
   {
     id: 'course-social',
@@ -106,9 +109,10 @@ export const COURSE_CATEGORIES: OverlappingCardItem[] = [
     badge: '7 讲完结',
     meta: '阿希从众与破窗效应解析',
     description: '解析群体极化、旁观者冷漠与社会认同，掌握逆向思维独立性。',
-    colorGradient: 'from-purple-600 via-violet-800 to-stone-950 text-white',
+    colorGradient: 'from-purple-900 via-violet-950 to-stone-950 text-white',
     accentColor: '#7C3AED',
     icon: <Layers className="w-5 h-5 text-purple-300" />,
+    image: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=700&q=80',
   },
   {
     id: 'course-emotion',
@@ -118,9 +122,10 @@ export const COURSE_CATEGORIES: OverlappingCardItem[] = [
     badge: '9 讲精读',
     meta: '接纳承诺与自主神经调节',
     description: '借助多迷走神经理论与身体扫描，化解情绪反刍重获内心秩序。',
-    colorGradient: 'from-rose-600 via-rose-800 to-stone-950 text-white',
+    colorGradient: 'from-rose-900 via-rose-950 to-stone-950 text-white',
     accentColor: '#E11D48',
     icon: <Flame className="w-5 h-5 text-rose-300" />,
+    image: 'https://images.unsplash.com/photo-1518241353330-0f7941c2d9b5?auto=format&fit=crop&w=700&q=80',
   },
   {
     id: 'course-meta',
@@ -130,9 +135,10 @@ export const COURSE_CATEGORIES: OverlappingCardItem[] = [
     badge: '12 讲专题',
     meta: '查理·芒格跨学科智慧集',
     description: '融汇物理、生物、数学与工程学第一性原理，终身精进认知格栅。',
-    colorGradient: 'from-amber-600 via-amber-800 to-stone-950 text-white',
+    colorGradient: 'from-amber-900 via-amber-950 to-stone-950 text-white',
     accentColor: '#D97706',
     icon: <GraduationCap className="w-5 h-5 text-amber-300" />,
+    image: 'https://images.unsplash.com/photo-1479839672679-a46483c0e7c8?auto=format&fit=crop&w=700&q=80',
   },
 ];
 
@@ -146,9 +152,10 @@ export const FAVORITES_COLLECTION: OverlappingCardItem[] = [
     badge: '已收藏 · 极高频',
     meta: '掌握度 95% · 3次复盘',
     description: '只寻找印证先入观的证据，自动视而不见反面客观事实。',
-    colorGradient: 'from-indigo-600 via-blue-700 to-slate-900 text-white',
+    colorGradient: 'from-indigo-900 via-blue-950 to-slate-950 text-white',
     accentColor: '#4F46E5',
     icon: <BookMarked className="w-5 h-5 text-indigo-300" />,
+    image: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=700&q=80',
   },
   {
     id: 'fav-anchoring',
@@ -158,9 +165,10 @@ export const FAVORITES_COLLECTION: OverlappingCardItem[] = [
     badge: '已收藏 · 经典',
     meta: '掌握度 88% · 2次训练',
     description: '第一接收的初始数值信息，如锚一样牢牢钳制后续全部推测。',
-    colorGradient: 'from-violet-600 via-purple-700 to-slate-900 text-white',
+    colorGradient: 'from-violet-900 via-purple-950 to-slate-950 text-white',
     accentColor: '#7C3AED',
     icon: <Brain className="w-5 h-5 text-violet-300" />,
+    image: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=700&q=80',
   },
   {
     id: 'fav-loss-aversion',
@@ -170,9 +178,10 @@ export const FAVORITES_COLLECTION: OverlappingCardItem[] = [
     badge: '重点心法',
     meta: '卡尼曼 & 特沃斯基定理',
     description: '同等金额的损失带来的痛苦，约为获得同等收益快乐的2至2.5倍。',
-    colorGradient: 'from-rose-600 via-pink-700 to-slate-900 text-white',
+    colorGradient: 'from-rose-900 via-pink-950 to-slate-950 text-white',
     accentColor: '#E11D48',
     icon: <Zap className="w-5 h-5 text-rose-300" />,
+    image: 'https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&w=700&q=80',
   },
   {
     id: 'fav-peak-end',
@@ -182,9 +191,10 @@ export const FAVORITES_COLLECTION: OverlappingCardItem[] = [
     badge: '设计心智',
     meta: '掌握度 92% · 体验架构',
     description: '人们对体验的记忆仅取决于峰值高峰与终点结束时的主观感受。',
-    colorGradient: 'from-amber-600 via-yellow-600 to-stone-900 text-white',
+    colorGradient: 'from-amber-900 via-yellow-950 to-stone-950 text-white',
     accentColor: '#D97706',
     icon: <Sparkles className="w-5 h-5 text-amber-300" />,
+    image: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=700&q=80',
   },
   {
     id: 'fav-sunk-cost',
@@ -194,9 +204,10 @@ export const FAVORITES_COLLECTION: OverlappingCardItem[] = [
     badge: '止损反思',
     meta: '掌握度 84% · 实战案例',
     description: '因为前期已投入不可挽回的时间金钱，而在错误的方向继续追加投入。',
-    colorGradient: 'from-red-600 via-rose-700 to-stone-950 text-white',
+    colorGradient: 'from-red-900 via-rose-950 to-stone-950 text-white',
     accentColor: '#DC2626',
     icon: <Flame className="w-5 h-5 text-red-300" />,
+    image: 'https://images.unsplash.com/photo-1508962914676-134849a727f0?auto=format&fit=crop&w=700&q=80',
   },
   {
     id: 'fav-dunning-kruger',
@@ -206,9 +217,10 @@ export const FAVORITES_COLLECTION: OverlappingCardItem[] = [
     badge: '愚昧之巅',
     meta: '破除自负 · 持续精进',
     description: '能力欠缺者沉浸在自我膨胀中，而真正通晓者反因见识浩瀚而倍感敬畏。',
-    colorGradient: 'from-cyan-600 via-teal-700 to-stone-900 text-white',
+    colorGradient: 'from-cyan-900 via-teal-950 to-stone-950 text-white',
     accentColor: '#0891B2',
     icon: <Award className="w-5 h-5 text-cyan-300" />,
+    image: 'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?auto=format&fit=crop&w=700&q=80',
   },
   {
     id: 'fav-bystander',
@@ -218,9 +230,10 @@ export const FAVORITES_COLLECTION: OverlappingCardItem[] = [
     badge: '紧急警示',
     meta: '达利 & 拉塔内实验',
     description: '在场旁观的人数越多，个体挺身而出施以援手的概率反而急剧下降。',
-    colorGradient: 'from-stone-700 via-stone-800 to-stone-950 text-white',
+    colorGradient: 'from-stone-800 via-stone-900 to-stone-950 text-white',
     accentColor: '#57534E',
     icon: <Layers className="w-5 h-5 text-stone-300" />,
+    image: 'https://images.unsplash.com/photo-1477959858617-67f30bc75b82?auto=format&fit=crop&w=700&q=80',
   },
 ];
 
@@ -234,9 +247,10 @@ export const VOCABULARY_SET: OverlappingCardItem[] = [
     badge: '心理学经典',
     meta: '利昂·费斯汀格 1957',
     description: '当态度与行为产生内在冲突时，心智会本能地扭曲信念来缓解心理张力。',
-    colorGradient: 'from-blue-600 via-indigo-700 to-slate-900 text-white',
+    colorGradient: 'from-blue-900 via-indigo-950 to-slate-950 text-white',
     accentColor: '#2563EB',
     icon: <BookOpen className="w-5 h-5 text-blue-300" />,
+    image: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=700&q=80',
   },
   {
     id: 'vocab-dopamine',
@@ -246,9 +260,10 @@ export const VOCABULARY_SET: OverlappingCardItem[] = [
     badge: '神经递质',
     meta: '舒尔茨突触动力学',
     description: '多巴胺并不等于快乐本身，而是驱动心智对未知的期待与渴望。',
-    colorGradient: 'from-purple-600 via-pink-700 to-slate-950 text-white',
+    colorGradient: 'from-purple-900 via-pink-950 to-slate-950 text-white',
     accentColor: '#9333EA',
     icon: <Zap className="w-5 h-5 text-purple-300" />,
+    image: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&w=700&q=80',
   },
   {
     id: 'vocab-neuroplasticity',
@@ -258,9 +273,10 @@ export const VOCABULARY_SET: OverlappingCardItem[] = [
     badge: '赫布突触理论',
     meta: 'Neurons fire together, wire together',
     description: '成年人的大脑神经突触回路仍可伴随专注训练而终生重组改造。',
-    colorGradient: 'from-teal-600 via-emerald-700 to-stone-900 text-white',
+    colorGradient: 'from-teal-900 via-emerald-950 to-stone-950 text-white',
     accentColor: '#0D9488',
     icon: <Brain className="w-5 h-5 text-teal-300" />,
+    image: 'https://images.unsplash.com/photo-1507499739999-097706ad8914?auto=format&fit=crop&w=700&q=80',
   },
   {
     id: 'vocab-self-serving',
@@ -270,9 +286,10 @@ export const VOCABULARY_SET: OverlappingCardItem[] = [
     badge: '心智防御',
     meta: '内归因与外归因失衡',
     description: '成功归结为自身天赋才智，失败则归咎于恶劣外部环境或坏运气。',
-    colorGradient: 'from-amber-600 via-orange-700 to-stone-900 text-white',
+    colorGradient: 'from-amber-900 via-orange-950 to-stone-950 text-white',
     accentColor: '#D97706',
     icon: <Sparkles className="w-5 h-5 text-amber-300" />,
+    image: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=700&q=80',
   },
   {
     id: 'vocab-zeigarnik',
@@ -282,9 +299,10 @@ export const VOCABULARY_SET: OverlappingCardItem[] = [
     badge: '任务闭环',
     meta: '未竟之事的潜意识侵入',
     description: '未完成的事务会在大脑中维持持续张力，远比已完成的事件记得更牢。',
-    colorGradient: 'from-fuchsia-600 via-pink-700 to-stone-900 text-white',
+    colorGradient: 'from-fuchsia-900 via-pink-950 to-stone-950 text-white',
     accentColor: '#C026D3',
     icon: <BookMarked className="w-5 h-5 text-fuchsia-300" />,
+    image: 'https://images.unsplash.com/photo-1501139083538-0139583c060f?auto=format&fit=crop&w=700&q=80',
   },
   {
     id: 'vocab-priming',
@@ -294,9 +312,10 @@ export const VOCABULARY_SET: OverlappingCardItem[] = [
     badge: '隐性激活',
     meta: '语义网络激活',
     description: '先前微弱的感官或语词刺激，会在无意识层面显著左右后续的行为与决策。',
-    colorGradient: 'from-sky-600 via-blue-800 to-slate-950 text-white',
+    colorGradient: 'from-sky-900 via-blue-950 to-slate-950 text-white',
     accentColor: '#0284C7',
     icon: <Layers className="w-5 h-5 text-sky-300" />,
+    image: 'https://images.unsplash.com/photo-1518895949257-7621c3c786d7?auto=format&fit=crop&w=700&q=80',
   },
   {
     id: 'vocab-spotlight',
@@ -306,9 +325,10 @@ export const VOCABULARY_SET: OverlappingCardItem[] = [
     badge: '去焦虑',
     meta: '自我中心投射偏差',
     description: '我们总高估他人对自己外表、尴尬过失或言行的注意程度，其实他人毫不在意。',
-    colorGradient: 'from-emerald-600 via-teal-800 to-stone-950 text-white',
+    colorGradient: 'from-emerald-900 via-teal-950 to-stone-950 text-white',
     accentColor: '#059669',
     icon: <Award className="w-5 h-5 text-emerald-300" />,
+    image: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=700&q=80',
   },
   {
     id: 'vocab-wallenda',
@@ -318,9 +338,10 @@ export const VOCABULARY_SET: OverlappingCardItem[] = [
     badge: '心流临界',
     meta: '过度患得患失致失误',
     description: '越害怕失败、全神贯注于可能犯错的后果，往往越容易触发神经失误。',
-    colorGradient: 'from-stone-700 via-stone-800 to-stone-950 text-white',
+    colorGradient: 'from-stone-800 via-stone-900 to-stone-950 text-white',
     accentColor: '#44403C',
     icon: <Flame className="w-5 h-5 text-stone-300" />,
+    image: 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?auto=format&fit=crop&w=700&q=80',
   },
 ];
 
@@ -334,9 +355,10 @@ export const PROFILE_ACHIEVEMENTS: OverlappingCardItem[] = [
     badge: '黄金荣耀',
     meta: '连续 7 天完成呼吸与冥想',
     description: '已构建深层副交感神经自主调节反射，心率变异性(HRV)显著增强。',
-    colorGradient: 'from-amber-500 via-yellow-600 to-amber-900 text-stone-900',
+    colorGradient: 'from-amber-900 via-yellow-950 to-stone-950 text-white',
     accentColor: '#F59E0B',
-    icon: <Award className="w-5 h-5 text-amber-950" />,
+    icon: <Award className="w-5 h-5 text-amber-300" />,
+    image: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=700&q=80',
   },
   {
     id: 'badge-critical-thinker',
@@ -346,9 +368,10 @@ export const PROFILE_ACHIEVEMENTS: OverlappingCardItem[] = [
     badge: 'Lv.7 哲思者',
     meta: '掌握 25 项经典心理学定律',
     description: '在日常决策中熟练识别确认偏误、损失厌恶与锚定陷阱，建立理性直觉。',
-    colorGradient: 'from-indigo-600 via-violet-700 to-slate-900 text-white',
+    colorGradient: 'from-indigo-900 via-violet-950 to-slate-950 text-white',
     accentColor: '#4F46E5',
     icon: <Brain className="w-5 h-5 text-indigo-300" />,
+    image: 'https://images.unsplash.com/photo-1507842229451-7f01be637a52?auto=format&fit=crop&w=700&q=80',
   },
   {
     id: 'badge-journal-alchemist',
@@ -358,9 +381,10 @@ export const PROFILE_ACHIEVEMENTS: OverlappingCardItem[] = [
     badge: '30 篇手记',
     meta: 'AI 深度情感洞察累计15篇',
     description: '将生活中的无序焦虑与负面情绪，通过结构化书写转化为澄澈理性洞察。',
-    colorGradient: 'from-emerald-600 via-teal-700 to-stone-900 text-white',
+    colorGradient: 'from-emerald-900 via-teal-950 to-stone-950 text-white',
     accentColor: '#059669',
     icon: <BookMarked className="w-5 h-5 text-emerald-300" />,
+    image: 'https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=700&q=80',
   },
   {
     id: 'badge-game-grandmaster',
@@ -370,9 +394,10 @@ export const PROFILE_ACHIEVEMENTS: OverlappingCardItem[] = [
     badge: '胜率 92%',
     meta: '战胜 15 个认知实验陷阱',
     description: '在有限时间与高压诱导下保持严密逻辑推理，敏捷击溃虚假启发式。',
-    colorGradient: 'from-rose-600 via-red-700 to-stone-950 text-white',
+    colorGradient: 'from-rose-900 via-red-950 to-stone-950 text-white',
     accentColor: '#E11D48',
     icon: <Zap className="w-5 h-5 text-rose-300" />,
+    image: 'https://images.unsplash.com/photo-1529699211952-734e80c4d42b?auto=format&fit=crop&w=700&q=80',
   },
   {
     id: 'badge-speed-runner',
@@ -382,9 +407,10 @@ export const PROFILE_ACHIEVEMENTS: OverlappingCardItem[] = [
     badge: '前 3% 顶尖',
     meta: '平均响应时延 < 280ms',
     description: '抑制优势反应通道，前额叶皮层与眼动执行系统实现毫秒级超敏协同。',
-    colorGradient: 'from-purple-600 via-indigo-700 to-stone-950 text-white',
+    colorGradient: 'from-purple-900 via-indigo-950 to-stone-950 text-white',
     accentColor: '#7C3AED',
     icon: <Sparkles className="w-5 h-5 text-purple-300" />,
+    image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=700&q=80',
   },
   {
     id: 'badge-zen-master',
@@ -394,9 +420,10 @@ export const PROFILE_ACHIEVEMENTS: OverlappingCardItem[] = [
     badge: '圆满达成',
     meta: '累计 180 分钟自然环境冥想',
     description: '如林间清泉、山中细雨，随时随地进入心无挂碍的安住状态。',
-    colorGradient: 'from-stone-700 via-stone-800 to-stone-950 text-white',
+    colorGradient: 'from-stone-800 via-stone-900 to-stone-950 text-white',
     accentColor: '#78716C',
     icon: <Layers className="w-5 h-5 text-stone-300" />,
+    image: 'https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=700&q=80',
   },
 ];
 
@@ -715,32 +742,58 @@ export const OverlappingCardStack: React.FC<OverlappingCardStackProps> = ({
                     : ''
                 }`}
               >
+                {/* 1. High-Resolution Thematic Photography Layer */}
+                {card.image && (
+                  <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0">
+                    <img
+                      src={card.image}
+                      alt={card.name}
+                      loading="lazy"
+                      referrerPolicy="no-referrer"
+                      className="w-full h-full object-cover object-center transform transition-transform duration-700 ease-out group-hover:scale-110 filter brightness-[0.72] contrast-[1.12]"
+                    />
+                  </div>
+                )}
+
+                {/* 2. Luxury Editorial Dark Gradient Scrim Overlay */}
+                <div
+                  className="absolute inset-0 pointer-events-none z-0 transition-opacity duration-300"
+                  style={{
+                    background: card.image
+                      ? 'linear-gradient(180deg, rgba(10, 9, 18, 0.40) 0%, rgba(10, 9, 18, 0.65) 45%, rgba(6, 5, 12, 0.94) 100%)'
+                      : undefined,
+                  }}
+                />
+
+                {/* 3. Subtle Cybernetic/Luxury Specular Top Edge Highlight */}
+                <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-white/40 to-transparent pointer-events-none z-10" />
+
                 {/* Background decorative watermark */}
-                <div className="absolute -right-4 -bottom-4 opacity-10 pointer-events-none transform rotate-12 scale-150">
+                <div className="absolute -right-4 -bottom-4 opacity-15 pointer-events-none transform rotate-12 scale-150 z-0">
                   {card.icon || <Sparkles className="w-24 h-24" />}
                 </div>
 
                 {/* Card Top: Category / Kicker & Icon */}
                 <div className="relative z-10 flex items-start justify-between gap-2">
                   <div className="flex flex-col">
-                    <span className="text-[10px] uppercase tracking-wider font-semibold opacity-75">
+                    <span className="text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-md bg-black/50 backdrop-blur-md border border-white/20 text-stone-200 shadow-2xs">
                       {card.category || '智识卡'}
                     </span>
                     {/* Index Indicator */}
-                    <span className="font-mono text-[10px] opacity-60">
+                    <span className="font-mono text-[9px] text-stone-300/80 mt-1 pl-0.5 font-medium">
                       #{String(index + 1).padStart(2, '0')}
                     </span>
                   </div>
 
-                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-white/15 backdrop-blur-xs flex items-center justify-center shrink-0 border border-white/20 shadow-2xs">
+                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0 border border-white/30 text-white shadow-sm">
                     {card.icon}
                   </div>
                 </div>
 
                 {/* Card Middle: Primary Name (名称) & Subname */}
-                <div className="relative z-10 space-y-1 my-auto">
+                <div className="relative z-10 space-y-1.5 my-auto py-1">
                   <h4
-                    className={`font-serif-editorial leading-snug tracking-tight text-white ${
+                    className={`font-serif-editorial leading-snug tracking-tight text-white drop-shadow-md ${
                       isMobile ? 'text-xs font-bold' : config.titleClass
                     }`}
                   >
@@ -749,7 +802,7 @@ export const OverlappingCardStack: React.FC<OverlappingCardStackProps> = ({
 
                   {card.subname && (
                     <p
-                      className={`text-white/80 font-sans tracking-normal font-normal line-clamp-1 ${
+                      className={`text-stone-300 font-sans tracking-normal font-medium line-clamp-1 drop-shadow-xs ${
                         isMobile ? 'text-[9.5px]' : config.subnameClass
                       }`}
                     >
@@ -764,29 +817,29 @@ export const OverlappingCardStack: React.FC<OverlappingCardStackProps> = ({
                     }}
                     className={`transition-all duration-400 ease-out ${
                       isExpanded
-                        ? 'opacity-90 max-h-24 translate-y-0 mt-2 text-white/85'
+                        ? 'opacity-95 max-h-28 translate-y-0 mt-2 text-stone-200'
                         : 'opacity-0 max-h-0 -translate-y-2 pointer-events-none overflow-hidden'
                     }`}
                   >
-                    <p className={isMobile ? 'text-[10px] line-clamp-3' : config.descClass}>
+                    <p className={`p-2.5 rounded-xl bg-stone-950/80 backdrop-blur-sm border border-white/15 text-stone-200 leading-relaxed shadow-sm ${isMobile ? 'text-[10px] line-clamp-3' : config.descClass}`}>
                       {card.description}
                     </p>
                   </div>
                 </div>
 
                 {/* Card Bottom: Badge or Meta Tag */}
-                <div className="relative z-10 pt-2 border-t border-white/15 flex items-center justify-between text-[10px]">
-                  <span className="font-medium text-white/90 truncate max-w-[85px] sm:max-w-[110px]">
+                <div className="relative z-10 pt-2 border-t border-white/20 flex items-center justify-between text-[10px]">
+                  <span className="font-medium text-white px-2 py-0.5 rounded-md bg-black/50 backdrop-blur-xs border border-white/20 truncate max-w-[95px] sm:max-w-[120px] shadow-2xs">
                     {card.badge || card.meta}
                   </span>
 
                   {isExpanded ? (
-                    <span className="inline-flex items-center gap-0.5 text-white/80 group-hover:text-white transition-colors">
-                      <span className="text-[9px]">详情</span>
+                    <span className="inline-flex items-center gap-0.5 text-amber-200 font-bold group-hover:text-white transition-colors">
+                      <span className="text-[9.5px]">详情</span>
                       <ArrowUpRight className="w-3 h-3" />
                     </span>
                   ) : (
-                    <span className="text-[9px] text-white/60">1/3 叠放</span>
+                    <span className="text-[9px] text-stone-300 font-medium">1/3 叠放</span>
                   )}
                 </div>
 
@@ -870,61 +923,106 @@ export const OverlappingCardStack: React.FC<OverlappingCardStackProps> = ({
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs animate-fadeIn"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn"
           onClick={() => setSelectedCard(null)}
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-md bg-white rounded-3xl p-6 sm:p-7 shadow-2xl border border-stone-200 space-y-4 animate-scaleUp"
+            className="w-full max-w-md bg-white rounded-3xl overflow-hidden shadow-2xl border border-stone-200 animate-scaleUp"
           >
-            <div className="flex items-start justify-between">
-              <div className="flex items-center gap-2">
-                <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-stone-100 text-stone-700 border border-stone-200">
-                  {selectedCard.category || '智识卡片'}
-                </span>
-                {selectedCard.badge && (
-                  <span className="text-xs text-stone-500 font-medium">
-                    · {selectedCard.badge}
-                  </span>
-                )}
+            {/* Hero Image Banner */}
+            {selectedCard.image ? (
+              <div className="relative h-48 sm:h-56 w-full overflow-hidden">
+                <img
+                  src={selectedCard.image}
+                  alt={selectedCard.name}
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-cover filter brightness-[0.78] contrast-[1.1]"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/40 to-transparent" />
+                
+                {/* Close Button on image */}
+                <button
+                  type="button"
+                  onClick={() => setSelectedCard(null)}
+                  className="absolute top-3.5 right-3.5 w-8 h-8 rounded-full bg-black/40 hover:bg-black/60 backdrop-blur-md flex items-center justify-center text-white transition-colors cursor-pointer border border-white/20"
+                  aria-label="关闭"
+                >
+                  ✕
+                </button>
+
+                {/* Overlaid Title & Category */}
+                <div className="absolute bottom-3.5 left-4 right-4 flex items-end justify-between gap-3">
+                  <div className="space-y-1">
+                    <span className="inline-block px-2.5 py-0.5 text-[10px] font-bold rounded-md bg-white/20 backdrop-blur-md text-white border border-white/25">
+                      {selectedCard.category || '智识卡片'}
+                    </span>
+                    <h3 className="font-serif-editorial text-xl sm:text-2xl font-bold text-white tracking-tight drop-shadow-md">
+                      {selectedCard.name}
+                    </h3>
+                  </div>
+                  <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-md border border-white/25 flex items-center justify-center text-white shrink-0 shadow-sm">
+                    {selectedCard.icon}
+                  </div>
+                </div>
               </div>
-              <button
-                type="button"
-                onClick={() => setSelectedCard(null)}
-                className="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center text-stone-500 hover:text-stone-900 transition-colors"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="space-y-1.5">
-              <h3 className="font-serif-editorial text-xl font-bold text-stone-900 tracking-tight">
-                {selectedCard.name}
-              </h3>
-              {selectedCard.subname && (
-                <p className="text-xs text-stone-500 font-medium">{selectedCard.subname}</p>
-              )}
-            </div>
-
-            <p className="text-sm text-stone-700 leading-relaxed bg-stone-50 p-3.5 rounded-xl border border-stone-200/80">
-              {selectedCard.description}
-            </p>
-
-            {selectedCard.meta && (
-              <div className="flex items-center gap-2 text-xs text-stone-600">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                <span>{selectedCard.meta}</span>
+            ) : (
+              <div className="p-6 pb-0 flex items-start justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-0.5 text-[10px] font-bold rounded-md bg-stone-100 text-stone-700 border border-stone-200">
+                    {selectedCard.category || '智识卡片'}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSelectedCard(null)}
+                  className="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center text-stone-500 hover:text-stone-900 transition-colors"
+                >
+                  ✕
+                </button>
               </div>
             )}
 
-            <div className="pt-2 flex items-center justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setSelectedCard(null)}
-                className="px-4 py-2 text-xs font-semibold text-stone-700 bg-stone-100 hover:bg-stone-200 rounded-xl transition-colors"
-              >
-                关闭
-              </button>
+            {/* Modal Content Body */}
+            <div className="p-6 space-y-4">
+              {selectedCard.subname && (
+                <p className="text-xs text-stone-500 font-mono font-medium -mt-1">
+                  {selectedCard.subname}
+                </p>
+              )}
+
+              <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200/80 space-y-2">
+                <span className="text-[10px] font-mono text-stone-400 uppercase tracking-wider block">
+                  核心释义与认知模型
+                </span>
+                <p className="text-sm text-stone-800 leading-relaxed font-sans">
+                  {selectedCard.description}
+                </p>
+              </div>
+
+              {selectedCard.meta && (
+                <div className="flex items-center justify-between p-3 rounded-xl bg-amber-50/80 border border-amber-200/60 text-xs text-amber-900 font-medium">
+                  <div className="flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
+                    <span>{selectedCard.meta}</span>
+                  </div>
+                  {selectedCard.badge && (
+                    <span className="px-2 py-0.5 rounded-md bg-amber-200/60 text-amber-950 font-bold text-[10px]">
+                      {selectedCard.badge}
+                    </span>
+                  )}
+                </div>
+              )}
+
+              <div className="pt-2 flex items-center justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedCard(null)}
+                  className="px-5 py-2.5 text-xs font-semibold text-stone-700 bg-stone-100 hover:bg-stone-200 rounded-xl transition-colors cursor-pointer"
+                >
+                  关闭
+                </button>
+              </div>
             </div>
           </div>
         </div>

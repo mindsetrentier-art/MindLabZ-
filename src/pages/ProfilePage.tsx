@@ -7,6 +7,7 @@ import firebaseConfig from '../../firebase-applet-config.json';
 import { useApp } from '../context/AppContext';
 import { useBiometricLock } from '../context/BiometricLockContext';
 import { OverlappingCardStack } from '../components/ui/OverlappingCardStack';
+import { CognitiveMedalsHall } from '../components/profile/CognitiveMedalsHall';
 import { setupNetlifyBadgeRemover } from '../utils/netlifyBadgeRemover';
 
 const GOAL_OPTIONS = [
@@ -1054,6 +1055,9 @@ export const ProfilePage: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* Cognitive Medals & Hall of Honor (认知勋章与心智殿堂) */}
+      <CognitiveMedalsHall user={user} />
 
       {/* Overlapping Card Stack Deck: 个人资料与荣誉成就卡片 */}
       <section className="editorial-card rounded-2xl p-4 sm:p-7 md:p-9 space-y-4 bg-white border border-stone-200">

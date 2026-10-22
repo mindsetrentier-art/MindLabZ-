@@ -226,6 +226,105 @@
         "createdAt",
         "updatedAt"
       ]
+    },
+    "GameLeaderboardEntry": {
+      "title": "GameLeaderboardEntry",
+      "description": "Public daily leaderboard record storing high scores, accuracies, and ranks achieved in cognitive training games.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique score identifier in format {userId}_{date}_{gameId}.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Firebase Auth UID or player ID of the user.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "userName": {
+          "type": "string",
+          "description": "Player display name.",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "userAvatar": {
+          "type": "string",
+          "description": "Player avatar image URL.",
+          "minLength": 1,
+          "maxLength": 1000
+        },
+        "userTitle": {
+          "type": "string",
+          "description": "Player cognitive title or rank.",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "userLevel": {
+          "type": "number",
+          "description": "Current cognitive level of the player (1-1000)."
+        },
+        "gameId": {
+          "type": "string",
+          "description": "ID of the specific cognitive game or 'all' for daily total.",
+          "minLength": 1,
+          "maxLength": 60
+        },
+        "gameName": {
+          "type": "string",
+          "description": "Display name of the cognitive game.",
+          "minLength": 1,
+          "maxLength": 100
+        },
+        "score": {
+          "type": "number",
+          "description": "Score achieved in the game or total daily score."
+        },
+        "accuracy": {
+          "type": "number",
+          "description": "Accuracy percentage (0 to 100)."
+        },
+        "streak": {
+          "type": "number",
+          "description": "Consecutive training days streak."
+        },
+        "date": {
+          "type": "string",
+          "description": "ISO date string (YYYY-MM-DD) for daily ranking partitioning.",
+          "minLength": 1,
+          "maxLength": 20
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when score was recorded."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when score was last updated."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "userName",
+        "userAvatar",
+        "userTitle",
+        "userLevel",
+        "gameId",
+        "gameName",
+        "score",
+        "accuracy",
+        "streak",
+        "date",
+        "createdAt",
+        "updatedAt"
+      ]
     }
   },
   "firestore": {
@@ -240,6 +339,12 @@
         "$ref": "#/entities/CognitiveJournal"
       },
       "description": "Private structured cognitive journal logs owned strictly by {userId}."
+    },
+    "/gameLeaderboards/{scoreId}": {
+      "schema": {
+        "$ref": "#/entities/GameLeaderboardEntry"
+      },
+      "description": "Daily cognitive training game leaderboard scores partitioned by date for real-time multiplayer competition."
     }
   }
 }

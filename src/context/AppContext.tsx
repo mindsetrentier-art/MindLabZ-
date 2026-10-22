@@ -25,6 +25,8 @@ import {
   deleteJournalEntry,
   loadLocalJournals,
 } from '../services/journalService';
+import { submitGameScoreToLeaderboard } from '../services/leaderboardService';
+import { evaluateAndUnlockBadges } from '../services/badgeService';
 
 export interface LocalUserAccount {
   id: string;
@@ -61,6 +63,8 @@ interface AppContextType {
   updateGoals: (goals: string[]) => void;
   laws: PsychologyLaw[];
   badges: Badge[];
+  newUnlockedBadge: Badge | null;
+  setNewUnlockedBadge: (badge: Badge | null) => void;
   addXP: (amount: number, reason?: string) => void;
   toggleBookmark: (lawId: string) => void;
   isBookmarked: (lawId: string) => boolean;
@@ -260,6 +264,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [laws] = useState<PsychologyLaw[]>(INITIAL_PSYCHOLOGY_LAWS);
   const [badges] = useState<Badge[]>(BADGES_DATA);
+  const [newUnlockedBadge, setNewUnlockedBadge] = useState<Badge | null>(null);
   const [isDailyChallengeCompleted, setIsDailyChallengeCompleted] = useState<boolean>(false);
   const [aiTutorOpen, setAiTutorOpen] = useState<boolean>(false);
   const [activeContextLaw, setActiveContextLaw] = useState<PsychologyLaw | null>(null);
@@ -757,24 +762,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updatedStats.decision = Math.min(100, Math.round(updatedStats.decision * 0.9 + result.accuracy * 0.1));
       }
 
-      const unlockedBadges = [...prev.unlockedBadges];
-      if (gameId === 'psych-experiment' && !unlockedBadges.includes('lab-experimenter')) {
-        unlockedBadges.push('lab-experimenter');
-      }
-      if (gameId === 'memory-lab' && result.score >= 10000 && !unlockedBadges.includes('memory-palace-grandmaster')) {
-        unlockedBadges.push('memory-palace-grandmaster');
-      }
-      if (completedGames.length >= 5 && !unlockedBadges.includes('cognitive-hunter')) {
-        unlockedBadges.push('cognitive-hunter');
-      }
-
-      const newXp = prev.xp + actualXpGained;
-      const newLevel = Math.max(prev.level, Math.floor(newXp / 400) + 1);
-
-      return {
+      const candidateUser: UserProfile = {
         ...prev,
-        xp: newXp,
-        level: newLevel,
+        xp: prev.xp + actualXpGained,
+        level: Math.max(prev.level, Math.floor((prev.xp + actualXpGained) / 400) + 1),
         totalGames: newTotalGames,
         gameHighScores: {
           ...prev.gameHighScores,
@@ -783,8 +774,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         completedGames,
         gameCompletionCount,
         stats: updatedStats,
-        unlockedBadges,
       };
+
+      // Automatically evaluate and unlock cognitive medals
+      const { updatedUser: profileWithBadges, newBadges } = evaluateAndUnlockBadges(candidateUser);
+      if (newBadges.length > 0) {
+        setNewUnlockedBadge(newBadges[0]);
+      }
+
+      return profileWithBadges;
+    });
+
+    // Automatically submit score to Firestore daily leaderboard
+    void submitGameScoreToLeaderboard({
+      userId: auth.currentUser?.uid || 'guest_user',
+      userName: user.name || '智心探索者',
+      userAvatar: user.avatar,
+      userTitle: user.title,
+      userLevel: user.level,
+      gameId,
+      gameName: gameId,
+      score: result.score,
+      accuracy: result.accuracy,
+      streak: user.streak,
     });
 
     triggerConfetti();
@@ -798,13 +810,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         unlockedBadges.push('speed-quiz-master');
       }
 
-      const newXp = prev.xp + earnedXp;
-      const newLevel = Math.max(prev.level, Math.floor(newXp / 400) + 1);
-
-      return {
+      const tentativeUser: UserProfile = {
         ...prev,
-        xp: newXp,
-        level: newLevel,
+        xp: prev.xp + earnedXp,
+        level: Math.max(prev.level, Math.floor((prev.xp + earnedXp) / 400) + 1),
         totalQuizzes: prev.totalQuizzes + 1,
         quizPoints: prev.quizPoints + earnedXp,
         unlockedBadges,
@@ -813,6 +822,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           knowledge: Math.min(100, Math.round(prev.stats.knowledge * 0.9 + accuracy * 0.1)),
         },
       };
+
+      const { updatedUser: profileWithBadges, newBadges } = evaluateAndUnlockBadges(tentativeUser);
+      if (newBadges.length > 0) {
+        setNewUnlockedBadge(newBadges[0]);
+      }
+
+      return profileWithBadges;
     });
 
     triggerConfetti();
@@ -828,7 +844,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           ? [...prev.lawsMastered, lawId]
           : prev.lawsMastered;
 
-      return {
+      const tentativeUser: UserProfile = {
         ...prev,
         lawsMastered,
         lawMasteryMap: {
@@ -836,6 +852,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           [lawId]: finalMastery,
         },
       };
+
+      const { updatedUser: profileWithBadges, newBadges } = evaluateAndUnlockBadges(tentativeUser);
+      if (newBadges.length > 0) {
+        setNewUnlockedBadge(newBadges[0]);
+      }
+
+      return profileWithBadges;
     });
   };
 
@@ -844,15 +867,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setIsDailyChallengeCompleted(true);
     dailyCompletedRef.current = true;
     setUser((prev) => {
+      const newStreak = prev.streak + 1;
       const newXp = prev.xp + 500;
       const newLevel = Math.max(prev.level, Math.floor(newXp / 400) + 1);
-      const next = {
+      const tentative = {
         ...prev,
+        streak: newStreak,
         xp: newXp,
         level: newLevel,
       };
-      void syncProfileToFirestore(next, true);
-      return next;
+      const { updatedUser: profileWithBadges, newBadges } = evaluateAndUnlockBadges(tentative);
+      if (newBadges.length > 0) {
+        setNewUnlockedBadge(newBadges[0]);
+      }
+      void syncProfileToFirestore(profileWithBadges, true);
+      return profileWithBadges;
     });
     triggerConfetti();
   };
@@ -941,6 +970,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updateGoals,
         laws,
         badges,
+        newUnlockedBadge,
+        setNewUnlockedBadge,
         addXP,
         toggleBookmark,
         isBookmarked,

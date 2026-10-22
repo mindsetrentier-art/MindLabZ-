@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { GameCard } from '../components/cards/GameCard';
 import { GameCardSkeleton } from '../components/ui/Skeleton';
 import { PSYCHOLOGY_GAMES } from '../data/games';
@@ -6,11 +7,13 @@ import { Brain, Trophy, Zap, Sparkles, Shuffle, ShieldCheck, Flame, Crown, Check
 import { useApp } from '../context/AppContext';
 import { GameDifficulty, DEFAULT_DIFFICULTY, DIFFICULTY_LIST, DIFFICULTY_CONFIGS } from '../data/difficulty';
 import { DifficultySelector } from '../components/games/DifficultySelector';
+import { GameLeaderboardModule } from '../components/games/GameLeaderboardModule';
 import { gameAudio } from '../utils/gameAudio';
 
 const GAME_CATEGORIES = ['全部', '10款心理学小游戏', '认知', '决策', '社会', '情绪', '习惯', '记忆', '逻辑'];
 
 export const GamesPage: React.FC = () => {
+  const navigate = useNavigate();
   const { user } = useApp();
   const [selectedCat, setSelectedCat] = useState('全部');
   const [isLoading, setIsLoading] = useState(false);
@@ -133,6 +136,22 @@ export const GamesPage: React.FC = () => {
               </div>
             </div>
 
+            {/* Cognitive Medals Showroom Quick Access Pill */}
+            <button
+              onClick={() => navigate('/profile')}
+              type="button"
+              className="flex items-center justify-between px-3.5 py-2 rounded-xl bg-amber-400/20 hover:bg-amber-400/30 border border-amber-400/40 text-xs font-bold transition-all cursor-pointer active:scale-95 text-amber-200"
+              title="前往个人资料页查看认知勋章荣誉殿堂"
+            >
+              <div className="flex items-center gap-1.5">
+                <Award className="w-4 h-4 text-amber-300" />
+                <span>认知勋章荣誉展馆</span>
+              </div>
+              <span className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-amber-400/25 text-amber-100 font-extrabold">
+                {user.unlockedBadges?.length || 0} 枚已解锁 →
+              </span>
+            </button>
+
             {/* Sound Toggle Pill */}
             <button
               onClick={handleToggleSound}
@@ -207,6 +226,9 @@ export const GamesPage: React.FC = () => {
           showDetails={true}
         />
       </section>
+
+      {/* Real-Time Firebase Daily Arena Leaderboard */}
+      <GameLeaderboardModule />
 
       {/* Category Filter Controls */}
       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">

@@ -146,6 +146,14 @@ export interface Badge {
   category: 'streak' | 'knowledge' | 'game' | 'quiz' | 'mastery';
   xpBonus: number;
   color: string;
+  tier?: 'bronze' | 'silver' | 'gold' | 'diamond' | 'master';
+  rarity?: string;
+  criteriaType?: 'game-score' | 'streak-days' | 'laws-mastered' | 'total-games' | 'leaderboard';
+  targetGameId?: string;
+  targetGameName?: string;
+  targetScore?: number;
+  targetStreak?: number;
+  targetCount?: number;
 }
 
 export interface UserStats {

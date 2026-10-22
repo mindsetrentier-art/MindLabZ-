@@ -97,6 +97,57 @@ service cloud.firestore {
         && data.updatedAt is timestamp;
     }
 
+    // Pillar 2: Standalone Entity Validation Blueprint for GameLeaderboardEntry
+    function isValidLeaderboardEntry(data) {
+      return data.keys().hasAll([
+          'id',
+          'userId',
+          'userName',
+          'userAvatar',
+          'userTitle',
+          'userLevel',
+          'gameId',
+          'gameName',
+          'score',
+          'accuracy',
+          'streak',
+          'date',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id',
+          'userId',
+          'userName',
+          'userAvatar',
+          'userTitle',
+          'userLevel',
+          'gameId',
+          'gameName',
+          'score',
+          'accuracy',
+          'streak',
+          'date',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 && data.userId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.userId == request.auth.uid
+        && data.userName is string && data.userName.size() >= 1 && data.userName.size() <= 100
+        && data.userAvatar is string && data.userAvatar.size() >= 1 && data.userAvatar.size() <= 1000
+        && data.userTitle is string && data.userTitle.size() >= 1 && data.userTitle.size() <= 60
+        && data.userLevel is number && data.userLevel >= 1 && data.userLevel <= 1000
+        && data.gameId is string && data.gameId.size() >= 1 && data.gameId.size() <= 60
+        && data.gameName is string && data.gameName.size() >= 1 && data.gameName.size() <= 100
+        && data.score is number && data.score >= 0 && data.score <= 10000000
+        && data.accuracy is number && data.accuracy >= 0 && data.accuracy <= 100
+        && data.streak is number && data.streak >= 0 && data.streak <= 10000
+        && data.date is string && data.date.size() >= 1 && data.date.size() <= 20
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
     // Helper for validating the 5-dimensional cognitive stats map
     function isValidStatsMap(stats) {
       return stats is map
@@ -293,6 +344,32 @@ service cloud.firestore {
 
         allow delete: if isOwner(userId) && isValidId(journalId);
       }
+    }
+
+    // Collection: /gameLeaderboards/{scoreId}
+    match /gameLeaderboards/{scoreId} {
+      allow get, list: if true;
+
+      allow create: if isVerifiedUser()
+        && isValidId(scoreId)
+        && incoming().id == scoreId
+        && incoming().userId == request.auth.uid
+        && isValidLeaderboardEntry(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+
+      allow update: if isVerifiedUser()
+        && isValidId(scoreId)
+        && incoming().id == existing().id
+        && incoming().userId == existing().userId
+        && incoming().userId == request.auth.uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && isValidLeaderboardEntry(incoming());
+
+      allow delete: if isVerifiedUser()
+        && isValidId(scoreId)
+        && existing().userId == request.auth.uid;
     }
   }
 }
