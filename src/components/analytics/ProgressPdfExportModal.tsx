@@ -68,13 +68,13 @@ export const ProgressPdfExportModal: React.FC<ProgressPdfExportModalProps> = ({
   const reportId = `MLZ-CR-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}-${user.level}`;
 
   // Radar points calculation for printable SVG
-  const stats = user.stats;
+  const stats = user?.stats || { memory: 80, attention: 80, reasoning: 80, knowledge: 80, decision: 80 };
   const dimensions = [
-    { key: 'memory', label: '空间记忆', value: stats.memory },
-    { key: 'attention', label: '专注过滤', value: stats.attention },
-    { key: 'reasoning', label: '逻辑反思', value: stats.reasoning },
-    { key: 'knowledge', label: '心理广度', value: stats.knowledge },
-    { key: 'decision', label: '决策理性', value: stats.decision },
+    { key: 'memory', label: '空间记忆', value: stats.memory ?? 80 },
+    { key: 'attention', label: '专注过滤', value: stats.attention ?? 80 },
+    { key: 'reasoning', label: '逻辑反思', value: stats.reasoning ?? 80 },
+    { key: 'knowledge', label: '心理广度', value: stats.knowledge ?? 80 },
+    { key: 'decision', label: '决策理性', value: stats.decision ?? 80 },
   ];
 
   const size = 180;
@@ -162,7 +162,7 @@ export const ProgressPdfExportModal: React.FC<ProgressPdfExportModalProps> = ({
     }
   };
 
-  const unlockedBadges = badges.filter((b) => user.unlockedBadges.includes(b.id));
+  const unlockedBadges = badges.filter((b) => (user?.unlockedBadges || []).includes(b.id));
 
   return (
     <div
@@ -590,7 +590,7 @@ export const ProgressPdfExportModal: React.FC<ProgressPdfExportModalProps> = ({
                 </div>
 
                 <div className="grid grid-cols-7 gap-2 items-end h-28 max-w-md mx-auto pt-2">
-                  {user.weeklyActivity.map((day, idx) => {
+                  {(user?.weeklyActivity || []).map((day, idx) => {
                     const heightPercent = Math.min(100, Math.round((day.xp / 500) * 100));
                     return (
                       <div key={idx} className="flex flex-col items-center gap-1.5 h-full justify-end text-xs">

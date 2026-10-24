@@ -2,6 +2,7 @@ import React from 'react';
 
 export interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
   variant?: 'text' | 'card' | 'avatar' | 'rect' | 'circle';
+  shape?: 'squircle' | 'circle' | 'rounded' | 'rect' | string;
   width?: string | number;
   height?: string | number;
   lines?: number;
@@ -14,6 +15,7 @@ export interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
  */
 export const Skeleton: React.FC<SkeletonProps> = ({
   variant = 'rect',
+  shape,
   width,
   height,
   lines = 1,

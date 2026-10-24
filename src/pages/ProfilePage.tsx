@@ -9,6 +9,7 @@ import { useBiometricLock } from '../context/BiometricLockContext';
 import { OverlappingCardStack } from '../components/ui/OverlappingCardStack';
 import { CognitiveMedalsHall } from '../components/profile/CognitiveMedalsHall';
 import { setupNetlifyBadgeRemover } from '../utils/netlifyBadgeRemover';
+import { ErrorBoundary } from '../components/ui/ErrorBoundary';
 
 const GOAL_OPTIONS = [
   '空间与序列记忆 (Memory)',
@@ -246,8 +247,8 @@ export const ProfilePage: React.FC = () => {
           <div className="w-20 h-20 rounded-full border border-stone-300 p-0.5 relative shrink-0">
             <div className="w-full h-full rounded-full overflow-hidden bg-stone-100">
               <img
-                src={user.avatar}
-                alt={user.name}
+                src={user?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80'}
+                alt={user?.name || 'Explorateur MindLabZ'}
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-cover"
               />
@@ -261,9 +262,9 @@ export const ProfilePage: React.FC = () => {
 
           <div className="space-y-1 text-center sm:text-left flex-1 min-w-0">
             <div className="flex flex-col sm:flex-row sm:items-baseline gap-2">
-              <h2 className="font-serif-editorial text-2xl font-bold text-stone-900">{user.name}</h2>
+              <h2 className="font-serif-editorial text-2xl font-bold text-stone-900">{user?.name || 'Explorateur MindLabZ'}</h2>
               <span className="text-xs font-semibold text-stone-600 font-numeric">
-                Level {user.level} · {user.title}
+                Level {user?.level ?? 1} · {user?.title || '认知探索者'}
               </span>
             </div>
             {(firebaseUser?.email || activeAccountEmail) && (
@@ -280,21 +281,21 @@ export const ProfilePage: React.FC = () => {
             <span className="text-[11px] text-stone-500 block mb-1">连续研习</span>
             <span className="text-base font-bold text-stone-900 flex items-center justify-center gap-1">
               <Flame className="w-3.5 h-3.5 text-amber-600 fill-amber-600" />
-              {user.streak} 天
+              {user?.streak ?? 0} 天
             </span>
           </div>
           <div className="p-3 rounded-xl bg-[#FAF8F5] border border-stone-200/60">
             <span className="text-[11px] text-stone-500 block mb-1">总经验值</span>
             <span className="text-base font-bold text-stone-900 flex items-center justify-center gap-1">
               <Star className="w-3.5 h-3.5 text-stone-600 fill-stone-400" />
-              {user.xp.toLocaleString()} XP
+              {(user?.xp ?? 0).toLocaleString()} XP
             </span>
           </div>
           <div className="p-3 rounded-xl bg-[#FAF8F5] border border-stone-200/60">
             <span className="text-[11px] text-stone-500 block mb-1">掌握定律</span>
             <span className="text-base font-bold text-emerald-800 flex items-center justify-center gap-1">
               <Trophy className="w-3.5 h-3.5 text-emerald-700" />
-              {user.lawsMastered.length} 项
+              {(user?.lawsMastered || []).length} 项
             </span>
           </div>
           <div
@@ -1057,34 +1058,38 @@ export const ProfilePage: React.FC = () => {
       </section>
 
       {/* Cognitive Medals & Hall of Honor (认知勋章与心智殿堂) */}
-      <CognitiveMedalsHall user={user} />
+      <ErrorBoundary fallbackTitle="勋章殿堂正在加载中">
+        <CognitiveMedalsHall user={user} />
+      </ErrorBoundary>
 
       {/* Overlapping Card Stack Deck: 个人资料与荣誉成就卡片 */}
-      <section className="editorial-card rounded-2xl p-4 sm:p-7 md:p-9 space-y-4 bg-white border border-stone-200">
-        <div className="pb-2 border-b border-stone-200/80">
-          <span className="editorial-kicker text-[10px] text-amber-700 font-bold block mb-0.5">
-            HONOR DECK · 重叠式卡片展馆
-          </span>
-          <h3 className="font-serif-editorial text-lg sm:text-xl font-bold text-stone-900 flex items-center gap-2">
-            <Trophy className="w-4 h-4 text-amber-600" />
-            荣誉徽章与成就卡组（1/3 叠放 · 点击依次展开）
-          </h3>
-          <p className="text-xs text-stone-500 mt-1">
-            卡片之间相互覆盖约 1/3，收起时显示前 3 张及剩余余量；点击后依次平滑展开并显示详细成就名称与等级，再次点击平滑收回。
-          </p>
-        </div>
+      <ErrorBoundary fallbackTitle="成就卡组正在加载中">
+        <section className="editorial-card rounded-2xl p-4 sm:p-7 md:p-9 space-y-4 bg-white border border-stone-200">
+          <div className="pb-2 border-b border-stone-200/80">
+            <span className="editorial-kicker text-[10px] text-amber-700 font-bold block mb-0.5">
+              HONOR DECK · 重叠式卡片展馆
+            </span>
+            <h3 className="font-serif-editorial text-lg sm:text-xl font-bold text-stone-900 flex items-center gap-2">
+              <Trophy className="w-4 h-4 text-amber-600" />
+              荣誉徽章与成就卡组（1/3 叠放 · 点击依次展开）
+            </h3>
+            <p className="text-xs text-stone-500 mt-1">
+              卡片之间相互覆盖约 1/3，收起时显示前 3 张及剩余余量；点击后依次平滑展开并显示详细成就名称与等级，再次点击平滑收回。
+            </p>
+          </div>
 
-        <div className="pt-1">
-          <OverlappingCardStack
-            scenario="profile"
-            maxVisible={3}
-            overlapRatio={1 / 3}
-            size="md"
-            layout="row"
-            showScenarioTabs={true}
-          />
-        </div>
-      </section>
+          <div className="pt-1">
+            <OverlappingCardStack
+              scenario="profile"
+              maxVisible={3}
+              overlapRatio={1 / 3}
+              size="md"
+              layout="row"
+              showScenarioTabs={true}
+            />
+          </div>
+        </section>
+      </ErrorBoundary>
 
       {/* 2. Training Goals Section */}
       <section className="editorial-card rounded-2xl p-7 sm:p-9 space-y-4">

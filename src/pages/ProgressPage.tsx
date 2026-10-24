@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Trophy,
   Flame,
@@ -13,6 +14,8 @@ import {
   FileDown,
   FileText,
   Printer,
+  ArrowRight,
+  Compass,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { RadarSkeleton, Skeleton } from '../components/ui/Skeleton';
@@ -25,13 +28,13 @@ export const ProgressPage: React.FC = () => {
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
 
   // Radar points calculation for 5 dimensions
-  const stats = user.stats;
+  const stats = user?.stats || { memory: 80, attention: 80, reasoning: 80, knowledge: 80, decision: 80 };
   const dimensions = [
-    { key: 'memory', label: '空间记忆', value: stats.memory },
-    { key: 'attention', label: '专注过滤', value: stats.attention },
-    { key: 'reasoning', label: '逻辑反思', value: stats.reasoning },
-    { key: 'knowledge', label: '心理广度', value: stats.knowledge },
-    { key: 'decision', label: '决策理性', value: stats.decision },
+    { key: 'memory', label: '空间记忆', value: stats.memory ?? 80 },
+    { key: 'attention', label: '专注过滤', value: stats.attention ?? 80 },
+    { key: 'reasoning', label: '逻辑反思', value: stats.reasoning ?? 80 },
+    { key: 'knowledge', label: '心理广度', value: stats.knowledge ?? 80 },
+    { key: 'decision', label: '决策理性', value: stats.decision ?? 80 },
   ];
 
   // SVG Radar Polygon generator
@@ -205,6 +208,30 @@ export const ProgressPage: React.FC = () => {
             })}
           </svg>
         </div>
+
+        {/* Deep Dive Cognitive Assessment Banner */}
+        <div className="pt-4 border-t border-stone-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-stone-900 to-indigo-950 text-white p-4 sm:p-5 rounded-xl shadow-sm">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300 bg-amber-400/20 px-2 py-0.5 rounded">深度测评</span>
+              <span className="text-stone-300 text-xs">· 实时映射 10 款游戏实战战绩</span>
+            </div>
+            <h4 className="font-serif-editorial text-base sm:text-lg font-bold text-white flex items-center gap-2">
+              <Compass className="w-4 h-4 text-amber-300" />
+              六维认知能力深度雷达 & 心智原型报告
+            </h4>
+            <p className="text-xs text-stone-300 font-normal leading-relaxed">
+              基于空间记忆、逻辑反思、瞬时专注、风险决策等真实得分，精准诊断你的心智原型与今日脑神经处方。
+            </p>
+          </div>
+          <Link
+            to="/assessment"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-stone-950 font-bold text-xs shadow-md transition-all shrink-0 active:scale-95"
+          >
+            <span>进入多维评估雷达</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
       </section>
 
       {/* 3. 7-Day Activity Chart */}
@@ -223,7 +250,7 @@ export const ProgressPage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-7 gap-3 pt-4 items-end h-36 max-w-lg mx-auto">
-          {user.weeklyActivity.map((day, idx) => {
+          {(user?.weeklyActivity || []).map((day, idx) => {
             const heightPercent = Math.min(100, Math.round((day.xp / 500) * 100));
             return (
               <div key={idx} className="flex flex-col items-center gap-2 h-full justify-end">
@@ -254,13 +281,13 @@ export const ProgressPage: React.FC = () => {
             </h3>
           </div>
           <span className="text-xs font-semibold text-stone-700 font-numeric">
-            已达成 {user.unlockedBadges.length} / {badges.length}
+            已达成 {(user?.unlockedBadges || []).length} / {badges.length}
           </span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
           {badges.map((badge) => {
-            const isUnlocked = user.unlockedBadges.includes(badge.id);
+            const isUnlocked = (user?.unlockedBadges || []).includes(badge.id);
 
             return (
               <div

@@ -92,6 +92,14 @@
           "type": "boolean",
           "description": "Whether the daily cognitive challenge is completed today."
         },
+        "completedGames": {
+          "type": "array",
+          "description": "List of IDs of completed mini-games."
+        },
+        "gameCompletionCount": {
+          "type": "object",
+          "description": "Map of mini-game ID to completion counts."
+        },
         "stats": {
           "type": "object",
           "description": "Five-dimensional cognitive capability scores (memory, attention, reasoning, knowledge, decision)."

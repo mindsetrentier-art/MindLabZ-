@@ -12,6 +12,7 @@ import { GamePlayPage } from './pages/GamePlayPage';
 import { RapidQuizPage } from './pages/RapidQuizPage';
 import { DailyChallengePage } from './pages/DailyChallengePage';
 import { ProgressPage } from './pages/ProgressPage';
+import { CognitiveAssessmentPage } from './pages/CognitiveAssessmentPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { JournalPage } from './pages/JournalPage';
 import { BreathingPage } from './pages/BreathingPage';
@@ -24,6 +25,7 @@ import { PwaInstallModal } from './components/pwa/PwaInstallModal';
 import { PwaUpdateToast } from './components/pwa/PwaUpdateToast';
 import { BiometricSetupModal } from './components/journal/BiometricSetupModal';
 import { BadgeUnlockedModal } from './components/profile/BadgeUnlockedModal';
+import { ErrorBoundary } from './components/ui/ErrorBoundary';
 
 const AppRoutes: React.FC = () => {
   const navigate = useNavigate();
@@ -60,22 +62,26 @@ const AppRoutes: React.FC = () => {
   return (
     <>
       <AppShell>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/learn" element={<LearnPage />} />
-          <Route path="/search" element={<LearnPage />} />
-          <Route path="/law/:id" element={<LawDetailPage />} />
-          <Route path="/journal" element={<JournalPage />} />
-          <Route path="/breathing" element={<BreathingPage />} />
-          <Route path="/games" element={<GamesPage />} />
-          <Route path="/game/:id" element={<GamePlayPage />} />
-          <Route path="/quiz" element={<RapidQuizPage />} />
-          <Route path="/challenge" element={<DailyChallengePage />} />
-          <Route path="/progress" element={<ProgressPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
-          {/* Universal 404 Recovery Route */}
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
+        <ErrorBoundary fallbackTitle="Page momentanément indisponible · 页面加载保护">
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/learn" element={<LearnPage />} />
+            <Route path="/search" element={<LearnPage />} />
+            <Route path="/law/:id" element={<LawDetailPage />} />
+            <Route path="/journal" element={<JournalPage />} />
+            <Route path="/breathing" element={<BreathingPage />} />
+            <Route path="/games" element={<GamesPage />} />
+            <Route path="/game/:id" element={<GamePlayPage />} />
+            <Route path="/quiz" element={<RapidQuizPage />} />
+            <Route path="/challenge" element={<DailyChallengePage />} />
+            <Route path="/progress" element={<ProgressPage />} />
+            <Route path="/assessment" element={<CognitiveAssessmentPage />} />
+            <Route path="/cognitive-assessment" element={<CognitiveAssessmentPage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            {/* Universal 404 Recovery Route */}
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
+        </ErrorBoundary>
       </AppShell>
 
       <PwaUpdateToast />

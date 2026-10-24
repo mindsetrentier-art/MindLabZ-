@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { GameCard } from '../components/cards/GameCard';
 import { GameCardSkeleton } from '../components/ui/Skeleton';
 import { PSYCHOLOGY_GAMES } from '../data/games';
-import { Brain, Trophy, Zap, Sparkles, Shuffle, ShieldCheck, Flame, Crown, CheckCircle2, Volume2, VolumeX, Gamepad2, Award } from 'lucide-react';
+import { Brain, Trophy, Zap, Sparkles, Shuffle, ShieldCheck, Flame, Crown, CheckCircle2, Volume2, VolumeX, Gamepad2, Award, ArrowRight } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { GameDifficulty, DEFAULT_DIFFICULTY, DIFFICULTY_LIST, DIFFICULTY_CONFIGS } from '../data/difficulty';
 import { DifficultySelector } from '../components/games/DifficultySelector';
@@ -136,6 +136,22 @@ export const GamesPage: React.FC = () => {
               </div>
             </div>
 
+            {/* Cognitive Assessment Radar Quick Access Pill */}
+            <button
+              onClick={() => navigate('/assessment')}
+              type="button"
+              className="flex items-center justify-between px-3.5 py-2 rounded-xl bg-indigo-500/25 hover:bg-indigo-500/35 border border-indigo-400/40 text-xs font-bold transition-all cursor-pointer active:scale-95 text-indigo-200"
+              title="查看基于游戏得分生成的六维认知能力评估雷达与心智报告"
+            >
+              <div className="flex items-center gap-1.5">
+                <Brain className="w-4 h-4 text-indigo-300" />
+                <span>认知多维评估雷达</span>
+              </div>
+              <span className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-indigo-500/30 text-indigo-100 font-extrabold">
+                全维测评 →
+              </span>
+            </button>
+
             {/* Cognitive Medals Showroom Quick Access Pill */}
             <button
               onClick={() => navigate('/profile')}
@@ -225,6 +241,40 @@ export const GamesPage: React.FC = () => {
           onChange={handleDifficultyChange}
           showDetails={true}
         />
+      </section>
+
+      {/* Cognitive Assessment Radar Feature Banner */}
+      <section className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-[#17162E] via-[#1E1B38] to-[#121124] text-white border border-indigo-500/30 shadow-md flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3.5">
+          <div className="w-11 h-11 rounded-2xl bg-indigo-500/25 border border-indigo-400/40 flex items-center justify-center shrink-0">
+            <Brain className="w-6 h-6 text-indigo-300" />
+          </div>
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-amber-300">
+                COGNITIVE RADAR ASSESSMENT
+              </span>
+              <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-200 border border-indigo-400/30">
+                基于实战得分
+              </span>
+            </div>
+            <h3 className="font-serif-editorial text-base sm:text-lg font-bold text-white">
+              六维认知能力评估雷达与心智原型报告
+            </h3>
+            <p className="text-xs text-stone-300">
+              综合测算记忆力、逻辑推理、专注抗扰、决策理性、反应速度与元认知。
+            </p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => navigate('/assessment')}
+          className="px-4 py-2.5 rounded-xl bg-white hover:bg-stone-100 text-stone-900 text-xs font-bold transition-all shadow-xs shrink-0 cursor-pointer active:scale-95 flex items-center gap-1.5"
+        >
+          <span>查看测评报告</span>
+          <ArrowRight className="w-3.5 h-3.5" />
+        </button>
       </section>
 
       {/* Real-Time Firebase Daily Arena Leaderboard */}

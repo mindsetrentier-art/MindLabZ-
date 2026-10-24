@@ -25,6 +25,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
     if (path === '/games') return { title: '认知训练游戏', showBack: false };
     if (path === '/quiz') return { title: '心理快问快答', showBack: false };
     if (path === '/progress') return { title: '认知能力图谱', showBack: true };
+    if (path === '/assessment' || path === '/cognitive-assessment') return { title: '认知能力多维评估', showBack: true };
     if (path === '/profile') return { title: '个人中心', showBack: false };
     if (path.startsWith('/law/')) return { title: '心理学定律解析', showBack: true };
     if (path.startsWith('/game/')) return { title: '认知竞技场', showBack: true };

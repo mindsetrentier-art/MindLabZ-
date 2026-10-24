@@ -537,10 +537,10 @@ export const OverlappingCardStack: React.FC<OverlappingCardStackProps> = ({
   }, []);
 
   // Determine current active dataset
-  const currentScenarioConfig = SCENARIO_PRESETS[activeScenario];
-  const items = customItems || currentScenarioConfig.items;
-  const currentTitle = customTitle || currentScenarioConfig.title;
-  const currentSubtitle = customSubtitle || currentScenarioConfig.subtitle;
+  const currentScenarioConfig = SCENARIO_PRESETS[activeScenario] || SCENARIO_PRESETS.profile;
+  const items = customItems || currentScenarioConfig?.items || [];
+  const currentTitle = customTitle || currentScenarioConfig?.title || '';
+  const currentSubtitle = customSubtitle || currentScenarioConfig?.subtitle || '';
 
   const totalCount = items.length;
   // Requirement: "收起时显示前三张和 +N 剩余数量"

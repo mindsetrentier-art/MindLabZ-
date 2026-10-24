@@ -16,12 +16,17 @@ export function evaluateAndUnlockBadges(user: UserProfile): {
   updatedUser: UserProfile;
   newBadges: Badge[];
 } {
-  const currentUnlockedIds = new Set(user.unlockedBadges || []);
+  const currentUnlockedIds = new Set(Array.isArray(user?.unlockedBadges) ? user.unlockedBadges : []);
+  const safeLawsMastered = Array.isArray(user?.lawsMastered) ? user.lawsMastered : [];
+  const safeGameHighScores = user?.gameHighScores || {};
+  const userStreak = Number(user?.streak) || 0;
+  const userTotalGames = Number(user?.totalGames) || 0;
+  const userTotalQuizzes = Number(user?.totalQuizzes) || 0;
   const newBadges: Badge[] = [];
   const todayStr = new Date().toISOString().split('T')[0];
 
   // Calculate total high scores across all games
-  const totalGameScores = Object.values(user.gameHighScores || {}).reduce<number>(
+  const totalGameScores = Object.values(safeGameHighScores).reduce<number>(
     (sum, val) => sum + Number(val || 0),
     0
   );
@@ -35,7 +40,7 @@ export function evaluateAndUnlockBadges(user: UserProfile): {
 
     switch (badge.criteriaType) {
       case 'streak-days':
-        if (badge.targetStreak && user.streak >= badge.targetStreak) {
+        if (badge.targetStreak && userStreak >= badge.targetStreak) {
           isSatisfied = true;
         }
         break;
@@ -46,7 +51,7 @@ export function evaluateAndUnlockBadges(user: UserProfile): {
             isSatisfied = true;
           }
         } else if (badge.targetGameId && badge.targetScore) {
-          const userGameScore = Number(user.gameHighScores?.[badge.targetGameId] || 0);
+          const userGameScore = Number(safeGameHighScores[badge.targetGameId] || 0);
           if (userGameScore >= badge.targetScore) {
             isSatisfied = true;
           }
@@ -54,19 +59,19 @@ export function evaluateAndUnlockBadges(user: UserProfile): {
         break;
 
       case 'laws-mastered':
-        if (badge.targetCount && user.lawsMastered.length >= badge.targetCount) {
+        if (badge.targetCount && safeLawsMastered.length >= badge.targetCount) {
           isSatisfied = true;
         }
         break;
 
       case 'total-games':
-        if (badge.targetCount && user.totalGames >= badge.targetCount) {
+        if (badge.targetCount && userTotalGames >= badge.targetCount) {
           isSatisfied = true;
         }
         break;
 
       default:
-        if (badge.id === 'quiz-centurion' && (user.totalQuizzes || 0) >= 100) {
+        if (badge.id === 'quiz-centurion' && userTotalQuizzes >= 100) {
           isSatisfied = true;
         }
         break;
@@ -88,8 +93,8 @@ export function evaluateAndUnlockBadges(user: UserProfile): {
 
   // Calculate total bonus XP gained from newly unlocked badges
   const totalBonusXP = newBadges.reduce((acc, b) => acc + (b.xpBonus || 0), 0);
-  const nextXP = user.xp + totalBonusXP;
-  const nextLevel = Math.max(user.level, Math.floor(nextXP / 400) + 1);
+  const nextXP = (user?.xp || 0) + totalBonusXP;
+  const nextLevel = Math.max(user?.level || 1, Math.floor(nextXP / 400) + 1);
 
   const updatedUser: UserProfile = {
     ...user,
@@ -105,7 +110,8 @@ export function evaluateAndUnlockBadges(user: UserProfile): {
  * Calculates current progress towards unlocking a badge.
  */
 export function getBadgeProgress(badge: Badge, user: UserProfile): BadgeProgress {
-  if (user.unlockedBadges.includes(badge.id)) {
+  const safeUnlocked = Array.isArray(user?.unlockedBadges) ? user.unlockedBadges : [];
+  if (safeUnlocked.includes(badge.id)) {
     return {
       current: 100,
       target: 100,
@@ -114,10 +120,16 @@ export function getBadgeProgress(badge: Badge, user: UserProfile): BadgeProgress
     };
   }
 
+  const safeStreak = Number(user?.streak) || 0;
+  const safeGameHighScores = user?.gameHighScores || {};
+  const safeLaws = Array.isArray(user?.lawsMastered) ? user.lawsMastered : [];
+  const safeTotalGames = Number(user?.totalGames) || 0;
+  const safeTotalQuizzes = Number(user?.totalQuizzes) || 0;
+
   switch (badge.criteriaType) {
     case 'streak-days': {
       const target = badge.targetStreak || 1;
-      const current = Math.min(target, user.streak || 0);
+      const current = Math.min(target, safeStreak);
       const percentage = Math.min(100, Math.round((current / target) * 100));
       return {
         current,
@@ -131,12 +143,12 @@ export function getBadgeProgress(badge: Badge, user: UserProfile): BadgeProgress
       const target = badge.targetScore || 1000;
       let current = 0;
       if (badge.targetGameId === 'all') {
-        current = Object.values(user.gameHighScores || {}).reduce<number>(
+        current = Object.values(safeGameHighScores).reduce<number>(
           (sum, val) => sum + Number(val || 0),
           0
         );
       } else if (badge.targetGameId) {
-        current = Number(user.gameHighScores?.[badge.targetGameId] || 0);
+        current = Number(safeGameHighScores[badge.targetGameId] || 0);
       }
       const clampedCurrent = Math.min(target, current);
       const percentage = Math.min(100, Math.round((clampedCurrent / target) * 100));
@@ -150,7 +162,7 @@ export function getBadgeProgress(badge: Badge, user: UserProfile): BadgeProgress
 
     case 'laws-mastered': {
       const target = badge.targetCount || 10;
-      const current = Math.min(target, user.lawsMastered.length);
+      const current = Math.min(target, safeLaws.length);
       const percentage = Math.min(100, Math.round((current / target) * 100));
       return {
         current,
@@ -160,29 +172,29 @@ export function getBadgeProgress(badge: Badge, user: UserProfile): BadgeProgress
       };
     }
 
-      case 'total-games': {
-        const target = badge.targetCount || 10;
-        const current = Math.min(target, user.totalGames || 0);
-        const percentage = Math.min(100, Math.round((current / target) * 100));
+    case 'total-games': {
+      const target = badge.targetCount || 10;
+      const current = Math.min(target, safeTotalGames);
+      const percentage = Math.min(100, Math.round((current / target) * 100));
+      return {
+        current,
+        target,
+        percentage,
+        label: `完成训练 ${current}/${target} 次`,
+      };
+    }
+
+    default:
+      if (badge.id === 'quiz-centurion') {
+        const target = 100;
+        const current = Math.min(target, safeTotalQuizzes);
         return {
           current,
           target,
-          percentage,
-          label: `完成训练 ${current}/${target} 次`,
+          percentage: Math.min(100, Math.round((current / target) * 100)),
+          label: `完成测验 ${current}/${target} 题`,
         };
       }
-
-      default:
-        if (badge.id === 'quiz-centurion') {
-          const target = 100;
-          const current = Math.min(target, user.totalQuizzes || 0);
-          return {
-            current,
-            target,
-            percentage: Math.min(100, Math.round((current / target) * 100)),
-            label: `完成测验 ${current}/${target} 题`,
-          };
-        }
         return {
           current: 0,
           target: 1,

@@ -341,7 +341,7 @@ export const FocusedBreathing: React.FC<FocusedBreathingProps> = ({
           primary: '澄澈平静',
           intensity: 8,
           valence: 'positive',
-          arousal: 'low',
+          energyLevel: 2,
         },
         structuredData: {
           deepFocusTrigger: `${technique.nameZh} 神经调节呼吸法`,

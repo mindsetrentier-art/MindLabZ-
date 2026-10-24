@@ -224,7 +224,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed === 'object') {
+          return {
+            ...DEFAULT_USER,
+            ...parsed,
+            stats: { ...DEFAULT_USER.stats, ...(parsed.stats || {}) },
+            gameHighScores: { ...DEFAULT_USER.gameHighScores, ...(parsed.gameHighScores || {}) },
+            unlockedBadges: Array.isArray(parsed.unlockedBadges) ? parsed.unlockedBadges : DEFAULT_USER.unlockedBadges,
+            lawsMastered: Array.isArray(parsed.lawsMastered) ? parsed.lawsMastered : DEFAULT_USER.lawsMastered,
+            bookmarks: Array.isArray(parsed.bookmarks) ? parsed.bookmarks : DEFAULT_USER.bookmarks,
+            selectedGoals: Array.isArray(parsed.selectedGoals) ? parsed.selectedGoals : DEFAULT_USER.selectedGoals,
+            weeklyActivity: Array.isArray(parsed.weeklyActivity) ? parsed.weeklyActivity : DEFAULT_USER.weeklyActivity,
+          };
+        }
       }
     } catch (e) {
       console.error('Failed to load user state from localStorage', e);
@@ -397,29 +410,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
                 totalGames: typeof data.totalGames === 'number' ? data.totalGames : prev.totalGames,
                 totalQuizzes: typeof data.totalQuizzes === 'number' ? data.totalQuizzes : prev.totalQuizzes,
                 quizPoints: typeof data.quizPoints === 'number' ? data.quizPoints : prev.quizPoints,
-                lawsMastered: Array.isArray(data.lawsMastered) ? data.lawsMastered : prev.lawsMastered,
+                lawsMastered: Array.isArray(data.lawsMastered) ? data.lawsMastered : (prev?.lawsMastered || DEFAULT_USER.lawsMastered),
                 lawMasteryMap:
                   data.lawMasteryMap && typeof data.lawMasteryMap === 'object'
                     ? data.lawMasteryMap
-                    : prev.lawMasteryMap,
-                bookmarks: Array.isArray(data.bookmarks) ? data.bookmarks : prev.bookmarks,
+                    : (prev?.lawMasteryMap || DEFAULT_USER.lawMasteryMap),
+                bookmarks: Array.isArray(data.bookmarks) ? data.bookmarks : (prev?.bookmarks || DEFAULT_USER.bookmarks),
                 gameHighScores:
                   data.gameHighScores && typeof data.gameHighScores === 'object'
                     ? data.gameHighScores
-                    : prev.gameHighScores,
-                unlockedBadges: Array.isArray(data.unlockedBadges) ? data.unlockedBadges : prev.unlockedBadges,
-                selectedGoals: Array.isArray(data.selectedGoals) ? data.selectedGoals : prev.selectedGoals,
+                    : (prev?.gameHighScores || DEFAULT_USER.gameHighScores),
+                unlockedBadges: Array.isArray(data.unlockedBadges) ? data.unlockedBadges : (prev?.unlockedBadges || DEFAULT_USER.unlockedBadges),
+                selectedGoals: Array.isArray(data.selectedGoals) ? data.selectedGoals : (prev?.selectedGoals || DEFAULT_USER.selectedGoals),
                 hasCompletedOnboarding:
                   typeof data.hasCompletedOnboarding === 'boolean'
                     ? data.hasCompletedOnboarding
-                    : prev.hasCompletedOnboarding,
+                    : (prev?.hasCompletedOnboarding ?? true),
                 stats:
                   data.stats && typeof data.stats === 'object'
-                    ? { ...prev.stats, ...data.stats }
-                    : prev.stats,
+                    ? { ...DEFAULT_USER.stats, ...(prev?.stats || {}), ...data.stats }
+                    : (prev?.stats || DEFAULT_USER.stats),
                 weeklyActivity: Array.isArray(data.weeklyActivity)
                   ? data.weeklyActivity
-                  : prev.weeklyActivity,
+                  : (prev?.weeklyActivity || DEFAULT_USER.weeklyActivity),
               }));
               if (typeof data.isDailyChallengeCompleted === 'boolean') {
                 setIsDailyChallengeCompleted(data.isDailyChallengeCompleted);
@@ -630,8 +643,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     let nextProfile: UserProfile;
     if (existingRaw) {
       try {
-        nextProfile = JSON.parse(existingRaw);
-        nextProfile.name = cleanName;
+        const parsed = JSON.parse(existingRaw);
+        nextProfile = {
+          ...DEFAULT_USER,
+          ...parsed,
+          name: cleanName,
+          stats: { ...DEFAULT_USER.stats, ...(parsed?.stats || {}) },
+          unlockedBadges: Array.isArray(parsed?.unlockedBadges) ? parsed.unlockedBadges : DEFAULT_USER.unlockedBadges,
+          lawsMastered: Array.isArray(parsed?.lawsMastered) ? parsed.lawsMastered : DEFAULT_USER.lawsMastered,
+          gameHighScores: { ...DEFAULT_USER.gameHighScores, ...(parsed?.gameHighScores || {}) },
+        };
       } catch {
         nextProfile = { ...DEFAULT_USER, name: cleanName, avatar: avatarUrl };
       }
@@ -660,7 +681,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (existingRaw) {
       try {
         const parsed = JSON.parse(existingRaw);
-        setUser({ ...parsed, name: account.name, avatar: account.avatar });
+        setUser({
+          ...DEFAULT_USER,
+          ...parsed,
+          name: account.name,
+          avatar: account.avatar,
+          stats: { ...DEFAULT_USER.stats, ...(parsed?.stats || {}) },
+          unlockedBadges: Array.isArray(parsed?.unlockedBadges) ? parsed.unlockedBadges : DEFAULT_USER.unlockedBadges,
+          lawsMastered: Array.isArray(parsed?.lawsMastered) ? parsed.lawsMastered : DEFAULT_USER.lawsMastered,
+          gameHighScores: { ...DEFAULT_USER.gameHighScores, ...(parsed?.gameHighScores || {}) },
+        });
       } catch {
         setUser({ ...DEFAULT_USER, name: account.name, avatar: account.avatar });
       }

@@ -225,6 +225,8 @@ service cloud.firestore {
           'selectedGoals',
           'hasCompletedOnboarding',
           'isDailyChallengeCompleted',
+          'completedGames',
+          'gameCompletionCount',
           'stats',
           'weeklyActivity',
           'createdAt',
@@ -248,6 +250,8 @@ service cloud.firestore {
         && data.gameHighScores is map && data.gameHighScores.size() <= 20
         && isValidStringList(data.unlockedBadges, 50)
         && isValidStringList(data.selectedGoals, 20)
+        && (!('completedGames' in data) || isValidStringList(data.completedGames, 100))
+        && (!('gameCompletionCount' in data) || (data.gameCompletionCount is map && data.gameCompletionCount.size() <= 50))
         && data.hasCompletedOnboarding is bool
         && data.isDailyChallengeCompleted is bool
         && isValidStatsMap(data.stats)
@@ -288,6 +292,8 @@ service cloud.firestore {
         'selectedGoals',
         'hasCompletedOnboarding',
         'isDailyChallengeCompleted',
+        'completedGames',
+        'gameCompletionCount',
         'stats',
         'weeklyActivity',
         'updatedAt'
