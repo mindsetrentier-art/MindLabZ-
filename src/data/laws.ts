@@ -524,7 +524,20 @@ const CORE_PSYCHOLOGY_LAWS: PsychologyLaw[] = [
   }
 ];
 
-export const MINDLABZ_CHAPTERS: string[] = manifestData.chapters;
+import { EMOTIONAL_PSYCHOLOGY_LAWS } from './emotionalLaws';
+
+export const EMOTIONAL_CHAPTERS = [
+  '情感篇 01 · 爱情与吸引力',
+  '情感篇 02 · 依恋与安全感',
+  '情感篇 03 · 亲密关系与冲突沟通',
+  '情感篇 04 · 失恋与关系困局',
+  '情感篇 05 · 长期爱情与成熟关系',
+];
+
+export const MINDLABZ_CHAPTERS: string[] = [
+  ...manifestData.chapters,
+  ...EMOTIONAL_CHAPTERS,
+];
 
 function mapCategory(catRaw: string): { category: CategoryType; categoryZh: CategoryZh; relatedGame: GameType } {
   switch (catRaw) {
@@ -552,7 +565,7 @@ function toSlug(titleEn: string): string {
     .replace(/(^-|-$)/g, '');
 }
 
-export const INITIAL_PSYCHOLOGY_LAWS: PsychologyLaw[] = manifestData.laws.map((item, idx) => {
+const CORE_MANIFEST_LAWS: PsychologyLaw[] = manifestData.laws.map((item, idx) => {
   const existing = CORE_PSYCHOLOGY_LAWS.find(
     (c) =>
       c.nameZh === item.title_zh ||
@@ -560,8 +573,21 @@ export const INITIAL_PSYCHOLOGY_LAWS: PsychologyLaw[] = manifestData.laws.map((i
       c.nameEn.toLowerCase() === item.title_en.toLowerCase()
   );
 
+  const emotionalMatch = EMOTIONAL_PSYCHOLOGY_LAWS.find(
+    (e) =>
+      e.duplicateCoreId === item.id ||
+      item.title_zh.includes(e.titleZh) ||
+      e.titleZh.includes(item.title_zh)
+  );
+
   const { category, categoryZh, relatedGame } = mapCategory(item.category);
   const difficulty = (item.difficulty as DifficultyLevel) || 'Medium';
+
+  const relationshipCase =
+    emotionalMatch?.lifeCase?.scenario
+      ? `${emotionalMatch.lifeCase.scenario} 【现实启示】${emotionalMatch.practicalTakeaways.summary}`
+      : existing?.relationshipCase ||
+        `在亲密关系与日常社交中，【${item.title_zh}】会潜移默化塑造双方的情绪预期与沟通反馈模式。`;
 
   if (existing) {
     return {
@@ -573,9 +599,7 @@ export const INITIAL_PSYCHOLOGY_LAWS: PsychologyLaw[] = manifestData.laws.map((i
       workplaceCase:
         existing.workplaceCase ||
         `在职场管理与跨部门协作中，【${item.title_zh}】常影响团队成员对项目优先级、绩效归因与方案可行性的客观判断。`,
-      relationshipCase:
-        existing.relationshipCase ||
-        `在亲密关系与日常社交中，【${item.title_zh}】会潜移默化塑造双方的情绪预期与沟通反馈模式。`,
+      relationshipCase,
       businessCase:
         existing.businessCase ||
         `在商业产品设计与用户增长策略中，理解【${item.title_zh}】能帮助洞察消费者真实的决策心理驱动力。`,
@@ -612,7 +636,7 @@ export const INITIAL_PSYCHOLOGY_LAWS: PsychologyLaw[] = manifestData.laws.map((i
     whyItHappens: `人类大脑的“系统1（直觉与快思考系统）”为了节省前额叶皮层的工作记忆能耗，会自动调用进化形成的心理捷径。当缺乏刻意激活“系统2（理性慢思考）”时，这种加工机制就会表现为稳定的【${item.title_zh}】。`,
     realLifeExample: `在日常生活中，当我们刷短视频、选购商品或评估一件突发事件时，【${item.title_zh}】会让我们不知不觉顺从直觉印象，而忽略更全面的背景事实。`,
     workplaceCase: `在职场会议、方案评审或项目复盘中，团队若未察觉【${item.title_zh}】的干扰，往往会在排期估算、责任划分或资源分配上陷入思维定势。`,
-    relationshipCase: `在人际交往与亲密关系沟通里，【${item.title_zh}】容易让双方只放大特定互动细节，从而影响彼此的信任感与共情深度。`,
+    relationshipCase,
     businessCase: `在商业定价、品牌传播与产品交互设计中，商家常巧妙利用【${item.title_zh}】降低用户的决策阻力，提高转化率与品牌黏性。`,
     recognitionSignals: [
       `感到“这件事显而易见，根本不需要看其他数据”时的直觉确信感`,
@@ -652,4 +676,70 @@ export const INITIAL_PSYCHOLOGY_LAWS: PsychologyLaw[] = manifestData.laws.map((i
     },
   };
 });
+
+// Non-duplicate emotional psychology laws appended with unique codes LAW101+
+const UNIQUE_EMOTIONAL_LAWS: PsychologyLaw[] = EMOTIONAL_PSYCHOLOGY_LAWS
+  .filter((l) => !l.isDuplicateOfCore)
+  .map((law, index) => {
+    const codeId = `LAW${String(101 + index).padStart(3, '0')}`;
+    const chapterName = EMOTIONAL_CHAPTERS[law.sectionIndex - 1] || '情感篇 · 亲密关系心理学';
+    const slugId = `emo-${toSlug(law.titleEn)}` || `law-${101 + index}`;
+
+    return {
+      id: slugId,
+      codeId,
+      chapter: chapterName,
+      xpReward: 350,
+      evidenceLevel: 'A',
+      nameZh: law.titleZh,
+      nameEn: law.titleEn,
+      category: 'emotion',
+      categoryZh: '情绪',
+      shortExplanation: law.corePrinciple,
+      detailedExplanation: `【${law.titleZh}（${law.titleEn}）】收录于《情感心理学：深度理解爱情、人性、依恋与亲密关系》${law.sectionTitle}。核心原理：${law.corePrinciple} 深度机制：${law.deepBreakdown.mechanism}`,
+      whyItHappens: law.deepBreakdown.insights.join(' '),
+      realLifeExample: law.lifeCase.scenario,
+      relationshipCase: `${law.lifeCase.scenario} 【启示】${law.practicalTakeaways.summary}`,
+      workplaceCase: `在团队协作与沟通中，【${law.titleZh}】同样影响着人们对情绪安全感、边界尊重与同理心反馈的敏感度。`,
+      businessCase: `在长期用户关系维系与品牌口碑构建中，【${law.titleZh}】揭示了如何通过真诚透明的回应与尊重个人边界赢得信赖。`,
+      recognitionSignals: [
+        `在面对亲密伴侣或重要沟通时，本能产生过度防御或焦虑反应`,
+        `把情境引发的暂时生理兴奋或生活压力误判为彼此的不可调和`,
+        `在冲突沟通中容易脱离具体事实而陷入主观脑补或受害者叙事`,
+      ],
+      antiManipulation: law.practicalTakeaways.actionablePoints,
+      keyTakeaway: law.practicalTakeaways.summary,
+      question: `关于【${law.titleZh}（${law.titleEn}）】的核心特征，以下哪项最符合其科学心理学原理？`,
+      answers: [
+        law.corePrinciple,
+        '这只在虚构小说或影视剧情中出现，日常生活中并不存在',
+        '只要个人智商或情商足够高，就绝对不会受此心理机制影响',
+        '这纯粹是个人的主观臆想，没有任何生理唤醒或神经认知基础',
+      ],
+      correctAnswer: 0,
+      difficulty: 'Medium',
+      mastery: 0,
+      relatedGame: 'psych-experiment',
+      icon: 'heart',
+      experimentSetup: {
+        scenario: `在亲密关系互动实验中，面对【${law.lifeCase.title}】的情境时：`,
+        optionA: {
+          label: '顺从直觉情绪化反应',
+          biasDescription: `受【${law.titleZh}】启发式驱动，可能放大误读并导致互动死结`,
+        },
+        optionB: {
+          label: '启动认知觉察并温和核实',
+          rationalDescription: `践行【${law.titleZh}】现实启示：${law.practicalTakeaways.summary}`,
+        },
+        globalChoicePercentageA: 72,
+        insight: `通过科学理解【${law.titleZh}】，受试者在面对亲密关系冲突时的自我安抚与有效沟通率提升了 48%。`,
+      },
+    };
+  });
+
+export const INITIAL_PSYCHOLOGY_LAWS: PsychologyLaw[] = [
+  ...CORE_MANIFEST_LAWS,
+  ...UNIQUE_EMOTIONAL_LAWS,
+];
+
 

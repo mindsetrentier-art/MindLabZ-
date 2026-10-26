@@ -10,7 +10,9 @@ const ai = new GoogleGenAI({
     },
   },
 });
-const model = process.env.GEMINI_MODEL || "gemini-3.8-flash";
+const model = (process.env.GEMINI_MODEL && (process.env.GEMINI_MODEL.startsWith("gemini-") || process.env.GEMINI_MODEL.startsWith("models/gemini-")))
+  ? process.env.GEMINI_MODEL
+  : "gemini-3.8-flash";
 const systemInstruction = await readFile("./prompts/system.txt", "utf8");
 const generatorPrompt = await readFile("./prompts/generator.txt", "utf8");
 const schema = JSON.parse(await readFile("./schemas/law.schema.json", "utf8"));

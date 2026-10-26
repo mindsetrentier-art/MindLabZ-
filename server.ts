@@ -8,7 +8,14 @@ import { createServer as createViteServer } from "vite";
 import { WebSocketServer } from "ws";
 import { GoogleGenAI, LiveServerMessage, Modality } from "@google/genai";
 
-const MODEL = process.env.GEMINI_MODEL || "gemini-3.8-flash";
+function getValidGeminiModel(envModel?: string): string {
+  if (envModel && (envModel.startsWith("gemini-") || envModel.startsWith("models/gemini-"))) {
+    return envModel;
+  }
+  return "gemini-3.8-flash";
+}
+
+const MODEL = getValidGeminiModel(process.env.GEMINI_MODEL);
 
 let aiClient: GoogleGenAI | null = null;
 function getAI(): GoogleGenAI | null {
@@ -178,17 +185,22 @@ async function startServer() {
 
       const prompt = `${generatorPrompt}\n\nLAW:\n${JSON.stringify(lawItem, null, 2)}`;
 
-      const response = await ai.models.generateContent({
-        model: MODEL,
-        contents: prompt,
-        config: {
-          systemInstruction,
-          responseMimeType: "application/json",
-          responseSchema: schema,
-        },
-      });
-
-      const parsed = JSON.parse(response.text || "{}");
+      let parsed;
+      try {
+        const response = await ai.models.generateContent({
+          model: MODEL,
+          contents: prompt,
+          config: {
+            systemInstruction,
+            responseMimeType: "application/json",
+            responseSchema: schema,
+          },
+        });
+        parsed = JSON.parse(response.text || "{}");
+      } catch (genErr: any) {
+        console.warn("Law AI generation returned error, using high-fidelity structured fallback:", genErr?.message || genErr);
+        return res.json(buildStructuredFallbackLaw(lawItem));
+      }
 
       try {
         await mkdir(generatedDir, { recursive: true });

@@ -262,11 +262,22 @@ export const HomePage: React.FC = () => {
               <button
                 onClick={() => {
                   gameAudio.playTap();
+                  navigate('/emotional-laws');
+                }}
+                className="px-4 py-3 rounded-2xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-400/40 text-amber-300 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 shadow-[0_0_12px_rgba(245,158,11,0.2)]"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <span>情感50律典藏馆</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  gameAudio.playTap();
                   navigate('/search');
                 }}
                 className="px-4 py-3 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5"
               >
-                <span>定律画廊</span>
+                <span>心智全景画廊</span>
                 <ArrowRight className="w-3.5 h-3.5" />
               </button>
             </div>
