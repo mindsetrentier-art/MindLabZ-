@@ -6,17 +6,17 @@ export const PSYCHOLOGY_GAMES: GameDefinition[] = [
     id: 'first-impression',
     numberPrefix: '01',
     name: 'First Impression',
-    nameEn: 'Primacy Effect & Confirmation Bias',
+    nameEn: 'Rapid Valuation & Mental Math',
     nameZh: '第一眼判断',
-    description: '通过人物初印象和后续反转信息，练习避免过早下结论，破除首因效应。',
+    description: '用3秒极速估值心算，识破日供低价、折上折与利息迷雾，穿透第一眼认知陷阱。',
     category: '认知',
     difficulty: 'Medium',
-    bestScore: 2800,
+    bestScore: 3200,
     icon: 'eye',
-    estimatedTime: '90秒',
-    conceptLearned: '首因效应（Primacy Effect）与确认偏误的延迟判断策略',
+    estimatedTime: '75秒',
+    conceptLearned: '极速估值心算（Mental Math Heuristics）与去锚定估值法',
     relatedLawId: 'primacy-effect',
-    accentColor: '#6366F1'
+    accentColor: '#F59E0B'
   },
   {
     id: 'anchoring-lab',

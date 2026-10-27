@@ -9,6 +9,7 @@ import { GameDefinition } from '../../types';
 import { useApp } from '../../context/AppContext';
 import { GameDifficulty, DIFFICULTY_CONFIGS } from '../../data/difficulty';
 import { gameAudio } from '../../utils/gameAudio';
+import { FirstImpressionGameIcon } from '../games/FirstImpressionGameIcon';
 
 interface GameCardProps {
   game: GameDefinition;
@@ -120,15 +121,19 @@ export const GameCard: React.FC<GameCardProps> = ({ game, difficulty = '中' }) 
 
           {/* Game Title & Tactile Glowing Monogram */}
           <div className="flex items-start gap-3.5 mb-3">
-            <div
-              className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shrink-0 shadow-md group-hover:scale-105 transition-transform duration-200"
-              style={{
-                backgroundColor: accentColor,
-                boxShadow: `0 6px 18px -4px ${accentColor}55`,
-              }}
-            >
-              <IconComponent className="w-6 h-6 text-white" />
-            </div>
+            {game.id === 'first-impression' ? (
+              <FirstImpressionGameIcon size={48} glow={false} className="group-hover:scale-105 transition-transform duration-200" />
+            ) : (
+              <div
+                className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shrink-0 shadow-md group-hover:scale-105 transition-transform duration-200"
+                style={{
+                  backgroundColor: accentColor,
+                  boxShadow: `0 6px 18px -4px ${accentColor}55`,
+                }}
+              >
+                <IconComponent className="w-6 h-6 text-white" />
+              </div>
+            )}
 
             <div className="min-w-0">
               <h3 className="font-serif-editorial text-base sm:text-lg font-bold text-stone-900 group-hover:text-stone-950 transition-colors leading-snug tracking-tight">

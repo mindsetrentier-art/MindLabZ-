@@ -208,6 +208,36 @@ class GameAudioEngine {
   }
 
   /**
+   * Crisp clock tick for countdown urgency
+   */
+  public playTick() {
+    if (this.isMuted) return;
+    this.init();
+    if (!this.ctx) return;
+
+    try {
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(800, now);
+      osc.frequency.exponentialRampToValueAtTime(400, now + 0.03);
+
+      gain.gain.setValueAtTime(0.06, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.03);
+    } catch {
+      // ignore
+    }
+  }
+
+  /**
    * Grand victory fanfare when completing game
    */
   public playVictory() {
