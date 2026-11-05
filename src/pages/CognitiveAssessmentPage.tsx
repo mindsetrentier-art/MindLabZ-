@@ -76,7 +76,7 @@ export const CognitiveAssessmentPage: React.FC = () => {
             </h1>
 
             <p className="text-xs sm:text-sm text-stone-600 leading-relaxed font-sans">
-              本报告基于您在 <strong>10 款心理学经典实验小游戏</strong> 与 <strong>日常心智手记反思</strong> 中的真实实操得分、反应速度与决策偏误抑制表现，由神经认知测评模型动态计算生成。
+              本报告基于您在 <strong>心理学经典实验小游戏</strong> 与 <strong>日常心智手记反思</strong> 中的真实实操得分、反应速度与决策偏误抑制表现，由神经认知测评模型动态计算生成。
             </p>
           </div>
 

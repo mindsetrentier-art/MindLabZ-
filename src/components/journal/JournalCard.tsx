@@ -176,6 +176,52 @@ export const JournalCard: React.FC<JournalCardProps> = ({
             })}
           </div>
 
+          {/* AI Cognitive Science Deep Analysis if Available */}
+          {entry.aiAnalysis && (
+            <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-indigo-50/70 via-[#FAF8F5] to-amber-50/40 border border-indigo-200/80 space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-100/80 pb-2">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-indigo-950">
+                  <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>AI 认知科学深度剖析与心智反馈</span>
+                </div>
+                <span className="text-[10px] font-mono text-indigo-800 font-semibold bg-white px-2 py-0.5 rounded-full border border-indigo-200 shadow-2xs">
+                  {entry.aiAnalysis.emotionalValence}
+                </span>
+              </div>
+
+              <p className="text-xs text-stone-700 leading-relaxed font-serif-editorial">
+                {entry.aiAnalysis.dailyInsightSummary}
+              </p>
+
+              {entry.aiAnalysis.psychologicalMechanism && (
+                <div className="text-[11px] text-stone-600 bg-white/80 p-3 rounded-xl border border-indigo-100/70 leading-relaxed space-y-1">
+                  <span className="font-bold text-indigo-900 flex items-center gap-1">
+                    <Brain className="w-3 h-3 text-indigo-600" />
+                    <span>神经心理学底层机制：</span>
+                  </span>
+                  <p>{entry.aiAnalysis.psychologicalMechanism}</p>
+                </div>
+              )}
+
+              {entry.aiAnalysis.actionableMicroAdvice && entry.aiAnalysis.actionableMicroAdvice.length > 0 && (
+                <div className="space-y-1 pt-1">
+                  <span className="text-[11px] font-bold text-stone-800 block">💡 推荐微干预行动：</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                    {entry.aiAnalysis.actionableMicroAdvice.map((act, i) => (
+                      <div
+                        key={i}
+                        className="text-[11px] text-stone-700 bg-white/90 p-2 rounded-lg border border-stone-200/60 flex items-start gap-1.5"
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0 mt-1.5" />
+                        <span>{act}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Lucidity Rating & Tags */}
           <div className="flex flex-wrap items-center justify-between gap-3 pt-2 text-xs border-t border-stone-100">
             <div className="flex items-center gap-1 text-amber-500">

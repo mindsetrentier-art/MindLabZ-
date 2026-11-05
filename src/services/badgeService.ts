@@ -12,7 +12,23 @@ export interface BadgeProgress {
  * Checks all badge criteria against the current user profile state
  * and returns newly unlocked badges along with the updated user profile.
  */
-export function evaluateAndUnlockBadges(user: UserProfile): {
+export interface ExtraBadgeContext {
+  gameId?: string;
+  level?: string;
+  score?: number;
+  accuracy?: number;
+  comboMax?: number;
+  practicePrecisionCount?: number;
+}
+
+/**
+ * Checks all badge criteria against the current user profile state
+ * and returns newly unlocked badges along with the updated user profile.
+ */
+export function evaluateAndUnlockBadges(
+  user: UserProfile,
+  extraContext?: ExtraBadgeContext
+): {
   updatedUser: UserProfile;
   newBadges: Badge[];
 } {
@@ -46,7 +62,34 @@ export function evaluateAndUnlockBadges(user: UserProfile): {
         break;
 
       case 'game-score':
-        if (badge.targetGameId === 'all') {
+        if (badge.id === 'valuation-novice') {
+          const s = extraContext?.gameId === 'first-impression' && (extraContext?.level === '初级' || extraContext?.level === '低')
+            ? (extraContext.score || 0)
+            : Number(safeGameHighScores['first-impression-beginner'] || safeGameHighScores['first-impression'] || 0);
+          if (s >= 2500) isSatisfied = true;
+        } else if (badge.id === 'valuation-adept') {
+          const s = extraContext?.gameId === 'first-impression' && (extraContext?.level === '中级' || extraContext?.level === '中')
+            ? (extraContext.score || 0)
+            : Number(safeGameHighScores['first-impression-intermediate'] || 0);
+          if (s >= 15000) isSatisfied = true;
+        } else if (badge.id === 'valuation-master') {
+          const s = extraContext?.gameId === 'first-impression' && (extraContext?.level === '高级' || extraContext?.level === '高')
+            ? (extraContext.score || 0)
+            : Number(safeGameHighScores['first-impression-advanced'] || 0);
+          if (s >= 50000) isSatisfied = true;
+        } else if (badge.id === 'valuation-perfect') {
+          if (extraContext?.accuracy === 100 || Number(safeGameHighScores['first-impression-perfect'] || 0) === 100) {
+            isSatisfied = true;
+          }
+        } else if (badge.id === 'valuation-combo-storm') {
+          if ((extraContext?.comboMax && extraContext.comboMax >= 8) || Number(safeGameHighScores['first-impression-combo'] || 0) >= 8) {
+            isSatisfied = true;
+          }
+        } else if (badge.id === 'valuation-calibration-sage') {
+          if ((extraContext?.practicePrecisionCount && extraContext.practicePrecisionCount >= 5) || Number(safeGameHighScores['first-impression-calibration'] || 0) >= 5) {
+            isSatisfied = true;
+          }
+        } else if (badge.targetGameId === 'all') {
           if (badge.targetScore && totalGameScores >= badge.targetScore) {
             isSatisfied = true;
           }

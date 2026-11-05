@@ -32,7 +32,10 @@ export function loadLocalJournals(userId?: string | null): CognitiveJournalEntry
     // If guest and no storage, initialize with high-taste samples
     if (!userId || userId === 'default-user') {
       const guestRaw = localStorage.getItem(GUEST_STORAGE_KEY);
-      if (guestRaw) return JSON.parse(guestRaw);
+      if (guestRaw) {
+        const parsedGuest = JSON.parse(guestRaw);
+        if (Array.isArray(parsedGuest) && parsedGuest.length > 0) return parsedGuest;
+      }
       localStorage.setItem(GUEST_STORAGE_KEY, JSON.stringify(JOURNAL_SAMPLE_ENTRIES));
       return JOURNAL_SAMPLE_ENTRIES;
     }

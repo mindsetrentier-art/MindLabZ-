@@ -433,7 +433,7 @@ export function generateCognitiveAssessment(user: UserProfile): OverallAssessmen
       };
     });
 
-  const totalGamesCount = Object.keys(gameHighScores).length;
+  const totalGamesCount = Object.keys(gameHighScores || {}).length;
 
   return {
     overallCq,

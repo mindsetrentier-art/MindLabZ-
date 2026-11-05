@@ -64,7 +64,11 @@ const AppRoutes: React.FC = () => {
   return (
     <>
       <AppShell>
-        <ErrorBoundary fallbackTitle="Page momentanément indisponible · 页面加载保护">
+        <ErrorBoundary
+          key={location.pathname}
+          resetKey={location.pathname}
+          fallbackTitle="Page momentanément indisponible · 页面加载保护"
+        >
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/learn" element={<LearnPage />} />

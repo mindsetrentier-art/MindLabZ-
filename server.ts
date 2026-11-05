@@ -418,6 +418,245 @@ ${structuredSummary || "（自由觉察内容）"}
     }
   });
 
+  // 4.2 AI-Powered Daily Emotional Weather Map & Cognitive Science Feedback
+  app.post("/api/journal/weather-analysis", async (req, res) => {
+    try {
+      const { entries = [], targetDate = new Date().toISOString().split("T")[0] } = req.body || {};
+      const safeEntries = Array.isArray(entries) ? entries : [];
+
+      // Extract texts and psychological markers
+      const summaryTextParts: string[] = [];
+      safeEntries.forEach((e: any, idx: number) => {
+        const title = e.title || `手记 #${idx + 1}`;
+        const primary = e.emotion?.primary || "平静";
+        const intensity = e.emotion?.intensity ?? 5;
+        const valence = e.emotion?.valence || "neutral";
+        const structured = Object.entries(e.structuredData || {})
+          .map(([k, v]) => `  - ${k}: ${v}`)
+          .join("\n");
+        summaryTextParts.push(
+          `【手记 ${idx + 1}】标题: ${title} | 模版: ${e.templateType || "常规"} | 情绪: ${primary} (强度 ${intensity}/10, 极性: ${valence}) | 关联定律: ${e.relatedLawName || "未指定"}\n${structured || "（自由反思内容）"}`
+        );
+      });
+
+      const combinedText =
+        summaryTextParts.length > 0
+          ? summaryTextParts.join("\n\n")
+          : "用户今日暂无详细手记，进行了常规的正念与心智状态反思。";
+
+      const ai = getAI();
+      if (!ai) {
+        // High-fidelity Cognitive Science Fallback
+        const hasChallenging = safeEntries.some((e: any) => e.emotion?.valence === "challenging");
+        const hasPositive = safeEntries.some((e: any) => e.emotion?.valence === "positive");
+        const avgIntensity =
+          safeEntries.length > 0
+            ? Math.round(safeEntries.reduce((acc: number, c: any) => acc + (c.emotion?.intensity || 5), 0) / safeEntries.length)
+            : 5;
+
+        let condition: string = "partly-cloudy";
+        let conditionTitle = "多云晴好 · 微风沉思";
+        let conditionPoeticDesc = "内心气象云淡风轻，理性前额叶自如监控思维流动，情绪如微漾清波，整体处于自我调和的舒适区间。";
+
+        if (hasChallenging && hasPositive) {
+          condition = "rainbow";
+          conditionTitle = "破云晴虹 · 认知重构明朗";
+          conditionPoeticDesc = "虽经历思维阴霾或情绪张力，但通过及时的自我察觉与元认知重塑，内心正迎来雨后初霁的壮丽彩虹。";
+        } else if (hasChallenging) {
+          condition = "stormy";
+          conditionTitle = "雷暴微歇 · 情绪蓄能释压";
+          conditionPoeticDesc = "边缘系统受到偶发压力刺激，内在气压略有走低；此刻正是启动前额叶理性刹车、进行深呼吸着陆的关键窗口。";
+        } else if (hasPositive) {
+          condition = "sunny";
+          conditionTitle = "澄澈暖阳 · 高阶心流朗照";
+          conditionPoeticDesc = "大脑奖励回路多巴胺充盈，心理防御低而好奇心高，思绪通透敏锐，适宜展开深度创作与高难度决策。";
+        }
+
+        const fallbackReport = {
+          date: targetDate,
+          condition,
+          conditionTitle,
+          conditionPoeticDesc,
+          metrics: {
+            barometerHpa: hasChallenging ? 1002 : hasPositive ? 1024 : 1014,
+            visibilityKm: hasChallenging ? 68 : hasPositive ? 96 : 85,
+            humidityPercent: Math.min(95, Math.max(25, avgIntensity * 9)),
+            windSpeedKmh: Math.min(55, Math.max(8, avgIntensity * 5)),
+            temperatureC: hasPositive ? 25.5 : hasChallenging ? 28.5 : 22.0,
+          },
+          radarDimensions: [
+            { dimension: "认知清晰度", value: hasChallenging ? 65 : 88, benchmark: 70 },
+            { dimension: "元认知觉察", value: 85, benchmark: 75 },
+            { dimension: "情绪复原力", value: hasPositive ? 86 : 74, benchmark: 70 },
+            { dimension: "内心平稳度", value: hasChallenging ? 60 : 82, benchmark: 65 },
+            { dimension: "正向动能感", value: hasPositive ? 88 : 70, benchmark: 70 },
+          ],
+          primaryEmotions: safeEntries.length > 0
+            ? [
+                { name: safeEntries[0]?.emotion?.primary || "觉察", percentage: 55, color: "#10B981" },
+                { name: safeEntries[1]?.emotion?.primary || "沉思", percentage: 30, color: "#6366F1" },
+                { name: "平静", percentage: 15, color: "#F59E0B" },
+              ]
+            : [
+                { name: "平静觉察", percentage: 60, color: "#10B981" },
+                { name: "理性内省", percentage: 40, color: "#6366F1" },
+              ],
+          cognitiveMechanism:
+            "基于认知神经科学，当您主动书写心情手记时，背外侧前额叶皮层（dlPFC）迅速介入并下调了杏仁核（Amygdala）的剧烈警报放电。将混沌的主观体感通过文字具象命名，直接削减了默认模式网络（DMN）的情绪反刍循环，促成生理层面的心智回稳。",
+          identifiedBiases: hasChallenging
+            ? ["情绪推理偏误（误将主观感受等同于客观现实）", "全或无二元思维"]
+            : ["过早认知闭合倾向"],
+          cognitiveFeedback:
+            "今日您的心智探索展现出了卓越的元认知韧性。不论外界天气如何瞬息万变，情绪从来不是需要被消灭的敌人，而是神经系统为您发来的加密信使。通过今日的客观书写，您已成功夺回了大脑系统二的决策方向盘。",
+          actionablePrescriptions: [
+            {
+              id: "act-1",
+              title: "3秒神经着陆",
+              desc: "深呼吸4拍并感受双脚触地，唤醒副交感神经",
+              technique: "躯体感官 5-4-3-2-1 着陆法",
+              estimatedMinutes: 2,
+            },
+            {
+              id: "act-2",
+              title: "苏格拉底质疑",
+              desc: "问自己：如果最信赖的导师在此，他会指出我的哪处盲点？",
+              technique: "认知解离与第三人称旁观视角",
+              estimatedMinutes: 3,
+            },
+            {
+              id: "act-3",
+              title: "睡前突触巩固",
+              desc: "今晚就寝前回想今日1件顺利完成的微小行动",
+              technique: "神经可塑性正向强化记忆法",
+              estimatedMinutes: 3,
+            },
+          ],
+          recommendedLaw: {
+            id: hasChallenging ? "LAW017" : "LAW005",
+            nameZh: hasChallenging ? "情绪ABC理论" : "峰终定律",
+            reason: hasChallenging
+              ? "厘清触发事件（A）与内心信念（B）的差异，瓦解自动消极情绪（C）"
+              : "用一个充满仪式感的积极收尾，为今日的心智体验画上圆满句号",
+          },
+          analyzedEntriesCount: safeEntries.length,
+          generatedAt: new Date().toISOString(),
+          isFallback: true,
+        };
+
+        return res.json({ report: fallbackReport, isFallback: true });
+      }
+
+      // Gemini AI Prompt
+      const prompt = `你是一位世界顶级的认知神经科学家与临床心理学家（智心堂心理实验室特聘专家）。
+请深入阅读并分析用户【${targetDate}】当天的心理手记文本与情绪数据，将其投射为专业、浪漫且具备严谨认知科学解释的“今日情绪气象图（Emotional Weather Map）”，并给出切实可行的每日认知科学反馈建议。
+
+【用户当日心情手记文本汇总】
+${combinedText}
+
+请严格按以下 JSON 结构输出，绝对不要包含任何 Markdown 代码块标记（绝对不要写 \`\`\`json 或 \`\`\`），直接输出纯合法的 JSON 字符串：
+{
+  "condition": "sunny" | "partly-cloudy" | "overcast" | "foggy" | "rainy" | "stormy" | "rainbow",
+  "conditionTitle": "4到12字诗意气象标题（如：破云见阳 · 认知重构明朗照耀、微风静好 · 澄明心流、雷暴微歇 · 情绪蓄能释压）",
+  "conditionPoeticDesc": "40到80字的情绪气象文学化诗意评述，描绘今天内心气象的生动意象与心境氛围",
+  "metrics": {
+    "barometerHpa": 990到1035之间的气压数值（标准1013，高压代表心理稳定沉着，低压代表受压或情绪气旋）,
+    "visibilityKm": 20到100之间的整数（认知能见度与思维清晰度，越高代表越通透敏锐）,
+    "humidityPercent": 20到95之间的整数（心理湿度与感性敏感度，50%左右最舒适）,
+    "windSpeedKmh": 5到55之间的整数（内在思维活跃速度与思潮涌动强度）,
+    "temperatureC": 18到32之间的数值（心灵感知温度，24℃舒适）
+  },
+  "radarDimensions": [
+    { "dimension": "认知清晰度", "value": 20到100的数值, "benchmark": 70 },
+    { "dimension": "元认知觉察", "value": 20到100的数值, "benchmark": 75 },
+    { "dimension": "情绪复原力", "value": 20到100的数值, "benchmark": 70 },
+    { "dimension": "内心平稳度", "value": 20到100的数值, "benchmark": 65 },
+    { "dimension": "正向动能感", "value": 20到100的数值, "benchmark": 70 }
+  ],
+  "primaryEmotions": [
+    { "name": "核心情绪1", "percentage": 占比数字, "color": "#10B981" },
+    { "name": "核心情绪2", "percentage": 占比数字, "color": "#6366F1" },
+    { "name": "核心情绪3", "percentage": 占比数字, "color": "#F59E0B" }
+  ],
+  "cognitiveMechanism": "基于认知神经科学原理（如背外侧前额叶dlPFC对杏仁核的调控、默认模式网络DMN、多巴胺奖赏回路与神经递质动态），用120到180字通俗而专业地解析今日情绪气象的底层脑科学机制",
+  "identifiedBiases": [
+    "识别出的潜在思维偏误1（如：灾难化推演、情绪推理、应该句式、确认偏误、双极思维，若无则列出值得保持的防偏策略）",
+    "识别出的潜在思维偏误2"
+  ],
+  "cognitiveFeedback": "150到220字基于认知科学的每日反馈建议：先肯定其自我觉察勇气，随后从认知重塑视角点明今日思维模式的闪光点与突破口，给予温暖而有力量的心智支持",
+  "actionablePrescriptions": [
+    {
+      "id": "act-1",
+      "title": "具体建议标题（8字内）",
+      "desc": "实操步骤说明（30字内）",
+      "technique": "对应科学技术（如：身体着陆 5-4-3-2-1 / 苏格拉底式解离提问 / 箱式呼吸法 / 睡前突触强化）",
+      "estimatedMinutes": 3
+    },
+    {
+      "id": "act-2",
+      "title": "具体建议标题（8字内）",
+      "desc": "实操步骤说明（30字内）",
+      "technique": "对应科学技术",
+      "estimatedMinutes": 5
+    },
+    {
+      "id": "act-3",
+      "title": "具体建议标题（8字内）",
+      "desc": "实操步骤说明（30字内）",
+      "technique": "对应科学技术",
+      "estimatedMinutes": 2
+    }
+  ],
+  "recommendedLaw": {
+    "id": "LAW017 或 LAW005 等",
+    "nameZh": "推荐研习的定律名称（如 情绪ABC理论、峰终定律、确认偏误）",
+    "reason": "为何今天特别适合研习该定律的科学原因（35字内）"
+  }
+}`;
+
+      const response = await ai.models.generateContent({
+        model: MODEL,
+        contents: prompt,
+        config: {
+          systemInstruction:
+            "你是一个兼具深厚神经科学造诣与诗性人文关怀的心理学专家。你只返回合法的 JSON 对象，不加任何解释性文字或 Markdown 标记。",
+        },
+      });
+
+      let rawText = (response.text || "").trim();
+      if (rawText.startsWith("```json")) {
+        rawText = rawText.replace(/^```json\s*/i, "").replace(/\s*```$/, "");
+      } else if (rawText.startsWith("```")) {
+        rawText = rawText.replace(/^```\s*/i, "").replace(/\s*```$/, "");
+      }
+
+      let parsedReport;
+      try {
+        parsedReport = JSON.parse(rawText);
+      } catch (parseErr) {
+        console.warn("AI Weather response parse error, trying regex:", parseErr);
+        const match = rawText.match(/\{[\s\S]*\}/);
+        if (match) {
+          parsedReport = JSON.parse(match[0]);
+        } else {
+          throw new Error("Unable to parse AI weather response");
+        }
+      }
+
+      parsedReport.date = targetDate;
+      parsedReport.analyzedEntriesCount = safeEntries.length;
+      parsedReport.generatedAt = new Date().toISOString();
+      parsedReport.isFallback = false;
+
+      return res.json({ report: parsedReport, isFallback: false });
+    } catch (err: any) {
+      console.error("Journal weather analysis error:", err);
+      return res.status(500).json({
+        error: "Weather analysis failed",
+        detail: String(err?.message || err),
+      });
+    }
+  });
+
   // 5. Real-time GPS Location Reverse Geocoding, Weather & Google Maps Grounding
   app.post("/api/location-telemetry", async (req, res) => {
     try {

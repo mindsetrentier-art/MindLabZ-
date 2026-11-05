@@ -68,7 +68,7 @@ interface AppContextType {
   addXP: (amount: number, reason?: string) => void;
   toggleBookmark: (lawId: string) => void;
   isBookmarked: (lawId: string) => boolean;
-  recordGameResult: (gameId: string, result: GameResult) => void;
+  recordGameResult: (gameId: string, result: GameResult, extraContext?: { level?: string; practicePrecisionCount?: number }) => void;
   recordQuizCompletion: (correctCount: number, total: number, earnedXp: number) => void;
   updateLawMastery: (lawId: string, newMastery: number) => void;
   completeDailyChallenge: () => void;
@@ -103,7 +103,7 @@ const MAX_AVATAR_LEN = 1000;
 const MAX_TITLE_LEN = 60;
 const MAX_STRING_LIST_ITEM_LEN = 100;
 
-const DEFAULT_USER: UserProfile = {
+export const DEFAULT_USER: UserProfile = {
   name: 'Alex Chen',
   avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
   title: '认知探索者',
@@ -217,6 +217,60 @@ function buildSanitizedBaseFields(
   };
 }
 
+export function normalizeUserProfile(raw?: Partial<UserProfile> | null): UserProfile {
+  if (!raw || typeof raw !== 'object') {
+    return { ...DEFAULT_USER };
+  }
+
+  const safeLawMasteryMap: Record<string, number> =
+    raw.lawMasteryMap && typeof raw.lawMasteryMap === 'object' && !Array.isArray(raw.lawMasteryMap)
+      ? { ...DEFAULT_USER.lawMasteryMap, ...raw.lawMasteryMap }
+      : { ...DEFAULT_USER.lawMasteryMap };
+
+  const safeGameHighScores: Record<string, number> =
+    raw.gameHighScores && typeof raw.gameHighScores === 'object' && !Array.isArray(raw.gameHighScores)
+      ? { ...DEFAULT_USER.gameHighScores, ...raw.gameHighScores }
+      : { ...DEFAULT_USER.gameHighScores };
+
+  const safeStats = {
+    memory: Math.max(0, Math.min(100, Math.round(raw.stats?.memory ?? DEFAULT_USER.stats.memory))),
+    attention: Math.max(0, Math.min(100, Math.round(raw.stats?.attention ?? DEFAULT_USER.stats.attention))),
+    reasoning: Math.max(0, Math.min(100, Math.round(raw.stats?.reasoning ?? DEFAULT_USER.stats.reasoning))),
+    knowledge: Math.max(0, Math.min(100, Math.round(raw.stats?.knowledge ?? DEFAULT_USER.stats.knowledge))),
+    decision: Math.max(0, Math.min(100, Math.round(raw.stats?.decision ?? DEFAULT_USER.stats.decision))),
+  };
+
+  const safeWeeklyActivity = Array.isArray(raw.weeklyActivity) && raw.weeklyActivity.length > 0
+    ? raw.weeklyActivity
+    : DEFAULT_USER.weeklyActivity;
+
+  return {
+    ...DEFAULT_USER,
+    ...raw,
+    name: typeof raw.name === 'string' && raw.name.trim() ? raw.name.trim() : DEFAULT_USER.name,
+    avatar: typeof raw.avatar === 'string' && raw.avatar.trim() ? raw.avatar.trim() : DEFAULT_USER.avatar,
+    title: typeof raw.title === 'string' && raw.title.trim() ? raw.title.trim() : DEFAULT_USER.title,
+    level: typeof raw.level === 'number' && !isNaN(raw.level) ? Math.max(1, Math.round(raw.level)) : DEFAULT_USER.level,
+    xp: typeof raw.xp === 'number' && !isNaN(raw.xp) ? Math.max(0, Math.round(raw.xp)) : DEFAULT_USER.xp,
+    streak: typeof raw.streak === 'number' && !isNaN(raw.streak) ? Math.max(0, Math.round(raw.streak)) : DEFAULT_USER.streak,
+    lastActiveDate: typeof raw.lastActiveDate === 'string' ? raw.lastActiveDate : DEFAULT_USER.lastActiveDate,
+    totalGames: typeof raw.totalGames === 'number' && !isNaN(raw.totalGames) ? Math.max(0, Math.round(raw.totalGames)) : DEFAULT_USER.totalGames,
+    totalQuizzes: typeof raw.totalQuizzes === 'number' && !isNaN(raw.totalQuizzes) ? Math.max(0, Math.round(raw.totalQuizzes)) : DEFAULT_USER.totalQuizzes,
+    quizPoints: typeof raw.quizPoints === 'number' && !isNaN(raw.quizPoints) ? Math.max(0, Math.round(raw.quizPoints)) : DEFAULT_USER.quizPoints,
+    lawsMastered: Array.isArray(raw.lawsMastered) ? raw.lawsMastered : [...DEFAULT_USER.lawsMastered],
+    lawMasteryMap: safeLawMasteryMap,
+    bookmarks: Array.isArray(raw.bookmarks) ? raw.bookmarks : [...DEFAULT_USER.bookmarks],
+    gameHighScores: safeGameHighScores,
+    unlockedBadges: Array.isArray(raw.unlockedBadges) ? raw.unlockedBadges : [...DEFAULT_USER.unlockedBadges],
+    selectedGoals: Array.isArray(raw.selectedGoals) ? raw.selectedGoals : [...DEFAULT_USER.selectedGoals],
+    hasCompletedOnboarding: raw.hasCompletedOnboarding ?? DEFAULT_USER.hasCompletedOnboarding,
+    completedGames: Array.isArray(raw.completedGames) ? raw.completedGames : [],
+    gameCompletionCount: raw.gameCompletionCount && typeof raw.gameCompletionCount === 'object' ? raw.gameCompletionCount : {},
+    stats: safeStats,
+    weeklyActivity: safeWeeklyActivity,
+  };
+}
+
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -226,23 +280,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed && typeof parsed === 'object') {
-          return {
-            ...DEFAULT_USER,
-            ...parsed,
-            stats: { ...DEFAULT_USER.stats, ...(parsed.stats || {}) },
-            gameHighScores: { ...DEFAULT_USER.gameHighScores, ...(parsed.gameHighScores || {}) },
-            unlockedBadges: Array.isArray(parsed.unlockedBadges) ? parsed.unlockedBadges : DEFAULT_USER.unlockedBadges,
-            lawsMastered: Array.isArray(parsed.lawsMastered) ? parsed.lawsMastered : DEFAULT_USER.lawsMastered,
-            bookmarks: Array.isArray(parsed.bookmarks) ? parsed.bookmarks : DEFAULT_USER.bookmarks,
-            selectedGoals: Array.isArray(parsed.selectedGoals) ? parsed.selectedGoals : DEFAULT_USER.selectedGoals,
-            weeklyActivity: Array.isArray(parsed.weeklyActivity) ? parsed.weeklyActivity : DEFAULT_USER.weeklyActivity,
-          };
+          return normalizeUserProfile(parsed);
         }
       }
     } catch (e) {
       console.error('Failed to load user state from localStorage', e);
     }
-    return DEFAULT_USER;
+    return { ...DEFAULT_USER };
   });
 
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
@@ -252,7 +296,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [savedAccounts, setSavedAccounts] = useState<LocalUserAccount[]>(() => {
     try {
       const raw = localStorage.getItem('mindlabz_saved_accounts_v1');
-      if (raw) return JSON.parse(raw);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
     } catch {
       // ignore
     }
@@ -321,7 +368,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const registerSavedAccount = (account: LocalUserAccount) => {
     setSavedAccounts((prev) => {
-      const filtered = prev.filter((a) => a.email.toLowerCase() !== account.email.toLowerCase());
+      const safePrev = Array.isArray(prev) ? prev : [];
+      const filtered = safePrev.filter((a) => a?.email && a.email.toLowerCase() !== (account?.email || '').toLowerCase());
       const next = [account, ...filtered].slice(0, 10);
       try {
         localStorage.setItem('mindlabz_saved_accounts_v1', JSON.stringify(next));
@@ -396,44 +444,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           async (snapshot) => {
             if (snapshot.exists()) {
               cloudDocExistsRef.current = true;
-              const data = snapshot.data();
-              setUser((prev) => ({
-                ...prev,
-                name: typeof data.name === 'string' && data.name.trim() ? data.name : fallbackName,
-                avatar: typeof data.avatar === 'string' && data.avatar.trim() ? data.avatar : fallbackAvatar,
-                title: typeof data.title === 'string' ? data.title : prev.title,
-                level: typeof data.level === 'number' ? data.level : prev.level,
-                xp: typeof data.xp === 'number' ? data.xp : prev.xp,
-                streak: typeof data.streak === 'number' ? data.streak : prev.streak,
-                lastActiveDate:
-                  typeof data.lastActiveDate === 'string' ? data.lastActiveDate : prev.lastActiveDate,
-                totalGames: typeof data.totalGames === 'number' ? data.totalGames : prev.totalGames,
-                totalQuizzes: typeof data.totalQuizzes === 'number' ? data.totalQuizzes : prev.totalQuizzes,
-                quizPoints: typeof data.quizPoints === 'number' ? data.quizPoints : prev.quizPoints,
-                lawsMastered: Array.isArray(data.lawsMastered) ? data.lawsMastered : (prev?.lawsMastered || DEFAULT_USER.lawsMastered),
-                lawMasteryMap:
-                  data.lawMasteryMap && typeof data.lawMasteryMap === 'object'
-                    ? data.lawMasteryMap
-                    : (prev?.lawMasteryMap || DEFAULT_USER.lawMasteryMap),
-                bookmarks: Array.isArray(data.bookmarks) ? data.bookmarks : (prev?.bookmarks || DEFAULT_USER.bookmarks),
-                gameHighScores:
-                  data.gameHighScores && typeof data.gameHighScores === 'object'
-                    ? data.gameHighScores
-                    : (prev?.gameHighScores || DEFAULT_USER.gameHighScores),
-                unlockedBadges: Array.isArray(data.unlockedBadges) ? data.unlockedBadges : (prev?.unlockedBadges || DEFAULT_USER.unlockedBadges),
-                selectedGoals: Array.isArray(data.selectedGoals) ? data.selectedGoals : (prev?.selectedGoals || DEFAULT_USER.selectedGoals),
-                hasCompletedOnboarding:
-                  typeof data.hasCompletedOnboarding === 'boolean'
-                    ? data.hasCompletedOnboarding
-                    : (prev?.hasCompletedOnboarding ?? true),
-                stats:
-                  data.stats && typeof data.stats === 'object'
-                    ? { ...DEFAULT_USER.stats, ...(prev?.stats || {}), ...data.stats }
-                    : (prev?.stats || DEFAULT_USER.stats),
-                weeklyActivity: Array.isArray(data.weeklyActivity)
-                  ? data.weeklyActivity
-                  : (prev?.weeklyActivity || DEFAULT_USER.weeklyActivity),
-              }));
+              const data = snapshot.data() || {};
+              setUser((prev) =>
+                normalizeUserProfile({
+                  ...prev,
+                  ...data,
+                  name: typeof data.name === 'string' && data.name.trim() ? data.name.trim() : (prev?.name || fallbackName),
+                  avatar: typeof data.avatar === 'string' && data.avatar.trim() ? data.avatar.trim() : (prev?.avatar || fallbackAvatar),
+                })
+              );
               if (typeof data.isDailyChallengeCompleted === 'boolean') {
                 setIsDailyChallengeCompleted(data.isDailyChallengeCompleted);
               }
@@ -601,14 +620,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const parsed = JSON.parse(jsonStr);
       if (!parsed || typeof parsed !== 'object') return false;
       if (parsed.user && typeof parsed.user === 'object') {
-        const nextUser: UserProfile = {
-          ...DEFAULT_USER,
-          ...parsed.user,
-          stats: {
-            ...DEFAULT_USER.stats,
-            ...(parsed.user.stats || {}),
-          },
-        };
+        const nextUser = normalizeUserProfile(parsed.user);
         setUser(nextUser);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(nextUser));
         if (activeAccountEmail) {
@@ -644,24 +656,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (existingRaw) {
       try {
         const parsed = JSON.parse(existingRaw);
-        nextProfile = {
-          ...DEFAULT_USER,
+        nextProfile = normalizeUserProfile({
           ...parsed,
           name: cleanName,
-          stats: { ...DEFAULT_USER.stats, ...(parsed?.stats || {}) },
-          unlockedBadges: Array.isArray(parsed?.unlockedBadges) ? parsed.unlockedBadges : DEFAULT_USER.unlockedBadges,
-          lawsMastered: Array.isArray(parsed?.lawsMastered) ? parsed.lawsMastered : DEFAULT_USER.lawsMastered,
-          gameHighScores: { ...DEFAULT_USER.gameHighScores, ...(parsed?.gameHighScores || {}) },
-        };
+          avatar: parsed?.avatar || avatarUrl,
+        });
       } catch {
-        nextProfile = { ...DEFAULT_USER, name: cleanName, avatar: avatarUrl };
+        nextProfile = normalizeUserProfile({ name: cleanName, avatar: avatarUrl });
       }
     } else {
-      nextProfile = {
-        ...DEFAULT_USER,
+      nextProfile = normalizeUserProfile({
         name: cleanName,
         avatar: avatarUrl,
-      };
+      });
     }
 
     setActiveAccountEmail(cleanEmail);
@@ -676,29 +683,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const switchSavedAccount = (account: LocalUserAccount) => {
-    const cleanEmail = account.email.toLowerCase();
-    const existingRaw = localStorage.getItem(`mindlabz_profile_${cleanEmail}`);
+    const cleanEmail = (account.email || '').toLowerCase();
+    const existingRaw = cleanEmail ? localStorage.getItem(`mindlabz_profile_${cleanEmail}`) : null;
     if (existingRaw) {
       try {
         const parsed = JSON.parse(existingRaw);
-        setUser({
-          ...DEFAULT_USER,
-          ...parsed,
-          name: account.name,
-          avatar: account.avatar,
-          stats: { ...DEFAULT_USER.stats, ...(parsed?.stats || {}) },
-          unlockedBadges: Array.isArray(parsed?.unlockedBadges) ? parsed.unlockedBadges : DEFAULT_USER.unlockedBadges,
-          lawsMastered: Array.isArray(parsed?.lawsMastered) ? parsed.lawsMastered : DEFAULT_USER.lawsMastered,
-          gameHighScores: { ...DEFAULT_USER.gameHighScores, ...(parsed?.gameHighScores || {}) },
-        });
+        setUser(
+          normalizeUserProfile({
+            ...parsed,
+            name: account.name || parsed.name,
+            avatar: account.avatar || parsed.avatar,
+          })
+        );
       } catch {
-        setUser({ ...DEFAULT_USER, name: account.name, avatar: account.avatar });
+        setUser(normalizeUserProfile({ name: account.name, avatar: account.avatar }));
       }
     } else {
-      setUser({ ...DEFAULT_USER, name: account.name, avatar: account.avatar });
+      setUser(normalizeUserProfile({ name: account.name, avatar: account.avatar }));
     }
-    setActiveAccountEmail(account.email);
-    localStorage.setItem('mindlabz_active_email_v1', account.email);
+    if (account.email) {
+      setActiveAccountEmail(account.email);
+      localStorage.setItem('mindlabz_active_email_v1', account.email);
+    }
   };
 
   const logout = async () => {
@@ -752,7 +758,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const isBookmarked = (lawId: string) => user.bookmarks.includes(lawId);
 
-  const recordGameResult = (gameId: string, result: GameResult) => {
+  const recordGameResult = (gameId: string, result: GameResult, extraContext?: { level?: string; practicePrecisionCount?: number }) => {
     updateUserAndSync((prev) => {
       const currentHigh = prev.gameHighScores[gameId] || 0;
       const newHigh = Math.max(currentHigh, result.score);
@@ -792,22 +798,67 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         updatedStats.decision = Math.min(100, Math.round(updatedStats.decision * 0.9 + result.accuracy * 0.1));
       }
 
+      const updatedHighScores: Record<string, number> = {
+        ...prev.gameHighScores,
+        [gameId]: newHigh,
+      };
+
+      if (gameId === 'first-impression') {
+        const lvl = extraContext?.level || (result.difficulty === '低' ? '初级' : result.difficulty === '中' ? '中级' : '高级');
+        if (lvl === '初级') {
+          updatedHighScores['first-impression-beginner'] = Math.max(
+            updatedHighScores['first-impression-beginner'] || 0,
+            result.score
+          );
+        } else if (lvl === '中级') {
+          updatedHighScores['first-impression-intermediate'] = Math.max(
+            updatedHighScores['first-impression-intermediate'] || 0,
+            result.score
+          );
+        } else if (lvl === '高级') {
+          updatedHighScores['first-impression-advanced'] = Math.max(
+            updatedHighScores['first-impression-advanced'] || 0,
+            result.score
+          );
+        }
+        if (result.accuracy === 100) {
+          updatedHighScores['first-impression-perfect'] = 100;
+        }
+        if (result.comboMax) {
+          updatedHighScores['first-impression-combo'] = Math.max(
+            updatedHighScores['first-impression-combo'] || 0,
+            result.comboMax
+          );
+        }
+        if (extraContext?.practicePrecisionCount) {
+          updatedHighScores['first-impression-calibration'] = Math.max(
+            updatedHighScores['first-impression-calibration'] || 0,
+            extraContext.practicePrecisionCount
+          );
+        }
+      }
+
       const candidateUser: UserProfile = {
         ...prev,
         xp: prev.xp + actualXpGained,
         level: Math.max(prev.level, Math.floor((prev.xp + actualXpGained) / 400) + 1),
         totalGames: newTotalGames,
-        gameHighScores: {
-          ...prev.gameHighScores,
-          [gameId]: newHigh,
-        },
+        gameHighScores: updatedHighScores,
         completedGames,
         gameCompletionCount,
         stats: updatedStats,
       };
 
       // Automatically evaluate and unlock cognitive medals
-      const { updatedUser: profileWithBadges, newBadges } = evaluateAndUnlockBadges(candidateUser);
+      const lvl = extraContext?.level || (result.difficulty === '低' ? '初级' : result.difficulty === '中' ? '中级' : '高级');
+      const { updatedUser: profileWithBadges, newBadges } = evaluateAndUnlockBadges(candidateUser, {
+        gameId,
+        score: result.score,
+        accuracy: result.accuracy,
+        comboMax: result.comboMax,
+        level: lvl,
+        practicePrecisionCount: extraContext?.practicePrecisionCount,
+      });
       if (newBadges.length > 0) {
         setNewUnlockedBadge(newBadges[0]);
       }
@@ -835,7 +886,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const recordQuizCompletion = (correctCount: number, total: number, earnedXp: number) => {
     updateUserAndSync((prev) => {
       const accuracy = (correctCount / total) * 100;
-      const unlockedBadges = [...prev.unlockedBadges];
+      const unlockedBadges = [...(prev.unlockedBadges || [])];
       if (accuracy >= 90 && !unlockedBadges.includes('speed-quiz-master')) {
         unlockedBadges.push('speed-quiz-master');
       }
@@ -866,19 +917,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const updateLawMastery = (lawId: string, newMastery: number) => {
     updateUserAndSync((prev) => {
-      const currentMastery = prev.lawMasteryMap[lawId] || 0;
+      const currentMastery = (prev.lawMasteryMap && prev.lawMasteryMap[lawId]) || 0;
       const finalMastery = Math.max(currentMastery, newMastery);
       const isMastered = finalMastery >= 80;
       const lawsMastered =
-        isMastered && !prev.lawsMastered.includes(lawId)
-          ? [...prev.lawsMastered, lawId]
-          : prev.lawsMastered;
+        isMastered && !(prev.lawsMastered || []).includes(lawId)
+          ? [...(prev.lawsMastered || []), lawId]
+          : (prev.lawsMastered || []);
 
       const tentativeUser: UserProfile = {
         ...prev,
         lawsMastered,
         lawMasteryMap: {
-          ...prev.lawMasteryMap,
+          ...(prev.lawMasteryMap || {}),
           [lawId]: finalMastery,
         },
       };

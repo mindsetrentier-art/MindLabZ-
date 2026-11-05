@@ -25,7 +25,7 @@ export const PsychologyLawCard: React.FC<PsychologyLawCardProps> = ({ law, compa
   const { isBookmarked, toggleBookmark, user } = useApp();
 
   const bookmarked = isBookmarked(law.id);
-  const mastery = user.lawMasteryMap[law.id] || 0;
+  const mastery = (user?.lawMasteryMap && user.lawMasteryMap[law.id]) || 0;
   const isMastered = mastery >= 80;
 
   const [expanded, setExpanded] = React.useState(false);

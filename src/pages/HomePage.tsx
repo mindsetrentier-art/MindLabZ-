@@ -61,20 +61,32 @@ export const HomePage: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Average mastery percentage across laws
-  const masteryValues = Object.values(user.lawMasteryMap) as number[];
+  // Average mastery percentage across laws with full defensive guarding
+  const safeLawMasteryMap =
+    user?.lawMasteryMap && typeof user.lawMasteryMap === 'object' ? user.lawMasteryMap : {};
+  const masteryValues = Object.values(safeLawMasteryMap) as number[];
+  const safeLaws = Array.isArray(laws) ? laws : [];
   const avgMastery =
-    masteryValues.length > 0
-      ? Math.round(masteryValues.reduce((a: number, b: number) => a + b, 0) / laws.length)
+    masteryValues.length > 0 && safeLaws.length > 0
+      ? Math.round(
+          masteryValues.reduce((a: number, b: number) => a + Number(b || 0), 0) / safeLaws.length
+        )
       : 35;
 
   // Featured Law of the Day (e.g. Zeigarnik Effect or first law)
-  const featuredLaw = laws.find((l) => l.id === 'zeigarnik-effect') || laws[0];
+  const featuredLaw =
+    safeLaws.find((l) => l.id === 'zeigarnik-effect') || safeLaws[0] || null;
+
+  // Safe user profile properties
+  const safeLawsMastered = Array.isArray(user?.lawsMastered) ? user.lawsMastered : [];
+  const safeStreak = Number(user?.streak ?? 0);
+  const safeXp = Number(user?.xp ?? 0);
 
   // Latest Journal Entry
-  const latestJournal = journals && journals.length > 0 ? journals[0] : null;
+  const safeJournals = Array.isArray(journals) ? journals : [];
+  const latestJournal = safeJournals.length > 0 ? safeJournals[0] : null;
   const todayIso = new Date().toISOString().split('T')[0];
-  const hasLoggedToday = journals?.some((j) => j.date === todayIso);
+  const hasLoggedToday = safeJournals.some((j) => Boolean(j && j.date === todayIso));
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -212,14 +224,14 @@ export const HomePage: React.FC = () => {
               <span className="flex items-center gap-1">
                 <Flame className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
                 <span>连续研习:</span>
-                <strong className="font-bold text-white">{user.streak} 天</strong>
+                <strong className="font-bold text-white">{safeStreak} 天</strong>
               </span>
               <span className="text-stone-500" aria-hidden="true">·</span>
               <span className="flex items-center gap-1">
                 <BookOpen className="w-3.5 h-3.5 text-indigo-400" />
                 <span>心智内化:</span>
                 <strong className="font-bold text-white">
-                  {user.lawsMastered.length} / {laws.length}
+                  {safeLawsMastered.length} / {safeLaws.length}
                 </strong>
                 <span>项</span>
               </span>
@@ -228,7 +240,7 @@ export const HomePage: React.FC = () => {
                 <Star className="w-3.5 h-3.5 text-amber-300 fill-amber-300" />
                 <span>累积经验:</span>
                 <strong className="font-bold text-amber-300">
-                  {user.xp.toLocaleString()} XP
+                  {safeXp.toLocaleString()} XP
                 </strong>
               </span>
             </div>
@@ -461,7 +473,7 @@ export const HomePage: React.FC = () => {
                 大脑训练竞技场
               </h3>
               <span className="px-2 py-0.5 rounded-full text-[10px] bg-amber-400/20 text-amber-300 font-bold border border-amber-400/30">
-                10 款互动实验
+                心理学互动实验
               </span>
             </div>
 
@@ -495,7 +507,7 @@ export const HomePage: React.FC = () => {
             }}
             className="text-xs font-semibold text-stone-700 hover:text-stone-900 flex items-center gap-1 transition-colors cursor-pointer"
           >
-            <span>全部手记 ({journals.length})</span>
+            <span>全部手记 ({safeJournals.length})</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </div>
@@ -505,10 +517,10 @@ export const HomePage: React.FC = () => {
             <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-2">
                 <span className="px-2.5 py-1 rounded-md bg-stone-100 text-stone-700 font-bold border border-stone-200 font-mono">
-                  最近归档 · {latestJournal.date}
+                  最近归档 · {latestJournal.date || '今日'}
                 </span>
                 <span className="text-stone-600 font-serif-editorial">
-                  情绪共鸣: <strong className="text-stone-900 font-semibold">{latestJournal.emotion.primary}</strong> (强度 {latestJournal.emotion.intensity}/10)
+                  情绪共鸣: <strong className="text-stone-900 font-semibold">{latestJournal.emotion?.primary || '澄明通透'}</strong> (强度 {latestJournal.emotion?.intensity ?? 5}/10)
                 </span>
               </div>
               <button
@@ -530,14 +542,14 @@ export const HomePage: React.FC = () => {
               }}
               className="font-serif-editorial text-lg font-bold text-stone-900 hover:text-amber-800 transition-colors cursor-pointer"
             >
-              {latestJournal.title}
+              {latestJournal.title || '无标题觉察手记'}
             </h4>
 
             <p className="font-serif-editorial text-xs sm:text-sm text-stone-700 italic border-l-2 border-stone-800 pl-3.5 leading-relaxed line-clamp-2">
-              “{latestJournal.structuredData.reframedPerspective ||
-                latestJournal.structuredData.tomorrowAnchor ||
-                latestJournal.structuredData.coreTakeaway ||
-                Object.values(latestJournal.structuredData)[0] ||
+              “{latestJournal.structuredData?.reframedPerspective ||
+                latestJournal.structuredData?.tomorrowAnchor ||
+                latestJournal.structuredData?.coreTakeaway ||
+                (latestJournal.structuredData && Object.values(latestJournal.structuredData)[0]) ||
                 '已记录完整思辨觉察。'}”
             </p>
           </div>

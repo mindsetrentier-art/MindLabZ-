@@ -35,8 +35,9 @@ export const CognitiveMedalsHall: React.FC<CognitiveMedalsHallProps> = ({ user }
   const [selectedStatus, setSelectedStatus] = useState<'all' | 'unlocked' | 'locked'>('all');
   const [activeModalBadge, setActiveModalBadge] = useState<Badge | null>(null);
 
-  const unlockedSet = new Set(user?.unlockedBadges || []);
-  const totalBadgesCount = BADGES_DATA.length;
+  const safeBadges = Array.isArray(user?.unlockedBadges) ? user.unlockedBadges : [];
+  const unlockedSet = new Set(safeBadges);
+  const totalBadgesCount = BADGES_DATA.length || 1;
   const unlockedCount = BADGES_DATA.filter((b) => unlockedSet.has(b.id)).length;
   const completionPercentage = Math.round((unlockedCount / totalBadgesCount) * 100);
 

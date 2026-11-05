@@ -35,13 +35,13 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ title, showBack, hasTopBar
             <div
               onClick={() => navigate('/profile')}
               className="relative group cursor-pointer shrink-0"
-              title={firebaseUser ? `已连接 Google 账号 (${firebaseUser.email || user.name})` : '前往个人中心连接 Firebase 云端'}
+              title={firebaseUser ? `已连接 Google 账号 (${firebaseUser.email || user?.name || 'Explorateur MindLabZ'})` : '前往个人中心连接 Firebase 云端'}
             >
               <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border border-stone-300/80 p-0.5 group-hover:border-stone-500 transition-colors">
                 <div className="w-full h-full rounded-full overflow-hidden bg-stone-100">
                   <img
-                    src={user.avatar}
-                    alt={user.name}
+                    src={user?.avatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80'}
+                    alt={user?.name || 'Explorateur MindLabZ'}
                     referrerPolicy="no-referrer"
                     className="w-full h-full object-cover"
                   />

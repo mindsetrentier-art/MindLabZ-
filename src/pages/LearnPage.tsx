@@ -341,7 +341,7 @@ export const LearnPage: React.FC = () => {
               <span className="flex items-center gap-1.5 bg-white/5 border border-white/10 px-2.5 py-1 rounded-lg">
                 <span className="w-2 h-2 rounded-full bg-amber-400 shadow-xs shadow-amber-400/50" />
                 <span>已内化掌握:</span>
-                <strong className="text-amber-300 font-bold">{user.lawsMastered.length} 项</strong>
+                <strong className="text-amber-300 font-bold">{(user?.lawsMastered || []).length} 项</strong>
               </span>
             </div>
           </div>
@@ -910,7 +910,7 @@ export const LearnPage: React.FC = () => {
             </>
           ) : filteredLaws.length > 0 ? (
             filteredLaws.map((law) => {
-              const mastery = user.lawMasteryMap[law.id] || 0;
+              const mastery = (user?.lawMasteryMap && user.lawMasteryMap[law.id]) || 0;
               const isMastered = mastery >= 80;
               return (
                 <div

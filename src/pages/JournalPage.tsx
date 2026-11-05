@@ -24,6 +24,7 @@ import { useBiometricLock } from '../context/BiometricLockContext';
 import { CognitiveJournalEntry, JournalTemplateType, EmotionValence } from '../types';
 import { JournalCard } from '../components/journal/JournalCard';
 import { JournalAnalyticsWidget } from '../components/journal/JournalAnalyticsWidget';
+import { EmotionalWeatherWidget } from '../components/journal/EmotionalWeatherWidget';
 import { JournalComposerModal } from '../components/journal/JournalComposerModal';
 import { BiometricVaultLockScreen } from '../components/journal/BiometricVaultLockScreen';
 import { JOURNAL_TEMPLATES } from '../data/journalTemplates';
@@ -232,7 +233,10 @@ export const JournalPage: React.FC = () => {
         </div>
       </section>
 
-      {/* 2. Emotional Landscape & Metacognitive Analytics */}
+      {/* 2. AI Emotional Weather Map & Daily Cognitive Science Feedback */}
+      <EmotionalWeatherWidget entries={journals} />
+
+      {/* 3. Emotional Landscape & Metacognitive Analytics */}
       <JournalAnalyticsWidget entries={journals} />
 
       {/* 3. Search & Filter Bar */}

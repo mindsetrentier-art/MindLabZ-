@@ -10,7 +10,7 @@ import { DifficultySelector } from '../components/games/DifficultySelector';
 import { GameLeaderboardModule } from '../components/games/GameLeaderboardModule';
 import { gameAudio } from '../utils/gameAudio';
 
-const GAME_CATEGORIES = ['全部', '10款心理学小游戏', '认知', '决策', '社会', '情绪', '习惯', '记忆', '逻辑'];
+const GAME_CATEGORIES = ['全部', '心理学核心实验', '认知', '决策', '社会', '情绪', '习惯', '记忆', '逻辑'];
 
 export const GamesPage: React.FC = () => {
   const navigate = useNavigate();
@@ -58,7 +58,7 @@ export const GamesPage: React.FC = () => {
 
   const filteredGames = selectedCat === '全部'
     ? PSYCHOLOGY_GAMES
-    : selectedCat === '10款心理学小游戏'
+    : selectedCat === '心理学核心实验' || selectedCat === '10款心理学小游戏'
     ? PSYCHOLOGY_GAMES.filter(g => Boolean(g.numberPrefix))
     : PSYCHOLOGY_GAMES.filter(g => g.category === selectedCat);
 
@@ -92,7 +92,7 @@ export const GamesPage: React.FC = () => {
             </div>
 
             <h1 className="font-serif-editorial text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight leading-tight text-white drop-shadow-sm">
-              10 款心理学实验小游戏 & 认知竞技场
+              心理学实验小游戏 & 认知竞技场
             </h1>
 
             <p className="text-xs sm:text-sm text-stone-300/90 font-normal leading-relaxed">
@@ -297,8 +297,8 @@ export const GamesPage: React.FC = () => {
             >
               {cat === '全部'
                 ? `全部项目 (${PSYCHOLOGY_GAMES.length}款)`
-                : cat === '10款心理学小游戏'
-                ? '🔥 10款经典小游戏'
+                : cat === '心理学核心实验' || cat === '10款心理学小游戏'
+                ? '🔥 心理学核心实验'
                 : `${cat}训练`}
             </button>
           );

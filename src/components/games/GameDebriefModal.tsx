@@ -21,12 +21,14 @@ interface GameDebriefModalProps {
   data: DebriefData;
   onRestart: () => void;
   onReturn: () => void;
+  children?: React.ReactNode;
 }
 
 export const GameDebriefModal: React.FC<GameDebriefModalProps> = ({
   data,
   onRestart,
   onReturn,
+  children,
 }) => {
   const diffConfig = DIFFICULTY_CONFIGS[data.difficulty];
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -223,6 +225,13 @@ export const GameDebriefModal: React.FC<GameDebriefModalProps> = ({
           </span>
         </div>
       </div>
+
+      {/* Custom Evolution / Ability Chart Slot */}
+      {children && (
+        <div className="relative z-20 w-full animate-smoothFadeIn">
+          {children}
+        </div>
+      )}
 
       {/* 1. Best Practice Strategy */}
       <div className="bg-gradient-to-r from-amber-50/70 to-orange-50/50 p-4 sm:p-4.5 rounded-2xl border border-amber-200/80 text-left space-y-1.5 shadow-xs relative z-20">

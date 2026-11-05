@@ -264,3 +264,57 @@ export interface JournalTemplateMeta {
   }[];
 }
 
+export type WeatherConditionType =
+  | 'sunny'
+  | 'partly-cloudy'
+  | 'overcast'
+  | 'foggy'
+  | 'rainy'
+  | 'stormy'
+  | 'rainbow';
+
+export interface EmotionalWeatherMetrics {
+  barometerHpa: number; // 心智气压 (hPa)
+  visibilityKm: number; // 认知清晰能见度 (%)
+  humidityPercent: number; // 情绪湿润/敏感度 (%)
+  windSpeedKmh: number; // 内在思维活跃度 (km/h)
+  temperatureC: number; // 心灵感知温度 (℃)
+}
+
+export interface EmotionalWeatherRadarPoint {
+  dimension: string;
+  value: number;
+  benchmark: number;
+}
+
+export interface EmotionalWeatherPrescription {
+  id: string;
+  title: string;
+  desc: string;
+  technique: string;
+  estimatedMinutes: number;
+}
+
+export interface EmotionalWeatherReport {
+  date: string;
+  condition: WeatherConditionType;
+  conditionTitle: string;
+  conditionPoeticDesc: string;
+  metrics: EmotionalWeatherMetrics;
+  radarDimensions: EmotionalWeatherRadarPoint[];
+  primaryEmotions: { name: string; percentage: number; color: string }[];
+  cognitiveMechanism: string;
+  identifiedBiases: string[];
+  cognitiveFeedback: string;
+  actionablePrescriptions: EmotionalWeatherPrescription[];
+  recommendedLaw: {
+    id: string;
+    nameZh: string;
+    reason: string;
+  };
+  analyzedEntriesCount: number;
+  generatedAt: string;
+  isFallback?: boolean;
+}
+
+

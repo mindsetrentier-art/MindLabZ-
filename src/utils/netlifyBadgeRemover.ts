@@ -4,6 +4,11 @@
  * Automatically purges, suppresses, and hides Netlify's floating "POWERED BY Netlify",
  * Netlify Drawer, feedback toolbar, and deploy preview badges that overlap the
  * bottom navigation dock and obscure application features.
+ * 
+ * CRITICAL SAFETY ISOLATION:
+ * This utility strictly NEVER touches, scans, modifies, or deletes any DOM node
+ * inside `#root`. React owns `#root` completely; removing nodes inside `#root`
+ * causes React 19 DOM reconciliation errors (removeChild on Node) and blank pages.
  */
 
 export function setupNetlifyBadgeRemover(): () => void {
@@ -11,8 +16,19 @@ export function setupNetlifyBadgeRemover(): () => void {
     return () => {};
   }
 
+  const isInsideRoot = (el: Element | null): boolean => {
+    if (!el) return false;
+    const root = document.getElementById('root');
+    if (!root) return false;
+    return el === root || root.contains(el);
+  };
+
   const isNetlifyElement = (el: Element): boolean => {
     try {
+      if (!el || isInsideRoot(el)) {
+        return false;
+      }
+
       const tagName = el.tagName.toLowerCase();
       if (tagName === 'netlify-drawer' || tagName === 'netlify-toolbar') {
         return true;
@@ -29,7 +45,7 @@ export function setupNetlifyBadgeRemover(): () => void {
         return true;
       }
 
-      // Check for links or images pointing to netlify
+      // Check for links or images pointing to netlify outside #root
       if (tagName === 'a') {
         const href = (el.getAttribute('href') || '').toLowerCase();
         if (href.includes('netlify.com') || href.includes('netlify.app')) {
@@ -63,7 +79,7 @@ export function setupNetlifyBadgeRemover(): () => void {
         }
       }
 
-      // Check text content for floating bottom elements
+      // Check text content strictly for floating bottom external elements
       const text = (el.textContent || '').trim().toLowerCase();
       if (
         text.includes('powered by netlify') ||
@@ -80,6 +96,10 @@ export function setupNetlifyBadgeRemover(): () => void {
 
   const purgeElement = (el: Element) => {
     try {
+      if (!el || isInsideRoot(el)) {
+        return;
+      }
+
       const htmlEl = el as HTMLElement;
       // Completely hide and disable interaction
       htmlEl.style.setProperty('display', 'none', 'important');
@@ -92,8 +112,8 @@ export function setupNetlifyBadgeRemover(): () => void {
       htmlEl.style.setProperty('position', 'absolute', 'important');
       htmlEl.style.setProperty('left', '-9999px', 'important');
       htmlEl.style.setProperty('top', '-9999px', 'important');
-      // Remove from DOM if possible
-      if (el.parentNode) {
+      // Remove from DOM only if outside root
+      if (el.parentNode && !isInsideRoot(el.parentNode as Element)) {
         el.parentNode.removeChild(el);
       }
     } catch {
@@ -102,7 +122,9 @@ export function setupNetlifyBadgeRemover(): () => void {
   };
 
   const scanAndPurge = () => {
-    // 1. Selector query
+    const root = document.getElementById('root');
+
+    // 1. Selector query strictly filtering out any React root nodes
     const selectors = [
       '#netlify-badge',
       '#netlify-identity-widget',
@@ -116,24 +138,26 @@ export function setupNetlifyBadgeRemover(): () => void {
       'iframe[title*="Netlify" i]',
       'a[href*="netlify.com"]',
       'img[src*="netlify"]',
-      'div[class*="netlify"]',
-      'div[id*="netlify"]',
     ];
 
     selectors.forEach((sel) => {
       try {
         const found = document.querySelectorAll(sel);
-        found.forEach((el) => purgeElement(el));
+        found.forEach((el) => {
+          if (!isInsideRoot(el)) {
+            purgeElement(el);
+          }
+        });
       } catch {
         // Continue
       }
     });
 
-    // 2. Scan direct children of body for fixed bottom elements
+    // 2. Scan direct children of body for external fixed bottom elements
     try {
       const bodyChildren = document.body ? Array.from(document.body.children) : [];
       bodyChildren.forEach((child) => {
-        if (child.id === 'root') return;
+        if (child === root || child.id === 'root' || isInsideRoot(child)) return;
         if (isNetlifyElement(child)) {
           purgeElement(child);
           return;
@@ -160,7 +184,7 @@ export function setupNetlifyBadgeRemover(): () => void {
   // Immediate execution
   scanAndPurge();
 
-  // MutationObserver to catch dynamically injected scripts or elements
+  // MutationObserver to catch dynamically injected scripts or elements outside #root
   let observer: MutationObserver | null = null;
   if (typeof MutationObserver !== 'undefined' && document.body) {
     observer = new MutationObserver((mutations) => {
@@ -171,6 +195,10 @@ export function setupNetlifyBadgeRemover(): () => void {
             const node = m.addedNodes[i];
             if (node.nodeType === Node.ELEMENT_NODE) {
               const el = node as Element;
+              // Never touch elements inside React root
+              if (isInsideRoot(el)) {
+                continue;
+              }
               if (isNetlifyElement(el)) {
                 purgeElement(el);
               } else {
@@ -185,20 +213,21 @@ export function setupNetlifyBadgeRemover(): () => void {
       }
     });
 
-    observer.observe(document.documentElement, {
+    // Observe body for external elements injected as direct siblings of #root
+    observer.observe(document.body, {
       childList: true,
-      subtree: true,
+      subtree: false, // Only observe direct children of body to avoid scanning React tree mutations
     });
   }
 
   // Periodic safety scan (especially after window load when async scripts arrive)
   const intervals: number[] = [];
-  [100, 300, 600, 1000, 2000, 3500, 5000, 8000].forEach((delay) => {
+  [150, 400, 800, 1500, 3000, 6000].forEach((delay) => {
     const timer = window.setTimeout(scanAndPurge, delay);
     intervals.push(timer);
   });
 
-  const recurringTimer = window.setInterval(scanAndPurge, 4000);
+  const recurringTimer = window.setInterval(scanAndPurge, 5000);
   intervals.push(recurringTimer);
 
   window.addEventListener('load', scanAndPurge);

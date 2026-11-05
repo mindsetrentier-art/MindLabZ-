@@ -33,6 +33,18 @@ import {
   MASTER_VALUATION_POOL,
   getUniqueSessionQuestions
 } from '../../data/valuationQuestions';
+import {
+  VALUATION_ACHIEVEMENTS,
+  ValuationAchievement,
+  evaluateValuationBreakthroughs
+} from '../../data/valuationAchievements';
+import { ValuationAchievementModal } from './ValuationAchievementModal';
+import { ValuationAchievementsShowroomModal } from './ValuationAchievementsShowroomModal';
+import {
+  ValuationPerformanceChart,
+  QuestionTrajectoryPoint,
+  ValuationSessionRecord,
+} from './ValuationPerformanceChart';
 
 export type GameLevel = '初级' | '中级' | '高级';
 
@@ -114,6 +126,49 @@ export const FirstImpressionGame: React.FC = () => {
   const [practiceRevealed, setPracticeRevealed] = useState(false);
   const [practiceRecords, setPracticeRecords] = useState<Record<string, { estimate: number; errorPercent: number }>>({});
 
+  // Valuation Achievement & Breakthrough States
+  const [unlockedBreakthroughsQueue, setUnlockedBreakthroughsQueue] = useState<ValuationAchievement[] | null>(null);
+  const [showShowroomModal, setShowShowroomModal] = useState<boolean>(false);
+  const [practicePrecisionCount, setPracticePrecisionCount] = useState<number>(() => {
+    return user.gameHighScores?.['first-impression-calibration'] || 0;
+  });
+
+  const unlockedBadgeCount = VALUATION_ACHIEVEMENTS.filter(a => (user.unlockedBadges || []).includes(a.id)).length;
+
+  // Trajectory & Performance Evolution History (Recharts data)
+  const [trajectoryHistory, setTrajectoryHistory] = useState<QuestionTrajectoryPoint[]>([]);
+  const [sessionHistory, setSessionHistory] = useState<ValuationSessionRecord[]>(() => {
+    try {
+      const saved = localStorage.getItem('mindlabz_first_impression_history_v1');
+      if (saved) return JSON.parse(saved);
+    } catch {
+      // ignore
+    }
+    return [];
+  });
+
+  const renderModals = () => (
+    <>
+      {unlockedBreakthroughsQueue && unlockedBreakthroughsQueue.length > 0 && (
+        <ValuationAchievementModal
+          achievements={unlockedBreakthroughsQueue}
+          onClose={() => setUnlockedBreakthroughsQueue(null)}
+          onViewShowroom={() => {
+            setUnlockedBreakthroughsQueue(null);
+            setShowShowroomModal(true);
+          }}
+        />
+      )}
+      {showShowroomModal && (
+        <ValuationAchievementsShowroomModal
+          unlockedBadgeIds={user.unlockedBadges || []}
+          gameHighScores={user.gameHighScores || {}}
+          onClose={() => setShowShowroomModal(false)}
+        />
+      )}
+    </>
+  );
+
   const questionStartTimeRef = useRef<number>(Date.now());
   const timerIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -151,6 +206,7 @@ export const FirstImpressionGame: React.FC = () => {
     setMaxCombo(0);
     setCorrectAnswersCount(0);
     setReactionTimes([]);
+    setTrajectoryHistory([]);
     setSelectedOptionId(null);
     setMilestoneNotice(null);
 
@@ -202,7 +258,25 @@ export const FirstImpressionGame: React.FC = () => {
     gameAudio.playMistake();
     setSelectedOptionId('TIMEOUT');
     setCombo(0);
-    setReactionTimes(prev => [...prev, currentLevelConfig.timeLimitPerQ * 1000]);
+    const timeoutMs = currentLevelConfig.timeLimitPerQ * 1000;
+    setReactionTimes(prev => [...prev, timeoutMs]);
+
+    const curQ = currentChallengeQ;
+    const cumAcc = Math.round((correctAnswersCount / (challengeIdx + 1)) * 100);
+    setTrajectoryHistory(prev => [
+      ...prev,
+      {
+        qIndex: challengeIdx + 1,
+        questionTitle: curQ?.title || `第 ${challengeIdx + 1} 题`,
+        reactionMs: timeoutMs,
+        reactionSeconds: Number((timeoutMs / 1000).toFixed(2)),
+        isCorrect: false,
+        cumulativeAccuracy: cumAcc,
+        speedScore: 20,
+        comboAtMoment: 0,
+      }
+    ]);
+
     setGameState('revealed');
   };
 
@@ -213,6 +287,29 @@ export const FirstImpressionGame: React.FC = () => {
     const reaction = Date.now() - questionStartTimeRef.current;
     setReactionTimes(prev => [...prev, reaction]);
     setSelectedOptionId(option.id);
+
+    const isCorrect = option.isCorrect;
+    const nextCorrectCount = correctAnswersCount + (isCorrect ? 1 : 0);
+    const cumAcc = Math.round((nextCorrectCount / (challengeIdx + 1)) * 100);
+    const curQ = currentChallengeQ;
+    const speedRatingScore = Math.min(
+      100,
+      Math.max(25, Math.round(100 - (reaction / (currentLevelConfig.timeLimitPerQ * 1000)) * 65))
+    );
+
+    setTrajectoryHistory(prev => [
+      ...prev,
+      {
+        qIndex: challengeIdx + 1,
+        questionTitle: curQ?.title || `第 ${challengeIdx + 1} 题`,
+        reactionMs: reaction,
+        reactionSeconds: Number((reaction / 1000).toFixed(2)),
+        isCorrect,
+        cumulativeAccuracy: cumAcc,
+        speedScore: speedRatingScore,
+        comboAtMoment: isCorrect ? combo + 1 : 0,
+      }
+    ]);
 
     if (option.isCorrect) {
       const nextCombo = combo + 1;
@@ -278,15 +375,62 @@ export const FirstImpressionGame: React.FC = () => {
       '高级': '高'
     };
 
-    recordGameResult('first-impression', {
+    // Evaluate breakthrough achievements across difficulty levels
+    const breakthroughs = evaluateValuationBreakthroughs(
+      {
+        level,
+        score,
+        accuracy,
+        comboMax: maxCombo,
+        questionCount: challengeQuestions.length || currentLevelConfig.questionCount,
+        precisePracticeCount: practicePrecisionCount,
+      },
+      user.unlockedBadges || []
+    );
+
+    if (breakthroughs.length > 0) {
+      setUnlockedBreakthroughsQueue(breakthroughs);
+    }
+
+    recordGameResult(
+      'first-impression',
+      {
+        score,
+        accuracy,
+        reactionTime: avgReaction,
+        xpGained: calculatedXp,
+        comboMax: maxCombo,
+        conceptLearned: `极速估值心算 · ${level}（${challengeQuestions.length}题非重复通关）`,
+        lawId: 'primacy-effect',
+        difficulty: diffMap[level],
+      },
+      {
+        level,
+        practicePrecisionCount,
+      }
+    );
+
+    const avgReactionSec = Number((avgReaction / 1000).toFixed(2));
+    const newSessionRecord: ValuationSessionRecord = {
+      id: Date.now().toString(),
+      timestamp: new Date().toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }),
+      dateStr: new Date().toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' }),
+      level,
       score,
       accuracy,
-      reactionTime: avgReaction,
-      xpGained: calculatedXp,
-      comboMax: maxCombo,
-      conceptLearned: `极速估值心算 · ${level}（${challengeQuestions.length}题非重复通关）`,
-      lawId: 'primacy-effect',
-      difficulty: diffMap[level]
+      avgReactionSec,
+      avgReactionMs: avgReaction,
+      maxCombo,
+    };
+
+    setSessionHistory(prev => {
+      const updated = [...prev, newSessionRecord].slice(-10);
+      try {
+        localStorage.setItem('mindlabz_first_impression_history_v1', JSON.stringify(updated));
+      } catch {
+        // ignore
+      }
+      return updated;
     });
 
     setGameState('debrief');
@@ -307,6 +451,28 @@ export const FirstImpressionGame: React.FC = () => {
       gameAudio.playSuccess();
     } else {
       gameAudio.playSelect();
+    }
+
+    if (errorPercent <= 5) {
+      const nextPreciseCount = practicePrecisionCount + 1;
+      setPracticePrecisionCount(nextPreciseCount);
+
+      if (nextPreciseCount >= 5) {
+        const sageBreakthroughs = evaluateValuationBreakthroughs(
+          {
+            level,
+            score: 0,
+            accuracy: 100,
+            comboMax: 0,
+            questionCount: 5,
+            precisePracticeCount: nextPreciseCount,
+          },
+          user.unlockedBadges || []
+        );
+        if (sageBreakthroughs.length > 0) {
+          setUnlockedBreakthroughsQueue(sageBreakthroughs);
+        }
+      }
     }
 
     setPracticeRevealed(true);
@@ -386,9 +552,21 @@ export const FirstImpressionGame: React.FC = () => {
             <ArrowLeft className="w-4 h-4" />
             <span>返回竞技场</span>
           </button>
-          <span className="text-xs font-mono font-bold text-amber-500 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/30">
-            GAME 01 · 极速估值
-          </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                gameAudio.playTap();
+                setShowShowroomModal(true);
+              }}
+              className="flex items-center gap-1.5 text-xs font-mono font-bold text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 px-2.5 py-1 rounded-full border border-amber-500/30 transition-all cursor-pointer shadow-sm hover:border-amber-400"
+            >
+              <Award className="w-3.5 h-3.5 text-amber-400" />
+              <span>徽章展厅 ({unlockedBadgeCount}/6)</span>
+            </button>
+            <span className="text-xs font-mono font-bold text-amber-500 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/30">
+              01 · 极速估值
+            </span>
+          </div>
         </div>
 
         {/* Hero Card with Obsidian Canvas & Gold Aesthetics */}
@@ -418,6 +596,31 @@ export const FirstImpressionGame: React.FC = () => {
               用 3 秒极速心算心法，瞬间穿透营销包装，算出真实底价！
             </p>
           </div>
+
+          {/* Achievement Badge Quick Entry Banner */}
+          <button
+            onClick={() => {
+              gameAudio.playTap();
+              setShowShowroomModal(true);
+            }}
+            className="w-full flex items-center justify-between p-3 rounded-2xl bg-gradient-to-r from-amber-500/15 via-yellow-500/10 to-amber-500/15 border border-amber-500/35 hover:border-amber-400/70 transition-all cursor-pointer group text-left relative z-10 shadow-sm"
+          >
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-amber-300 shrink-0">
+                <Award className="w-4 h-4 text-amber-400 group-hover:scale-110 transition-transform" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-amber-200">极速估值突破徽章系统</span>
+                  <span className="text-[10px] px-1.5 py-0.2 rounded-md bg-amber-400/25 text-amber-300 font-mono font-bold">
+                    {unlockedBadgeCount}/6 已解锁
+                  </span>
+                </div>
+                <p className="text-[11px] text-stone-300">初/中/高级高分突破、零失误神算与量感校准勋章</p>
+              </div>
+            </div>
+            <ArrowRight className="w-4 h-4 text-amber-400/70 group-hover:translate-x-1 group-hover:text-amber-300 transition-all shrink-0" />
+          </button>
 
           {/* Mode Selector Segmented Tabs */}
           <div className="p-1 rounded-2xl bg-black/40 border border-white/10 flex gap-1 relative z-10">
@@ -553,6 +756,7 @@ export const FirstImpressionGame: React.FC = () => {
             </div>
           )}
         </div>
+        {renderModals()}
       </div>
     );
   }
@@ -563,11 +767,41 @@ export const FirstImpressionGame: React.FC = () => {
   if (gameState === 'debrief') {
     return (
       <div className="py-4 px-2">
+        <div className="max-w-lg mx-auto mb-3 flex items-center justify-between px-1">
+          <span className="text-xs font-mono font-bold text-stone-400">
+            第一眼判断 · 本局战报
+          </span>
+          <button
+            onClick={() => {
+              gameAudio.playTap();
+              setShowShowroomModal(true);
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-yellow-500/10 to-amber-500/20 border border-amber-400/40 text-amber-300 text-xs font-bold hover:border-amber-300 hover:text-amber-200 transition-all cursor-pointer shadow-sm hover:shadow-amber-500/20"
+          >
+            <Award className="w-3.5 h-3.5 text-amber-400" />
+            <span>极速估值徽章展厅 ({unlockedBadgeCount}/6)</span>
+          </button>
+        </div>
         <GameDebriefModal
           data={debriefData}
           onRestart={() => startChallengeSession(level)}
           onReturn={() => navigate('/games')}
-        />
+        >
+          <ValuationPerformanceChart
+            currentAccuracy={Math.round((correctAnswersCount / (challengeQuestions.length || 1)) * 100)}
+            avgReactionMs={
+              reactionTimes.length > 0
+                ? Math.round(reactionTimes.reduce((a, b) => a + b, 0) / reactionTimes.length)
+                : 2500
+            }
+            maxCombo={maxCombo}
+            level={level}
+            totalQuestions={challengeQuestions.length || currentLevelConfig.questionCount}
+            trajectory={trajectoryHistory}
+            historySessions={sessionHistory}
+          />
+        </GameDebriefModal>
+        {renderModals()}
       </div>
     );
   }
@@ -609,6 +843,16 @@ export const FirstImpressionGame: React.FC = () => {
           </button>
 
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                gameAudio.playTap();
+                setShowShowroomModal(true);
+              }}
+              className="text-[11px] font-bold text-amber-300 hover:text-amber-200 bg-amber-500/15 hover:bg-amber-500/25 px-2.5 py-0.5 rounded-full border border-amber-400/40 transition-all cursor-pointer flex items-center gap-1 shadow-sm"
+            >
+              <Award className="w-3 h-3 text-amber-400" />
+              <span>徽章 {unlockedBadgeCount}/6</span>
+            </button>
             <span className="text-[11px] font-mono font-bold text-amber-500 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/30">
               🎯 心算量感练习
             </span>
@@ -874,6 +1118,7 @@ export const FirstImpressionGame: React.FC = () => {
             </div>
           )}
         </div>
+        {renderModals()}
       </div>
     );
   }
@@ -912,6 +1157,17 @@ export const FirstImpressionGame: React.FC = () => {
               {score.toLocaleString()}
             </span>
           </div>
+
+          <button
+            onClick={() => {
+              gameAudio.playTap();
+              setShowShowroomModal(true);
+            }}
+            className="p-1.5 text-amber-600 hover:text-amber-700 rounded-lg hover:bg-amber-50 transition-colors cursor-pointer"
+            title="查看极速估值徽章展厅"
+          >
+            <Award className="w-4 h-4 text-amber-500" />
+          </button>
 
           <button
             onClick={() => setGameState('intro')}
@@ -1129,6 +1385,7 @@ export const FirstImpressionGame: React.FC = () => {
           )}
         </div>
       )}
+      {renderModals()}
     </div>
   );
 };
