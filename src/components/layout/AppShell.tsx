@@ -7,6 +7,8 @@ import { AITutorModal } from '../ui/AITutorModal';
 import { Sparkles } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
+import { TopSummaryPullDrawer } from './TopSummaryPullDrawer';
+
 interface AppShellProps {
   children: React.ReactNode;
 }
@@ -66,7 +68,13 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
             geoBarVisible ? (geoBarExpanded ? 'pt-64' : 'pt-24 sm:pt-28') : 'pt-16 sm:pt-20'
           }`}
         >
-          {children}
+          {/* Top Pull-Down Expandable Summary Drawer (收起为胶囊，下拉跟手展开并下移变暗) */}
+          <TopSummaryPullDrawer isPlayingGame={isPlayingGame} />
+
+          {/* Page Route Content */}
+          <div className="relative w-full">
+            {children}
+          </div>
         </main>
 
         {/* Floating Action Button: AI Tutor Editorial Jewel (Mobile-Adaptive) */}
