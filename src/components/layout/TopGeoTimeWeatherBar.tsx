@@ -356,11 +356,15 @@ export const TopGeoTimeWeatherBar: React.FC<TopGeoTimeWeatherBarProps> = ({
 
   const watchIdRef = useRef<number | null>(null);
   const lastFetchedCoordsRef = useRef<string>('');
+  const onVisibilityChangeRef = useRef(onVisibilityChange);
+  onVisibilityChangeRef.current = onVisibilityChange;
+  const remainingMsRef = useRef<number>(remainingMs);
+  remainingMsRef.current = remainingMs;
 
-  // Notify parent layout
+  // Notify parent layout only when visibility or expansion state changes
   useEffect(() => {
-    onVisibilityChange?.(isVisible, isExpanded);
-  }, [isVisible, isExpanded, onVisibilityChange]);
+    onVisibilityChangeRef.current?.(isVisible, isExpanded);
+  }, [isVisible, isExpanded]);
 
   // 1. Live Clock updating every second
   useEffect(() => {
@@ -376,17 +380,18 @@ export const TopGeoTimeWeatherBar: React.FC<TopGeoTimeWeatherBarProps> = ({
       return;
     }
 
+    const startRemaining = remainingMsRef.current > 0 ? remainingMsRef.current : 5000;
+    const startTime = Date.now();
+
     const interval = window.setInterval(() => {
-      setRemainingMs((prev) => {
-        const next = Math.max(0, prev - 100);
-        if (next <= 0) {
-          window.clearInterval(interval);
-          setIsVisible(false);
-          setIsExpanded(false);
-          return 0;
-        }
-        return next;
-      });
+      const elapsed = Date.now() - startTime;
+      const next = Math.max(0, startRemaining - elapsed);
+      setRemainingMs(next);
+      if (next <= 0) {
+        window.clearInterval(interval);
+        setIsVisible(false);
+        setIsExpanded(false);
+      }
     }, 100);
 
     return () => window.clearInterval(interval);

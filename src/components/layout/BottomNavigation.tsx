@@ -2,6 +2,7 @@ import React, { useState, useEffect, useLayoutEffect, useRef, useCallback } from
 import { NavLink, useLocation } from 'react-router-dom';
 import { Home, BookOpen, PenLine, Gamepad2, User } from 'lucide-react';
 import { gameAudio } from '../../utils/gameAudio';
+import { FocusSoundscapePlayer } from '../audio/FocusSoundscapePlayer';
 
 interface NavItem {
   to: string;
@@ -81,13 +82,28 @@ export const BottomNavigation: React.FC = () => {
 
     const containerRect = containerRef.current.getBoundingClientRect();
     const itemRect = targetEl.getBoundingClientRect();
+    const nextX = Math.round(itemRect.left - containerRect.left);
+    const nextY = Math.round(itemRect.top - containerRect.top);
+    const nextWidth = Math.round(itemRect.width);
+    const nextHeight = Math.round(itemRect.height);
 
-    setHighlightStyle({
-      x: Math.round(itemRect.left - containerRect.left),
-      y: Math.round(itemRect.top - containerRect.top),
-      width: Math.round(itemRect.width),
-      height: Math.round(itemRect.height),
-      opacity: 1,
+    setHighlightStyle((prev) => {
+      if (
+        prev.x === nextX &&
+        prev.y === nextY &&
+        prev.width === nextWidth &&
+        prev.height === nextHeight &&
+        prev.opacity === 1
+      ) {
+        return prev;
+      }
+      return {
+        x: nextX,
+        y: nextY,
+        width: nextWidth,
+        height: nextHeight,
+        opacity: 1,
+      };
     });
   }, [location.pathname, getActiveIndex]);
 
@@ -124,6 +140,9 @@ export const BottomNavigation: React.FC = () => {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 pointer-events-auto glass-dock pb-[max(0.5rem,env(safe-area-inset-bottom))] transition-all">
+      {/* Focus Soundscape Player: HTML5 Audio, Toggle, Volume Slider & Soundscapes */}
+      <FocusSoundscapePlayer />
+
       <div
         ref={containerRef}
         className="flex justify-around items-center px-2 sm:px-6 md:px-10 lg:px-12 py-1.5 sm:py-2.5 max-w-2xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto relative"

@@ -91,6 +91,16 @@ export const PsychologyLawCard: React.FC<PsychologyLawCardProps> = ({ law, compa
             </span>
           )}
 
+          {law.isLoveCodex && law.subTag && (
+            <span
+              className="inline-flex items-center gap-1 font-mono text-[10px] font-bold px-2 py-0.5 rounded-md border bg-rose-50 text-rose-700 border-rose-200 shadow-2xs"
+              title={law.loveDomainTitle || '爱情心理学典藏'}
+            >
+              <Heart className="w-2.5 h-2.5 fill-current" />
+              <span>爱情心理 · {law.subTag}</span>
+            </span>
+          )}
+
           <span className="text-stone-300" aria-hidden="true">/</span>
           <span
             className="font-bold text-xs flex items-center gap-1.5"
@@ -103,7 +113,25 @@ export const PsychologyLawCard: React.FC<PsychologyLawCardProps> = ({ law, compa
             {law.categoryZh}展厅
           </span>
           <span className="text-stone-300" aria-hidden="true">·</span>
-          <span className="text-[11px] text-stone-500 font-medium">{law.difficulty}</span>
+          <span
+            className={`text-[10.5px] px-1.5 py-0.5 rounded font-semibold ${
+              law.difficulty === 'Easy'
+                ? 'bg-emerald-50 text-emerald-700'
+                : law.difficulty === 'Medium'
+                ? 'bg-amber-50 text-amber-800'
+                : 'bg-rose-50 text-rose-700'
+            }`}
+          >
+            {law.difficulty}
+          </span>
+          {law.assignedCityZh && (
+            <>
+              <span className="text-stone-300" aria-hidden="true">·</span>
+              <span className="text-[10.5px] px-1.5 py-0.5 rounded bg-stone-100 text-stone-700 font-medium">
+                {law.assignedCityZh.split(' ')[0]}
+              </span>
+            </>
+          )}
 
           {law.xpReward && (
             <>

@@ -61,13 +61,13 @@ export const GameHeaderHud: React.FC<GameHeaderHudProps> = ({
   };
 
   return (
-    <header className="w-full game-hud-bar rounded-2xl p-2.5 sm:p-3 mb-4 flex items-center justify-between gap-2 shadow-sm animate-fadeIn relative z-20 border border-stone-200/90">
+    <header className="w-full game-hud-bar rounded-2xl p-3 sm:p-4 mb-4 flex items-center justify-between gap-2 shadow-sm animate-fadeIn relative z-20 border border-stone-200/90">
       {/* Left: Exit & Title */}
-      <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+      <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
         <button
           onClick={handleExitClick}
           type="button"
-          className="p-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 transition-all cursor-pointer shrink-0 active:scale-95 flex items-center gap-1 text-xs font-semibold"
+          className="px-2.5 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 transition-all cursor-pointer shrink-0 active:scale-95 flex items-center gap-1.5 text-xs sm:text-sm font-semibold"
           title="退出 / 重选"
         >
           <ArrowLeft className="w-4 h-4" />
@@ -75,79 +75,79 @@ export const GameHeaderHud: React.FC<GameHeaderHudProps> = ({
         </button>
 
         <div className="min-w-0">
-          <div className="flex items-center gap-1.5 text-[10px] text-stone-400 font-numeric font-medium">
+          <div className="flex items-center gap-1.5 text-xs text-stone-500 font-numeric font-medium">
             {numberPrefix && (
               <span
-                className="font-bold px-1.5 py-0.2 rounded text-[10px] text-white"
+                className="font-bold px-2 py-0.5 rounded text-[11px] text-white"
                 style={{ backgroundColor: accentColor }}
               >
                 #{numberPrefix}
               </span>
             )}
-            <span className="text-stone-500 font-semibold truncate">
+            <span className="text-stone-600 font-semibold truncate">
               {diffConfig.name}难度 ({diffConfig.multiplierText})
             </span>
             {typeof currentRound === 'number' && typeof totalRounds === 'number' && (
               <>
                 <span className="text-stone-300">·</span>
-                <span className="text-stone-600 font-bold font-numeric">
+                <span className="text-stone-700 font-bold font-numeric">
                   关卡 {currentRound}/{totalRounds}
                 </span>
               </>
             )}
           </div>
-          <h2 className="text-xs sm:text-sm font-bold text-stone-900 truncate font-serif-editorial">
+          <h2 className="text-sm sm:text-base font-bold text-stone-900 truncate font-serif-editorial">
             {title}
           </h2>
         </div>
       </div>
 
       {/* Right: Game HUD Status Badges */}
-      <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0 font-numeric text-xs">
+      <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 font-numeric text-xs sm:text-sm">
         {/* Sound FX Button */}
         <button
           onClick={handleToggleSound}
           type="button"
-          className={`p-1.5 sm:p-2 rounded-xl transition-all cursor-pointer active:scale-90 ${
+          className={`p-2 rounded-xl transition-all cursor-pointer active:scale-90 ${
             isMuted
               ? 'bg-stone-100 text-stone-400 hover:text-stone-600'
               : 'bg-indigo-50 text-indigo-600 hover:bg-indigo-100'
           }`}
           title={isMuted ? '开启音效' : '静音'}
         >
-          {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+          {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
         </button>
 
         {/* Timer countdown if active */}
         {typeof timeLeft === 'number' && (
           <div
-            className={`flex items-center gap-1 px-2.5 py-1 rounded-xl font-bold transition-all shadow-xs ${
+            className={`flex items-center gap-1 px-3 py-1.5 rounded-xl font-bold transition-all shadow-xs ${
               timeLeft <= 6
                 ? 'bg-rose-500 text-white animate-pulse shadow-rose-500/30'
                 : 'bg-stone-900 text-white'
             }`}
           >
-            <Clock className="w-3.5 h-3.5" />
+            <Clock className="w-4 h-4" />
             <span>{timeLeft}s</span>
           </div>
         )}
 
         {/* Combo Multiplier */}
         {effectiveCombo > 1 && (
-          <div className="flex items-center gap-1 px-2.5 py-1 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-black shadow-sm animate-pulse">
-            <Flame className="w-3.5 h-3.5 fill-white text-white" />
+          <div className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-black shadow-sm animate-pulse">
+            <Flame className="w-4 h-4 fill-white text-white" />
             <span>x{effectiveCombo}</span>
           </div>
         )}
 
         {/* Glowing Score Ticker */}
         <div
-          className={`flex items-center gap-1.5 px-3 py-1 rounded-xl bg-gradient-to-r from-amber-50 via-orange-50 to-amber-100/60 border border-amber-300 text-stone-900 font-bold shadow-xs transition-transform duration-200 ${
+          className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-amber-50 via-orange-50 to-amber-100/60 border border-amber-300 text-stone-900 font-bold shadow-xs transition-transform duration-200 ${
             scorePop ? 'scale-110 shadow-amber-300/50' : 'scale-100'
           }`}
         >
-          <Trophy className="w-3.5 h-3.5 text-amber-600 fill-amber-500" />
-          <span className="text-xs sm:text-sm font-black text-amber-950 font-numeric tracking-tight">
+          <Trophy className="w-4 h-4 text-amber-600 fill-amber-500" />
+          <span className="text-sm sm:text-base font-black text-amber-950 font-numeric tracking-tight">
             {score.toLocaleString()}
           </span>
         </div>

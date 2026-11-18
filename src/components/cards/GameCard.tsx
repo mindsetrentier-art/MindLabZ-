@@ -2,7 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Play, Trophy, Clock, Brain, Zap, Sparkles, Search, FlaskConical, Shuffle,
-  Eye, Anchor, Users, Activity, HeartPulse, Gift, LifeBuoy, SearchCheck, CheckCircle2,
+  Eye, Anchor, Users, Activity, HeartPulse, Heart, Gift, LifeBuoy, SearchCheck, CheckCircle2,
   ChevronRight, Award, Flame
 } from 'lucide-react';
 import { GameDefinition } from '../../types';
@@ -27,6 +27,7 @@ const GAME_ICONS: Record<string, React.ElementType> = {
   'micro-habit': Sparkles,
   'bystander-breaker': LifeBuoy,
   'falsification-challenge': SearchCheck,
+  'love-aleatoric-arena': Heart,
   'memory-lab': Brain,
   'mind-trap': Zap,
   'brain-rush': Sparkles,

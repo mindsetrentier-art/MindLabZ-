@@ -8,7 +8,10 @@ import { useApp } from '../context/AppContext';
 import { GameDifficulty, DEFAULT_DIFFICULTY, DIFFICULTY_LIST, DIFFICULTY_CONFIGS } from '../data/difficulty';
 import { DifficultySelector } from '../components/games/DifficultySelector';
 import { GameLeaderboardModule } from '../components/games/GameLeaderboardModule';
+import { ArenaHorizontalAccordion } from '../components/games/ArenaHorizontalAccordion';
 import { gameAudio } from '../utils/gameAudio';
+import { getAleatoricStats, resetAleatoricDeck } from '../utils/aleatoricEngine';
+import { Heart, RotateCcw } from 'lucide-react';
 
 const GAME_CATEGORIES = ['全部', '心理学核心实验', '认知', '决策', '社会', '情绪', '习惯', '记忆', '逻辑'];
 
@@ -18,6 +21,7 @@ export const GamesPage: React.FC = () => {
   const [selectedCat, setSelectedCat] = useState('全部');
   const [isLoading, setIsLoading] = useState(false);
   const [isMuted, setIsMuted] = useState(() => gameAudio.getMuted());
+  const [aleatoricStats, setAleatoricStats] = useState(() => getAleatoricStats());
 
   const [arenaDifficulty, setArenaDifficulty] = useState<GameDifficulty>(() => {
     try {
@@ -279,6 +283,64 @@ export const GamesPage: React.FC = () => {
 
       {/* Real-Time Firebase Daily Arena Leaderboard */}
       <GameLeaderboardModule />
+
+      {/* Featured Extreme Aleatoric Love Psychology Arena Launcher */}
+      <section className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-[#2B0C1C] via-[#1B1230] to-[#111827] text-white p-5 sm:p-7 border border-rose-400/35 shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-5">
+        <div className="space-y-2 max-w-2xl">
+          <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-rose-500/25 text-rose-200 border border-rose-400/40 font-bold">
+              <Heart className="w-3 h-3 fill-rose-400 text-rose-400" />
+              ALEATORIC LOVE ENGINE
+            </span>
+            <span className="px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-200 border border-amber-400/30 font-bold">
+              {aleatoricStats.totalConcepts} 定律 × 6 视角 = {aleatoricStats.totalUniqueEncounters.toLocaleString()} 张防重题卡
+            </span>
+          </div>
+          <h3 className="font-serif-editorial text-xl sm:text-2xl font-bold text-white">
+            爱情心理学 · 极致零重复 Aleatoric 竞技场
+          </h3>
+          <p className="text-xs sm:text-sm text-stone-300 leading-relaxed">
+            基于加密真随机洗牌盒与跨局冷却锁机制（60 题概念防重窗口 + {aleatoricStats.totalUniqueEncounters.toLocaleString()} 独立变式跟踪），无论尝试多少次开局，绝不重复推送同一张题卡。当前已探索{' '}
+            <strong className="text-amber-300 font-numeric">
+              {aleatoricStats.seenEncountersCount.toLocaleString()} / {aleatoricStats.totalUniqueEncounters.toLocaleString()}
+            </strong>{' '}
+            张题卡（覆盖 <strong className="text-emerald-300 font-numeric">{aleatoricStats.uniqueConceptsExplored}</strong> / {aleatoricStats.totalConcepts} 条词条）。
+          </p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row md:flex-col gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={() => {
+              gameAudio.playSuccess();
+              navigate(`/game/love-aleatoric-arena?difficulty=${encodeURIComponent(arenaDifficulty)}`);
+            }}
+            className="px-5 py-3 rounded-xl bg-gradient-to-r from-rose-500 via-pink-500 to-amber-500 hover:brightness-110 text-white font-bold text-xs sm:text-sm shadow-lg shadow-rose-500/25 flex items-center justify-center gap-2 cursor-pointer active:scale-95 whitespace-nowrap"
+          >
+            <Shuffle className="w-4 h-4" />
+            <span>立即开启全随机对战</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+
+          {aleatoricStats.seenEncountersCount > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                gameAudio.playTap();
+                resetAleatoricDeck();
+                setAleatoricStats(getAleatoricStats());
+              }}
+              className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-stone-200 text-[11px] font-semibold flex items-center justify-center gap-1.5 cursor-pointer"
+            >
+              <RotateCcw className="w-3 h-3" />
+              <span>重置全库防重洗牌盒</span>
+            </button>
+          )}
+        </div>
+      </section>
+
+      {/* Arena Horizontal Accordion: Psychological Experiments Canvas */}
+      <ArenaHorizontalAccordion difficulty={arenaDifficulty} />
 
       {/* Category Filter Controls */}
       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">

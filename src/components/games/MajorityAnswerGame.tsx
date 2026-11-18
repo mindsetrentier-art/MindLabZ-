@@ -232,7 +232,7 @@ export const MajorityAnswerGame: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col items-center justify-start min-h-[85vh] w-full max-w-lg mx-auto py-2 px-2 animate-fadeIn space-y-4">
+    <div className="flex flex-col items-center justify-start min-h-[85vh] w-full max-w-2xl mx-auto py-2 px-2 animate-fadeIn space-y-5">
       {/* HUD Header */}
       <GameHeaderHud
         title="03 · 多数人的答案"
@@ -247,45 +247,45 @@ export const MajorityAnswerGame: React.FC = () => {
       />
 
       {scen && (
-        <div className="w-full game-arcade-card rounded-3xl p-6 border-pink-100 shadow-xl space-y-5 animate-fadeIn bg-white relative overflow-hidden">
+        <div className="w-full game-arcade-card rounded-3xl p-6 sm:p-8 border-pink-100 shadow-xl space-y-6 animate-fadeIn bg-white relative overflow-hidden">
           {/* Scenario Header */}
-          <div className="space-y-1.5 border-b border-stone-200/70 pb-3.5">
-            <span className="text-[10px] font-black text-pink-700 bg-pink-50 px-2 py-0.5 rounded-md border border-pink-200 font-mono">
+          <div className="space-y-2 border-b border-stone-200/70 pb-4">
+            <span className="inline-block text-xs font-black text-pink-700 bg-pink-50 px-2.5 py-1 rounded-md border border-pink-200 font-mono">
               CONFORMITY PRESSURE #{currentIdx + 1} / {scenarios.length}
             </span>
-            <h2 className="text-xl font-bold text-stone-900 font-serif-editorial">
+            <h2 className="text-xl sm:text-2xl font-bold text-stone-900 font-serif-editorial leading-snug">
               {scen.topic}
             </h2>
-            <div className="text-xs text-stone-700 leading-relaxed bg-stone-50 p-3.5 rounded-2xl border border-stone-200/80 font-sans mt-2">
+            <div className="text-sm sm:text-base text-stone-700 leading-relaxed bg-stone-50 p-4 rounded-2xl border border-stone-200/80 font-sans mt-2">
               {scen.context}
             </div>
           </div>
 
           {/* Social Proof Pressure Meter Banner */}
-          <div className="p-4 bg-gradient-to-r from-rose-50 to-pink-50 rounded-2xl border border-rose-200 space-y-2">
-            <div className="flex items-center justify-between text-xs">
+          <div className="p-4 sm:p-5 bg-gradient-to-r from-rose-50 to-pink-50 rounded-2xl border border-rose-200 space-y-2">
+            <div className="flex items-center justify-between text-xs sm:text-sm gap-2">
               <span className="font-bold text-rose-950 flex items-center gap-1.5">
-                <Users className="w-4 h-4 text-rose-600" />
+                <Users className="w-4 h-4 text-rose-600 shrink-0" />
                 群聊多数人压倒性意见：
               </span>
-              <span className="font-numeric font-black text-rose-600 bg-rose-100/90 px-2.5 py-0.5 rounded-lg border border-rose-300">
+              <span className="font-numeric font-black text-rose-600 bg-rose-100/90 px-2.5 py-0.5 rounded-lg border border-rose-300 shrink-0">
                 {scen.majorityPercentage}% 压倒性支持
               </span>
             </div>
-            <p className="text-xs text-stone-700 font-sans italic">
+            <p className="text-sm sm:text-base text-stone-700 font-sans italic leading-relaxed">
               “{scen.majorityReasoning}”
             </p>
           </div>
 
           {/* Hidden Facts / Evidences */}
-          <div className="space-y-2">
-            <h4 className="text-xs font-bold text-stone-900 flex items-center gap-1.5 font-serif-editorial">
-              <FileText className="w-4 h-4 text-indigo-600" />
+          <div className="space-y-2.5">
+            <h4 className="text-sm sm:text-base font-bold text-stone-900 flex items-center gap-1.5 font-serif-editorial">
+              <FileText className="w-4 h-4 text-indigo-600 shrink-0" />
               <span>实验室可验证的客观数据证据：</span>
             </h4>
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               {scen.evidenceItems.map((item, idx) => (
-                <div key={idx} className="p-3 bg-stone-50 rounded-2xl border border-stone-200/80 text-xs text-stone-700 flex items-start gap-2 shadow-2xs font-sans">
+                <div key={idx} className="p-3.5 sm:p-4 bg-stone-50 rounded-2xl border border-stone-200/80 text-sm sm:text-base text-stone-700 flex items-start gap-2.5 shadow-2xs font-sans">
                   <span className="text-indigo-600 font-bold shrink-0">证据 #{idx + 1}</span>
                   <span className="leading-relaxed">{item}</span>
                 </div>
@@ -295,51 +295,51 @@ export const MajorityAnswerGame: React.FC = () => {
 
           {/* Options */}
           {gameState === 'question' ? (
-            <div className="space-y-3 pt-2 border-t border-stone-200/70">
-              <h4 className="text-xs font-bold text-stone-900">
+            <div className="space-y-3.5 pt-3 border-t border-stone-200/70">
+              <h4 className="text-lg sm:text-xl font-bold text-stone-900 font-serif-editorial">
                 面对群体压力，你的真实抉择：
               </h4>
-              <div className="grid grid-cols-1 gap-2.5">
+              <div className="grid grid-cols-1 gap-3">
                 <button
                   onClick={() => handleMakeChoice('majority')}
                   type="button"
-                  className="w-full text-left p-4 rounded-2xl border-2 border-stone-200 hover:border-rose-400 bg-white hover:bg-rose-50/30 transition-all text-xs cursor-pointer active:scale-98 shadow-xs"
+                  className="w-full text-left p-4.5 sm:p-5 rounded-2xl border-2 border-stone-200 hover:border-rose-400 bg-white hover:bg-rose-50/30 transition-all cursor-pointer active:scale-98 shadow-xs"
                 >
-                  <span className="font-black text-stone-900 block mb-1">选项 A：跟随多数人（阿希从众）</span>
-                  <span className="text-stone-600 leading-relaxed">{scen.majorityChoice}</span>
+                  <span className="text-base sm:text-lg font-black text-stone-900 block mb-1.5">选项 A：跟随多数人（阿希从众）</span>
+                  <span className="text-sm sm:text-base text-stone-600 leading-relaxed block">{scen.majorityChoice}</span>
                 </button>
 
                 <button
                   onClick={() => handleMakeChoice('rational')}
                   type="button"
-                  className="w-full text-left p-4 rounded-2xl border-2 border-indigo-200 hover:border-indigo-500 bg-indigo-50/50 hover:bg-indigo-50 transition-all text-xs cursor-pointer active:scale-98 shadow-xs"
+                  className="w-full text-left p-4.5 sm:p-5 rounded-2xl border-2 border-indigo-200 hover:border-indigo-500 bg-indigo-50/50 hover:bg-indigo-50 transition-all cursor-pointer active:scale-98 shadow-xs"
                 >
-                  <span className="font-black text-indigo-950 block mb-1 flex items-center gap-1">
-                    <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                  <span className="text-base sm:text-lg font-black text-indigo-950 mb-1.5 flex items-center gap-1.5">
+                    <Sparkles className="w-4 h-4 text-indigo-600 shrink-0" />
                     选项 B：坚持证据独立判断（理性破局）
                   </span>
-                  <span className="text-stone-700 leading-relaxed">{scen.rationalChoice}</span>
+                  <span className="text-sm sm:text-base text-stone-700 leading-relaxed block">{scen.rationalChoice}</span>
                 </button>
               </div>
             </div>
           ) : (
             /* Result Reveal */
-            <div className="space-y-4 pt-2 border-t border-stone-200/70 animate-fadeIn">
-              <div className={`p-4.5 rounded-2xl border ${userChoice === 'rational' ? 'bg-emerald-50 border-emerald-300 text-emerald-950' : 'bg-rose-50 border-rose-300 text-rose-950'} space-y-1.5 shadow-2xs`}>
-                <div className="flex items-center gap-1.5 text-xs font-bold font-serif-editorial">
+            <div className="space-y-4 pt-3 border-t border-stone-200/70 animate-fadeIn">
+              <div className={`p-5 rounded-2xl border ${userChoice === 'rational' ? 'bg-emerald-50 border-emerald-300 text-emerald-950' : 'bg-rose-50 border-rose-300 text-rose-950'} space-y-2 shadow-2xs`}>
+                <div className="flex items-center gap-2 font-bold font-serif-editorial">
                   {userChoice === 'rational' ? (
                     <>
-                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                      <span className="text-sm">出色！你顶住了强大的阿希从众压力 (+{Math.round(1500 * diffConfig.scoreMultiplier)}分)</span>
+                      <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                      <span className="text-base sm:text-lg">出色！你顶住了强大的阿希从众压力 (+{Math.round(1500 * diffConfig.scoreMultiplier)}分)</span>
                     </>
                   ) : (
                     <>
-                      <ShieldAlert className="w-4 h-4 text-rose-600 shrink-0" />
-                      <span className="text-sm">落入从众陷阱！屈从了多数人的错误偏误</span>
+                      <ShieldAlert className="w-5 h-5 text-rose-600 shrink-0" />
+                      <span className="text-base sm:text-lg">落入从众陷阱！屈从了多数人的错误偏误</span>
                     </>
                   )}
                 </div>
-                <p className="text-xs leading-relaxed opacity-95 font-sans">
+                <p className="text-sm sm:text-base leading-relaxed opacity-95 font-sans">
                   {scen.rationalReasoning}
                 </p>
               </div>
@@ -347,10 +347,10 @@ export const MajorityAnswerGame: React.FC = () => {
               <button
                 onClick={handleNext}
                 type="button"
-                className="w-full py-4 rounded-2xl bg-gradient-to-r from-stone-900 via-purple-950 to-pink-950 hover:opacity-95 text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 game-btn-tactile"
+                className="w-full py-4 rounded-2xl bg-gradient-to-r from-stone-900 via-purple-950 to-pink-950 hover:opacity-95 text-white font-bold text-sm sm:text-base shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 game-btn-tactile"
               >
                 <span>{currentIdx < scenarios.length - 1 ? '审阅下一个从众情境' : '查看实验总结研报'}</span>
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
             </div>
           )}

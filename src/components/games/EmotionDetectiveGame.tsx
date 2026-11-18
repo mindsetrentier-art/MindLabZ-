@@ -259,7 +259,7 @@ export const EmotionDetectiveGame: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col items-center justify-start min-h-[85vh] w-full max-w-lg mx-auto py-2 px-2 animate-fadeIn space-y-4">
+    <div className="flex flex-col items-center justify-start min-h-[85vh] w-full max-w-2xl mx-auto py-2 px-2 animate-fadeIn space-y-5">
       {/* Game HUD */}
       <GameHeaderHud
         title="05 · 情绪侦探"
@@ -273,22 +273,22 @@ export const EmotionDetectiveGame: React.FC = () => {
       />
 
       {currentCase && (
-        <div className="w-full game-arcade-card rounded-3xl p-6 border-rose-100 shadow-xl space-y-5 animate-fadeIn bg-white relative overflow-hidden">
+        <div className="w-full game-arcade-card rounded-3xl p-6 sm:p-8 border-rose-100 shadow-xl space-y-6 animate-fadeIn bg-white relative overflow-hidden">
           {/* Dialogue Case Header */}
-          <div className="space-y-1.5 border-b border-stone-200/70 pb-3.5">
-            <span className="text-[10px] font-black text-rose-700 bg-rose-50 px-2 py-0.5 rounded-md border border-rose-200 font-mono">
+          <div className="space-y-2 border-b border-stone-200/70 pb-4">
+            <span className="inline-block text-xs font-black text-rose-700 bg-rose-50 px-2.5 py-1 rounded-md border border-rose-200 font-mono">
               CASE #{currentIdx + 1} / {cases.length} · 冲突研判
             </span>
-            <h2 className="text-xl font-bold text-stone-900 font-serif-editorial">
+            <h2 className="text-xl sm:text-2xl font-bold text-stone-900 font-serif-editorial leading-snug">
               {currentCase.title}
             </h2>
-            <div className="text-xs text-stone-700 leading-relaxed bg-stone-50 p-3.5 rounded-2xl border border-stone-200/80 font-sans mt-2">
+            <div className="text-sm sm:text-base text-stone-700 leading-relaxed bg-stone-50 p-4 rounded-2xl border border-stone-200/80 font-sans mt-2">
               {currentCase.scene}
             </div>
           </div>
 
           {/* Statements to classify */}
-          <div className="space-y-3.5">
+          <div className="space-y-4">
             {currentCase.statements.map((stmt, idx) => {
               const userChosen = userClassifications[idx];
               const isCorrect = isSubmitted && userChosen === stmt.correctType;
@@ -296,7 +296,7 @@ export const EmotionDetectiveGame: React.FC = () => {
               return (
                 <div
                   key={idx}
-                  className={`p-4 rounded-2xl border-2 transition-all ${
+                  className={`p-4.5 sm:p-5 rounded-2xl border-2 transition-all ${
                     isSubmitted
                       ? isCorrect
                         ? 'bg-emerald-50/70 border-emerald-300'
@@ -304,17 +304,17 @@ export const EmotionDetectiveGame: React.FC = () => {
                       : 'bg-stone-50/90 border-stone-200/80'
                   }`}
                 >
-                  <p className="text-xs sm:text-[13px] font-bold text-stone-900 mb-3 leading-snug">
+                  <p className="text-base sm:text-lg font-bold text-stone-900 mb-3.5 leading-snug">
                     {stmt.text}
                   </p>
 
                   {/* 3 Game-Themed Classification Buttons */}
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                     <button
                       type="button"
                       disabled={isSubmitted}
                       onClick={() => handleSelect(idx, 'fact')}
-                      className={`py-2 px-1 text-[11px] sm:text-xs rounded-xl font-bold transition-all cursor-pointer border ${
+                      className={`py-3 px-2.5 text-sm sm:text-base rounded-xl font-bold transition-all cursor-pointer border ${
                         userChosen === 'fact'
                           ? 'bg-blue-600 text-white border-blue-600 shadow-md shadow-blue-500/25 scale-102'
                           : 'bg-white hover:bg-blue-50 text-stone-700 border-stone-200'
@@ -327,7 +327,7 @@ export const EmotionDetectiveGame: React.FC = () => {
                       type="button"
                       disabled={isSubmitted}
                       onClick={() => handleSelect(idx, 'emotion')}
-                      className={`py-2 px-1 text-[11px] sm:text-xs rounded-xl font-bold transition-all cursor-pointer border ${
+                      className={`py-3 px-2.5 text-sm sm:text-base rounded-xl font-bold transition-all cursor-pointer border ${
                         userChosen === 'emotion'
                           ? 'bg-rose-600 text-white border-rose-600 shadow-md shadow-rose-500/25 scale-102'
                           : 'bg-white hover:bg-rose-50 text-stone-700 border-stone-200'
@@ -340,7 +340,7 @@ export const EmotionDetectiveGame: React.FC = () => {
                       type="button"
                       disabled={isSubmitted}
                       onClick={() => handleSelect(idx, 'speculation')}
-                      className={`py-2 px-1 text-[11px] sm:text-xs rounded-xl font-bold transition-all cursor-pointer border ${
+                      className={`py-3 px-2.5 text-sm sm:text-base rounded-xl font-bold transition-all cursor-pointer border ${
                         userChosen === 'speculation'
                           ? 'bg-purple-600 text-white border-purple-600 shadow-md shadow-purple-500/25 scale-102'
                           : 'bg-white hover:bg-purple-50 text-stone-700 border-stone-200'
@@ -352,7 +352,7 @@ export const EmotionDetectiveGame: React.FC = () => {
 
                   {/* Explanation on submit */}
                   {isSubmitted && (
-                    <div className="mt-3 pt-2.5 border-t border-stone-200/60 text-xs text-stone-700 leading-relaxed animate-fadeIn font-sans">
+                    <div className="mt-3.5 pt-3 border-t border-stone-200/60 text-sm sm:text-base text-stone-700 leading-relaxed animate-fadeIn font-sans">
                       <strong className="text-stone-900">侦探解析：</strong> {stmt.explanation}
                     </div>
                   )}
@@ -366,23 +366,23 @@ export const EmotionDetectiveGame: React.FC = () => {
               disabled={Object.keys(userClassifications).length < currentCase.statements.length}
               onClick={handleSubmit}
               type="button"
-              className={`w-full py-4 font-bold text-xs sm:text-sm rounded-2xl shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 game-btn-tactile ${
+              className={`w-full py-4 font-bold text-sm sm:text-base rounded-2xl shadow-sm transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 game-btn-tactile ${
                 Object.keys(userClassifications).length === currentCase.statements.length
                   ? 'bg-gradient-to-r from-stone-900 to-indigo-950 text-white shadow-md'
                   : 'bg-stone-200 text-stone-400 cursor-not-allowed'
               }`}
             >
               <span>提交分类判定</span>
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           ) : (
             <button
               onClick={handleNext}
               type="button"
-              className="w-full py-4 bg-gradient-to-r from-rose-600 via-red-600 to-purple-600 hover:opacity-95 text-white font-bold text-xs sm:text-sm rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer animate-fadeIn active:scale-98 game-btn-tactile"
+              className="w-full py-4 bg-gradient-to-r from-rose-600 via-red-600 to-purple-600 hover:opacity-95 text-white font-bold text-sm sm:text-base rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer animate-fadeIn active:scale-98 game-btn-tactile"
             >
               <span>{currentIdx < cases.length - 1 ? '审理下一宗沟通案卷' : '完成实验生成研报'}</span>
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           )}
         </div>

@@ -2,11 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Target, Trophy, Clock, ArrowRight, RotateCcw, CheckCircle2, XCircle, Sparkles, Zap } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useFontScale } from '../context/FontScaleContext';
+import { FloatingFontScaleControl } from '../components/ui/FloatingFontScaleControl';
 import { DAILY_CHALLENGE_QUESTIONS } from '../data/quizzes';
 
 export const DailyChallengePage: React.FC = () => {
   const navigate = useNavigate();
   const { completeDailyChallenge, isDailyChallengeCompleted } = useApp();
+  const { fontScale } = useFontScale();
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
@@ -22,18 +25,17 @@ export const DailyChallengePage: React.FC = () => {
     if (gameState !== 'playing') return;
 
     const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          clearInterval(timer);
-          setGameState('completed');
-          return 0;
-        }
-        return prev - 1;
-      });
+      setTimeLeft((prev) => (prev <= 1 ? 0 : prev - 1));
     }, 1000);
 
     return () => clearInterval(timer);
   }, [gameState]);
+
+  useEffect(() => {
+    if (gameState === 'playing' && timeLeft === 0) {
+      setGameState('completed');
+    }
+  }, [gameState, timeLeft]);
 
   const handleStart = () => {
     setCurrentIndex(0);
@@ -77,36 +79,40 @@ export const DailyChallengePage: React.FC = () => {
   const currentQ = questions[currentIndex];
 
   return (
-    <div className="flex flex-col items-center justify-start min-h-[75vh] w-full max-w-2xl mx-auto py-4 sm:py-6 animate-fadeIn">
+    <div
+      className={`flex flex-col items-center justify-start min-h-[75vh] w-full mx-auto py-4 sm:py-6 animate-fadeIn transition-[max-width] duration-200 ${
+        gameState === 'playing' && fontScale === 'xlarge' ? 'max-w-4xl' : 'max-w-3xl'
+      }`}
+    >
       {/* Top Folio Header */}
-      <div className="w-full flex items-center justify-between mb-6 pb-3 border-b border-stone-200/80 text-xs text-stone-600">
+      <div className="w-full flex items-center justify-between mb-6 pb-3 border-b border-stone-200/80 text-xs sm:text-sm text-stone-600">
         <div className="flex items-center gap-2">
-          <span className="editorial-kicker text-[10px] text-stone-800">
+          <span className="editorial-kicker text-[11px] sm:text-xs text-stone-800">
             Daily Challenge · 今日特刊挑战
           </span>
           {gameState === 'playing' && (
-            <span className="font-numeric font-medium text-stone-500">
+            <span className="font-numeric font-semibold text-stone-600">
               ({currentIndex + 1} / {questions.length})
             </span>
           )}
         </div>
 
-        <div className="flex items-center gap-3 font-numeric text-xs">
+        <div className="flex items-center gap-3.5 font-numeric text-xs sm:text-sm">
           {gameState === 'playing' && (
-            <div className="flex items-center gap-1 text-stone-700">
-              <Clock className="w-3.5 h-3.5 text-stone-500" />
+            <div className="flex items-center gap-1.5 text-stone-700 font-semibold">
+              <Clock className="w-4 h-4 text-stone-500" />
               <span>{formatTime(timeLeft)}</span>
             </div>
           )}
           <div className="flex items-center gap-1 text-stone-900 font-semibold">
-            <Trophy className="w-3.5 h-3.5 text-stone-700" />
+            <Trophy className="w-4 h-4 text-stone-700" />
             <span>{score} 分</span>
           </div>
         </div>
       </div>
 
       {gameState === 'intro' ? (
-        <div className="w-full editorial-card rounded-2xl p-8 sm:p-10 text-center space-y-6">
+        <div className="w-full max-w-2xl editorial-card rounded-2xl p-8 sm:p-10 text-center space-y-6">
           <div className="w-12 h-12 rounded-full bg-stone-100 text-stone-800 flex items-center justify-center mx-auto">
             <Target className="w-6 h-6 stroke-[1.5]" />
           </div>
@@ -137,7 +143,7 @@ export const DailyChallengePage: React.FC = () => {
           </button>
         </div>
       ) : gameState === 'completed' ? (
-        <div className="w-full editorial-card rounded-2xl p-8 sm:p-10 text-center space-y-6 animate-fadeIn">
+        <div className="w-full max-w-2xl editorial-card rounded-2xl p-8 sm:p-10 text-center space-y-6 animate-fadeIn">
           <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-800 flex items-center justify-center mx-auto">
             <CheckCircle2 className="w-6 h-6 stroke-[1.5]" />
           </div>
@@ -170,75 +176,94 @@ export const DailyChallengePage: React.FC = () => {
         </div>
       ) : (
         /* Playing */
-        <div className="w-full flex flex-col items-center space-y-5">
-          <div className="w-full bg-stone-200 h-1 rounded-full overflow-hidden">
+        <div
+          className="w-full flex flex-col items-center space-y-5 quiz-font-scope"
+          data-quiz-font-scale={fontScale}
+        >
+          <div className="w-full bg-stone-200 h-2 rounded-full overflow-hidden">
             <div
               className="h-full chameleon-bar"
               style={{ width: `${((currentIndex + 1) / questions.length) * 100}%` }}
             />
           </div>
 
-          <div className="w-full editorial-card rounded-2xl p-7 sm:p-9 space-y-6">
-            <div className="flex items-center justify-between text-xs pb-3 border-b border-stone-200/80">
-              <span className="font-serif-editorial italic text-stone-600">
+          <div className="w-full editorial-card rounded-2xl p-6 sm:p-9 md:p-10 space-y-6 sm:space-y-7">
+            <div className="flex items-center justify-between text-sm sm:text-base pb-3.5 border-b border-stone-200/80">
+              <span className="font-serif-editorial italic text-stone-700 font-medium">
                 {currentQ.category}领域
               </span>
-              <span className="text-stone-500 font-numeric">
+              <span className="text-stone-500 font-numeric font-medium">
                 第 {currentIndex + 1} / {questions.length} 题
               </span>
             </div>
 
-            <h3 className="font-serif-editorial text-base sm:text-lg md:text-xl font-bold text-stone-900 leading-snug">
+            <h3 className="font-serif-editorial text-xl sm:text-2xl md:text-3xl font-bold text-stone-900 leading-relaxed">
               {currentQ.question}
             </h3>
 
-            <div className="space-y-3">
+            <div className="space-y-3.5">
               {currentQ.options.map((opt, idx) => {
                 const isSelected = selectedOption === idx;
                 const isCorrect = idx === currentQ.correctAnswer;
                 const showSuccess = isAnswered && isCorrect;
                 const showWrong = isAnswered && isSelected && !isCorrect;
+                const optionLetter = String.fromCharCode(65 + idx);
 
                 return (
                   <button
                     key={idx}
                     disabled={isAnswered}
                     onClick={() => handleSelectOption(idx)}
-                    className={`w-full text-left p-4 rounded-xl border text-xs sm:text-sm font-medium transition-colors flex items-center justify-between cursor-pointer ${
+                    className={`w-full text-left p-4 sm:p-5 rounded-xl border-2 text-base sm:text-lg font-semibold leading-relaxed transition-colors flex items-center justify-between gap-3 cursor-pointer ${
                       showSuccess
-                        ? 'bg-emerald-50 border-emerald-400 text-emerald-900'
+                        ? 'bg-emerald-50 border-emerald-400 text-emerald-950'
                         : showWrong
-                        ? 'bg-rose-50 border-rose-300 text-rose-900'
-                        : 'bg-white hover:bg-stone-50 border-stone-200 text-stone-900'
+                        ? 'bg-rose-50 border-rose-300 text-rose-950'
+                        : 'bg-white hover:bg-stone-50 border-stone-200 hover:border-stone-400 text-stone-900'
                     }`}
                   >
-                    <span>{opt}</span>
-                    {showSuccess && <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0 ml-2" />}
-                    {showWrong && <XCircle className="w-4 h-4 text-rose-600 shrink-0 ml-2" />}
+                    <div className="flex items-start gap-3">
+                      <span
+                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center text-xs sm:text-sm font-mono font-bold shrink-0 mt-0.5 ${
+                          showSuccess
+                            ? 'bg-emerald-600 text-white'
+                            : showWrong
+                            ? 'bg-rose-600 text-white'
+                            : 'bg-stone-100 text-stone-700'
+                        }`}
+                      >
+                        {optionLetter}
+                      </span>
+                      <span>{opt}</span>
+                    </div>
+                    {showSuccess && <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-700 shrink-0 ml-2" />}
+                    {showWrong && <XCircle className="w-5 h-5 sm:w-6 sm:h-6 text-rose-600 shrink-0 ml-2" />}
                   </button>
                 );
               })}
             </div>
 
             {isAnswered && (
-              <div className="p-4 rounded-xl bg-[#FAF8F5] border border-stone-200/80 space-y-3 animate-fadeIn">
-                <div className="flex items-center gap-1.5 text-xs font-semibold text-stone-900 font-serif-editorial">
-                  <Sparkles className="w-3.5 h-3.5 text-stone-600" />
+              <div className="p-5 sm:p-6 rounded-xl bg-[#FAF8F5] border border-stone-200/80 space-y-4 animate-fadeIn">
+                <div className="flex items-center gap-2 text-sm sm:text-base font-bold text-stone-900 font-serif-editorial">
+                  <Sparkles className="w-4 h-4 text-stone-600" />
                   <span>核心理论解析</span>
                 </div>
-                <p className="text-xs sm:text-sm text-stone-700 leading-relaxed">
+                <p className="text-base text-stone-700 leading-relaxed">
                   {currentQ.explanation}
                 </p>
                 <button
                   onClick={handleNext}
-                  className="w-full mt-2 py-3 chameleon-btn font-semibold text-xs rounded-xl transition-all flex items-center justify-center gap-1 cursor-pointer"
+                  className="w-full mt-2 py-3.5 sm:py-4 chameleon-btn font-bold text-sm sm:text-base rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <span>{currentIndex < questions.length - 1 ? '继续下一题' : '提交挑战报告'}</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <ArrowRight className="w-4 h-4" />
                 </button>
               </div>
             )}
           </div>
+
+          <FloatingFontScaleControl />
         </div>
       )}
     </div>

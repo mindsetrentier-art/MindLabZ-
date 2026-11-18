@@ -25,10 +25,12 @@ import {
   Layers,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useFontScale } from '../context/FontScaleContext';
+import { FloatingFontScaleControl } from '../components/ui/FloatingFontScaleControl';
 import { PsychologyLawCard } from '../components/cards/PsychologyLawCard';
 import { LawCardSkeleton } from '../components/ui/Skeleton';
 import { VoiceTranscribeButton } from '../components/ui/VoiceTranscribeButton';
-import { CategoryZh, PsychologyLaw } from '../types';
+import { CategoryZh, DifficultyLevel, LoveDomainId, PsychologyLaw } from '../types';
 import { MINDLABZ_CHAPTERS } from '../data/laws';
 import { gameAudio } from '../utils/gameAudio';
 import { OverlappingCardStack } from '../components/ui/OverlappingCardStack';
@@ -36,6 +38,11 @@ import {
   EMOTIONAL_SECTIONS,
   getLawEmotionalMapping,
 } from '../data/emotionalLaws';
+import {
+  LOVE_DOMAINS,
+  LOVE_PSYCHOLOGY_LAWS,
+  LOVE_SUBTAGS,
+} from '../data/lovePsychologyCodex';
 
 interface CategoryOption {
   key: 'all' | CategoryZh;
@@ -140,16 +147,27 @@ const POPULAR_SEARCH_TAGS: PopularSearchTag[] = [
 
 export const LearnPage: React.FC = () => {
   const { laws, user } = useApp();
+  const { fontScale } = useFontScale();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const initialQuery = searchParams.get('q') || '';
   const initialCategory = (searchParams.get('category') as CategoryZh) || 'all';
-  const initialMode = searchParams.get('mode') === 'classic' ? 'classic_domains' : 'emotional_sections';
+  const modeParam = searchParams.get('mode');
+  const initialMode: 'love_codex' | 'emotional_sections' | 'classic_domains' =
+    modeParam === 'classic'
+      ? 'classic_domains'
+      : modeParam === 'emotional'
+      ? 'emotional_sections'
+      : 'love_codex';
   const initialSectionParam = searchParams.get('section');
   const initialSection = initialSectionParam ? (Number(initialSectionParam) as number) || 'all' : 'all';
 
-  const [curationMode, setCurationMode] = useState<'emotional_sections' | 'classic_domains'>(initialMode);
+  const [curationMode, setCurationMode] = useState<'love_codex' | 'emotional_sections' | 'classic_domains'>(initialMode);
+  const [selectedLoveDomain, setSelectedLoveDomain] = useState<'all' | LoveDomainId>('all');
+  const [selectedLoveSubTag, setSelectedLoveSubTag] = useState<string>('all');
+  const [selectedDifficulty, setSelectedDifficulty] = useState<'all' | DifficultyLevel>('all');
+  const [visibleLimit, setVisibleLimit] = useState<number>(24);
   const [selectedEmotionalSection, setSelectedEmotionalSection] = useState<number | 'all'>(initialSection);
   const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [selectedCategory, setSelectedCategory] = useState<'all' | CategoryZh>(initialCategory);
@@ -169,14 +187,27 @@ export const LearnPage: React.FC = () => {
     }
   }, [searchParams]);
 
-  const handleCurationModeChange = (mode: 'emotional_sections' | 'classic_domains') => {
+  const handleCurationModeChange = (mode: 'love_codex' | 'emotional_sections' | 'classic_domains') => {
     if (curationMode === mode) return;
     gameAudio.playTap();
     setIsLoading(true);
     setCurationMode(mode);
+    setVisibleLimit(24);
     setTimeout(() => {
       setIsLoading(false);
     }, 140);
+  };
+
+  const handleLoveDomainChange = (domain: 'all' | LoveDomainId) => {
+    if (selectedLoveDomain === domain) return;
+    gameAudio.playSelect();
+    setIsLoading(true);
+    setSelectedLoveDomain(domain);
+    setSelectedLoveSubTag('all');
+    setVisibleLimit(24);
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 120);
   };
 
   const handleEmotionalSectionChange = (section: number | 'all') => {
@@ -184,6 +215,7 @@ export const LearnPage: React.FC = () => {
     gameAudio.playSelect();
     setIsLoading(true);
     setSelectedEmotionalSection(section);
+    setVisibleLimit(24);
     setTimeout(() => {
       setIsLoading(false);
     }, 140);
@@ -194,6 +226,7 @@ export const LearnPage: React.FC = () => {
     gameAudio.playTap();
     setIsLoading(true);
     setSelectedCategory(catKey);
+    setVisibleLimit(24);
     setTimeout(() => {
       setIsLoading(false);
     }, 140);
@@ -204,6 +237,7 @@ export const LearnPage: React.FC = () => {
     gameAudio.playTap();
     setIsLoading(true);
     setSelectedChapter(chapter);
+    setVisibleLimit(24);
     setTimeout(() => {
       setIsLoading(false);
     }, 140);
@@ -216,10 +250,11 @@ export const LearnPage: React.FC = () => {
 
   // Trigger random inspiring law discovery
   const handleRandomEpiphany = () => {
-    if (!laws || laws.length === 0) return;
+    const pool = curationMode === 'love_codex' ? LOVE_PSYCHOLOGY_LAWS : laws;
+    if (!pool || pool.length === 0) return;
     gameAudio.playSuccess();
-    const randomIndex = Math.floor(Math.random() * laws.length);
-    const chosen = laws[randomIndex];
+    const randomIndex = Math.floor(Math.random() * pool.length);
+    const chosen = pool[randomIndex];
     setEpiphanyLaw(chosen);
   };
 
@@ -235,10 +270,26 @@ export const LearnPage: React.FC = () => {
           law.nameEn.toLowerCase().includes(q) ||
           law.shortExplanation.toLowerCase().includes(q) ||
           law.detailedExplanation.toLowerCase().includes(q) ||
+          (law.subTag && law.subTag.toLowerCase().includes(q)) ||
+          (law.assignedCityZh && law.assignedCityZh.toLowerCase().includes(q)) ||
           (law.chapter && law.chapter.toLowerCase().includes(q));
 
         const matchesBookmark = !onlyBookmarked || user.bookmarks.includes(law.id);
         if (!matchesSearch || !matchesBookmark) return false;
+
+        if (curationMode === 'love_codex') {
+          if (!law.isLoveCodex) return false;
+          if (selectedLoveDomain !== 'all' && law.loveDomainId !== selectedLoveDomain) {
+            return false;
+          }
+          if (selectedLoveSubTag !== 'all' && law.subTag !== selectedLoveSubTag) {
+            return false;
+          }
+          if (selectedDifficulty !== 'all' && law.difficulty !== selectedDifficulty) {
+            return false;
+          }
+          return true;
+        }
 
         if (curationMode === 'emotional_sections') {
           const emoMeta = getLawEmotionalMapping(law);
@@ -250,11 +301,12 @@ export const LearnPage: React.FC = () => {
             return false;
           }
           return true;
-        } else {
-          const matchesCategory = selectedCategory === 'all' || law.categoryZh === selectedCategory;
-          const matchesChapter = selectedChapter === 'all' || law.chapter === selectedChapter;
-          return matchesCategory && matchesChapter;
         }
+
+        if (law.isLoveCodex) return false;
+        const matchesCategory = selectedCategory === 'all' || law.categoryZh === selectedCategory;
+        const matchesChapter = selectedChapter === 'all' || law.chapter === selectedChapter;
+        return matchesCategory && matchesChapter;
       })
       .sort((a, b) => {
         if (curationMode === 'emotional_sections') {
@@ -270,6 +322,9 @@ export const LearnPage: React.FC = () => {
     laws,
     searchQuery,
     curationMode,
+    selectedLoveDomain,
+    selectedLoveSubTag,
+    selectedDifficulty,
     selectedEmotionalSection,
     selectedCategory,
     selectedChapter,
@@ -277,15 +332,27 @@ export const LearnPage: React.FC = () => {
     user.bookmarks,
   ]);
 
+  const visibleLaws = useMemo(
+    () => filteredLaws.slice(0, visibleLimit),
+    [filteredLaws, visibleLimit]
+  );
+
   // Current active category config
   const currentCategoryObj = CATEGORIES.find((c) => c.key === selectedCategory) || CATEGORIES[0];
+  const currentLoveDomainObj =
+    selectedLoveDomain !== 'all'
+      ? LOVE_DOMAINS.find((d) => d.id === selectedLoveDomain) || null
+      : null;
   const currentEmotionalSectionObj =
     typeof selectedEmotionalSection === 'number'
       ? EMOTIONAL_SECTIONS[selectedEmotionalSection - 1]
       : null;
 
   return (
-    <div className="space-y-8 sm:space-y-10 pb-16 animate-fadeIn max-w-5xl mx-auto">
+    <div
+      className="space-y-8 sm:space-y-10 pb-16 animate-fadeIn max-w-5xl mx-auto quiz-font-scope"
+      data-quiz-font-scale={fontScale}
+    >
       {/* 1. Artistic Salon Masthead: Museum Nocturne, Renaissance Gold Foil & Harmonic Spectrum */}
       <section className="relative rounded-3xl overflow-hidden shadow-2xl art-salon-canvas text-white p-7 sm:p-10 md:p-12 transition-all">
         {/* Subtle Decorative Golden Ratio Spiral & Celestial Constellation Watermark */}
@@ -312,18 +379,18 @@ export const LearnPage: React.FC = () => {
               </span>
               <span className="text-stone-500" aria-hidden="true">/</span>
               <span className="text-stone-300 font-serif-editorial italic font-sans">
-                LAW001 – LAW100
+                LAW001 – LAW142 · LOVE001 – LOVE{LOVE_PSYCHOLOGY_LAWS.length}
               </span>
             </div>
 
             {/* High-Contrast Literary Headline */}
             <h1 className="font-serif-editorial text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight leading-tight text-white drop-shadow-sm">
-              100 心智定律与思维美学 · 全景画廊
+              MindLabZ 全景心理学定律典藏馆
             </h1>
 
             {/* Editorial Dek */}
             <p className="text-xs sm:text-sm text-stone-300/90 font-normal leading-relaxed">
-              穿行于理性与感性的艺术展厅。系统汇聚认知偏误、行为博弈、社会动能与情绪共鸣的百道实证心智规律，支持双语、编号、多维展厅及语音口述探索。
+              系统收录 142 条经典心智规律与 {LOVE_PSYCHOLOGY_LAWS.length} 条爱情心理学科学词条（已按依恋、沟通、认知、情绪、边界、择偶、成长 7 大分析类别整理，并同步部署至 50 座世界首都关卡与竞技场）。
             </p>
 
             {/* Curatorial Index Stats */}
@@ -494,9 +561,24 @@ export const LearnPage: React.FC = () => {
           ))}
         </div>
 
-        {/* Curatorial Taxonomy Switcher: Five Major Emotional Sections vs Classic Salons */}
+        {/* Curatorial Taxonomy Switcher: Love Psychology Codex vs Emotional Sections vs Classic Salons */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
-          <div className="flex items-center p-1 bg-stone-100/90 border border-stone-200/90 rounded-2xl shadow-inner max-w-full overflow-x-auto no-scrollbar">
+          <div className="flex items-center p-1 bg-stone-100/90 border border-stone-200/90 rounded-2xl shadow-inner max-w-full overflow-x-auto no-scrollbar gap-1">
+            <button
+              onClick={() => handleCurationModeChange('love_codex')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer active:scale-95 ${
+                curationMode === 'love_codex'
+                  ? 'bg-gradient-to-r from-rose-900 via-stone-900 to-amber-950 text-rose-200 shadow-md border border-rose-400/35'
+                  : 'text-stone-600 hover:text-stone-900'
+              }`}
+            >
+              <Heart className={`w-3.5 h-3.5 ${curationMode === 'love_codex' ? 'fill-rose-400 text-rose-400' : 'text-rose-500'}`} />
+              <span>♥ 爱情心理学全书 · 7大分类</span>
+              <span className="font-mono text-[10px] px-1.5 py-0.5 rounded-full bg-rose-400/20 text-rose-200 font-normal">
+                {LOVE_PSYCHOLOGY_LAWS.length} 律
+              </span>
+            </button>
+
             <button
               onClick={() => handleCurationModeChange('emotional_sections')}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer active:scale-95 ${
@@ -505,7 +587,7 @@ export const LearnPage: React.FC = () => {
                   : 'text-stone-600 hover:text-stone-900'
               }`}
             >
-              <Heart className={`w-3.5 h-3.5 ${curationMode === 'emotional_sections' ? 'fill-amber-400 text-amber-400' : 'text-stone-500'}`} />
+              <Crown className={`w-3.5 h-3.5 ${curationMode === 'emotional_sections' ? 'fill-amber-400 text-amber-400' : 'text-stone-500'}`} />
               <span>✦ 情感心理学五大板块</span>
               <span className="font-mono text-[10px] px-1.5 py-0.5 rounded-full bg-amber-400/20 text-amber-300 font-normal">
                 50 律
@@ -535,7 +617,148 @@ export const LearnPage: React.FC = () => {
         </div>
 
         {/* 3. Category Controls depending on active Taxonomy Mode */}
-        {curationMode === 'emotional_sections' ? (
+        {curationMode === 'love_codex' ? (
+          <div className="space-y-3.5">
+            {/* 7 Analyzed Love Psychology Domain Tabs */}
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+              <button
+                onClick={() => handleLoveDomainChange('all')}
+                className={`text-xs font-bold px-4 py-2.5 rounded-2xl transition-all shrink-0 whitespace-nowrap cursor-pointer flex items-center gap-2 active:scale-95 shadow-xs ${
+                  selectedLoveDomain === 'all'
+                    ? 'bg-stone-900 text-rose-200 shadow-md border border-rose-400/40'
+                    : 'bg-white text-stone-700 border border-stone-200 hover:border-stone-400 hover:text-stone-900'
+                }`}
+              >
+                <Heart className={`w-3.5 h-3.5 ${selectedLoveDomain === 'all' ? 'fill-rose-400 text-rose-400' : 'text-rose-500'}`} />
+                <span>全部分类</span>
+                <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${selectedLoveDomain === 'all' ? 'bg-rose-400/20 text-rose-100' : 'bg-stone-100 text-stone-500'}`}>
+                  {LOVE_PSYCHOLOGY_LAWS.length} 篇
+                </span>
+              </button>
+
+              {LOVE_DOMAINS.map((dom) => {
+                const isSelected = selectedLoveDomain === dom.id;
+                const count = LOVE_PSYCHOLOGY_LAWS.filter((l) => l.loveDomainId === dom.id).length;
+                return (
+                  <button
+                    key={dom.id}
+                    onClick={() => handleLoveDomainChange(dom.id)}
+                    className={`text-xs font-bold px-4 py-2.5 rounded-2xl transition-all shrink-0 whitespace-nowrap cursor-pointer flex items-center gap-2 active:scale-95 shadow-xs ${
+                      isSelected
+                        ? 'text-white shadow-md'
+                        : 'bg-white text-stone-700 border border-stone-200 hover:border-stone-400 hover:text-stone-900'
+                    }`}
+                    style={
+                      isSelected
+                        ? { backgroundColor: dom.color, boxShadow: `0 6px 16px -2px ${dom.color}65` }
+                        : undefined
+                    }
+                  >
+                    <span
+                      className="w-2 h-2 rounded-full shrink-0"
+                      style={{ backgroundColor: isSelected ? '#ffffff' : dom.color }}
+                    />
+                    <span>{dom.shortTitle}</span>
+                    <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded-full ${isSelected ? 'bg-white/20 text-white' : 'bg-stone-100 text-stone-500'}`}>
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+
+              <button
+                onClick={() => {
+                  gameAudio.playTap();
+                  setIsLoading(true);
+                  setOnlyBookmarked((prev) => !prev);
+                  setTimeout(() => setIsLoading(false), 120);
+                }}
+                className={`text-xs font-bold px-4 py-2.5 rounded-2xl transition-all shrink-0 flex items-center gap-1.5 whitespace-nowrap cursor-pointer active:scale-95 ${
+                  onlyBookmarked
+                    ? 'bg-amber-500 text-white shadow-md shadow-amber-500/30'
+                    : 'bg-white text-stone-700 border border-stone-200 hover:border-stone-400'
+                }`}
+              >
+                <Bookmark className={`w-3.5 h-3.5 ${onlyBookmarked ? 'fill-white text-white' : 'text-stone-500'}`} />
+                <span className="font-numeric">收藏 ({user.bookmarks.length})</span>
+              </button>
+            </div>
+
+            {/* Difficulty Progression + Sub-tag Filter Row */}
+            <div className="bg-stone-50/90 p-3 rounded-2xl border border-stone-200/80 space-y-2.5">
+              <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[11px] font-bold text-stone-500 mr-1">难度阶梯:</span>
+                  {(['all', 'Easy', 'Medium', 'Hard'] as const).map((lvl) => (
+                    <button
+                      key={lvl}
+                      onClick={() => {
+                        gameAudio.playTap();
+                        setSelectedDifficulty(lvl);
+                        setVisibleLimit(24);
+                      }}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${
+                        selectedDifficulty === lvl
+                          ? 'bg-stone-900 text-white shadow-2xs'
+                          : 'bg-white text-stone-600 border border-stone-200 hover:border-stone-400'
+                      }`}
+                    >
+                      {lvl === 'all'
+                        ? '全部难度'
+                        : lvl === 'Easy'
+                        ? '初级 Easy (首都 1-17)'
+                        : lvl === 'Medium'
+                        ? '中阶 Medium (首都 18-34)'
+                        : '高阶 Hard (首都 35-50)'}
+                    </button>
+                  ))}
+                </div>
+
+                {currentLoveDomainObj && (
+                  <span className="text-[11px] text-stone-600 font-medium">
+                    {currentLoveDomainObj.description}
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-1 border-t border-stone-200/70">
+                <button
+                  onClick={() => {
+                    gameAudio.playTap();
+                    setSelectedLoveSubTag('all');
+                    setVisibleLimit(24);
+                  }}
+                  className={`text-[11px] font-bold px-2.5 py-1 rounded-lg shrink-0 cursor-pointer transition-all ${
+                    selectedLoveSubTag === 'all'
+                      ? 'bg-rose-700 text-white'
+                      : 'bg-white text-stone-600 border border-stone-200 hover:border-stone-400'
+                  }`}
+                >
+                  全部细分标签 ({LOVE_SUBTAGS.length})
+                </button>
+                {LOVE_SUBTAGS.filter((st) =>
+                  currentLoveDomainObj ? currentLoveDomainObj.rawTags.includes(st.tag) : true
+                ).map((st) => (
+                  <button
+                    key={st.tag}
+                    onClick={() => {
+                      gameAudio.playTap();
+                      setSelectedLoveSubTag(st.tag);
+                      setVisibleLimit(24);
+                    }}
+                    className={`text-[11px] font-medium px-2.5 py-1 rounded-lg shrink-0 cursor-pointer transition-all ${
+                      selectedLoveSubTag === st.tag
+                        ? 'bg-rose-700 text-white font-bold'
+                        : 'bg-white text-stone-600 border border-stone-200 hover:border-stone-400'
+                    }`}
+                  >
+                    {st.tag} ({st.count})
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        ) : curationMode === 'emotional_sections' ? (
           <div className="space-y-3.5">
             {/* Five Major Sections Tabs Row */}
             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
@@ -835,15 +1058,25 @@ export const LearnPage: React.FC = () => {
           )}
         </div>
 
-        {((curationMode === 'emotional_sections' ? selectedEmotionalSection !== 'all' : (selectedCategory !== 'all' || selectedChapter !== 'all')) || onlyBookmarked || searchQuery) && (
+        {((curationMode === 'love_codex'
+          ? selectedLoveDomain !== 'all' || selectedLoveSubTag !== 'all' || selectedDifficulty !== 'all'
+          : curationMode === 'emotional_sections'
+          ? selectedEmotionalSection !== 'all'
+          : selectedCategory !== 'all' || selectedChapter !== 'all') ||
+          onlyBookmarked ||
+          searchQuery) && (
           <button
             onClick={() => {
               gameAudio.playTap();
               setSearchQuery('');
+              setSelectedLoveDomain('all');
+              setSelectedLoveSubTag('all');
+              setSelectedDifficulty('all');
               setSelectedEmotionalSection('all');
               setSelectedCategory('all');
               setSelectedChapter('all');
               setOnlyBookmarked(false);
+              setVisibleLimit(24);
             }}
             className="text-stone-800 font-bold hover:underline cursor-pointer flex items-center gap-1 text-xs"
           >
@@ -863,16 +1096,40 @@ export const LearnPage: React.FC = () => {
               <LawCardSkeleton />
               <LawCardSkeleton />
             </>
-          ) : filteredLaws.length > 0 ? (
-            filteredLaws.map((law, idx) => (
-              <div
-                key={law.id}
-                className="animate-stageEnter"
-                style={{ animationDelay: `${Math.min(idx * 25, 200)}ms` }}
-              >
-                <PsychologyLawCard law={law} />
-              </div>
-            ))
+          ) : visibleLaws.length > 0 ? (
+            <>
+              {visibleLaws.map((law, idx) => (
+                <div
+                  key={law.id}
+                  className="animate-stageEnter"
+                  style={{ animationDelay: `${Math.min(idx * 20, 180)}ms` }}
+                >
+                  <PsychologyLawCard law={law} />
+                </div>
+              ))}
+              {filteredLaws.length > visibleLaws.length && (
+                <div className="col-span-full flex flex-wrap items-center justify-center gap-3 pt-2">
+                  <button
+                    onClick={() => {
+                      gameAudio.playTap();
+                      setVisibleLimit((prev) => prev + 24);
+                    }}
+                    className="px-6 py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold transition-all shadow-sm cursor-pointer"
+                  >
+                    加载更多（已显示 {visibleLaws.length} / {filteredLaws.length} 条）
+                  </button>
+                  <button
+                    onClick={() => {
+                      gameAudio.playTap();
+                      setVisibleLimit(filteredLaws.length);
+                    }}
+                    className="px-4 py-2.5 rounded-xl bg-white border border-stone-300 hover:border-stone-500 text-stone-700 text-xs font-semibold transition-all cursor-pointer"
+                  >
+                    展开全部 {filteredLaws.length} 条
+                  </button>
+                </div>
+              )}
+            </>
           ) : (
             <div className="col-span-full bg-white rounded-3xl p-12 text-center border-2 border-dashed border-stone-200 space-y-4">
               <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center mx-auto text-amber-600">
@@ -882,12 +1139,15 @@ export const LearnPage: React.FC = () => {
                 在当前展厅未检索到匹配的定律
               </h3>
               <p className="text-xs text-stone-500 max-w-sm mx-auto leading-relaxed">
-                建议尝试更换中英文关键词、编号（如 LAW001）或切换至“全部展厅”继续探索。
+                建议尝试更换中英文关键词、编号（如 LOVE001 或 LAW001）或切换至“全部分类”继续探索。
               </p>
               <button
                 onClick={() => {
                   gameAudio.playTap();
                   setSearchQuery('');
+                  setSelectedLoveDomain('all');
+                  setSelectedLoveSubTag('all');
+                  setSelectedDifficulty('all');
                   setSelectedCategory('all');
                   setSelectedChapter('all');
                   setOnlyBookmarked(false);
@@ -895,7 +1155,7 @@ export const LearnPage: React.FC = () => {
                 className="px-6 py-2.5 bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-md inline-flex items-center gap-2"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
-                <span>重置并显示全部 100 篇典藏</span>
+                <span>重置筛选并显示全部典藏</span>
               </button>
             </div>
           )}
@@ -908,53 +1168,78 @@ export const LearnPage: React.FC = () => {
               <LawCardSkeleton />
               <LawCardSkeleton />
             </>
-          ) : filteredLaws.length > 0 ? (
-            filteredLaws.map((law) => {
-              const mastery = (user?.lawMasteryMap && user.lawMasteryMap[law.id]) || 0;
-              const isMastered = mastery >= 80;
-              return (
-                <div
-                  key={law.id}
-                  onClick={() => {
-                    gameAudio.playTap();
-                    navigate(`/law/${law.id}`);
-                  }}
-                  className="group bg-white hover:bg-stone-50/80 rounded-2xl p-4 sm:p-5 border border-stone-200/80 hover:border-amber-400/80 transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs hover:shadow-xs"
-                >
-                  <div className="flex items-start gap-3.5 min-w-0 flex-1">
-                    <span className="font-mono text-xs font-bold px-2 py-1 rounded bg-stone-100 text-stone-800 shrink-0 mt-0.5">
-                      {law.codeId || 'LAW'}
-                    </span>
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-serif-editorial text-base font-bold text-stone-900 group-hover:text-amber-800 transition-colors truncate">
-                          {law.nameZh}
-                        </h3>
-                        <span className="text-xs text-stone-400 font-serif-editorial italic truncate">
-                          {law.nameEn}
-                        </span>
+          ) : visibleLaws.length > 0 ? (
+            <>
+              {visibleLaws.map((law) => {
+                const mastery = (user?.lawMasteryMap && user.lawMasteryMap[law.id]) || 0;
+                const isMastered = mastery >= 80;
+                return (
+                  <div
+                    key={law.id}
+                    onClick={() => {
+                      gameAudio.playTap();
+                      navigate(`/law/${law.id}`);
+                    }}
+                    className="group bg-white hover:bg-stone-50/80 rounded-2xl p-4 sm:p-5 border border-stone-200/80 hover:border-amber-400/80 transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs hover:shadow-xs"
+                  >
+                    <div className="flex items-start gap-3.5 min-w-0 flex-1">
+                      <span className="font-mono text-xs font-bold px-2 py-1 rounded bg-stone-100 text-stone-800 shrink-0 mt-0.5">
+                        {law.codeId || 'LAW'}
+                      </span>
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <h3 className="font-serif-editorial text-base font-bold text-stone-900 group-hover:text-amber-800 transition-colors truncate">
+                            {law.nameZh}
+                          </h3>
+                          <span className="text-xs text-stone-400 font-serif-editorial italic truncate">
+                            {law.nameEn}
+                          </span>
+                        </div>
+                        <p className="text-xs text-stone-600 line-clamp-1 mt-0.5">
+                          {law.shortExplanation}
+                        </p>
                       </div>
-                      <p className="text-xs text-stone-600 line-clamp-1 mt-0.5">
-                        {law.shortExplanation}
-                      </p>
+                    </div>
+
+                    <div className="flex items-center gap-2.5 shrink-0 self-end sm:self-center text-xs">
+                      {law.subTag && (
+                        <span className="text-[11px] px-2 py-0.5 rounded bg-rose-50 text-rose-700 font-medium">
+                          {law.subTag}
+                        </span>
+                      )}
+                      {law.assignedCityZh && (
+                        <span className="text-[11px] px-2 py-0.5 rounded bg-amber-50 text-amber-800 font-medium">
+                          {law.assignedCityZh.split(' ')[0]}
+                        </span>
+                      )}
+                      <span className="text-[11px] px-2 py-0.5 rounded bg-stone-100 text-stone-600 font-medium">
+                        {law.categoryZh}
+                      </span>
+                      {isMastered && (
+                        <span className="text-[11px] text-emerald-700 font-semibold flex items-center gap-1">
+                          <CheckCircle2 className="w-3.5 h-3.5 fill-emerald-600 text-white" />
+                          <span>已内化</span>
+                        </span>
+                      )}
+                      <ChevronRight className="w-4 h-4 text-stone-400 group-hover:text-stone-900 group-hover:translate-x-1 transition-all" />
                     </div>
                   </div>
-
-                  <div className="flex items-center gap-3 shrink-0 self-end sm:self-center text-xs">
-                    <span className="text-[11px] px-2 py-0.5 rounded bg-stone-100 text-stone-600 font-medium">
-                      {law.categoryZh}
-                    </span>
-                    {isMastered && (
-                      <span className="text-[11px] text-emerald-700 font-semibold flex items-center gap-1">
-                        <CheckCircle2 className="w-3.5 h-3.5 fill-emerald-600 text-white" />
-                        <span>已内化</span>
-                      </span>
-                    )}
-                    <ChevronRight className="w-4 h-4 text-stone-400 group-hover:text-stone-900 group-hover:translate-x-1 transition-all" />
-                  </div>
+                );
+              })}
+              {filteredLaws.length > visibleLaws.length && (
+                <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                  <button
+                    onClick={() => {
+                      gameAudio.playTap();
+                      setVisibleLimit((prev) => prev + 36);
+                    }}
+                    className="px-6 py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold transition-all shadow-sm cursor-pointer"
+                  >
+                    加载更多（已显示 {visibleLaws.length} / {filteredLaws.length} 条）
+                  </button>
                 </div>
-              );
-            })
+              )}
+            </>
           ) : (
             <div className="bg-white rounded-3xl p-10 text-center border border-stone-200">
               <p className="text-xs text-stone-500">未检索到匹配结果</p>
@@ -1037,6 +1322,8 @@ export const LearnPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      <FloatingFontScaleControl tone="paper" title="定律库字号调节" />
     </div>
   );
 };

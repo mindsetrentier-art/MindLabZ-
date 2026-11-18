@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { PSYCHOLOGY_GAMES } from '../data/games';
 import { GameArenaStageSkeleton } from '../components/ui/Skeleton';
+import { useFontScale } from '../context/FontScaleContext';
+import { FloatingFontScaleControl } from '../components/ui/FloatingFontScaleControl';
 
 // 经典小游戏
 import { MemoryLabGame } from '../components/games/MemoryLabGame';
@@ -21,10 +23,12 @@ import { ZeroPriceTrapGame } from '../components/games/ZeroPriceTrapGame';
 import { MicroHabitGame } from '../components/games/MicroHabitGame';
 import { BystanderBreakerGame } from '../components/games/BystanderBreakerGame';
 import { FalsificationChallengeGame } from '../components/games/FalsificationChallengeGame';
+import { LoveAleatoricArenaGame } from '../components/games/LoveAleatoricArenaGame';
 
 export const GamePlayPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { fontScale } = useFontScale();
   const [isTransitioning, setIsTransitioning] = useState(true);
 
   const currentGame = PSYCHOLOGY_GAMES.find((g) => g.id === id);
@@ -72,6 +76,8 @@ export const GamePlayPage: React.FC = () => {
         return <BystanderBreakerGame />;
       case 'falsification-challenge':
         return <FalsificationChallengeGame />;
+      case 'love-aleatoric-arena':
+        return <LoveAleatoricArenaGame />;
 
       // 经典竞技场实验室
       case 'memory-lab':
@@ -104,8 +110,13 @@ export const GamePlayPage: React.FC = () => {
   };
 
   return (
-    <div key={id} className="animate-stageEnter w-full">
+    <div
+      key={id}
+      className="animate-stageEnter w-full quiz-font-scope"
+      data-quiz-font-scale={fontScale}
+    >
       {renderGameComponent()}
+      <FloatingFontScaleControl />
     </div>
   );
 };

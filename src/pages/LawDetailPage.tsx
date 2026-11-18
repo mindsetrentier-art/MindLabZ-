@@ -22,6 +22,8 @@ import {
   PenLine,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useFontScale } from '../context/FontScaleContext';
+import { FloatingFontScaleControl } from '../components/ui/FloatingFontScaleControl';
 import { LawDetailSkeleton } from '../components/ui/Skeleton';
 import { StructuredLawData, StructuredLawQuizItem } from '../types';
 import { OverlappingStack, OverlappingItem } from '../components/ui/OverlappingStack';
@@ -31,6 +33,7 @@ import { KineticCutoutHero } from '../components/ui/KineticCutoutHero';
 export const LawDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { fontScale } = useFontScale();
   const {
     laws,
     user,
@@ -104,7 +107,7 @@ export const LawDetailPage: React.FC = () => {
       setIsLoading(false);
     }, 150);
 
-    if (law) {
+    if (law && !law.isLoveCodex) {
       void fetchStructuredLaw(law.codeId || law.id, false);
     }
 
@@ -258,7 +261,12 @@ export const LawDetailPage: React.FC = () => {
     });
 
   return (
-    <div className="space-y-8 sm:space-y-10 pb-12 animate-fadeIn max-w-4xl mx-auto">
+    <div
+      className={`space-y-8 sm:space-y-10 pb-12 animate-fadeIn mx-auto transition-[max-width] duration-200 quiz-font-scope ${
+        fontScale === 'xlarge' ? 'max-w-5xl' : 'max-w-4xl'
+      }`}
+      data-quiz-font-scale={fontScale}
+    >
       {/* 0. Kinetic Cutout Typography Detail Header: Photo emerges from letterforms with scroll zoom */}
       <section className="rounded-3xl overflow-hidden shadow-2xl border border-amber-400/35 bg-[#0B0918]">
         <KineticCutoutHero
@@ -290,6 +298,22 @@ export const LawDetailPage: React.FC = () => {
             <span className="font-numeric font-medium text-stone-700">
               证据等级 {structuredLaw?.evidence_level || law.evidenceLevel || 'A'}
             </span>
+            {law.isLoveCodex && law.subTag && (
+              <>
+                <span className="text-stone-300" aria-hidden="true">·</span>
+                <span className="px-2 py-0.5 rounded-md bg-rose-50 text-rose-700 border border-rose-200 font-semibold">
+                  爱情心理 · {law.subTag}
+                </span>
+              </>
+            )}
+            {law.assignedCityZh && (
+              <>
+                <span className="text-stone-300" aria-hidden="true">·</span>
+                <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 font-semibold">
+                  驻守首都 · {law.assignedCityZh}
+                </span>
+              </>
+            )}
           </div>
 
           <div className="flex items-center gap-2 self-start sm:self-auto">
@@ -360,7 +384,7 @@ export const LawDetailPage: React.FC = () => {
 
         {/* Literary Definition Quote Box */}
         <div className="bg-[#FAF8F5]/90 border-l-2 border-stone-900 p-5 sm:p-6 rounded-r-xl">
-          <p className="font-serif-editorial text-sm sm:text-base text-stone-800 leading-relaxed font-normal">
+          <p className="font-serif-editorial text-base sm:text-lg text-stone-800 leading-relaxed font-normal">
             “{displayDefinition}”
           </p>
         </div>
@@ -393,7 +417,7 @@ export const LawDetailPage: React.FC = () => {
             认知科学底层机制与神经根基
           </h3>
         </div>
-        <p className="text-xs sm:text-sm text-stone-700 leading-relaxed sm:leading-loose">
+        <p className="text-sm sm:text-base text-stone-700 leading-relaxed sm:leading-loose">
           {displayMechanism}
         </p>
       </section>
@@ -437,7 +461,7 @@ export const LawDetailPage: React.FC = () => {
           })}
         </div>
 
-        <div className="bg-[#FAF8F5]/90 rounded-xl p-5 border border-stone-200/60 text-xs sm:text-sm text-stone-700 leading-relaxed">
+        <div className="bg-[#FAF8F5]/90 rounded-xl p-5 border border-stone-200/60 text-sm sm:text-base text-stone-700 leading-relaxed">
           {cases[activeCaseTab]}
         </div>
       </section>
@@ -459,9 +483,9 @@ export const LawDetailPage: React.FC = () => {
             {recognitionSignals.map((sig, idx) => (
               <li
                 key={idx}
-                className="p-3.5 rounded-xl bg-[#FAF8F5] border border-stone-200/60 text-xs text-stone-700 leading-relaxed flex items-start gap-2.5"
+                className="p-3.5 rounded-xl bg-[#FAF8F5] border border-stone-200/60 text-sm text-stone-700 leading-relaxed flex items-start gap-2.5"
               >
-                <span className="font-mono text-xs font-bold text-stone-400 shrink-0 mt-0.5">
+                <span className="font-mono text-xs font-bold text-stone-400 shrink-0 mt-1">
                   0{idx + 1}
                 </span>
                 <span>{sig}</span>
@@ -485,7 +509,7 @@ export const LawDetailPage: React.FC = () => {
             {antiManipulation.map((defense, idx) => (
               <li
                 key={idx}
-                className="p-3.5 rounded-xl bg-[#FAF8F5] border border-stone-200/60 text-xs text-stone-700 leading-relaxed flex items-start gap-2.5"
+                className="p-3.5 rounded-xl bg-[#FAF8F5] border border-stone-200/60 text-sm text-stone-700 leading-relaxed flex items-start gap-2.5"
               >
                 <span className="text-emerald-700 font-bold shrink-0 mt-0.5">✓</span>
                 <span>{defense}</span>
@@ -510,7 +534,7 @@ export const LawDetailPage: React.FC = () => {
           <span className="font-numeric text-xs font-semibold text-stone-700">+30 XP</span>
         </div>
 
-        <div className="bg-[#FAF8F5] p-5 rounded-xl border border-stone-200/60 text-xs sm:text-sm text-stone-800 leading-relaxed">
+        <div className="bg-[#FAF8F5] p-5 sm:p-6 rounded-xl border border-stone-200/60 text-base sm:text-lg text-stone-800 leading-relaxed font-medium">
           {lawGame.scenario}
         </div>
 
@@ -525,7 +549,7 @@ export const LawDetailPage: React.FC = () => {
                 key={choiceKey}
                 onClick={() => handleGameChoice(choiceKey)}
                 disabled={selectedGameChoice !== null}
-                className={`p-4 rounded-xl border text-left text-xs font-medium transition-colors cursor-pointer ${
+                className={`p-4 sm:p-5 rounded-xl border-2 text-left text-sm sm:text-base font-semibold transition-colors cursor-pointer ${
                   selectedGameChoice === null
                     ? 'bg-white hover:bg-stone-50 border-stone-200 text-stone-900'
                     : isRational
@@ -536,9 +560,9 @@ export const LawDetailPage: React.FC = () => {
                 }`}
               >
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="font-mono font-bold text-xs text-stone-900">选项 {choiceKey}</span>
+                  <span className="font-mono font-bold text-xs sm:text-sm text-stone-900">选项 {choiceKey}</span>
                   {selectedGameChoice !== null && isRational && (
-                    <span className="text-[10px] font-medium text-emerald-800">
+                    <span className="text-xs font-medium text-emerald-800">
                       系统2 理性解
                     </span>
                   )}
@@ -550,7 +574,7 @@ export const LawDetailPage: React.FC = () => {
         </div>
 
         {selectedGameChoice && (
-          <div className="p-4 rounded-xl bg-stone-100/80 border border-stone-200 text-xs text-stone-800 leading-relaxed animate-fadeIn">
+          <div className="p-4 sm:p-5 rounded-xl bg-stone-100/80 border border-stone-200 text-sm sm:text-base text-stone-800 leading-relaxed animate-fadeIn">
             <strong className="block mb-1 font-semibold">实验洞察与反思：</strong>
             {lawGame.insight}
           </div>
@@ -559,7 +583,7 @@ export const LawDetailPage: React.FC = () => {
 
       {/* 6. Module 7: 3-Question Structured Quiz */}
       <section className="editorial-card rounded-2xl p-7 sm:p-10 space-y-5">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
           <div>
             <span className="editorial-kicker text-[10px] text-stone-500 block mb-1">
               06 · Three-Step Dialectic Quiz
@@ -574,7 +598,7 @@ export const LawDetailPage: React.FC = () => {
               <button
                 key={idx}
                 onClick={() => setActiveQuizIdx(idx)}
-                className={`w-7 h-7 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                className={`w-8 h-8 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
                   activeQuizIdx === idx
                     ? 'bg-stone-900 text-white'
                     : quizAnswers[idx] !== undefined
@@ -588,40 +612,54 @@ export const LawDetailPage: React.FC = () => {
           </div>
         </div>
 
-        <p className="text-xs sm:text-sm font-semibold text-stone-900 leading-relaxed">
+        <p className="font-serif-editorial text-lg sm:text-xl md:text-2xl font-bold text-stone-900 leading-relaxed">
           {currentQuiz.question}
         </p>
 
-        <div className="space-y-2.5">
+        <div className="space-y-3">
           {currentQuiz.options.map((ans, idx) => {
             const isSelected = selectedQuizOption === idx;
             const isCorrect = idx === currentQuiz.answer_index;
             const showSuccess = isCurrentQuizAnswered && isCorrect;
             const showWrong = isCurrentQuizAnswered && isSelected && !isCorrect;
+            const optionLetter = String.fromCharCode(65 + idx);
 
             return (
               <button
                 key={idx}
                 disabled={isCurrentQuizAnswered}
                 onClick={() => handleQuizSelect(idx)}
-                className={`w-full text-left p-3.5 rounded-xl text-xs font-medium border transition-colors flex items-center justify-between cursor-pointer ${
+                className={`w-full text-left p-4 sm:p-5 rounded-xl text-base sm:text-lg font-semibold leading-relaxed border-2 transition-colors flex items-center justify-between gap-3 cursor-pointer ${
                   showSuccess
                     ? 'bg-emerald-50 border-emerald-400 text-emerald-900'
                     : showWrong
                     ? 'bg-rose-50 border-rose-300 text-rose-900'
-                    : 'bg-white hover:bg-stone-50 border-stone-200 text-stone-900'
+                    : 'bg-white hover:bg-stone-50 border-stone-200 hover:border-stone-400 text-stone-900'
                 }`}
               >
-                <span>{ans}</span>
-                {showSuccess && <CheckCircle2 className="w-4 h-4 text-emerald-700 shrink-0" />}
-                {showWrong && <AlertCircle className="w-4 h-4 text-rose-600 shrink-0" />}
+                <div className="flex items-start gap-3">
+                  <span
+                    className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center text-xs sm:text-sm font-mono font-bold shrink-0 mt-0.5 ${
+                      showSuccess
+                        ? 'bg-emerald-600 text-white'
+                        : showWrong
+                        ? 'bg-rose-600 text-white'
+                        : 'bg-stone-100 text-stone-700'
+                    }`}
+                  >
+                    {optionLetter}
+                  </span>
+                  <span>{ans}</span>
+                </div>
+                {showSuccess && <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-700 shrink-0" />}
+                {showWrong && <AlertCircle className="w-5 h-5 sm:w-6 sm:h-6 text-rose-600 shrink-0" />}
               </button>
             );
           })}
         </div>
 
         {isCurrentQuizAnswered && (
-          <div className="p-4 bg-stone-100/80 border border-stone-200 rounded-xl text-xs text-stone-800 space-y-2 animate-fadeIn">
+          <div className="p-4 sm:p-5 bg-stone-100/80 border border-stone-200 rounded-xl text-sm sm:text-base text-stone-800 space-y-3 animate-fadeIn">
             <p className="leading-relaxed">
               <strong>解析：</strong>
               {currentQuiz.explanation}
@@ -629,7 +667,7 @@ export const LawDetailPage: React.FC = () => {
             {activeQuizIdx < quizList.length - 1 && (
               <button
                 onClick={() => setActiveQuizIdx((prev) => prev + 1)}
-                className="px-4 py-2 rounded-lg bg-stone-900 text-white font-medium text-xs hover:bg-stone-800 transition-colors cursor-pointer"
+                className="px-4 py-2.5 rounded-lg bg-stone-900 text-white font-semibold text-xs sm:text-sm hover:bg-stone-800 transition-colors cursor-pointer"
               >
                 继续下一题 ({activeQuizIdx + 2}/{quizList.length}) →
               </button>
@@ -683,6 +721,8 @@ export const LawDetailPage: React.FC = () => {
           <span>进入认知竞技场实战演练</span>
         </button>
       </div>
+
+      <FloatingFontScaleControl tone="paper" title="定律阅读与答题字号" />
     </div>
   );
 };

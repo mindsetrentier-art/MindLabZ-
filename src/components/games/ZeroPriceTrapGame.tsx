@@ -265,7 +265,7 @@ export const ZeroPriceTrapGame: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col items-center justify-start min-h-[85vh] w-full max-w-lg mx-auto py-2 px-2 animate-fadeIn space-y-4">
+    <div className="flex flex-col items-center justify-start min-h-[85vh] w-full max-w-2xl mx-auto py-2 px-2 animate-fadeIn space-y-5">
       {/* Game HUD */}
       <GameHeaderHud
         title="07 · 免费陷阱"
@@ -280,27 +280,27 @@ export const ZeroPriceTrapGame: React.FC = () => {
       />
 
       {scen && (
-        <div className="w-full game-arcade-card rounded-3xl p-6 border-emerald-100 shadow-xl space-y-5 animate-fadeIn bg-white relative overflow-hidden">
+        <div className="w-full game-arcade-card rounded-3xl p-6 sm:p-8 border-emerald-100 shadow-xl space-y-6 animate-fadeIn bg-white relative overflow-hidden">
           {/* Scenario Header */}
-          <div className="space-y-1.5 border-b border-stone-200/70 pb-3.5">
-            <span className="text-[10px] font-black text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200 font-mono">
+          <div className="space-y-2 border-b border-stone-200/70 pb-4">
+            <span className="inline-block text-xs font-black text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-md border border-emerald-200 font-mono">
               ZERO-PRICE DILEMMA #{currentIdx + 1} / {scenarios.length}
             </span>
-            <h2 className="text-xl font-bold text-stone-900 font-serif-editorial">
+            <h2 className="text-xl sm:text-2xl font-bold text-stone-900 font-serif-editorial leading-snug">
               {scen.title}
             </h2>
-            <div className="text-xs text-stone-700 leading-relaxed bg-stone-50 p-3.5 rounded-2xl border border-stone-200/80 font-sans mt-2">
+            <div className="text-sm sm:text-base text-stone-700 leading-relaxed bg-stone-50 p-4 rounded-2xl border border-stone-200/80 font-sans mt-2">
               {scen.context}
             </div>
           </div>
 
           {/* Choices */}
-          <div className="space-y-3 pt-1">
-            <h4 className="text-xs font-bold text-stone-900 font-serif-editorial">
+          <div className="space-y-3.5 pt-1">
+            <h4 className="text-lg sm:text-xl font-bold text-stone-900 font-serif-editorial">
               面对诱惑，你的理性决策是：
             </h4>
 
-            <div className="grid grid-cols-1 gap-3">
+            <div className="grid grid-cols-1 gap-3.5">
               {scen.choices.map((c, idx) => {
                 const isSelected = selectedChoiceIdx === idx;
                 return (
@@ -309,7 +309,7 @@ export const ZeroPriceTrapGame: React.FC = () => {
                     disabled={gameState === 'revealed'}
                     onClick={() => handleChoose(idx)}
                     type="button"
-                    className={`w-full text-left p-4 rounded-2xl border-2 transition-all cursor-pointer ${
+                    className={`w-full text-left p-4.5 sm:p-5 rounded-2xl border-2 transition-all cursor-pointer ${
                       isSelected
                         ? c.isOptimal
                           ? 'bg-emerald-50 border-emerald-400 text-emerald-950 font-semibold shadow-md shadow-emerald-500/15'
@@ -317,21 +317,21 @@ export const ZeroPriceTrapGame: React.FC = () => {
                         : 'bg-white hover:bg-stone-50 border-stone-200 text-stone-800 hover:border-emerald-300'
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <span className="text-xs sm:text-[13px] font-bold leading-snug font-sans">{c.label}</span>
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="text-base sm:text-lg font-bold leading-snug font-sans">{c.label}</span>
                       {isSelected && (
                         c.isOptimal ? (
-                          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                          <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0 mt-0.5" />
                         ) : (
-                          <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                          <AlertTriangle className="w-6 h-6 text-rose-600 shrink-0 mt-0.5" />
                         )
                       )}
                     </div>
 
                     {gameState === 'revealed' && (
-                      <div className="mt-3 pt-2.5 border-t border-stone-200/70 text-xs space-y-1 animate-fadeIn font-sans">
-                        <div className="text-stone-700 font-medium"><strong>成本收益核算：</strong>{c.costBreakdown}</div>
-                        <div className="text-stone-500 text-[11px] font-normal">{c.opportunityCost}</div>
+                      <div className="mt-3.5 pt-3 border-t border-stone-200/70 text-xs sm:text-sm space-y-1.5 animate-fadeIn font-sans">
+                        <div className="text-stone-700 font-medium leading-relaxed"><strong>成本收益核算：</strong>{c.costBreakdown}</div>
+                        <div className="text-stone-500 font-normal leading-relaxed">{c.opportunityCost}</div>
                       </div>
                     )}
                   </button>
@@ -342,22 +342,22 @@ export const ZeroPriceTrapGame: React.FC = () => {
 
           {/* Rational Insight Reveal */}
           {gameState === 'revealed' && (
-            <div className="p-4.5 rounded-2xl bg-[#FAF8F5] border border-amber-200 space-y-2 text-xs text-stone-700 animate-fadeIn shadow-2xs">
-              <span className="font-bold text-stone-900 block font-serif-editorial flex items-center gap-1.5 text-sm">
-                <Sparkles className="w-4 h-4 text-amber-600" />
+            <div className="p-5 rounded-2xl bg-[#FAF8F5] border border-amber-200 space-y-2.5 text-stone-700 animate-fadeIn shadow-2xs">
+              <span className="font-bold text-stone-900 font-serif-editorial flex items-center gap-2 text-base">
+                <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
                 行为经济学深度解析：
               </span>
-              <p className="leading-relaxed font-sans">
+              <p className="text-sm sm:text-base leading-relaxed font-sans">
                 {scen.rationalInsight}
               </p>
 
               <button
                 onClick={handleNext}
                 type="button"
-                className="w-full mt-3 py-4 bg-gradient-to-r from-stone-900 to-emerald-950 hover:opacity-95 text-white font-bold text-xs sm:text-sm rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 game-btn-tactile"
+                className="w-full mt-3 py-4 bg-gradient-to-r from-stone-900 to-emerald-950 hover:opacity-95 text-white font-bold text-sm sm:text-base rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 game-btn-tactile"
               >
                 <span>{currentIdx < scenarios.length - 1 ? '审视下一个消费情境' : '完成实验生成研报'}</span>
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
             </div>
           )}

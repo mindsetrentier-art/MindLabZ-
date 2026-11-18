@@ -341,7 +341,7 @@ export const MindDetectiveGame: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-start min-h-[85vh] w-full max-w-lg mx-auto py-3 px-2 animate-fadeIn">
+    <div className={`flex flex-col items-center justify-start min-h-[85vh] w-full ${gameState === 'playing' ? 'max-w-2xl' : 'max-w-lg'} mx-auto py-3 px-2 animate-fadeIn transition-all`}>
       {/* Game Header HUD */}
       <GameHeaderHud
         title="心理侦探 · 案卷审理"
@@ -397,26 +397,26 @@ export const MindDetectiveGame: React.FC = () => {
           </button>
         </div>
       ) : gameState === 'playing' && currentCase ? (
-        <div className="w-full game-arcade-card rounded-3xl p-6 sm:p-7 border-amber-200/80 shadow-2xl space-y-5 animate-fadeIn">
+        <div className="w-full game-arcade-card rounded-3xl p-6 sm:p-8 border-amber-200/80 shadow-2xl space-y-6 animate-fadeIn">
           {/* Case Header */}
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-black uppercase tracking-wider text-amber-800 bg-amber-100 px-2.5 py-0.5 rounded-lg border border-amber-300 font-numeric">
+            <div className="flex items-center justify-between mb-2.5">
+              <span className="text-xs sm:text-sm font-black uppercase tracking-wider text-amber-800 bg-amber-100 px-3 py-0.5 rounded-lg border border-amber-300 font-numeric">
                 案卷 #{currentCaseIndex + 1} / {activeCases.length}
               </span>
               {combo > 1 && (
-                <span className="text-xs font-black text-orange-600 animate-pulse font-numeric flex items-center gap-1">
-                  <Flame className="w-3.5 h-3.5 fill-orange-500 text-orange-500" />
+                <span className="text-xs sm:text-sm font-black text-orange-600 animate-pulse font-numeric flex items-center gap-1">
+                  <Flame className="w-4 h-4 fill-orange-500 text-orange-500" />
                   {combo} 连击侦破
                 </span>
               )}
             </div>
-            <h2 className="text-xl font-black text-stone-900 font-serif-editorial">
+            <h2 className="text-xl sm:text-2xl font-black text-stone-900 font-serif-editorial">
               {currentCase.title}
             </h2>
-            <div className="p-4 bg-gradient-to-br from-amber-50/60 to-stone-50 rounded-2xl border border-amber-200/70 mt-2.5 shadow-sm">
-              <span className="text-xs font-bold text-amber-900 block mb-1">案情重现：</span>
-              <p className="text-xs text-stone-700 leading-relaxed">
+            <div className="p-4 sm:p-5 bg-gradient-to-br from-amber-50/60 to-stone-50 rounded-2xl border border-amber-200/70 mt-3 shadow-sm">
+              <span className="text-sm font-bold text-amber-900 block mb-1.5">案情重现：</span>
+              <p className="text-sm sm:text-base text-stone-800 leading-relaxed">
                 {currentCase.scenario}
               </p>
             </div>
@@ -424,22 +424,22 @@ export const MindDetectiveGame: React.FC = () => {
 
           {/* Evidence Dossier */}
           <div>
-            <h4 className="text-xs font-black text-stone-900 flex items-center gap-1.5 mb-2.5">
+            <h4 className="text-sm sm:text-base font-black text-stone-900 flex items-center gap-2 mb-3">
               <FileText className="w-4 h-4 text-amber-600" />
               <span>现场收集物证与行为口供</span>
             </h4>
-            <div className="grid grid-cols-1 gap-2">
+            <div className="grid grid-cols-1 gap-2.5">
               {currentCase.evidence.map((ev, idx) => (
                 <div
                   key={idx}
-                  className="flex items-start gap-3 p-3 bg-white/90 rounded-2xl border border-amber-200/60 shadow-sm text-xs hover:border-amber-400 transition-colors"
+                  className="flex items-start gap-3.5 p-3.5 sm:p-4 bg-white/90 rounded-2xl border border-amber-200/60 shadow-sm hover:border-amber-400 transition-colors"
                 >
-                  <span className="text-xl shrink-0 p-1 bg-amber-50 rounded-xl">{ev.icon}</span>
+                  <span className="text-2xl shrink-0 p-1.5 bg-amber-50 rounded-xl">{ev.icon}</span>
                   <div>
-                    <span className="font-extrabold text-stone-900 block font-serif-editorial">
+                    <span className="text-sm sm:text-base font-extrabold text-stone-900 block font-serif-editorial mb-0.5">
                       {ev.title}
                     </span>
-                    <span className="text-[11px] text-stone-600 leading-relaxed">
+                    <span className="text-sm text-stone-700 leading-relaxed">
                       {ev.detail}
                     </span>
                   </div>
@@ -449,13 +449,13 @@ export const MindDetectiveGame: React.FC = () => {
           </div>
 
           {/* Detective Question */}
-          <div className="pt-2 border-t border-stone-200/60">
-            <h3 className="text-xs sm:text-sm font-black text-stone-900 mb-3 flex items-center gap-2">
-              <span className="w-6 h-6 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center text-xs">🔍</span>
+          <div className="pt-3 border-t border-stone-200/60">
+            <h3 className="text-lg sm:text-xl font-black text-stone-900 mb-4 flex items-start gap-2.5 leading-snug font-serif-editorial">
+              <span className="w-7 h-7 rounded-lg bg-amber-100 text-amber-800 flex items-center justify-center text-sm shrink-0 mt-0.5">🔍</span>
               <span>{currentCase.question}</span>
             </h3>
 
-            <div className="space-y-2.5">
+            <div className="space-y-3">
               {currentCase.options.map((opt, idx) => {
                 const isSelected = selectedOption === idx;
                 const showSuccess = revealedExplanation && opt.isCorrect;
@@ -466,20 +466,25 @@ export const MindDetectiveGame: React.FC = () => {
                     key={idx}
                     disabled={revealedExplanation}
                     onClick={() => handleSelectOption(idx)}
-                    className={`w-full text-left p-4 rounded-2xl border-2 transition-all flex items-center justify-between text-xs font-bold cursor-pointer active:scale-98 ${
+                    className={`w-full text-left p-4 sm:p-5 rounded-2xl border-2 transition-all flex items-center justify-between text-base sm:text-lg font-bold cursor-pointer active:scale-98 ${
                       showSuccess
                         ? 'bg-emerald-50 border-emerald-500 text-emerald-950 shadow-md'
                         : showWrong
                         ? 'bg-rose-50 border-rose-500 text-rose-950 shadow-md'
-                        : 'bg-white hover:bg-amber-50/60 border-stone-200 text-stone-800'
+                        : 'bg-white hover:bg-amber-50/60 border-stone-200 hover:border-amber-300 text-stone-900'
                     }`}
                   >
-                    <span className="leading-relaxed">{opt.label}</span>
+                    <div className="flex items-start gap-3">
+                      <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 flex items-center justify-center text-xs sm:text-sm font-mono font-bold shrink-0 mt-0.5">
+                        {String.fromCharCode(65 + idx)}
+                      </span>
+                      <span className="leading-relaxed">{opt.label}</span>
+                    </div>
                     {showSuccess && (
-                      <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 ml-2 animate-scaleUp" />
+                      <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0 ml-2 animate-scaleUp" />
                     )}
                     {showWrong && (
-                      <ShieldAlert className="w-5 h-5 text-rose-600 shrink-0 ml-2 animate-shake" />
+                      <ShieldAlert className="w-6 h-6 text-rose-600 shrink-0 ml-2 animate-shake" />
                     )}
                   </button>
                 );
@@ -489,17 +494,17 @@ export const MindDetectiveGame: React.FC = () => {
 
           {/* Explanation Box on Reveal */}
           {revealedExplanation && selectedOption !== null && (
-            <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-50/70 to-orange-50/70 border border-amber-200/80 space-y-2.5 animate-fadeIn shadow-sm">
-              <div className="flex items-center gap-1.5 text-xs font-black text-amber-950">
+            <div className="p-5 rounded-2xl bg-gradient-to-br from-amber-50/70 to-orange-50/70 border border-amber-200/80 space-y-3 animate-fadeIn shadow-sm">
+              <div className="flex items-center gap-2 text-sm sm:text-base font-black text-amber-950">
                 <Sparkles className="w-4 h-4 text-amber-600" />
                 <span>侦探推理研判报告</span>
               </div>
-              <p className="text-xs text-stone-700 leading-relaxed font-serif-editorial">
+              <p className="text-base text-stone-800 leading-relaxed font-serif-editorial">
                 {currentCase.options[selectedOption].explanation}
               </p>
               <button
                 onClick={handleNext}
-                className="w-full mt-2 py-3 bg-gradient-to-r from-stone-900 via-stone-800 to-amber-950 hover:from-stone-800 hover:to-amber-900 text-white font-bold text-xs rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                className="w-full mt-2 py-3.5 sm:py-4 bg-gradient-to-r from-stone-900 via-stone-800 to-amber-950 hover:from-stone-800 hover:to-amber-900 text-white font-bold text-sm sm:text-base rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
               >
                 <span>{currentCaseIndex < activeCases.length - 1 ? '审阅下一卷宗' : '查看结案评级'}</span>
                 <ArrowRight className="w-4 h-4" />

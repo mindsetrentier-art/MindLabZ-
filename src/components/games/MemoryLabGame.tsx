@@ -211,7 +211,7 @@ export const MemoryLabGame: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-start min-h-[85vh] w-full max-w-lg mx-auto py-3 px-2 animate-fadeIn">
+    <div className={`flex flex-col items-center justify-start min-h-[85vh] w-full mx-auto py-3 px-2 animate-fadeIn transition-all ${gameState !== 'intro' && gameState !== 'game_over' ? 'max-w-2xl' : 'max-w-lg'}`}>
       {/* Header HUD */}
       <GameHeaderHud
         title="记忆宫殿矩阵"
@@ -330,11 +330,11 @@ export const MemoryLabGame: React.FC = () => {
         </div>
       ) : (
         /* Playing Grid Screen */
-        <div className="w-full flex flex-col items-center space-y-4 animate-fadeIn">
+        <div className="w-full flex flex-col items-center space-y-5 animate-fadeIn">
           {/* Level Header Status Bar */}
-          <div className="w-full flex justify-between items-center text-xs font-numeric bg-white/90 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-stone-200/90 shadow-sm">
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-1 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-black rounded-lg text-xs shadow-sm">
+          <div className="w-full flex justify-between items-center text-xs sm:text-sm font-numeric bg-white/90 backdrop-blur-md px-5 py-3 rounded-2xl border border-stone-200/90 shadow-sm">
+            <div className="flex items-center gap-2.5">
+              <span className="px-3 py-1 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-black rounded-lg text-xs sm:text-sm shadow-sm">
                 LEVEL {level}
               </span>
               <span className="text-stone-700 font-bold">
@@ -342,26 +342,26 @@ export const MemoryLabGame: React.FC = () => {
               </span>
             </div>
             <div className="flex items-center gap-1.5 text-stone-600 font-bold">
-              <Clock className="w-3.5 h-3.5 text-amber-500" />
+              <Clock className="w-4 h-4 text-amber-500" />
               <span>目标点位: <strong className="text-indigo-600 font-extrabold">{targetCount}</strong></span>
             </div>
           </div>
 
           {/* Prompt status */}
-          <div className="text-xs font-black text-center py-1">
+          <div className="text-sm sm:text-base font-black text-center py-1">
             {gameState === 'memorize' ? (
-              <span className="text-indigo-600 animate-pulse flex items-center justify-center gap-1.5 bg-indigo-50 border border-indigo-200 px-4 py-2 rounded-xl shadow-sm">
-                <Brain className="w-4 h-4 text-indigo-600" />
+              <span className="text-indigo-600 animate-pulse flex items-center justify-center gap-2 bg-indigo-50 border border-indigo-200 px-5 py-2.5 rounded-xl shadow-sm">
+                <Brain className="w-5 h-5 text-indigo-600 shrink-0" />
                 正在点亮目标矩阵，请用海马体网格快速锁定发光方块！
               </span>
             ) : gameState === 'recall' ? (
-              <span className="text-stone-800 flex items-center justify-center gap-1.5 bg-white border border-stone-200 px-4 py-2 rounded-xl shadow-sm">
-                <Zap className="w-4 h-4 text-amber-500 fill-amber-500" />
+              <span className="text-stone-800 flex items-center justify-center gap-2 bg-white border border-stone-200 px-5 py-2.5 rounded-xl shadow-sm">
+                <Zap className="w-5 h-5 text-amber-500 fill-amber-500 shrink-0" />
                 点击复原记忆中的所有发光方块 ({userSelected.length} / {activeTiles.length})
               </span>
             ) : gameState === 'level_clear' ? (
-              <span className="text-emerald-700 flex items-center justify-center gap-1.5 bg-emerald-50 border border-emerald-200 px-4 py-2 rounded-xl shadow-sm font-bold">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <span className="text-emerald-700 flex items-center justify-center gap-2 bg-emerald-50 border border-emerald-200 px-5 py-2.5 rounded-xl shadow-sm font-bold">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
                 完美复原！空间记忆回路同步，准备升级...
               </span>
             ) : null}
@@ -369,7 +369,7 @@ export const MemoryLabGame: React.FC = () => {
 
           {/* Matrix Grid Canvas */}
           <div
-            className="w-full max-w-sm aspect-square bg-gradient-to-b from-stone-900 to-slate-950 rounded-3xl p-5 border-2 border-indigo-500/30 shadow-2xl grid gap-3 relative overflow-hidden"
+            className="w-full max-w-md aspect-square bg-gradient-to-b from-stone-900 to-slate-950 rounded-3xl p-5 border-2 border-indigo-500/30 shadow-2xl grid gap-3 relative overflow-hidden"
             style={{
               gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`,
               gridTemplateRows: `repeat(${gridSize}, minmax(0, 1fr))`,

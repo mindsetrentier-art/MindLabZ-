@@ -25,6 +25,8 @@ import {
   Check,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useFontScale } from '../context/FontScaleContext';
+import { FloatingFontScaleControl } from '../components/ui/FloatingFontScaleControl';
 import {
   EMOTIONAL_PSYCHOLOGY_LAWS,
   EMOTIONAL_SECTIONS,
@@ -36,6 +38,7 @@ import { gameAudio } from '../utils/gameAudio';
 export const EmotionalLawsLibraryPage: React.FC = () => {
   const navigate = useNavigate();
   const { user, toggleBookmark, isBookmarked } = useApp();
+  const { fontScale } = useFontScale();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSectionFilter, setSelectedSectionFilter] = useState<number | 'all'>('all');
@@ -152,7 +155,10 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
       : null;
 
   return (
-    <div className="space-y-10 pb-24 animate-fadeIn max-w-5xl mx-auto px-2 sm:px-4 text-stone-100">
+    <div
+      className="space-y-10 pb-24 animate-fadeIn max-w-5xl mx-auto px-2 sm:px-4 text-stone-100 quiz-font-scope"
+      data-quiz-font-scale={fontScale}
+    >
       {/* 1. Grand Masterpiece Header: Nocturne Gold Foil Canvas */}
       <section className="relative rounded-3xl overflow-hidden art-salon-canvas text-white p-7 sm:p-10 md:p-12 border border-amber-500/35 shadow-[0_25px_60px_rgba(0,0,0,0.8)] transition-all">
         {/* Subtle Decorative Golden Ratio Spiral & Celestial Geometry */}
@@ -782,6 +788,8 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
           })
         )}
       </div>
+
+      <FloatingFontScaleControl tone="dark" title="情感定律库字号" />
     </div>
   );
 };

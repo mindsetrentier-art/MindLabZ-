@@ -831,12 +831,12 @@ export const FirstImpressionGame: React.FC = () => {
     const practicedCount = Object.keys(practiceRecords).length;
 
     return (
-      <div className="flex flex-col items-center justify-start min-h-[85vh] w-full max-w-lg mx-auto py-2 px-2 animate-smoothFadeIn space-y-4">
+      <div className="flex flex-col items-center justify-start min-h-[85vh] w-full max-w-2xl mx-auto py-2 px-2 animate-smoothFadeIn space-y-4">
         {/* Practice Top HUD */}
         <div className="w-full flex items-center justify-between px-1">
           <button
             onClick={() => setGameState('intro')}
-            className="flex items-center gap-1.5 text-xs font-semibold text-stone-600 hover:text-stone-900 transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-stone-600 hover:text-stone-900 transition-colors cursor-pointer"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>模式选择</span>
@@ -848,17 +848,17 @@ export const FirstImpressionGame: React.FC = () => {
                 gameAudio.playTap();
                 setShowShowroomModal(true);
               }}
-              className="text-[11px] font-bold text-amber-300 hover:text-amber-200 bg-amber-500/15 hover:bg-amber-500/25 px-2.5 py-0.5 rounded-full border border-amber-400/40 transition-all cursor-pointer flex items-center gap-1 shadow-sm"
+              className="text-xs font-bold text-amber-300 hover:text-amber-200 bg-amber-500/15 hover:bg-amber-500/25 px-3 py-1 rounded-full border border-amber-400/40 transition-all cursor-pointer flex items-center gap-1 shadow-sm"
             >
-              <Award className="w-3 h-3 text-amber-400" />
+              <Award className="w-3.5 h-3.5 text-amber-400" />
               <span>徽章 {unlockedBadgeCount}/6</span>
             </button>
-            <span className="text-[11px] font-mono font-bold text-amber-500 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/30">
+            <span className="text-xs font-mono font-bold text-amber-500 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/30">
               🎯 心算量感练习
             </span>
             <button
               onClick={() => startChallengeSession(level)}
-              className="text-[11px] font-bold text-stone-300 hover:text-amber-300 bg-white/10 px-2.5 py-0.5 rounded-full border border-white/15 transition-all cursor-pointer"
+              className="text-xs font-bold text-stone-300 hover:text-amber-300 bg-white/10 px-3 py-1 rounded-full border border-white/15 transition-all cursor-pointer"
             >
               切至挑战 ⚡
             </button>
@@ -866,7 +866,7 @@ export const FirstImpressionGame: React.FC = () => {
         </div>
 
         {/* Question Selector Carousel Pills */}
-        <div className="w-full overflow-x-auto no-scrollbar flex items-center gap-1.5 py-1 px-0.5">
+        <div className="w-full overflow-x-auto no-scrollbar flex items-center gap-2 py-1 px-0.5">
           {MASTER_VALUATION_POOL.map((item, idx) => {
             const isCurrent = idx === practiceIdx;
             const isDone = practiceRecords[item.id] !== undefined;
@@ -874,7 +874,7 @@ export const FirstImpressionGame: React.FC = () => {
               <button
                 key={item.id}
                 onClick={() => handleSwitchPracticeQuestion(idx)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-mono font-bold whitespace-nowrap transition-all cursor-pointer border ${
+                className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-mono font-bold whitespace-nowrap transition-all cursor-pointer border ${
                   isCurrent
                     ? 'bg-amber-500 text-stone-950 border-amber-400 shadow-md font-black scale-102'
                     : isDone
@@ -883,55 +883,55 @@ export const FirstImpressionGame: React.FC = () => {
                 }`}
               >
                 <span>#{idx + 1} {item.title.split('：')[0]}</span>
-                {isDone && <span className="ml-1 text-[10px]">✓</span>}
+                {isDone && <span className="ml-1 text-xs">✓</span>}
               </button>
             );
           })}
         </div>
 
         {/* Main Practice Card */}
-        <div className="w-full art-salon-canvas rounded-3xl p-5 sm:p-6 art-gold-border shadow-2xl space-y-5 relative overflow-hidden text-stone-100">
+        <div className="w-full art-salon-canvas rounded-3xl p-6 sm:p-8 art-gold-border shadow-2xl space-y-6 relative overflow-hidden text-stone-100">
           <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-500/15 rounded-full blur-3xl pointer-events-none" />
 
           {/* Card Header: Category & Practice Status */}
-          <div className="flex items-center justify-between border-b border-white/10 pb-3 relative z-10">
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-mono font-bold text-amber-300 bg-amber-500/15 px-2.5 py-0.5 rounded-lg border border-amber-500/30">
+          <div className="flex items-center justify-between border-b border-white/10 pb-3.5 relative z-10">
+            <div className="flex items-center gap-2.5">
+              <span className="text-xs font-mono font-bold text-amber-300 bg-amber-500/15 px-2.5 py-0.5 rounded-lg border border-amber-500/30">
                 SCENARIO #{practiceIdx + 1} / {MASTER_VALUATION_POOL.length}
               </span>
-              <span className="text-[11px] font-medium text-stone-300">
+              <span className="text-xs sm:text-sm font-medium text-stone-300">
                 {q.category} · {q.title}
               </span>
             </div>
 
-            <div className="text-[11px] text-stone-400 font-mono">
+            <div className="text-xs text-stone-400 font-mono">
               已练习: {practicedCount}/{MASTER_VALUATION_POOL.length}
             </div>
           </div>
 
           {/* Slogan Hook */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-black/40 border border-amber-500/30 shadow-inner space-y-2 relative z-10">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-amber-400">
+          <div className="p-5 sm:p-6 rounded-2xl bg-black/40 border border-amber-500/30 shadow-inner space-y-2.5 relative z-10">
+            <div className="flex items-center gap-2 text-sm font-bold text-amber-400">
               <Eye className="w-4 h-4 text-amber-400" />
               <span>第一眼诱人噱头（商业宣传标语）</span>
             </div>
-            <h2 className="text-base sm:text-lg font-serif-editorial font-bold text-white tracking-wide leading-snug">
+            <h2 className="text-xl sm:text-2xl font-serif-editorial font-bold text-white tracking-wide leading-snug">
               {q.hookSlogan}
             </h2>
           </div>
 
           {/* Practice Prompt */}
-          <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-amber-300 relative z-10">
-            <Sliders className="w-4 h-4 text-amber-400 shrink-0" />
+          <div className="flex items-center gap-2 text-base sm:text-lg font-bold text-amber-300 relative z-10">
+            <Sliders className="w-5 h-5 text-amber-400 shrink-0" />
             <span>{q.practicePrompt}：</span>
           </div>
 
           {/* Interactive Slider Section */}
-          <div className="p-4 sm:p-5 rounded-2xl bg-white/[0.04] border border-white/15 space-y-4 relative z-10">
+          <div className="p-5 sm:p-6 rounded-2xl bg-white/[0.04] border border-white/15 space-y-4 relative z-10">
             <div className="flex items-baseline justify-between">
-              <span className="text-xs text-stone-400 font-medium">你的直觉估值：</span>
-              <span className="font-numeric text-2xl sm:text-3xl font-extrabold art-gold-text">
+              <span className="text-sm sm:text-base text-stone-300 font-medium">你的直觉估值：</span>
+              <span className="font-numeric text-3xl sm:text-4xl font-extrabold art-gold-text">
                 {q.formatValue(sliderValue)}
               </span>
             </div>
@@ -1084,28 +1084,28 @@ export const FirstImpressionGame: React.FC = () => {
               </div>
 
               {/* Cognitive Breakdown */}
-              <div className="space-y-2.5 text-xs">
-                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 space-y-1">
+              <div className="space-y-3 text-sm sm:text-base">
+                <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/25 space-y-1.5">
                   <div className="flex items-center gap-1.5 font-bold text-amber-300">
-                    <Eye className="w-3.5 h-3.5" />
+                    <Eye className="w-4 h-4" />
                     <span>👁️ 大众第一眼直觉为什么会偏？</span>
                   </div>
-                  <p className="text-stone-300 leading-relaxed font-sans">
+                  <p className="text-stone-200 leading-relaxed font-sans">
                     {q.system1Trap}
                   </p>
                 </div>
 
-                <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10 space-y-1">
+                <div className="p-4 rounded-xl bg-white/[0.04] border border-white/10 space-y-1.5">
                   <div className="flex items-center gap-1.5 font-bold text-stone-200">
-                    <TrendingUp className="w-3.5 h-3.5 text-blue-400" />
+                    <TrendingUp className="w-4 h-4 text-blue-400" />
                     <span>💎 数学底层真值推导：</span>
                   </div>
-                  <p className="text-stone-300 leading-relaxed font-sans">
+                  <p className="text-stone-200 leading-relaxed font-sans">
                     {q.mathTruth}
                   </p>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-amber-400/15 to-transparent border border-amber-400/40 space-y-1 shadow-md">
+                <div className="p-4 rounded-xl bg-gradient-to-r from-amber-500/20 via-amber-400/15 to-transparent border border-amber-400/40 space-y-1.5 shadow-md">
                   <div className="flex items-center gap-1.5 font-black text-amber-300">
                     <Zap className="w-4 h-4 text-amber-400" />
                     <span className="tracking-wide">⚡【3秒极速心算妙招 · 建立量感】：</span>
@@ -1132,28 +1132,28 @@ export const FirstImpressionGame: React.FC = () => {
   const overallProgressPct = Math.round(((challengeIdx + 1) / challengeQuestions.length) * 100);
 
   return (
-    <div className="flex flex-col items-center justify-start min-h-[85vh] w-full max-w-lg mx-auto py-2 px-2 animate-smoothFadeIn space-y-3.5">
+    <div className="flex flex-col items-center justify-start min-h-[85vh] w-full max-w-2xl mx-auto py-2 px-2 animate-smoothFadeIn space-y-4">
       {/* Top HUD with Game Icon */}
       <div className="w-full flex items-center justify-between px-1">
-        <div className="flex items-center gap-2">
-          <FirstImpressionGameIcon size={32} glow={false} />
+        <div className="flex items-center gap-2.5">
+          <FirstImpressionGameIcon size={36} glow={false} />
           <div>
-            <h3 className="text-xs font-bold text-stone-900 flex items-center gap-1.5">
+            <h3 className="text-sm sm:text-base font-bold text-stone-900 flex items-center gap-2">
               <span>01 · 第一眼判断</span>
-              <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-md bg-amber-50 text-amber-800 border border-amber-300">
+              <span className="text-xs font-mono px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-300">
                 {level} ({challengeQuestions.length}题)
               </span>
             </h3>
-            <p className="text-[10px] text-stone-500 font-mono">
+            <p className="text-xs text-stone-500 font-mono">
               第 {challengeIdx + 1} / {challengeQuestions.length} 关 · {overallProgressPct}%
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
           <div className="text-right">
-            <span className="text-[10px] text-stone-400 block font-mono">积分</span>
-            <span className="font-numeric font-extrabold text-amber-600 text-sm">
+            <span className="text-[11px] text-stone-500 block font-mono">积分</span>
+            <span className="font-numeric font-extrabold text-amber-600 text-base sm:text-lg">
               {score.toLocaleString()}
             </span>
           </div>
@@ -1163,7 +1163,7 @@ export const FirstImpressionGame: React.FC = () => {
               gameAudio.playTap();
               setShowShowroomModal(true);
             }}
-            className="p-1.5 text-amber-600 hover:text-amber-700 rounded-lg hover:bg-amber-50 transition-colors cursor-pointer"
+            className="p-2 text-amber-600 hover:text-amber-700 rounded-lg hover:bg-amber-50 transition-colors cursor-pointer"
             title="查看极速估值徽章展厅"
           >
             <Award className="w-4 h-4 text-amber-500" />
@@ -1171,7 +1171,7 @@ export const FirstImpressionGame: React.FC = () => {
 
           <button
             onClick={() => setGameState('intro')}
-            className="p-1.5 text-stone-400 hover:text-stone-700 rounded-lg hover:bg-stone-100 transition-colors cursor-pointer"
+            className="p-2 text-stone-400 hover:text-stone-700 rounded-lg hover:bg-stone-100 transition-colors cursor-pointer"
             title="退出本局"
           >
             <ArrowLeft className="w-4 h-4" />
@@ -1181,42 +1181,42 @@ export const FirstImpressionGame: React.FC = () => {
 
       {/* Main Game Stage Card */}
       {currentQ && (
-        <div className="w-full art-salon-canvas rounded-3xl p-5 sm:p-6 art-gold-border shadow-2xl space-y-4 relative overflow-hidden text-stone-100">
+        <div className="w-full art-salon-canvas rounded-3xl p-6 sm:p-8 art-gold-border shadow-2xl space-y-5 relative overflow-hidden text-stone-100">
           <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-500/15 rounded-full blur-3xl pointer-events-none" />
 
           {/* Top Status Bar */}
-          <div className="flex items-center justify-between border-b border-white/10 pb-2.5 relative z-10">
-            <div className="flex items-center gap-2">
-              <span className="text-[11px] font-mono font-bold text-amber-300 bg-amber-500/15 px-2.5 py-0.5 rounded-lg border border-amber-500/30">
+          <div className="flex items-center justify-between border-b border-white/10 pb-3 relative z-10">
+            <div className="flex items-center gap-2.5">
+              <span className="text-xs sm:text-sm font-mono font-bold text-amber-300 bg-amber-500/15 px-3 py-0.5 rounded-lg border border-amber-500/30">
                 #{challengeIdx + 1} / {challengeQuestions.length}
               </span>
-              <span className="text-[11px] font-medium text-stone-300">
+              <span className="text-xs sm:text-sm font-medium text-stone-200">
                 {currentQ.category}
               </span>
             </div>
 
             <div className="flex items-center gap-2.5">
               {combo >= 2 && (
-                <div className="flex items-center gap-1 text-xs font-black text-amber-400 bg-amber-500/15 px-2 py-0.5 rounded-full border border-amber-500/40 animate-pulse">
-                  <Flame className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                <div className="flex items-center gap-1 text-xs sm:text-sm font-black text-amber-400 bg-amber-500/15 px-2.5 py-0.5 rounded-full border border-amber-500/40 animate-pulse">
+                  <Flame className="w-4 h-4 fill-amber-400 text-amber-400" />
                   <span>Combo x{combo}</span>
                 </div>
               )}
 
-              <div className={`flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-numeric font-bold border transition-colors ${
+              <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs sm:text-sm font-numeric font-bold border transition-colors ${
                 isTimeCritical
                   ? 'bg-rose-500/20 border-rose-500 text-rose-400 animate-pulse'
                   : 'bg-white/[0.06] border-white/15 text-amber-300'
               }`}>
-                <Timer className="w-3.5 h-3.5" />
+                <Timer className="w-4 h-4" />
                 <span>{timeLeft}s</span>
               </div>
             </div>
           </div>
 
           {/* Dynamic Countdown Gauge Bar */}
-          <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden relative z-10">
+          <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden relative z-10">
             <div
               className={`h-full transition-all duration-300 ease-linear rounded-full ${
                 isTimeCritical
@@ -1229,45 +1229,45 @@ export const FirstImpressionGame: React.FC = () => {
 
           {/* Milestone Toast Notice */}
           {milestoneNotice && (
-            <div className="p-2 rounded-xl bg-amber-500/20 border border-amber-400/50 text-center text-xs font-bold text-amber-300 animate-pulse relative z-10">
+            <div className="p-2.5 rounded-xl bg-amber-500/20 border border-amber-400/50 text-center text-sm font-bold text-amber-300 animate-pulse relative z-10">
               {milestoneNotice}
             </div>
           )}
 
           {/* Scenario Headline Presentation */}
-          <div className="space-y-2.5 relative z-10">
-            <div className="p-4 sm:p-5 rounded-2xl bg-black/40 border border-amber-500/30 shadow-inner space-y-1.5">
-              <div className="flex items-center gap-1.5 text-xs font-bold text-amber-400">
+          <div className="space-y-3.5 relative z-10">
+            <div className="p-5 sm:p-6 rounded-2xl bg-black/40 border border-amber-500/30 shadow-inner space-y-2">
+              <div className="flex items-center gap-2 text-sm font-bold text-amber-400">
                 <Eye className="w-4 h-4 text-amber-400" />
                 <span>第一眼诱人噱头（商业宣传标语）</span>
               </div>
-              <h2 className="text-base sm:text-lg font-serif-editorial font-bold text-white tracking-wide leading-snug">
+              <h2 className="text-xl sm:text-2xl font-serif-editorial font-bold text-white tracking-wide leading-snug">
                 {currentQ.hookSlogan}
               </h2>
             </div>
 
-            <div className="flex items-center gap-2 pt-0.5 text-xs sm:text-sm font-bold text-amber-300">
-              <Calculator className="w-4 h-4 text-amber-400 shrink-0" />
+            <div className="flex items-start gap-2.5 pt-1 text-lg sm:text-xl font-bold text-amber-200 leading-relaxed">
+              <Calculator className="w-5 h-5 text-amber-400 shrink-0 mt-1" />
               <span>{currentQ.question}</span>
             </div>
           </div>
 
           {/* Option Buttons Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 relative z-10">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 relative z-10">
             {currentQ.options.map((option, idx) => {
               const keyLabel = ['A', 'B', 'C', 'D'][idx];
               const isSelected = selectedOptionId === option.id;
               const isRevealed = gameState === 'revealed';
 
-              let btnStyle = 'bg-white/[0.05] hover:bg-white/[0.09] border-white/15 text-stone-200';
+              let btnStyle = 'bg-white/[0.06] hover:bg-white/[0.11] border-white/15 text-stone-100';
 
               if (isRevealed) {
                 if (option.isCorrect) {
-                  btnStyle = 'bg-emerald-950/70 border-emerald-400 text-emerald-200 ring-2 ring-emerald-500/40 shadow-lg shadow-emerald-900/30';
+                  btnStyle = 'bg-emerald-950/70 border-emerald-400 text-emerald-100 ring-2 ring-emerald-500/40 shadow-lg shadow-emerald-900/30';
                 } else if (isSelected && !option.isCorrect) {
-                  btnStyle = 'bg-rose-950/70 border-rose-500 text-rose-200 ring-2 ring-rose-500/40';
+                  btnStyle = 'bg-rose-950/70 border-rose-500 text-rose-100 ring-2 ring-rose-500/40';
                 } else if (option.isIntuitionTrap) {
-                  btnStyle = 'bg-amber-950/40 border-amber-500/40 text-amber-300/80';
+                  btnStyle = 'bg-amber-950/40 border-amber-500/40 text-amber-200/90';
                 } else {
                   btnStyle = 'bg-black/20 border-white/5 text-stone-500 opacity-60';
                 }
@@ -1278,9 +1278,9 @@ export const FirstImpressionGame: React.FC = () => {
                   key={option.id}
                   disabled={isRevealed}
                   onClick={() => handleSelectOption(option)}
-                  className={`p-3.5 rounded-2xl border text-left transition-all relative cursor-pointer active:scale-98 flex items-start gap-2.5 ${btnStyle}`}
+                  className={`p-4 sm:p-5 rounded-2xl border-2 text-left transition-all relative cursor-pointer active:scale-98 flex items-start gap-3 ${btnStyle}`}
                 >
-                  <span className={`w-6 h-6 rounded-lg flex items-center justify-center text-xs font-mono font-bold shrink-0 ${
+                  <span className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-mono font-bold shrink-0 mt-0.5 ${
                     isRevealed && option.isCorrect
                       ? 'bg-emerald-500 text-stone-950'
                       : isRevealed && isSelected && !option.isCorrect
@@ -1290,20 +1290,20 @@ export const FirstImpressionGame: React.FC = () => {
                     {keyLabel}
                   </span>
 
-                  <div className="flex-1 text-xs sm:text-[13px] leading-snug">
+                  <div className="flex-1 text-base sm:text-lg font-bold leading-relaxed">
                     <span>{option.text}</span>
                     {isRevealed && option.isIntuitionTrap && (
-                      <span className="block mt-1 text-[10px] text-amber-400 font-semibold">
+                      <span className="block mt-1.5 text-xs text-amber-400 font-semibold">
                         ⚠️ 大众直觉最常中招的锚定陷阱
                       </span>
                     )}
                   </div>
 
                   {isRevealed && option.isCorrect && (
-                    <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0 self-center" />
+                    <CheckCircle2 className="w-6 h-6 text-emerald-400 shrink-0 self-center" />
                   )}
                   {isRevealed && isSelected && !option.isCorrect && (
-                    <XCircle className="w-5 h-5 text-rose-400 shrink-0 self-center" />
+                    <XCircle className="w-6 h-6 text-rose-400 shrink-0 self-center" />
                   )}
                 </button>
               );
@@ -1312,53 +1312,53 @@ export const FirstImpressionGame: React.FC = () => {
 
           {/* Reveal & Mental Math Shortcut Card */}
           {gameState === 'revealed' && (
-            <div className="space-y-3.5 pt-2 border-t border-white/15 animate-smoothFadeIn relative z-10">
-              <div className={`p-3.5 rounded-2xl border flex items-center justify-between ${
+            <div className="space-y-4 pt-3 border-t border-white/15 animate-smoothFadeIn relative z-10">
+              <div className={`p-4 rounded-2xl border flex items-center justify-between ${
                 selectedOptionId === currentQ.options.find(o => o.isCorrect)?.id
-                  ? 'bg-emerald-500/15 border-emerald-400/40 text-emerald-300'
-                  : 'bg-rose-500/15 border-rose-400/40 text-rose-300'
+                  ? 'bg-emerald-500/15 border-emerald-400/40 text-emerald-200'
+                  : 'bg-rose-500/15 border-rose-400/40 text-rose-200'
               }`}>
-                <div className="flex items-center gap-2 text-xs font-bold">
+                <div className="flex items-center gap-2 text-sm sm:text-base font-bold">
                   {selectedOptionId === currentQ.options.find(o => o.isCorrect)?.id ? (
                     <>
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                      <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
                       <span>估值精准！穿透第一眼错觉（+{Math.round((500 + (timeLeft / currentLevelConfig.timeLimitPerQ) * 350) * currentLevelConfig.scoreMultiplier)} 分）</span>
                     </>
                   ) : (
                     <>
-                      <XCircle className="w-4 h-4 text-rose-400" />
+                      <XCircle className="w-5 h-5 text-rose-400 shrink-0" />
                       <span>直觉被锚定劫持！请看下方极速心算法门</span>
                     </>
                   )}
                 </div>
-                <span className="text-[11px] text-stone-400 font-mono">
+                <span className="text-xs sm:text-sm text-stone-300 font-mono shrink-0 ml-2">
                   耗时 {((currentLevelConfig.timeLimitPerQ - timeLeft)).toFixed(1)}s
                 </span>
               </div>
 
               {/* 3-Point Breakdown */}
-              <div className="space-y-2 text-xs">
-                <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/25 space-y-1">
+              <div className="space-y-3 text-sm sm:text-base">
+                <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/25 space-y-1.5">
                   <div className="flex items-center gap-1.5 font-bold text-amber-300">
-                    <Eye className="w-3.5 h-3.5" />
+                    <Eye className="w-4 h-4" />
                     <span>👁️ 大众第一眼错觉（直觉陷阱）：</span>
                   </div>
-                  <p className="text-stone-300 leading-relaxed font-sans">
+                  <p className="text-stone-200 leading-relaxed font-sans">
                     {currentQ.system1Trap}
                   </p>
                 </div>
 
-                <div className="p-3 rounded-xl bg-white/[0.04] border border-white/10 space-y-1">
+                <div className="p-4 rounded-xl bg-white/[0.04] border border-white/10 space-y-1.5">
                   <div className="flex items-center gap-1.5 font-bold text-stone-200">
-                    <TrendingUp className="w-3.5 h-3.5 text-blue-400" />
+                    <TrendingUp className="w-4 h-4 text-blue-400" />
                     <span>💎 数学真实底价（底层逻辑）：</span>
                   </div>
-                  <p className="text-stone-300 leading-relaxed font-sans">
+                  <p className="text-stone-200 leading-relaxed font-sans">
                     {currentQ.mathTruth}
                   </p>
                 </div>
 
-                <div className="p-3.5 rounded-xl bg-gradient-to-r from-amber-500/20 via-amber-400/15 to-transparent border border-amber-400/40 space-y-1 shadow-md">
+                <div className="p-4 rounded-xl bg-gradient-to-r from-amber-500/20 via-amber-400/15 to-transparent border border-amber-400/40 space-y-1.5 shadow-md">
                   <div className="flex items-center gap-1.5 font-black text-amber-300">
                     <Zap className="w-4 h-4 text-amber-400" />
                     <span className="tracking-wide">⚡【3秒极速心算妙招 · 边玩边学】：</span>
@@ -1372,7 +1372,7 @@ export const FirstImpressionGame: React.FC = () => {
               {/* Next / Finish Button */}
               <button
                 onClick={handleNextChallengeQuestion}
-                className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-stone-950 font-black text-xs sm:text-sm shadow-xl shadow-amber-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+                className="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-stone-950 font-black text-sm sm:text-base shadow-xl shadow-amber-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
               >
                 <span>
                   {challengeIdx < challengeQuestions.length - 1

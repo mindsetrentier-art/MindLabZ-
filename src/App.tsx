@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { AppProvider, useApp } from './context/AppContext';
 import { ThemeColorProvider } from './context/ThemeColorContext';
+import { FontScaleProvider } from './context/FontScaleContext';
 import { BiometricLockProvider, useBiometricLock } from './context/BiometricLockContext';
 import { AppShell } from './components/layout/AppShell';
 import { HomePage } from './pages/HomePage';
@@ -140,11 +141,13 @@ export default function App() {
   return (
     <BrowserRouter>
       <ThemeColorProvider>
-        <AppProvider>
-          <BiometricLockProvider>
-            <AppRoutes />
-          </BiometricLockProvider>
-        </AppProvider>
+        <FontScaleProvider>
+          <AppProvider>
+            <BiometricLockProvider>
+              <AppRoutes />
+            </BiometricLockProvider>
+          </AppProvider>
+        </FontScaleProvider>
       </ThemeColorProvider>
     </BrowserRouter>
   );

@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   Sparkles,
   Flame,
@@ -37,6 +38,17 @@ import {
 } from '../components/ui/OverlappingStackLabModal';
 import { KineticCutoutHero } from '../components/ui/KineticCutoutHero';
 import { AmbientSoundscapeControl } from '../components/ui/AmbientSoundscapeControl';
+import { HorizontalAccordion } from '../components/ui/HorizontalAccordion';
+import { CityQuizMapView } from '../components/quiz/CityQuizMapView';
+import {
+  useCityQuizProgress,
+  getUnlockedCityCount,
+} from '../hooks/useCityQuizProgress';
+import { WORLD_CAPITALS, POINTS_PER_CITY } from '../data/worldCapitals';
+import {
+  WORLD_CITATIONS,
+  createShuffledCitationDeck,
+} from '../data/worldCitations';
 import { gameAudio } from '../utils/gameAudio';
 
 export const HomePage: React.FC = () => {
@@ -50,9 +62,40 @@ export const HomePage: React.FC = () => {
     openComposerWithPreload,
     setBreathingOpen,
   } = useApp();
+  const {
+    progress: worldCityProgress,
+    newlyUnlockedPointIndex,
+    newlyUnlockedCityIndex,
+    selectCity,
+    selectPoint,
+    selectChapter,
+    setActiveCoordinates,
+    resetAllProgress,
+  } = useCityQuizProgress();
   const [isLoading, setIsLoading] = useState(true);
   const [isStackLabOpen, setIsStackLabOpen] = useState(false);
   const [homeSearchQuery, setHomeSearchQuery] = useState('');
+
+  // Non-repeating randomized shuffle-bag for 500 bilingual world citations (10s rotation)
+  const citationDeckRef = useRef<number[]>(createShuffledCitationDeck());
+  const citationCursorRef = useRef<number>(0);
+  const [citationIndex, setCitationIndex] = useState<number>(
+    () => citationDeckRef.current[0]
+  );
+
+  const advanceRandomCitation = useCallback(() => {
+    const currentShown = citationDeckRef.current[citationCursorRef.current];
+    const nextCursor = citationCursorRef.current + 1;
+
+    if (nextCursor >= citationDeckRef.current.length) {
+      citationDeckRef.current = createShuffledCitationDeck(currentShown);
+      citationCursorRef.current = 0;
+    } else {
+      citationCursorRef.current = nextCursor;
+    }
+
+    setCitationIndex(citationDeckRef.current[citationCursorRef.current]);
+  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -60,6 +103,13 @@ export const HomePage: React.FC = () => {
     }, 120);
     return () => clearTimeout(timer);
   }, []);
+
+  useEffect(() => {
+    const rotationTimer = setInterval(advanceRandomCitation, 10000);
+    return () => clearInterval(rotationTimer);
+  }, [advanceRandomCitation]);
+
+  const activeCitation = WORLD_CITATIONS[citationIndex] || WORLD_CITATIONS[0];
 
   // Average mastery percentage across laws with full defensive guarding
   const safeLawMasteryMap =
@@ -489,6 +539,50 @@ export const HomePage: React.FC = () => {
         </div>
       </section>
 
+      {/* 2B. Integrated City Quiz Cartographic Atlas (世界 50 国首都互动沙盘) */}
+      <section className="space-y-4">
+        <div className="flex flex-wrap items-baseline justify-between gap-3 pb-3 border-b border-stone-200">
+          <div>
+            <span className="editorial-kicker text-[10px] text-amber-800 block mb-0.5">
+              World Capitals Cognitive Atlas · 五十国首都心智沙盘
+            </span>
+            <h3 className="font-serif-editorial text-lg sm:text-xl font-bold text-stone-900 tracking-tight">
+              世界首都闯关版图 · 当前坐标（{WORLD_CAPITALS[worldCityProgress.activeCityIndex]?.cityZh || '巴黎'} · 第{' '}
+              {worldCityProgress.activePointIndex + 1}/{POINTS_PER_CITY} 站 · 第{' '}
+              {worldCityProgress.activeChapterIndex + 1} 章 · 已解锁 {getUnlockedCityCount(worldCityProgress)}/{WORLD_CAPITALS.length} 城）
+            </h3>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              gameAudio.playTap();
+              navigate('/quiz');
+            }}
+            className="text-xs font-semibold text-stone-700 hover:text-stone-900 flex items-center gap-1 transition-colors cursor-pointer whitespace-nowrap"
+          >
+            <span>进入全屏思辨闯关</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        <CityQuizMapView
+          variant="dashboard"
+          progress={worldCityProgress}
+          newlyUnlockedPointIndex={newlyUnlockedPointIndex}
+          newlyUnlockedCityIndex={newlyUnlockedCityIndex}
+          playerAvatar={user?.avatar}
+          playerName={user?.name}
+          onSelectCity={selectCity}
+          onSelectPoint={selectPoint}
+          onSelectChapter={selectChapter}
+          onStartChapterQuiz={(c, p, ch) => {
+            setActiveCoordinates(c, p, ch);
+            navigate(`/quiz?city=${c}&point=${p}&chapter=${ch}&autostart=1`);
+          }}
+          onResetAllProgress={resetAllProgress}
+        />
+      </section>
+
       {/* 3. Daily Cognitive Journal Feature Section */}
       <section className="space-y-4">
         <div className="flex items-baseline justify-between pb-3 border-b border-stone-200">
@@ -636,6 +730,14 @@ export const HomePage: React.FC = () => {
         </div>
       </section>
 
+      {/* Horizontal Accordion Component: MindLabZ Cognitive Canvas */}
+      <HorizontalAccordion
+        scenario="laws"
+        showScenarioTabs={true}
+        title="心智定律与认知演进展廊"
+        subtitle="横向手风琴交互 · 默认等宽窄条 · 点击展开变宽并延迟淡入详情，其余同步收窄"
+      />
+
       {/* 6. Interactive Overlapping Card Stack Feature: Multiverse Knowledge Deck */}
       <section className="art-museum-mat rounded-2xl p-4 sm:p-7 md:p-9 space-y-5 sm:space-y-6 bg-white border border-stone-200/90 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-stone-200/70">
@@ -682,23 +784,38 @@ export const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* 7. Museum Epigram Plaque (思想家金句艺术铭牌) */}
-      <section className="relative rounded-3xl p-8 sm:p-10 text-center space-y-3.5 bg-gradient-to-b from-[#F9F7F2] to-[#F3EFE6] border border-amber-900/15 shadow-sm overflow-hidden">
-        <div className="w-8 h-8 rounded-full bg-amber-500/10 text-amber-700 flex items-center justify-center mx-auto mb-1">
+      {/* 7. Museum Epigram Plaque (世界哲思金句艺术铭牌) */}
+      <section className="editorial-card editorial-card-hover relative rounded-3xl p-8 sm:p-10 text-center space-y-4 bg-gradient-to-b from-[#F9F7F2] to-[#F3EFE6] border border-amber-900/15 shadow-sm overflow-hidden">
+        <div className="w-8 h-8 rounded-full bg-amber-500/10 text-amber-700 flex items-center justify-center mx-auto">
           <Quote className="w-4 h-4 fill-amber-700" />
         </div>
 
         <span className="editorial-kicker text-[10px] text-stone-500 tracking-widest block font-bold">
-          04 · Thinker's Epigram · 认知哲思
+          04 · Sagesse du Monde · 世界哲思金句
         </span>
 
-        <blockquote className="font-serif-editorial text-base sm:text-lg text-stone-900 italic max-w-2xl mx-auto leading-relaxed">
-          “人类理性的局限并非智力的缺陷，而是演化赋予大脑在不确定世界中生存的启发式捷径。”
-        </blockquote>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeCitation.id}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.45, ease: [0.16, 1, 0.3, 1] }}
+            className="space-y-3 max-w-2xl mx-auto"
+          >
+            <blockquote className="font-serif-editorial text-base sm:text-lg text-stone-900 italic leading-relaxed">
+              « {activeCitation.fr} »
+            </blockquote>
 
-        <cite className="block text-xs text-stone-600 font-medium not-italic mt-2">
-          — 赫伯特·西蒙（Herbert A. Simon）· 诺贝尔经济学奖得主 · 有限理性之父
-        </cite>
+            <p className="font-serif-editorial text-sm sm:text-base text-stone-700 leading-relaxed">
+              “{activeCitation.zh}”
+            </p>
+
+            <cite className="block text-xs text-stone-600 font-medium not-italic pt-1">
+              — {activeCitation.authorFr}（{activeCitation.authorZh}）· {activeCitation.region}
+            </cite>
+          </motion.div>
+        </AnimatePresence>
       </section>
 
       {/* Interactive Overlapping Stack Lab Modal */}

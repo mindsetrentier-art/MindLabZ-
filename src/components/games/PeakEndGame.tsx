@@ -186,7 +186,7 @@ export const PeakEndGame: React.FC = () => {
   }, '');
 
   return (
-    <div className="flex flex-col items-center justify-start min-h-[85vh] w-full max-w-lg mx-auto py-2 px-2 animate-fadeIn space-y-4">
+    <div className="flex flex-col items-center justify-start min-h-[85vh] w-full max-w-2xl mx-auto py-2 px-2 animate-fadeIn space-y-5">
       {/* Game HUD */}
       <GameHeaderHud
         title="04 · 峰值与结尾"
@@ -197,24 +197,24 @@ export const PeakEndGame: React.FC = () => {
         accentColor="#F59E0B"
       />
 
-      <div className="w-full game-arcade-card rounded-3xl p-6 border-amber-100 shadow-xl space-y-5 animate-fadeIn bg-white relative overflow-hidden">
+      <div className="w-full game-arcade-card rounded-3xl p-6 sm:p-8 border-amber-100 shadow-xl space-y-6 animate-fadeIn bg-white relative overflow-hidden">
         {/* Header Title */}
-        <div className="space-y-1 border-b border-stone-200/70 pb-3">
-          <span className="text-[10px] font-black text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200 font-mono">
+        <div className="space-y-1.5 border-b border-stone-200/70 pb-3.5">
+          <span className="inline-block text-xs font-black text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-md border border-amber-200 font-mono">
             EXPERIENCE WAVEFORM SIMULATOR
           </span>
-          <h2 className="text-xl font-bold text-stone-900 font-serif-editorial">
+          <h2 className="text-xl sm:text-2xl font-bold text-stone-900 font-serif-editorial">
             动态体验波形调音台
           </h2>
-          <p className="text-xs text-stone-500 font-sans">
+          <p className="text-sm sm:text-base text-stone-600 font-sans leading-relaxed">
             实时滑动 5 个节点的体验体验值（1~10分），观察波形与大脑长久记忆的变化
           </p>
         </div>
 
         {/* Dynamic Interactive SVG Waveform Canvas */}
-        <div className="p-4 bg-gradient-to-b from-stone-900 to-[#1C1929] rounded-2xl border border-stone-800 shadow-inner space-y-2 text-white">
-          <div className="flex items-center justify-between text-[11px] font-mono text-stone-300">
-            <span className="flex items-center gap-1">
+        <div className="p-4.5 bg-gradient-to-b from-stone-900 to-[#1C1929] rounded-2xl border border-stone-800 shadow-inner space-y-2.5 text-white">
+          <div className="flex items-center justify-between text-xs sm:text-sm font-mono text-stone-300">
+            <span className="flex items-center gap-1.5">
               <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
               实时心智体验波形
             </span>
@@ -263,7 +263,7 @@ export const PeakEndGame: React.FC = () => {
                     <text
                       x={p.x}
                       y={p.y - 10}
-                      fontSize="9"
+                      fontSize="10"
                       fill="#ffffff"
                       textAnchor="middle"
                       fontWeight="bold"
@@ -275,7 +275,7 @@ export const PeakEndGame: React.FC = () => {
               })}
             </svg>
           </div>
-          <div className="flex justify-between text-[10px] text-stone-400 font-mono px-2">
+          <div className="flex justify-between text-xs text-stone-400 font-mono px-2">
             <span>进店排队</span>
             <span>选座就座</span>
             <span className="text-rose-400 font-bold">主菜(峰值)</span>
@@ -285,30 +285,30 @@ export const PeakEndGame: React.FC = () => {
         </div>
 
         {/* Live Calculation Metric Cards */}
-        <div className="grid grid-cols-3 gap-2 text-center font-numeric">
-          <div className="p-3 bg-stone-50 rounded-2xl border border-stone-200 shadow-2xs">
-            <span className="text-[10px] text-stone-500 font-semibold block">全程数学平均</span>
-            <span className="text-base font-black text-stone-700">{averageScore} 分</span>
+        <div className="grid grid-cols-3 gap-2.5 text-center font-numeric">
+          <div className="p-3.5 bg-stone-50 rounded-2xl border border-stone-200 shadow-2xs">
+            <span className="text-xs sm:text-sm text-stone-500 font-semibold block">全程数学平均</span>
+            <span className="text-lg sm:text-xl font-black text-stone-700 mt-0.5 block">{averageScore} 分</span>
           </div>
 
-          <div className="p-3 bg-rose-50/80 rounded-2xl border border-rose-200 shadow-2xs">
-            <span className="text-[10px] text-rose-800 font-semibold block">最高峰值 (Peak)</span>
-            <span className="text-base font-black text-rose-700">{peakScore} 分</span>
+          <div className="p-3.5 bg-rose-50/80 rounded-2xl border border-rose-200 shadow-2xs">
+            <span className="text-xs sm:text-sm text-rose-800 font-semibold block">最高峰值 (Peak)</span>
+            <span className="text-lg sm:text-xl font-black text-rose-700 mt-0.5 block">{peakScore} 分</span>
           </div>
 
-          <div className="p-3 bg-purple-50/80 rounded-2xl border border-purple-200 shadow-2xs">
-            <span className="text-[10px] text-purple-800 font-semibold block">最终长久回忆分</span>
-            <span className="text-base font-black text-purple-700">{rememberedScore} 分</span>
+          <div className="p-3.5 bg-purple-50/80 rounded-2xl border border-purple-200 shadow-2xs">
+            <span className="text-xs sm:text-sm text-purple-800 font-semibold block">最终长久回忆分</span>
+            <span className="text-lg sm:text-xl font-black text-purple-700 mt-0.5 block">{rememberedScore} 分</span>
           </div>
         </div>
 
         {/* Sliders for the 5 points */}
-        <div className="space-y-2.5 pt-1">
+        <div className="space-y-3 pt-1">
           {steps.map((step, idx) => (
-            <div key={idx} className="p-3 bg-stone-50 rounded-2xl border border-stone-200/80 space-y-1.5 shadow-2xs">
-              <div className="flex justify-between items-center text-xs">
+            <div key={idx} className="p-3.5 sm:p-4 bg-stone-50 rounded-2xl border border-stone-200/80 space-y-2 shadow-2xs">
+              <div className="flex justify-between items-center text-sm sm:text-base">
                 <span className="font-bold text-stone-800 font-sans">{step.name}</span>
-                <span className="font-black text-amber-700 font-numeric bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-200">
+                <span className="font-black text-amber-700 font-numeric bg-amber-50 px-2.5 py-0.5 rounded-lg border border-amber-200">
                   {scores[idx]} 分
                 </span>
               </div>
@@ -318,19 +318,19 @@ export const PeakEndGame: React.FC = () => {
                 max="10"
                 value={scores[idx]}
                 onChange={(e) => updateScore(idx, Number(e.target.value))}
-                className="w-full accent-amber-600 cursor-pointer h-2 bg-stone-200 rounded-lg"
+                className="w-full accent-amber-600 cursor-pointer h-2.5 bg-stone-200 rounded-lg"
               />
             </div>
           ))}
         </div>
 
         {/* Peak-End Equation Callout */}
-        <div className="p-4 bg-[#FAF8F5] rounded-2xl border border-amber-200 text-xs text-stone-700 space-y-1 shadow-2xs">
-          <span className="font-bold text-stone-900 font-serif-editorial flex items-center gap-1">
-            <Sparkles className="w-4 h-4 text-amber-600" />
+        <div className="p-4.5 bg-[#FAF8F5] rounded-2xl border border-amber-200 text-stone-700 space-y-1.5 shadow-2xs">
+          <span className="text-sm sm:text-base font-bold text-stone-900 font-serif-editorial flex items-center gap-1.5">
+            <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
             卡尼曼峰终定律：全局记忆回忆 ≈ (最高峰值 {peakScore} + 结尾时刻 {endScore}) ÷ 2 = {rememberedScore}
           </span>
-          <p className="text-[11px] leading-relaxed text-stone-600 font-sans">
+          <p className="text-xs sm:text-sm leading-relaxed text-stone-600 font-sans">
             试着把第 5 个节点（结尾）调低到 2 分，你会发现即便前 4 个节点体验再好，客户离开后回忆依然会被毁掉！
           </p>
         </div>
@@ -338,10 +338,10 @@ export const PeakEndGame: React.FC = () => {
         <button
           onClick={handleFinish}
           type="button"
-          className="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-sm shadow-md shadow-amber-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 game-btn-tactile"
+          className="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-sm sm:text-base shadow-md shadow-amber-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 game-btn-tactile"
         >
           <span>提交体验设计，生成研报</span>
-          <ArrowRight className="w-4 h-4" />
+          <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
         </button>
       </div>
     </div>

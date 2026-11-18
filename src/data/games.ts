@@ -162,6 +162,22 @@ export const PSYCHOLOGY_GAMES: GameDefinition[] = [
     relatedLawId: 'confirmation-bias',
     accentColor: '#6366F1'
   },
+  {
+    id: 'love-aleatoric-arena',
+    numberPrefix: '11',
+    name: 'Love Psychology Aleatoric Arena',
+    nameEn: 'Non-Repeating 696-Law CSPRNG Challenge',
+    nameZh: '爱情心智 · 极致随机博弈',
+    description: '接入 696 条爱情心理学 × 6 种变式（共 4,176 张独立题卡），采用加密真随机与跨局防重洗牌盒，每局绝不重题！',
+    category: '情绪',
+    difficulty: 'Medium',
+    bestScore: 5200,
+    icon: 'heart',
+    estimatedTime: '120秒',
+    conceptLearned: '爱情心理学七大维度与极致 Aleatoric 零重复思辨体系',
+    relatedLawId: 'love-001',
+    accentColor: '#E11D48'
+  },
 
   // 经典神经竞技实验室 (原有矩阵/反应游戏)
   {

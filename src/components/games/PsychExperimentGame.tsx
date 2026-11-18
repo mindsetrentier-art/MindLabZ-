@@ -370,7 +370,7 @@ export const PsychExperimentGame: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-start min-h-[85vh] w-full max-w-lg mx-auto py-3 px-2 animate-fadeIn">
+    <div className={`flex flex-col items-center justify-start min-h-[85vh] w-full ${gameState === 'playing' ? 'max-w-2xl' : 'max-w-lg'} mx-auto py-3 px-2 animate-fadeIn transition-all`}>
       {/* Game Header HUD */}
       <GameHeaderHud
         title="心理实验模拟器"
@@ -425,42 +425,42 @@ export const PsychExperimentGame: React.FC = () => {
           </button>
         </div>
       ) : gameState === 'playing' && exp ? (
-        <div className="w-full game-arcade-card rounded-3xl p-6 sm:p-7 border-blue-200/80 shadow-2xl space-y-5 animate-fadeIn">
+        <div className="w-full game-arcade-card rounded-3xl p-6 sm:p-8 border-blue-200/80 shadow-2xl space-y-6 animate-fadeIn">
           {/* Experiment Header */}
           <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-black uppercase tracking-wider text-blue-700 bg-blue-50 px-2.5 py-0.5 rounded-lg border border-blue-200 font-numeric">
+            <div className="flex items-center justify-between mb-2.5">
+              <span className="text-xs sm:text-sm font-black uppercase tracking-wider text-blue-700 bg-blue-50 px-3 py-0.5 rounded-lg border border-blue-200 font-numeric">
                 实验 #{currentIndex + 1} / {activeExperiments.length}
               </span>
-              <span className="text-[11px] text-stone-500 font-mono font-bold">
+              <span className="text-xs sm:text-sm text-stone-500 font-mono font-bold">
                 {exp.researcher} ({exp.year})
               </span>
             </div>
-            <h2 className="text-xl font-black text-stone-900 font-serif-editorial">
+            <h2 className="text-xl sm:text-2xl font-black text-stone-900 font-serif-editorial">
               {exp.nameZh}
             </h2>
-            <p className="text-xs text-stone-500 font-mono italic mt-0.5">
+            <p className="text-xs sm:text-sm text-stone-500 font-mono italic mt-0.5">
               {exp.nameEn}
             </p>
           </div>
 
           {/* Background Scenario */}
-          <div className="p-4 bg-gradient-to-br from-blue-50/50 to-indigo-50/40 rounded-2xl border border-blue-200/60 text-xs text-stone-700 leading-relaxed shadow-sm">
-            <span className="font-bold text-blue-950 block mb-1 font-serif-editorial">
+          <div className="p-4 sm:p-5 bg-gradient-to-br from-blue-50/50 to-indigo-50/40 rounded-2xl border border-blue-200/60 text-sm sm:text-base text-stone-800 leading-relaxed shadow-sm">
+            <span className="font-bold text-blue-950 block mb-1.5 font-serif-editorial">
               🔬 实验情境设定：
             </span>
             {exp.background}
           </div>
 
           {/* Question / Dilemma */}
-          <div className="pt-2 border-t border-stone-200/60">
-            <h3 className="text-xs sm:text-sm font-black text-stone-900 mb-3.5 flex items-center gap-2">
-              <span className="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-xs">🎯</span>
+          <div className="pt-3 border-t border-stone-200/60">
+            <h3 className="text-lg sm:text-xl font-black text-stone-900 mb-4 flex items-start gap-2.5 leading-snug font-serif-editorial">
+              <span className="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center text-sm shrink-0 mt-0.5">🎯</span>
               <span>{exp.question}</span>
             </h3>
 
             {/* Randomized Choice Options */}
-            <div className="space-y-3">
+            <div className="space-y-3.5">
               {exp.choices.map((c) => {
                 const isSelected = userChoiceKey === c.key;
 
@@ -469,35 +469,35 @@ export const PsychExperimentGame: React.FC = () => {
                     key={c.key}
                     disabled={userChoiceKey !== null}
                     onClick={() => handleMakeChoice(c.key)}
-                    className={`w-full text-left p-4 rounded-2xl border-2 transition-all cursor-pointer relative overflow-hidden active:scale-98 ${
+                    className={`w-full text-left p-4 sm:p-5 rounded-2xl border-2 transition-all cursor-pointer relative overflow-hidden active:scale-98 ${
                       isSelected
                         ? 'bg-blue-50 border-blue-500 text-blue-950 font-bold shadow-md shadow-blue-500/10'
                         : userChoiceKey !== null
                         ? 'bg-white/80 border-stone-200 text-stone-700'
-                        : 'bg-white hover:bg-blue-50/50 border-stone-200 hover:border-blue-300 text-stone-800'
+                        : 'bg-white hover:bg-blue-50/50 border-stone-200 hover:border-blue-300 text-stone-900'
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <div className="text-xs sm:text-sm font-bold leading-relaxed">
+                      <div className="text-base sm:text-lg font-bold leading-relaxed">
                         {c.label}
                       </div>
                       {isSelected && (
-                        <CheckCircle2 className="w-5 h-5 text-blue-600 shrink-0 mt-0.5 animate-scaleUp" />
+                        <CheckCircle2 className="w-6 h-6 text-blue-600 shrink-0 mt-0.5 animate-scaleUp" />
                       )}
                     </div>
 
                     {/* Reveal Percentage Bar after choice */}
                     {userChoiceKey !== null && (
-                      <div className="mt-3 pt-2.5 border-t border-stone-200/60 space-y-1.5 animate-fadeIn">
-                        <div className="flex justify-between items-center text-xs font-numeric">
-                          <span className="text-stone-500 font-medium">{c.biasDescription}</span>
+                      <div className="mt-3.5 pt-3 border-t border-stone-200/60 space-y-2 animate-fadeIn">
+                        <div className="flex flex-wrap justify-between items-center gap-1 text-xs sm:text-sm font-numeric">
+                          <span className="text-stone-600 font-medium">{c.biasDescription}</span>
                           <span className="font-extrabold text-blue-700">
                             {c.globalPercentage}% 受试者做出此抉择
                           </span>
                         </div>
-                        <div className="w-full bg-stone-100 rounded-full h-2 overflow-hidden">
+                        <div className="w-full bg-stone-100 rounded-full h-2.5 overflow-hidden">
                           <div
-                            className="bg-gradient-to-r from-blue-600 to-cyan-500 h-2 rounded-full transition-all duration-700 shadow-sm"
+                            className="bg-gradient-to-r from-blue-600 to-cyan-500 h-2.5 rounded-full transition-all duration-700 shadow-sm"
                             style={{ width: `${c.globalPercentage}%` }}
                           />
                         </div>
@@ -511,17 +511,17 @@ export const PsychExperimentGame: React.FC = () => {
 
           {/* Deep Insight Reveal */}
           {userChoiceKey !== null && (
-            <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-50/70 to-blue-50/70 border border-blue-200/80 space-y-2.5 animate-fadeIn shadow-sm">
-              <div className="flex items-center gap-1.5 text-xs font-black text-indigo-950">
+            <div className="p-5 rounded-2xl bg-gradient-to-br from-indigo-50/70 to-blue-50/70 border border-blue-200/80 space-y-3 animate-fadeIn shadow-sm">
+              <div className="flex items-center gap-2 text-sm sm:text-base font-black text-indigo-950">
                 <Sparkles className="w-4 h-4 text-blue-600" />
                 <span>心理学核心洞察与规律</span>
               </div>
-              <p className="text-xs text-stone-700 leading-relaxed font-serif-editorial">
+              <p className="text-base text-stone-800 leading-relaxed font-serif-editorial">
                 {exp.insight}
               </p>
               <button
                 onClick={handleNext}
-                className="w-full mt-2 py-3 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                className="w-full mt-2 py-3.5 sm:py-4 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-sm sm:text-base rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-2"
               >
                 <span>{currentIndex < activeExperiments.length - 1 ? '进入下一实验范式' : '查看实验总结'}</span>
                 <ArrowRight className="w-4 h-4" />

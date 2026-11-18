@@ -23,6 +23,8 @@ import {
   Sparkle,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { useFontScale } from '../context/FontScaleContext';
+import { FloatingFontScaleControl } from '../components/ui/FloatingFontScaleControl';
 import {
   EMOTIONAL_PSYCHOLOGY_LAWS,
   EMOTIONAL_SECTIONS,
@@ -33,6 +35,7 @@ import { gameAudio } from '../utils/gameAudio';
 export const EmotionalLawsPage: React.FC = () => {
   const navigate = useNavigate();
   const { user, toggleBookmark } = useApp();
+  const { fontScale } = useFontScale();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSection, setSelectedSection] = useState<number | 'all'>('all');
@@ -93,7 +96,10 @@ export const EmotionalLawsPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8 sm:space-y-10 pb-20 animate-fadeIn max-w-5xl mx-auto">
+    <div
+      className="space-y-8 sm:space-y-10 pb-20 animate-fadeIn max-w-5xl mx-auto quiz-font-scope"
+      data-quiz-font-scale={fontScale}
+    >
       {/* 1. Grand Masterpiece Header: Museum Nocturne & Gold Foil Canvas */}
       <section className="relative rounded-3xl overflow-hidden art-salon-canvas text-white p-6 sm:p-10 md:p-12 border border-amber-500/30 shadow-[0_20px_50px_rgba(0,0,0,0.7)] transition-all">
         {/* Subtle Decorative Golden Ratio Geometry */}
@@ -615,6 +621,8 @@ export const EmotionalLawsPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      <FloatingFontScaleControl tone="dark" title="情感定律库字号" />
     </div>
   );
 };

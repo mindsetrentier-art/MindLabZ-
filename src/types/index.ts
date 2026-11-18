@@ -42,9 +42,18 @@ export interface StructuredLawData {
   evidence_level: string;
 }
 
+export type LoveDomainId =
+  | 'attachment-attraction'
+  | 'communication-resonance'
+  | 'cognition-bias'
+  | 'emotion-repair'
+  | 'boundary-safety'
+  | 'mate-dynamics'
+  | 'growth-autonomy';
+
 export interface PsychologyLaw {
   id: string;
-  codeId?: string; // e.g. LAW001 - LAW100
+  codeId?: string; // e.g. LAW001 - LAW100, LOVE001 - LOVE696
   chapter?: string;
   xpReward?: number;
   evidenceLevel?: string;
@@ -69,6 +78,13 @@ export interface PsychologyLaw {
   mastery: number; // 0 - 100
   relatedGame: GameType;
   icon: string;
+  isLoveCodex?: boolean;
+  loveDomainId?: LoveDomainId;
+  loveDomainTitle?: string;
+  subTag?: string;
+  assignedCityIndex?: number;
+  assignedCityZh?: string;
+  healthyBoundary?: string;
   experimentSetup?: {
     scenario: string;
     optionA: { label: string; biasDescription?: string; rationalDescription?: string; description?: string };
@@ -79,6 +95,7 @@ export interface PsychologyLaw {
 }
 
 export type GameType = 
+  | 'love-aleatoric-arena'
   | 'memory-lab' 
   | 'mind-trap' 
   | 'brain-rush' 

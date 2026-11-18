@@ -242,7 +242,7 @@ export const BystanderBreakerGame: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col items-center justify-start min-h-[85vh] w-full max-w-lg mx-auto py-2 px-2 animate-fadeIn space-y-4">
+    <div className="flex flex-col items-center justify-start min-h-[85vh] w-full max-w-2xl mx-auto py-2 px-2 animate-fadeIn space-y-5">
       {/* Game HUD */}
       <GameHeaderHud
         title="09 · 旁观者破局"
@@ -257,42 +257,42 @@ export const BystanderBreakerGame: React.FC = () => {
       />
 
       {scen && (
-        <div className="w-full game-arcade-card rounded-3xl p-6 border-orange-100 shadow-xl space-y-5 animate-fadeIn bg-white relative overflow-hidden">
+        <div className="w-full game-arcade-card rounded-3xl p-6 sm:p-8 border-orange-100 shadow-xl space-y-6 animate-fadeIn bg-white relative overflow-hidden">
           {/* Emergency Incident Banner */}
-          <div className="space-y-2 border-b border-stone-200/70 pb-4">
+          <div className="space-y-3 border-b border-stone-200/70 pb-4">
             <div className="flex items-center justify-between">
-              <span className="text-[10px] font-black text-rose-700 bg-rose-50 px-2.5 py-0.5 rounded-md border border-rose-200 font-mono flex items-center gap-1">
-                <Siren className="w-3.5 h-3.5 animate-pulse text-rose-600" />
+              <span className="text-xs font-black text-rose-700 bg-rose-50 px-2.5 py-1 rounded-md border border-rose-200 font-mono flex items-center gap-1.5">
+                <Siren className="w-4 h-4 animate-pulse text-rose-600" />
                 EMERGENCY ALERT #{currentIdx + 1} / {scenarios.length}
               </span>
             </div>
 
-            <h2 className="text-xl font-bold text-stone-900 font-serif-editorial">
+            <h2 className="text-xl sm:text-2xl font-bold text-stone-900 font-serif-editorial leading-snug">
               {scen.title}
             </h2>
 
-            <div className="p-3.5 bg-rose-50/70 rounded-2xl border border-rose-200 space-y-1">
-              <span className="text-[11px] font-bold text-rose-900 block font-serif-editorial">
+            <div className="p-4 bg-rose-50/70 rounded-2xl border border-rose-200 space-y-1.5">
+              <span className="text-xs sm:text-sm font-bold text-rose-900 block font-serif-editorial">
                 现场危急状况：
               </span>
-              <p className="text-xs text-stone-800 leading-relaxed font-sans">
+              <p className="text-sm sm:text-base text-stone-800 leading-relaxed font-sans">
                 {scen.emergency}
               </p>
             </div>
 
-            <div className="p-3 bg-stone-50 rounded-xl border border-stone-200 text-xs text-stone-600 font-sans">
+            <div className="p-3.5 bg-stone-50 rounded-xl border border-stone-200 text-sm sm:text-base text-stone-600 font-sans leading-relaxed">
               <strong>现场人群心理状态：</strong>{scen.crowdState}
             </div>
           </div>
 
           {/* Action Choice Buttons */}
-          <div className="space-y-3 pt-1">
-            <h4 className="text-xs font-bold text-stone-900 font-serif-editorial flex items-center gap-1.5">
-              <Megaphone className="w-4 h-4 text-orange-600" />
+          <div className="space-y-3.5 pt-1">
+            <h4 className="text-lg sm:text-xl font-bold text-stone-900 font-serif-editorial flex items-center gap-2">
+              <Megaphone className="w-5 h-5 text-orange-600 shrink-0" />
               <span>你立刻喊出的破局指令：</span>
             </h4>
 
-            <div className="grid grid-cols-1 gap-3">
+            <div className="grid grid-cols-1 gap-3.5">
               {scen.options.map((opt, idx) => {
                 const isSelected = selectedIdx === idx;
                 return (
@@ -301,7 +301,7 @@ export const BystanderBreakerGame: React.FC = () => {
                     disabled={gameState === 'result'}
                     onClick={() => handleSelectOption(idx)}
                     type="button"
-                    className={`w-full text-left p-4 rounded-2xl border-2 transition-all cursor-pointer ${
+                    className={`w-full text-left p-4.5 sm:p-5 rounded-2xl border-2 transition-all cursor-pointer ${
                       isSelected
                         ? opt.isEffective
                           ? 'bg-emerald-50 border-emerald-400 text-emerald-950 font-semibold shadow-md shadow-emerald-500/15'
@@ -309,26 +309,26 @@ export const BystanderBreakerGame: React.FC = () => {
                         : 'bg-white hover:bg-stone-50 border-stone-200 text-stone-800 hover:border-orange-300'
                     }`}
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <span className="text-xs sm:text-[13px] font-bold leading-snug font-sans">{opt.text}</span>
+                    <div className="flex items-start justify-between gap-3">
+                      <span className="text-base sm:text-lg font-bold leading-snug font-sans">{opt.text}</span>
                       {isSelected && (
                         opt.isEffective ? (
-                          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                          <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0 mt-0.5" />
                         ) : (
-                          <AlertTriangle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                          <AlertTriangle className="w-6 h-6 text-rose-600 shrink-0 mt-0.5" />
                         )
                       )}
                     </div>
 
                     {gameState === 'result' && (
-                      <div className="mt-3 pt-2.5 border-t border-stone-200/70 text-xs space-y-1 animate-fadeIn font-sans">
-                        <div className="flex items-center gap-2">
+                      <div className="mt-3.5 pt-3 border-t border-stone-200/70 space-y-1.5 animate-fadeIn font-sans">
+                        <div className="flex items-center gap-2 text-xs sm:text-sm">
                           <span className="text-stone-500 font-medium">责任锁定率:</span>
                           <span className={`font-bold font-numeric ${opt.isEffective ? 'text-emerald-600 font-black' : 'text-rose-600'}`}>
                             {opt.responsibilityLock}%
                           </span>
                         </div>
-                        <p className="text-stone-600 leading-relaxed font-normal">{opt.crowdReaction}</p>
+                        <p className="text-sm sm:text-base text-stone-700 leading-relaxed font-normal">{opt.crowdReaction}</p>
                       </div>
                     )}
                   </button>
@@ -341,10 +341,10 @@ export const BystanderBreakerGame: React.FC = () => {
             <button
               onClick={handleNext}
               type="button"
-              className="w-full py-4 bg-gradient-to-r from-orange-600 via-amber-600 to-red-600 hover:opacity-95 text-white font-bold text-xs sm:text-sm rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 game-btn-tactile animate-fadeIn"
+              className="w-full py-4 bg-gradient-to-r from-orange-600 via-amber-600 to-red-600 hover:opacity-95 text-white font-bold text-sm sm:text-base rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 game-btn-tactile animate-fadeIn"
             >
               <span>{currentIdx < scenarios.length - 1 ? '审视下一个危机场景' : '完成实验生成研报'}</span>
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
           )}
         </div>

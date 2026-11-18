@@ -261,7 +261,7 @@ export const AnchoringLabGame: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col items-center justify-start min-h-[85vh] w-full max-w-lg mx-auto py-2 px-2 animate-fadeIn space-y-4">
+    <div className="flex flex-col items-center justify-start min-h-[85vh] w-full max-w-2xl mx-auto py-2 px-2 animate-fadeIn space-y-5">
       {/* Game Header HUD */}
       <GameHeaderHud
         title="02 · 锚点实验室"
@@ -275,32 +275,32 @@ export const AnchoringLabGame: React.FC = () => {
       />
 
       {currentItem && (
-        <div className="w-full game-arcade-card rounded-3xl p-6 border-sky-100 shadow-xl space-y-5 animate-fadeIn relative overflow-hidden bg-white">
+        <div className="w-full game-arcade-card rounded-3xl p-6 sm:p-8 border-sky-100 shadow-xl space-y-6 animate-fadeIn relative overflow-hidden bg-white">
           {/* Item Header */}
-          <div className="border-b border-stone-200/70 pb-3.5 space-y-1.5">
-            <span className="text-[10px] font-black text-sky-700 bg-sky-50 px-2 py-0.5 rounded-md border border-sky-200 font-mono">
+          <div className="border-b border-stone-200/70 pb-4 space-y-2">
+            <span className="inline-block text-xs font-black text-sky-700 bg-sky-50 px-2.5 py-1 rounded-md border border-sky-200 font-mono">
               VALUATION #{currentIdx + 1} / {items.length} · {currentItem.category}
             </span>
-            <h2 className="text-xl font-bold text-stone-900 font-serif-editorial">
+            <h2 className="text-xl sm:text-2xl font-bold text-stone-900 font-serif-editorial leading-snug">
               {currentItem.title}
             </h2>
-            <p className="text-xs text-stone-600 leading-relaxed font-sans">
+            <p className="text-sm sm:text-base text-stone-600 leading-relaxed font-sans">
               {currentItem.description}
             </p>
           </div>
 
           {/* Anchor Clue Exposure Box */}
-          <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-300 space-y-2">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-amber-900">
-              <Anchor className="w-4 h-4 text-amber-600" />
+          <div className="p-4.5 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-300 space-y-2.5">
+            <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-amber-900">
+              <Anchor className="w-4 h-4 text-amber-600 shrink-0" />
               <span>你无意中接触到的前置参考信息（潜意识锚点）：</span>
             </div>
-            <p className="text-xs text-stone-700 leading-relaxed font-sans">
+            <p className="text-sm sm:text-base text-stone-700 leading-relaxed font-sans">
               {currentItem.anchorContext}
             </p>
-            <div className="pt-1 flex items-center justify-between">
-              <span className="text-xs text-stone-500 font-medium">先验锚定标价：</span>
-              <span className="text-base font-black text-amber-900 font-numeric bg-amber-100/80 px-2.5 py-0.5 rounded-lg border border-amber-300">
+            <div className="pt-1 flex items-center justify-between gap-2">
+              <span className="text-xs sm:text-sm text-stone-600 font-medium">先验锚定标价：</span>
+              <span className="text-lg sm:text-xl font-black text-amber-900 font-numeric bg-amber-100/80 px-3 py-1 rounded-lg border border-amber-300">
                 {currentItem.anchorValue.toLocaleString()} {currentItem.unit}
               </span>
             </div>
@@ -309,10 +309,10 @@ export const AnchoringLabGame: React.FC = () => {
           {/* Estimating View */}
           {gameState === 'estimating' ? (
             <div className="space-y-4 animate-fadeIn">
-              <div className="p-4.5 bg-stone-50 rounded-2xl border border-stone-200/80 space-y-3">
-                <div className="flex justify-between items-center text-xs">
+              <div className="p-5 bg-stone-50 rounded-2xl border border-stone-200/80 space-y-3.5">
+                <div className="flex justify-between items-center text-sm sm:text-base gap-2">
                   <span className="font-bold text-stone-800">请给出你的独立估值（滑动估价）：</span>
-                  <span className="text-lg font-black text-sky-600 font-numeric bg-sky-50 px-2.5 py-0.5 rounded-lg border border-sky-200">
+                  <span className="text-xl sm:text-2xl font-black text-sky-600 font-numeric bg-sky-50 px-3 py-1 rounded-lg border border-sky-200 shrink-0">
                     {userEstimate.toLocaleString()} {currentItem.unit}
                   </span>
                 </div>
@@ -324,10 +324,10 @@ export const AnchoringLabGame: React.FC = () => {
                   step={Math.round((currentItem.maxRange - currentItem.minRange) / 100)}
                   value={userEstimate}
                   onChange={(e) => handleEstimateChange(Number(e.target.value))}
-                  className="w-full accent-sky-600 cursor-pointer h-2 bg-stone-200 rounded-lg"
+                  className="w-full accent-sky-600 cursor-pointer h-2.5 bg-stone-200 rounded-lg"
                 />
 
-                <div className="flex justify-between text-[10px] text-stone-400 font-numeric font-medium">
+                <div className="flex justify-between text-xs sm:text-sm text-stone-500 font-numeric font-medium">
                   <span>最低标尺 {currentItem.minRange.toLocaleString()} {currentItem.unit}</span>
                   <span>最高标尺 {currentItem.maxRange.toLocaleString()} {currentItem.unit}</span>
                 </div>
@@ -336,37 +336,37 @@ export const AnchoringLabGame: React.FC = () => {
               <button
                 onClick={handleEstimateSubmit}
                 type="button"
-                className="w-full py-4 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white font-bold text-sm shadow-md shadow-sky-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 game-btn-tactile"
+                className="w-full py-4 rounded-2xl bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-600 hover:to-blue-700 text-white font-bold text-sm sm:text-base shadow-md shadow-sky-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 game-btn-tactile"
               >
                 <span>锁定估值，揭晓市场真相</span>
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
             </div>
           ) : (
             /* Revealed Comparison Screen */
             <div className="space-y-4 animate-fadeIn">
               <div className="grid grid-cols-2 gap-3 font-numeric text-center">
-                <div className="p-4 bg-stone-50 rounded-2xl border border-stone-200 shadow-2xs">
-                  <span className="text-[10px] text-stone-500 font-semibold block">你的独立估值</span>
-                  <span className="text-lg font-black text-stone-900 mt-1 block">
+                <div className="p-4.5 bg-stone-50 rounded-2xl border border-stone-200 shadow-2xs">
+                  <span className="text-xs sm:text-sm text-stone-500 font-semibold block">你的独立估值</span>
+                  <span className="text-xl sm:text-2xl font-black text-stone-900 mt-1.5 block">
                     {userEstimate.toLocaleString()} {currentItem.unit}
                   </span>
                 </div>
-                <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-300 shadow-2xs">
-                  <span className="text-[10px] text-emerald-700 font-semibold block">真实市场公允价</span>
-                  <span className="text-lg font-black text-emerald-700 mt-1 block">
+                <div className="p-4.5 bg-emerald-50 rounded-2xl border border-emerald-300 shadow-2xs">
+                  <span className="text-xs sm:text-sm text-emerald-700 font-semibold block">真实市场公允价</span>
+                  <span className="text-xl sm:text-2xl font-black text-emerald-700 mt-1.5 block">
                     {currentItem.actualMarketValue.toLocaleString()} {currentItem.unit}
                   </span>
                 </div>
               </div>
 
               {/* Debiasing Insight Box */}
-              <div className="p-4.5 bg-[#FAF8F5] rounded-2xl border border-amber-200 space-y-1.5 text-xs text-stone-700 shadow-2xs">
-                <div className="flex items-center gap-1.5 font-bold text-stone-900 font-serif-editorial">
-                  <Sparkles className="w-4 h-4 text-amber-600" />
+              <div className="p-5 bg-[#FAF8F5] rounded-2xl border border-amber-200 space-y-2 text-stone-700 shadow-2xs">
+                <div className="flex items-center gap-2 text-base font-bold text-stone-900 font-serif-editorial">
+                  <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
                   <span>去锚定破局深度复盘：</span>
                 </div>
-                <p className="leading-relaxed font-sans">
+                <p className="text-sm sm:text-base leading-relaxed font-sans">
                   {currentItem.debiasingHint}
                 </p>
               </div>
@@ -374,10 +374,10 @@ export const AnchoringLabGame: React.FC = () => {
               <button
                 onClick={handleNextItem}
                 type="button"
-                className="w-full py-4 rounded-2xl bg-gradient-to-r from-stone-900 via-slate-900 to-indigo-950 hover:opacity-95 text-white font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 game-btn-tactile"
+                className="w-full py-4 rounded-2xl bg-gradient-to-r from-stone-900 via-slate-900 to-indigo-950 hover:opacity-95 text-white font-bold text-sm sm:text-base shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 game-btn-tactile"
               >
                 <span>{currentIdx < items.length - 1 ? '审视下一个估值标的' : '生成实验研报'}</span>
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
             </div>
           )}

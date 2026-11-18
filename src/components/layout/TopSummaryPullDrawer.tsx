@@ -83,14 +83,16 @@ export const TopSummaryPullDrawer: React.FC<TopSummaryPullDrawerProps> = ({
   const updateOverlayPosition = useCallback(() => {
     if (containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
-      setOverlayTop(Math.max(0, Math.round(rect.bottom)));
+      const nextTop = Math.max(0, Math.round(rect.bottom));
+      setOverlayTop((prev) => (prev === nextTop ? prev : nextTop));
     }
   }, []);
 
   useEffect(() => {
     if (panelContentRef.current) {
       const measured = panelContentRef.current.scrollHeight + 48;
-      setTargetTrayHeight(Math.max(EXPANDED_TRAY_MIN_HEIGHT, measured));
+      const nextHeight = Math.max(EXPANDED_TRAY_MIN_HEIGHT, measured);
+      setTargetTrayHeight((prev) => (prev === nextHeight ? prev : nextHeight));
     }
   }, [user, journals, isExpanded]);
 

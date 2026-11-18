@@ -217,7 +217,7 @@ export const BrainRushGame: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col items-center justify-start min-h-[85vh] w-full max-w-lg mx-auto py-3 px-2 animate-fadeIn">
+    <div className={`flex flex-col items-center justify-start min-h-[85vh] w-full mx-auto py-3 px-2 animate-fadeIn transition-all ${gameState === 'playing' ? 'max-w-2xl' : 'max-w-lg'}`}>
       {/* Game Header HUD */}
       <GameHeaderHud
         title="注意力风暴"
@@ -334,23 +334,23 @@ export const BrainRushGame: React.FC = () => {
         </div>
       ) : (
         /* Playing Arena */
-        <div className="w-full flex flex-col items-center space-y-4 animate-fadeIn">
+        <div className="w-full flex flex-col items-center space-y-5 animate-fadeIn">
           {/* Timer & Velocity HUD */}
-          <div className="w-full flex justify-between items-center bg-white/90 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-stone-200/90 shadow-sm font-numeric">
+          <div className="w-full flex justify-between items-center bg-white/90 backdrop-blur-md px-5 py-3 rounded-2xl border border-stone-200/90 shadow-sm font-numeric">
             <div className="flex items-center gap-2">
               <div
-                className={`flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-black transition-all ${
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs sm:text-sm font-black transition-all ${
                   timeLeft <= 6
                     ? 'bg-rose-500 text-white shadow-[0_0_15px_rgba(244,63,94,0.6)] animate-pulse'
                     : 'bg-stone-900 text-white'
                 }`}
               >
-                <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                <Zap className="w-4 h-4 text-amber-400 fill-amber-400" />
                 <span>倒计时: {timeLeft}s</span>
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5 text-xs text-stone-600 font-bold">
+            <div className="flex items-center gap-2 text-xs sm:text-sm text-stone-600 font-bold">
               <span>命中: <strong className="text-emerald-600 font-extrabold">{correctCount}</strong></span>
               <span className="text-stone-300">/</span>
               <span>失误: <strong className="text-rose-500 font-extrabold">{wrongCount}</strong></span>
@@ -358,15 +358,15 @@ export const BrainRushGame: React.FC = () => {
           </div>
 
           {/* Warning / Indicator Banner */}
-          <div className="text-xs text-center font-bold">
+          <div className="text-sm sm:text-base text-center font-bold">
             {currentTrial?.isInverted ? (
-              <span className="text-rose-600 flex items-center justify-center gap-1.5 bg-rose-50 px-4 py-2 rounded-xl border border-rose-300 animate-pulse shadow-sm">
-                <AlertCircle className="w-4 h-4 text-rose-600" />
+              <span className="text-rose-600 flex items-center justify-center gap-2 bg-rose-50 px-5 py-2.5 rounded-xl border border-rose-300 animate-pulse shadow-sm">
+                <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
                 ⚠️ 逆向抑制警告：请按与中心箭头【完全相反】的方向！
               </span>
             ) : (
-              <span className="text-stone-700 flex items-center justify-center gap-1.5 bg-white px-4 py-2 rounded-xl border border-stone-200 shadow-sm">
-                <Sparkles className="w-4 h-4 text-emerald-500" />
+              <span className="text-stone-700 flex items-center justify-center gap-2 bg-white px-5 py-2.5 rounded-xl border border-stone-200 shadow-sm">
+                <Sparkles className="w-4 h-4 text-emerald-500 shrink-0" />
                 专注目标：仅看【正中心】箭头，毫秒屏蔽两侧干扰
               </span>
             )}
@@ -374,7 +374,7 @@ export const BrainRushGame: React.FC = () => {
 
           {/* Flanker Visual Target Cockpit */}
           <div
-            className={`w-full rounded-3xl p-8 sm:p-10 border-2 shadow-2xl flex items-center justify-center min-h-[180px] transition-all relative overflow-hidden ${
+            className={`w-full rounded-3xl p-8 sm:p-12 border-2 shadow-2xl flex items-center justify-center min-h-[210px] transition-all relative overflow-hidden ${
               currentTrial?.isInverted
                 ? 'bg-gradient-to-b from-rose-950 via-slate-950 to-stone-950 border-rose-500/40 shadow-rose-500/10'
                 : 'bg-gradient-to-b from-slate-900 via-stone-950 to-slate-950 border-emerald-500/30 shadow-emerald-500/10'
@@ -384,17 +384,17 @@ export const BrainRushGame: React.FC = () => {
             <div className="absolute inset-0 bg-radial-gradient from-emerald-500/10 via-transparent to-transparent pointer-events-none" />
 
             {currentTrial && (
-              <div className="flex items-center justify-center gap-3 sm:gap-4 select-none">
+              <div className="flex items-center justify-center gap-3.5 sm:gap-5 select-none">
                 {currentTrial.flankers.map((char, idx) => {
                   const isCenter = idx === currentTrial.centerIndex;
                   return (
                     <span
                       key={idx}
-                      className={`text-4xl sm:text-6xl font-black transition-all ${
+                      className={`text-5xl sm:text-7xl font-black transition-all ${
                         isCenter
                           ? currentTrial.isInverted
-                            ? 'text-rose-400 scale-125 px-3 py-1.5 bg-rose-950/80 rounded-2xl shadow-[0_0_25px_rgba(244,63,94,0.7)] border-2 border-rose-400 animate-pulse'
-                            : 'text-amber-300 scale-125 px-3 py-1.5 bg-amber-500/20 rounded-2xl shadow-[0_0_25px_rgba(245,158,11,0.7)] border-2 border-amber-300 animate-subtleFloat'
+                            ? 'text-rose-400 scale-125 px-3.5 py-2 bg-rose-950/80 rounded-2xl shadow-[0_0_25px_rgba(244,63,94,0.7)] border-2 border-rose-400 animate-pulse'
+                            : 'text-amber-300 scale-125 px-3.5 py-2 bg-amber-500/20 rounded-2xl shadow-[0_0_25px_rgba(245,158,11,0.7)] border-2 border-amber-300 animate-subtleFloat'
                           : 'text-slate-600 opacity-40 hover:opacity-50'
                       }`}
                     >
@@ -407,31 +407,31 @@ export const BrainRushGame: React.FC = () => {
           </div>
 
           {/* Responsive Arcade Controller Buttons */}
-          <div className="grid grid-cols-2 gap-3.5 sm:gap-4 w-full max-w-sm pt-2">
+          <div className="grid grid-cols-2 gap-4 w-full max-w-md pt-2">
             <button
               onClick={() => handleRespond('left')}
-              className="py-6 sm:py-7 rounded-2xl bg-white hover:bg-emerald-50/60 border-2 border-stone-200 hover:border-emerald-500/60 shadow-lg flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer group active:scale-95"
+              className="py-6 sm:py-7 rounded-2xl bg-white hover:bg-emerald-50/60 border-2 border-stone-200 hover:border-emerald-500/60 shadow-lg flex flex-col items-center justify-center gap-2 transition-all cursor-pointer group active:scale-95"
             >
-              <div className="w-12 h-12 rounded-xl bg-stone-100 group-hover:bg-emerald-500 group-hover:text-white flex items-center justify-center text-stone-800 transition-colors shadow-sm">
+              <div className="w-13 h-13 rounded-xl bg-stone-100 group-hover:bg-emerald-500 group-hover:text-white flex items-center justify-center text-stone-800 transition-colors shadow-sm">
                 <ArrowLeftIcon className="w-7 h-7 group-hover:scale-110 transition-transform" />
               </div>
-              <span className="text-xs font-black text-stone-900 group-hover:text-emerald-700">向左 (← 或 A)</span>
+              <span className="text-sm sm:text-base font-black text-stone-900 group-hover:text-emerald-700">向左 (← 或 A)</span>
             </button>
 
             <button
               onClick={() => handleRespond('right')}
-              className="py-6 sm:py-7 rounded-2xl bg-white hover:bg-emerald-50/60 border-2 border-stone-200 hover:border-emerald-500/60 shadow-lg flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer group active:scale-95"
+              className="py-6 sm:py-7 rounded-2xl bg-white hover:bg-emerald-50/60 border-2 border-stone-200 hover:border-emerald-500/60 shadow-lg flex flex-col items-center justify-center gap-2 transition-all cursor-pointer group active:scale-95"
             >
-              <div className="w-12 h-12 rounded-xl bg-stone-100 group-hover:bg-emerald-500 group-hover:text-white flex items-center justify-center text-stone-800 transition-colors shadow-sm">
+              <div className="w-13 h-13 rounded-xl bg-stone-100 group-hover:bg-emerald-500 group-hover:text-white flex items-center justify-center text-stone-800 transition-colors shadow-sm">
                 <ArrowRightIcon className="w-7 h-7 group-hover:scale-110 transition-transform" />
               </div>
-              <span className="text-xs font-black text-stone-900 group-hover:text-emerald-700">向右 (→ 或 D)</span>
+              <span className="text-sm sm:text-base font-black text-stone-900 group-hover:text-emerald-700">向右 (→ 或 D)</span>
             </button>
           </div>
 
           {lastFeedback && (
             <div
-              className={`text-xs font-black px-4 py-1.5 rounded-full shadow-md animate-bounce ${
+              className={`text-sm sm:text-base font-black px-5 py-2 rounded-full shadow-md animate-bounce ${
                 lastFeedback === 'correct'
                   ? 'bg-emerald-500 text-white shadow-emerald-500/30'
                   : 'bg-rose-500 text-white shadow-rose-500/30'

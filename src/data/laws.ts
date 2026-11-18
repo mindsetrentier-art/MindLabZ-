@@ -1,5 +1,6 @@
 import { PsychologyLaw, CategoryType, CategoryZh, DifficultyLevel, GameType } from '../types';
 import manifestData from '../../data/laws.manifest.json';
+import { LOVE_PSYCHOLOGY_LAWS } from './lovePsychologyCodex';
 
 const CORE_PSYCHOLOGY_LAWS: PsychologyLaw[] = [
   {
@@ -737,9 +738,16 @@ const UNIQUE_EMOTIONAL_LAWS: PsychologyLaw[] = EMOTIONAL_PSYCHOLOGY_LAWS
     };
   });
 
-export const INITIAL_PSYCHOLOGY_LAWS: PsychologyLaw[] = [
+export const CORE_AND_EMOTIONAL_LAWS: PsychologyLaw[] = [
   ...CORE_MANIFEST_LAWS,
   ...UNIQUE_EMOTIONAL_LAWS,
 ];
 
+export { LOVE_PSYCHOLOGY_LAWS };
+
+export const INITIAL_PSYCHOLOGY_LAWS: PsychologyLaw[] = [
+  ...CORE_MANIFEST_LAWS,
+  ...UNIQUE_EMOTIONAL_LAWS,
+  ...LOVE_PSYCHOLOGY_LAWS,
+];
 

@@ -248,7 +248,7 @@ export const MicroHabitGame: React.FC = () => {
   const currentStepNum = gameState === 'step1' ? 1 : gameState === 'step2' ? 2 : 3;
 
   return (
-    <div className="flex flex-col items-center justify-start min-h-[85vh] w-full max-w-lg mx-auto py-2 px-2 animate-fadeIn space-y-4">
+    <div className="flex flex-col items-center justify-start min-h-[85vh] w-full max-w-2xl mx-auto py-2 px-2 animate-fadeIn space-y-5">
       {/* Game HUD */}
       <GameHeaderHud
         title="08 · 微习惯设计师"
@@ -261,62 +261,62 @@ export const MicroHabitGame: React.FC = () => {
         accentColor="#14B8A6"
       />
 
-      <div className="w-full game-arcade-card rounded-3xl p-6 border-teal-100 shadow-xl space-y-5 animate-fadeIn bg-white relative overflow-hidden">
+      <div className="w-full game-arcade-card rounded-3xl p-6 sm:p-8 border-teal-100 shadow-xl space-y-6 animate-fadeIn bg-white relative overflow-hidden">
         {/* Goal Card */}
-        <div className="p-4 bg-gradient-to-r from-teal-50 to-cyan-50 rounded-2xl border border-teal-200 space-y-1 shadow-2xs">
-          <span className="text-[10px] font-black text-teal-800 bg-teal-100/90 px-2 py-0.5 rounded-md font-mono">
+        <div className="p-4.5 sm:p-5 bg-gradient-to-r from-teal-50 to-cyan-50 rounded-2xl border border-teal-200 space-y-1.5 shadow-2xs">
+          <span className="inline-block text-xs font-black text-teal-800 bg-teal-100/90 px-2.5 py-0.5 rounded-md font-mono">
             HABIT BLUEPRINT #{currentStepNum} / 3
           </span>
-          <h2 className="text-lg font-bold text-stone-900 font-serif-editorial">
+          <h2 className="text-xl sm:text-2xl font-bold text-stone-900 font-serif-editorial leading-snug">
             {currentGoal.title}
           </h2>
-          <p className="text-xs text-stone-600 italic font-serif-editorial">
+          <p className="text-sm sm:text-base text-stone-600 italic font-serif-editorial leading-relaxed">
             {currentGoal.vaguePrompt}
           </p>
         </div>
 
         {/* 3 Step Interactive Circuit Nodes Tracker */}
-        <div className="flex items-center justify-between gap-1 p-2 bg-stone-50 rounded-2xl border border-stone-200 text-xs font-bold font-numeric">
-          <div className={`flex-1 py-1.5 px-2 rounded-xl text-center transition-all ${currentStepNum >= 1 ? 'bg-teal-600 text-white shadow-xs' : 'text-stone-400'}`}>
+        <div className="flex items-center justify-between gap-1.5 p-2.5 bg-stone-50 rounded-2xl border border-stone-200 text-xs sm:text-sm font-bold font-numeric">
+          <div className={`flex-1 py-2 px-2 rounded-xl text-center transition-all ${currentStepNum >= 1 ? 'bg-teal-600 text-white shadow-xs' : 'text-stone-400'}`}>
             1. 阻力切割
           </div>
           <span className="text-stone-300">→</span>
-          <div className={`flex-1 py-1.5 px-2 rounded-xl text-center transition-all ${currentStepNum >= 2 ? 'bg-teal-600 text-white shadow-xs' : 'text-stone-400'}`}>
+          <div className={`flex-1 py-2 px-2 rounded-xl text-center transition-all ${currentStepNum >= 2 ? 'bg-teal-600 text-white shadow-xs' : 'text-stone-400'}`}>
             2. 习惯锚点
           </div>
           <span className="text-stone-300">→</span>
-          <div className={`flex-1 py-1.5 px-2 rounded-xl text-center transition-all ${currentStepNum >= 3 ? 'bg-teal-600 text-white shadow-xs' : 'text-stone-400'}`}>
+          <div className={`flex-1 py-2 px-2 rounded-xl text-center transition-all ${currentStepNum >= 3 ? 'bg-teal-600 text-white shadow-xs' : 'text-stone-400'}`}>
             3. 环境架构
           </div>
         </div>
 
         {/* STEP 1: Friction reduction */}
         {gameState === 'step1' && (
-          <div className="space-y-3.5 animate-fadeIn">
-            <div className="space-y-0.5">
-              <h4 className="text-xs font-bold text-stone-900 flex items-center gap-1.5 font-serif-editorial">
-                <Target className="w-4 h-4 text-teal-600" />
+          <div className="space-y-4 animate-fadeIn">
+            <div className="space-y-1">
+              <h4 className="text-lg sm:text-xl font-bold text-stone-900 flex items-center gap-2 font-serif-editorial">
+                <Target className="w-5 h-5 text-teal-600 shrink-0" />
                 <span>第 1 步：动作阻力切割（2分钟定律）</span>
               </h4>
-              <p className="text-xs text-stone-500 font-sans">
+              <p className="text-sm sm:text-base text-stone-600 font-sans leading-relaxed">
                 请选择阻力极小、大脑最不可能找借口拒绝的【原子微行动】：
               </p>
             </div>
 
-            <div className="space-y-2.5">
+            <div className="space-y-3">
               {currentGoal.microActions.map((action, idx) => (
                 <button
                   key={idx}
                   onClick={() => handleFinishStep1(idx)}
                   type="button"
-                  className={`w-full text-left p-4 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between active:scale-98 shadow-2xs ${
+                  className={`w-full text-left p-4.5 sm:p-5 rounded-2xl border-2 transition-all cursor-pointer flex items-center justify-between gap-3 active:scale-98 shadow-2xs ${
                     action.isOptimal
                       ? 'bg-white hover:bg-teal-50 border-stone-200 hover:border-teal-400'
                       : 'bg-stone-50 hover:bg-stone-100 border-stone-200'
                   }`}
                 >
-                  <span className="text-xs sm:text-[13px] font-bold text-stone-800 font-sans">{action.text}</span>
-                  <span className={`text-[10px] px-2.5 py-1 rounded-lg font-numeric font-bold shrink-0 ml-2 ${action.isOptimal ? 'bg-teal-100 text-teal-800' : 'bg-stone-200 text-stone-600'}`}>
+                  <span className="text-base sm:text-lg font-bold text-stone-800 font-sans leading-snug">{action.text}</span>
+                  <span className={`text-xs px-3 py-1 rounded-lg font-numeric font-bold shrink-0 ${action.isOptimal ? 'bg-teal-100 text-teal-800' : 'bg-stone-200 text-stone-600'}`}>
                     {action.frictionLevel}
                   </span>
                 </button>
@@ -327,27 +327,27 @@ export const MicroHabitGame: React.FC = () => {
 
         {/* STEP 2: Anchor identification */}
         {gameState === 'step2' && (
-          <div className="space-y-3.5 animate-fadeIn">
-            <div className="space-y-0.5">
-              <h4 className="text-xs font-bold text-stone-900 flex items-center gap-1.5 font-serif-editorial">
-                <Layers className="w-4 h-4 text-teal-600" />
+          <div className="space-y-4 animate-fadeIn">
+            <div className="space-y-1">
+              <h4 className="text-lg sm:text-xl font-bold text-stone-900 flex items-center gap-2 font-serif-editorial">
+                <Layers className="w-5 h-5 text-teal-600 shrink-0" />
                 <span>第 2 步：习惯叠加锚点（Habit Stacking）</span>
               </h4>
-              <p className="text-xs text-stone-500 font-sans">
+              <p className="text-sm sm:text-base text-stone-600 font-sans leading-relaxed">
                 挑选一个你每天都会稳定发生的【既有生活基石习惯】作为触发提示：
               </p>
             </div>
 
-            <div className="space-y-2.5">
+            <div className="space-y-3">
               {currentGoal.existingAnchors.map((anchor, idx) => (
                 <button
                   key={idx}
                   onClick={() => handleFinishStep2(anchor)}
                   type="button"
-                  className="w-full text-left p-4 rounded-2xl border-2 border-stone-200 hover:border-teal-400 bg-white hover:bg-teal-50 transition-all text-xs sm:text-[13px] font-bold text-stone-800 cursor-pointer flex items-center justify-between active:scale-98 shadow-2xs font-sans"
+                  className="w-full text-left p-4.5 sm:p-5 rounded-2xl border-2 border-stone-200 hover:border-teal-400 bg-white hover:bg-teal-50 transition-all text-base sm:text-lg font-bold text-stone-800 cursor-pointer flex items-center justify-between gap-3 active:scale-98 shadow-2xs font-sans leading-snug"
                 >
                   <span>{anchor}</span>
-                  <ArrowRight className="w-4 h-4 text-teal-600 shrink-0" />
+                  <ArrowRight className="w-5 h-5 text-teal-600 shrink-0" />
                 </button>
               ))}
             </div>
@@ -356,27 +356,27 @@ export const MicroHabitGame: React.FC = () => {
 
         {/* STEP 3: Environmental architecture */}
         {gameState === 'step3' && (
-          <div className="space-y-3.5 animate-fadeIn">
-            <div className="space-y-0.5">
-              <h4 className="text-xs font-bold text-stone-900 flex items-center gap-1.5 font-serif-editorial">
-                <Cpu className="w-4 h-4 text-teal-600" />
+          <div className="space-y-4 animate-fadeIn">
+            <div className="space-y-1">
+              <h4 className="text-lg sm:text-xl font-bold text-stone-900 flex items-center gap-2 font-serif-editorial">
+                <Cpu className="w-5 h-5 text-teal-600 shrink-0" />
                 <span>第 3 步：物理环境选择架构（Choice Architecture）</span>
               </h4>
-              <p className="text-xs text-stone-500 font-sans">
+              <p className="text-sm sm:text-base text-stone-600 font-sans leading-relaxed">
                 重新布置你的房间或桌面，让好习惯的阻力降至 0：
               </p>
             </div>
 
-            <div className="space-y-2.5">
+            <div className="space-y-3">
               {currentGoal.environmentTweaks.map((tweak, idx) => (
                 <button
                   key={idx}
                   onClick={() => handleFinishStep3(tweak)}
                   type="button"
-                  className="w-full text-left p-4 rounded-2xl border-2 border-stone-200 hover:border-teal-400 bg-white hover:bg-teal-50 transition-all text-xs sm:text-[13px] font-bold text-stone-800 cursor-pointer flex items-center justify-between active:scale-98 shadow-2xs font-sans"
+                  className="w-full text-left p-4.5 sm:p-5 rounded-2xl border-2 border-stone-200 hover:border-teal-400 bg-white hover:bg-teal-50 transition-all text-base sm:text-lg font-bold text-stone-800 cursor-pointer flex items-center justify-between gap-3 active:scale-98 shadow-2xs font-sans leading-snug"
                 >
                   <span>{tweak}</span>
-                  <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0" />
+                  <CheckCircle2 className="w-5 h-5 text-teal-600 shrink-0" />
                 </button>
               ))}
             </div>

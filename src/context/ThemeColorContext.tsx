@@ -71,21 +71,25 @@ export const ThemeColorProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     if (!isAutoCycling) return;
 
     const timer = window.setInterval(() => {
-      setSecondsRemaining((prev) => {
-        if (prev <= 1) {
-          setCurrentId((currId) => {
-            const idx = filteredPalette.findIndex((c) => c.id === currId);
-            const nextIdx = idx >= 0 ? (idx + 1) % filteredPalette.length : 0;
-            return filteredPalette[nextIdx].id;
-          });
-          return CYCLE_INTERVAL_SECONDS;
-        }
-        return prev - 1;
-      });
+      setSecondsRemaining((prev) => (prev <= 1 ? CYCLE_INTERVAL_SECONDS : prev - 1));
     }, 1000);
 
     return () => window.clearInterval(timer);
-  }, [isAutoCycling, filteredPalette]);
+  }, [isAutoCycling]);
+
+  // Advance theme color cleanly after countdown resets to full cycle
+  const prevSecondsRef = React.useRef<number>(secondsRemaining);
+  useEffect(() => {
+    const prev = prevSecondsRef.current;
+    prevSecondsRef.current = secondsRemaining;
+    if (isAutoCycling && prev === 1 && secondsRemaining === CYCLE_INTERVAL_SECONDS) {
+      setCurrentId((currId) => {
+        const idx = filteredPalette.findIndex((c) => c.id === currId);
+        const nextIdx = idx >= 0 ? (idx + 1) % filteredPalette.length : 0;
+        return filteredPalette[nextIdx].id;
+      });
+    }
+  }, [secondsRemaining, isAutoCycling, filteredPalette]);
 
   // Dynamically update CSS variables on document root
   useEffect(() => {

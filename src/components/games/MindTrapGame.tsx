@@ -317,7 +317,7 @@ export const MindTrapGame: React.FC = () => {
   const currentTrial = trials[currentTrialIndex];
 
   return (
-    <div className="flex flex-col items-center justify-start min-h-[85vh] w-full max-w-lg mx-auto py-3 px-2 animate-fadeIn">
+    <div className={`flex flex-col items-center justify-start min-h-[85vh] w-full ${gameState === 'playing' ? 'max-w-2xl' : 'max-w-lg'} mx-auto py-3 px-2 animate-fadeIn transition-all`}>
       {/* Game Header HUD */}
       <GameHeaderHud
         title="思维陷阱解密"
@@ -436,13 +436,13 @@ export const MindTrapGame: React.FC = () => {
         /* Active Trial Arena */
         <div className="w-full flex flex-col items-center space-y-4 animate-fadeIn">
           {/* Progress and Countdown Bar */}
-          <div className="w-full flex justify-between items-center bg-white/90 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-stone-200/90 shadow-sm font-numeric">
-            <div className="flex items-center gap-2">
-              <span className="px-2.5 py-1 bg-gradient-to-r from-rose-600 to-amber-600 text-white font-black rounded-lg text-xs shadow-sm">
+          <div className="w-full flex justify-between items-center bg-white/90 backdrop-blur-md px-4 sm:px-5 py-3 rounded-2xl border border-stone-200/90 shadow-sm font-numeric">
+            <div className="flex items-center gap-2.5">
+              <span className="px-3 py-1 bg-gradient-to-r from-rose-600 to-amber-600 text-white font-black rounded-lg text-xs sm:text-sm shadow-sm">
                 #{currentTrialIndex + 1} / {trials.length}
               </span>
               <div
-                className={`flex items-center gap-1 px-2.5 py-0.5 rounded-lg text-xs font-black ${
+                className={`flex items-center gap-1 px-3 py-1 rounded-lg text-xs sm:text-sm font-black ${
                   timeLeft <= 8 ? 'bg-rose-500 text-white animate-pulse' : 'bg-stone-900 text-white'
                 }`}
               >
@@ -450,7 +450,7 @@ export const MindTrapGame: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex items-center gap-1.5 text-xs text-stone-600 font-bold">
+            <div className="flex items-center gap-2 text-xs sm:text-sm text-stone-600 font-bold">
               <span>正确: <strong className="text-emerald-600 font-extrabold">{correctCount}</strong></span>
               <span className="text-stone-300">/</span>
               <span>错误: <strong className="text-rose-500 font-extrabold">{wrongCount}</strong></span>
@@ -459,20 +459,20 @@ export const MindTrapGame: React.FC = () => {
 
           {currentTrial && currentTrial.type === 'stroop' ? (
             /* Stroop Question Screen */
-            <div className="w-full game-arcade-card rounded-3xl p-6 sm:p-7 border-rose-200/80 shadow-2xl text-center space-y-5">
-              <div className="flex justify-between items-center text-xs font-bold">
-                <span className="text-stone-500 font-mono">STROOP TASK</span>
-                <span className={`${currentTrial.isInverted ? 'text-purple-600 font-black animate-pulse' : 'text-rose-600'}`}>
+            <div className="w-full game-arcade-card rounded-3xl p-6 sm:p-8 border-rose-200/80 shadow-2xl text-center space-y-6">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-1.5 text-sm sm:text-base font-bold">
+                <span className="text-stone-500 font-mono text-xs sm:text-sm">STROOP TASK</span>
+                <span className={`${currentTrial.isInverted ? 'text-purple-700 font-black animate-pulse' : 'text-rose-700'}`}>
                   {currentTrial.instruction}
                 </span>
               </div>
 
               {/* Stimulus Word Display */}
-              <div className={`py-9 my-2 rounded-2xl border-2 flex items-center justify-center transition-all shadow-inner ${
+              <div className={`py-11 sm:py-12 my-2 rounded-2xl border-2 flex items-center justify-center transition-all shadow-inner ${
                 currentTrial.isInverted ? 'bg-purple-950/20 border-purple-300 shadow-purple-500/10' : 'bg-stone-900/90 border-stone-700/80'
               }`}>
                 <span
-                  className="text-5xl sm:text-6xl font-black tracking-widest transition-all select-none drop-shadow-md font-serif-editorial"
+                  className="text-6xl sm:text-7xl font-black tracking-widest transition-all select-none drop-shadow-md font-serif-editorial"
                   style={{ color: currentTrial.colorCode }}
                 >
                   {currentTrial.wordText}
@@ -480,15 +480,15 @@ export const MindTrapGame: React.FC = () => {
               </div>
 
               {/* Color Options */}
-              <div className={`grid gap-3 ${currentTrial.options.length === 4 ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'}`}>
+              <div className={`grid gap-3.5 ${currentTrial.options.length === 4 ? 'grid-cols-2 sm:grid-cols-4' : 'grid-cols-3'}`}>
                 {currentTrial.options.map((opt, idx) => (
                   <button
                     key={idx}
                     onClick={() => handleAnswer(opt)}
-                    className="py-3.5 rounded-2xl bg-white hover:bg-rose-50 border-2 border-stone-200 hover:border-rose-400 text-stone-900 font-black text-xs sm:text-sm transition-all cursor-pointer flex items-center justify-center gap-2 shadow-sm group active:scale-95"
+                    className="py-4 sm:py-5 px-3 rounded-2xl bg-white hover:bg-rose-50 border-2 border-stone-200 hover:border-rose-400 text-stone-900 font-black text-base sm:text-lg transition-all cursor-pointer flex items-center justify-center gap-2.5 shadow-sm group active:scale-95"
                   >
                     <span
-                      className="w-3.5 h-3.5 rounded-full shrink-0 ring-2 ring-stone-200 group-hover:scale-125 transition-transform"
+                      className="w-4 h-4 rounded-full shrink-0 ring-2 ring-stone-200 group-hover:scale-125 transition-transform"
                       style={{ backgroundColor: COLOR_MAP[opt] }}
                     />
                     <span>{opt}</span>
@@ -498,27 +498,30 @@ export const MindTrapGame: React.FC = () => {
             </div>
           ) : currentTrial && currentTrial.type === 'reflection' ? (
             /* CRT Reflection Riddle */
-            <div className="w-full game-arcade-card rounded-3xl p-6 sm:p-7 border-amber-200/80 shadow-2xl space-y-4">
-              <div className="flex justify-between items-center text-xs font-bold">
-                <span className="text-amber-600 flex items-center gap-1.5 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200">
+            <div className="w-full game-arcade-card rounded-3xl p-6 sm:p-9 border-amber-200/80 shadow-2xl space-y-6">
+              <div className="flex justify-between items-center text-xs sm:text-sm font-bold">
+                <span className="text-amber-700 flex items-center gap-1.5 bg-amber-50 px-3 py-1 rounded-lg border border-amber-200">
                   <AlertTriangle className="w-4 h-4 text-amber-500" />
                   认知反思陷阱题 (CRT)
                 </span>
                 <span className="text-stone-500 font-mono">System 2 激活</span>
               </div>
 
-              <h3 className="text-sm sm:text-base font-extrabold text-stone-900 leading-snug font-serif-editorial p-1">
+              <h3 className="text-xl sm:text-2xl font-extrabold text-stone-900 leading-relaxed font-serif-editorial px-1">
                 {currentTrial.question}
               </h3>
 
-              <div className="space-y-2.5 pt-1">
+              <div className="space-y-3 pt-1">
                 {currentTrial.options.map((opt, idx) => (
                   <button
                     key={idx}
                     onClick={() => handleAnswer(opt)}
-                    className="w-full text-left p-4 rounded-2xl bg-white hover:bg-amber-50/70 border-2 border-stone-200/90 hover:border-amber-400 text-stone-800 hover:text-stone-950 font-bold text-xs transition-all cursor-pointer shadow-sm active:scale-98"
+                    className="w-full text-left p-4 sm:p-5 rounded-2xl bg-white hover:bg-amber-50/70 border-2 border-stone-200/90 hover:border-amber-400 text-stone-900 hover:text-stone-950 font-bold text-base sm:text-lg leading-relaxed transition-all cursor-pointer shadow-sm active:scale-98 flex items-center gap-3"
                   >
-                    {opt}
+                    <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-amber-50 text-amber-800 border border-amber-200 flex items-center justify-center text-xs sm:text-sm font-mono font-bold shrink-0">
+                      {String.fromCharCode(65 + idx)}
+                    </span>
+                    <span>{opt}</span>
                   </button>
                 ))}
               </div>
@@ -527,7 +530,7 @@ export const MindTrapGame: React.FC = () => {
 
           {lastFeedback && (
             <div
-              className={`text-xs font-black px-4 py-1.5 rounded-full shadow-md animate-bounce ${
+              className={`text-sm sm:text-base font-black px-5 py-2 rounded-full shadow-md animate-bounce ${
                 lastFeedback === 'correct'
                   ? 'bg-emerald-500 text-white shadow-emerald-500/30'
                   : 'bg-rose-500 text-white shadow-rose-500/30'

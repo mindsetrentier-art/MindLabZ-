@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import { TopHeader } from './TopHeader';
 import { TopGeoTimeWeatherBar } from './TopGeoTimeWeatherBar';
@@ -18,6 +18,11 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
   const { setAiTutorOpen } = useApp();
   const [geoBarVisible, setGeoBarVisible] = useState<boolean>(true);
   const [geoBarExpanded, setGeoBarExpanded] = useState<boolean>(false);
+
+  const handleGeoVisibilityChange = useCallback((visible: boolean, expanded: boolean) => {
+    setGeoBarVisible((prev) => (prev === visible ? prev : visible));
+    setGeoBarExpanded((prev) => (prev === expanded ? prev : expanded));
+  }, []);
 
   // Determine if we should show back button or special title in header
   const getHeaderConfig = () => {
@@ -48,12 +53,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
       {/* 2. Main Responsive Shell (Generous Whitespace & Editorial Balance) */}
       <div className="w-full max-w-2xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl min-h-screen flex flex-col relative z-10 bg-transparent pb-36">
         {/* Top Edge Bar: Date, Live Time, High-Precision GPS Location, Real-Time Weather & Temp (Auto-hides after 5s unless clicked) */}
-        <TopGeoTimeWeatherBar
-          onVisibilityChange={(visible, expanded) => {
-            setGeoBarVisible(visible);
-            setGeoBarExpanded(expanded);
-          }}
-        />
+        <TopGeoTimeWeatherBar onVisibilityChange={handleGeoVisibilityChange} />
 
         {/* Top Header (Editorial Glass Header) */}
         <TopHeader

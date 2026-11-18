@@ -219,7 +219,7 @@ export const AttributionShiftGame: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col items-center justify-start min-h-[85vh] w-full max-w-lg mx-auto py-2 px-2 animate-fadeIn space-y-4">
+    <div className="flex flex-col items-center justify-start min-h-[85vh] w-full max-w-2xl mx-auto py-2 px-2 animate-fadeIn space-y-5">
       {/* Game HUD */}
       <GameHeaderHud
         title="06 · 换位不读心"
@@ -233,67 +233,67 @@ export const AttributionShiftGame: React.FC = () => {
       />
 
       {scen && (
-        <div className="w-full game-arcade-card rounded-3xl p-6 border-purple-100 shadow-xl space-y-5 animate-fadeIn bg-white relative overflow-hidden">
+        <div className="w-full game-arcade-card rounded-3xl p-6 sm:p-8 border-purple-100 shadow-xl space-y-6 animate-fadeIn bg-white relative overflow-hidden">
           {/* Scenario Trigger Card */}
-          <div className="p-4 bg-gradient-to-r from-rose-50 to-orange-50 rounded-2xl border border-rose-200 space-y-1.5 shadow-2xs">
-            <span className="text-[10px] font-black text-rose-800 bg-rose-100/90 px-2 py-0.5 rounded-md font-mono">
+          <div className="p-4.5 sm:p-5 bg-gradient-to-r from-rose-50 to-orange-50 rounded-2xl border border-rose-200 space-y-2 shadow-2xs">
+            <span className="inline-block text-xs font-black text-rose-800 bg-rose-100/90 px-2.5 py-0.5 rounded-md font-mono">
               TRIGGER EVENT #{currentIdx + 1} / {scenarios.length}
             </span>
-            <p className="text-xs sm:text-[13px] font-bold text-stone-900 leading-snug font-sans">
+            <p className="text-base sm:text-lg font-bold text-stone-900 leading-snug font-sans">
               {scen.triggerEvent}
             </p>
           </div>
 
           {/* Internal Blame Callout */}
-          <div className="p-3.5 bg-stone-50 rounded-2xl border border-stone-200 text-xs text-stone-600 italic font-serif-editorial">
+          <div className="p-4 bg-stone-50 rounded-2xl border border-stone-200 text-sm sm:text-base text-stone-600 italic font-serif-editorial leading-relaxed">
             {scen.internalBlame}
           </div>
 
           {/* Clues Flip Cards */}
-          <div className="space-y-3">
-            <h4 className="text-xs font-bold text-stone-900 flex items-center justify-between font-serif-editorial">
-              <span className="flex items-center gap-1.5">
-                <Sparkles className="w-4 h-4 text-purple-600" />
+          <div className="space-y-3.5">
+            <h4 className="text-base sm:text-lg font-bold text-stone-900 flex items-center justify-between gap-2 font-serif-editorial">
+              <span className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-purple-600 shrink-0" />
                 点击翻开隐藏在背后的客观真实情境：
               </span>
-              <span className="text-[11px] font-numeric text-purple-600 font-bold">
+              <span className="text-xs sm:text-sm font-numeric text-purple-600 font-bold shrink-0">
                 已翻开 {revealedClues.length} / {scen.hiddenContext.length}
               </span>
             </h4>
 
-            <div className="space-y-2.5">
+            <div className="space-y-3">
               {scen.hiddenContext.map((c, idx) => {
                 const isRevealed = revealedClues.includes(idx);
                 return (
                   <div
                     key={idx}
                     onClick={() => handleRevealClue(idx)}
-                    className={`p-4 rounded-2xl border-2 transition-all cursor-pointer ${
+                    className={`p-4.5 sm:p-5 rounded-2xl border-2 transition-all cursor-pointer ${
                       isRevealed
                         ? 'bg-purple-50/80 border-purple-300 shadow-xs'
                         : 'bg-stone-50 hover:bg-stone-100 border-stone-200/90 border-dashed text-stone-400 hover:border-purple-300'
                     }`}
                   >
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="font-bold text-purple-950 flex items-center gap-1.5">
+                    <div className="flex justify-between items-center text-sm sm:text-base gap-2">
+                      <span className="font-bold text-purple-950 flex items-center gap-2">
                         {isRevealed ? (
-                          <Unlock className="w-3.5 h-3.5 text-purple-600" />
+                          <Unlock className="w-4 h-4 text-purple-600 shrink-0" />
                         ) : (
-                          <Lock className="w-3.5 h-3.5 text-stone-400" />
+                          <Lock className="w-4 h-4 text-stone-400 shrink-0" />
                         )}
                         线索 #{idx + 1}：{c.clue}
                       </span>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-white border border-stone-200">
+                      <span className="text-xs font-bold px-2.5 py-0.5 rounded-full bg-white border border-stone-200 shrink-0">
                         {isRevealed ? '已探明' : '点击解锁'}
                       </span>
                     </div>
 
                     {isRevealed ? (
-                      <p className="text-xs text-stone-700 leading-relaxed mt-2 animate-fadeIn font-sans">
+                      <p className="text-sm sm:text-base text-stone-700 leading-relaxed mt-2.5 animate-fadeIn font-sans">
                         {c.details}
                       </p>
                     ) : (
-                      <div className="py-2 text-center text-xs text-stone-400 font-medium">
+                      <div className="py-2 text-center text-sm text-stone-400 font-medium">
                         🔒 锁定中（点击透视客观不可抗力情境）
                       </div>
                     )}
@@ -305,12 +305,12 @@ export const AttributionShiftGame: React.FC = () => {
 
           {/* Empathy Shift Callout */}
           {revealedClues.length === scen.hiddenContext.length && (
-            <div className="p-4.5 bg-emerald-50/90 rounded-2xl border-2 border-emerald-300 text-xs text-emerald-950 space-y-1.5 animate-fadeIn shadow-2xs">
-              <span className="font-bold flex items-center gap-1.5 font-serif-editorial text-sm text-emerald-900">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+            <div className="p-5 bg-emerald-50/90 rounded-2xl border-2 border-emerald-300 text-emerald-950 space-y-2 animate-fadeIn shadow-2xs">
+              <span className="font-bold flex items-center gap-2 font-serif-editorial text-base sm:text-lg text-emerald-900">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
                 <span>换位归因达成：停止无端恶意读心</span>
               </span>
-              <p className="text-xs text-stone-700 leading-relaxed font-sans">
+              <p className="text-sm sm:text-base text-stone-700 leading-relaxed font-sans">
                 {scen.empathyShiftReasoning}
               </p>
             </div>
@@ -320,14 +320,14 @@ export const AttributionShiftGame: React.FC = () => {
             disabled={revealedClues.length < scen.hiddenContext.length}
             onClick={handleNext}
             type="button"
-            className={`w-full py-4 font-bold text-xs sm:text-sm rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 game-btn-tactile ${
+            className={`w-full py-4 font-bold text-sm sm:text-base rounded-2xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 game-btn-tactile ${
               revealedClues.length === scen.hiddenContext.length
                 ? 'bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-700 text-white'
                 : 'bg-stone-200 text-stone-400 cursor-not-allowed'
             }`}
           >
             <span>{currentIdx < scenarios.length - 1 ? '审视下一个冲突场景' : '完成实验生成研报'}</span>
-            <ArrowRight className="w-4 h-4" />
+            <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5" />
           </button>
         </div>
       )}
