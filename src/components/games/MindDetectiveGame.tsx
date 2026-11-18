@@ -6,6 +6,7 @@ import { GameDifficulty, DIFFICULTY_CONFIGS, DIFFICULTY_LIST, shuffleArray } fro
 import { DifficultySelector } from './DifficultySelector';
 import { GameHeaderHud } from './GameHeaderHud';
 import { gameAudio } from '../../utils/gameAudio';
+import { MicroexpressionGameDispatchCard } from './MicroexpressionGameDispatchCard';
 
 interface DetectiveCase {
   id: string;
@@ -208,13 +209,89 @@ const ALL_CASES: DetectiveCase[] = [
     ],
     lawLearned: '可得性启发式与理性风险评估',
     lawId: 'availability-heuristic'
+  },
+  {
+    id: 'case-ml001-facs',
+    title: '微表情卷宗（ML001）：急诊室的“零猜测笔记”',
+    scenario: '凌晨急诊分诊台上，患者在强顶灯直射下频繁出现眉间收紧（AU4）与轻度下颌咬肌绷紧。实习生看后断定“他神色紧张、一定在隐瞒醉驾实情”。老医生却制止了猜测，仅按 FACS 系统逐项记录面部动作并进一步物理查体，最终查明患者是磨牙撞裂叠加偏头痛怕光。',
+    evidence: [
+      { icon: '🔬', title: '客观解剖位移记录', detail: '记录到的仅是眉部、嘴部与下颌的物理收缩位移，不包含“心虚”二字。' },
+      { icon: '💡', title: '强光与牙痛情境干扰', detail: '刺眼无影灯与患侧咬合疼痛均会自主触发眉间收紧与下颌紧缩。' },
+      { icon: '📜', title: 'FACS 原理边界', detail: 'Ekman & Friesen (1978) 明确指出动作编码只描述肌肉运动，不直接读取思想。' }
+    ],
+    question: '作为心理侦探，你如何依据 FACS 原理（ML001）评估实习生的初始判断？',
+    options: [
+      { label: '混淆了“客观面部动作编码”与“主观情绪/意图推论”，动作本身不能证明说谎或心虚', biasId: 'ml-001', isCorrect: true, explanation: 'FACS 的科学基石是将“描述肌肉动作”与“推断心理意图”剥离，任何未核查生理与光线情境的读心术都会产生高危误判。' },
+      { label: '实习生直觉无误，只要下颌收紧叠加皱眉就 100% 证明存在欺骗隐瞒', biasId: 'pseudo-lie', isCorrect: false, explanation: '临床与实验室研究表明没有单一动作或组合可以作为绝对测谎指标。' },
+      { label: 'FACS 系统只能用于观察开心大笑，不能记录眉毛和下颌运动', biasId: 'scope-err', isCorrect: false, explanation: 'FACS 覆盖全脸眉部、眼睑、鼻翼、唇部与下颌全部可见运动单元。' },
+      { label: '患者出现眉间收紧完全属于心理暗示错觉，实际上肌肉毫无运动', biasId: 'illusion-err', isCorrect: false, explanation: '物理动作确实存在，错在直接跃迁为“撒谎动机”。' }
+    ],
+    lawLearned: '面部动作编码系统原理（ML001）',
+    lawId: 'ml-001'
+  },
+  {
+    id: 'case-ml003-au2',
+    title: '微表情卷宗（ML003）：发布会上的单侧挑眉',
+    scenario: '新品专访中，设计师讲到“超长 14 天续航”时，主编左侧眉毛外侧向上挑动了一下（AU2），额角闪过浅弧纹。设计师瞬间慌神以为对方怀疑自己数据造假，语无伦次猛补辩解，最后主编却笑称自己只是遇到亮点记笔记时的习惯性挑眉。',
+    evidence: [
+      { icon: '📐', title: '眉毛外侧上移（AU2）', detail: '额肌外侧束收缩抬起眉梢并改变眉形弧度。' },
+      { icon: '📝', title: '对话高亮停顿同步', detail: '挑眉发生后主编随即俯首认真记录核心参数，未见防御性打断。' },
+      { icon: '⚠️', title: '孤立 AU2 限制', detail: '单次眉毛外侧上提不足以单独确定惊讶、怀疑或恐惧情绪。' }
+    ],
+    question: '设计师在现场误判主编挑眉动作的根本心理学失误是：',
+    options: [
+      { label: '将孤立出现的 AU2 外眉上提动作直接读心为“怀疑/不屑”，未结合语境及其他动作线索核查', biasId: 'ml-003', isCorrect: true, explanation: 'AU2 常在语言重音强调、注意力切换或个人习惯思考时出现，单独出现绝不等于否定或惊恐。' },
+      { label: '主编其实确实在愤怒指责，只是事后为了礼貌临时编了个借口', biasId: 'mind-read', isCorrect: false, explanation: '无视记录亮点等实质行为证据而主观猜忌他人恶意，反而陷入了过度防御偏误。' },
+      { label: '眉毛外侧上提（AU2）由嘴角颧大肌驱动，因此不可能发生在专注记录时', biasId: 'anatomy-err', isCorrect: false, explanation: 'AU2 源自额肌外侧束而非颧大肌。' },
+      { label: '人类在认真倾听时额肌必须完全瘫痪，任何挑眉都是敌意信号', biasId: 'rigidity-err', isCorrect: false, explanation: '眉部动作是对话标点与视觉调整的常客，绝非敌意专线。' }
+    ],
+    lawLearned: '眉毛外侧上提动作 AU2（ML003）',
+    lawId: 'ml-003'
+  },
+  {
+    id: 'case-ml005-au5',
+    title: '微表情卷宗（ML005）：暗室投影与突然睁大的双眼',
+    scenario: '学术报告厅灯光调暗开启大屏，第三排一位听众上眼睑骤然抬升（AU5），眼睛睁开程度大幅增大，紧盯着屏幕右下角小号公式。旁观同学小李低声说：“他刚才猛睁眼暴露了虹膜上方眼白，肯定是听到台上的核心商业机密吓坏了！”',
+    evidence: [
+      { icon: '👁️', title: '上眼睑抬升（AU5）', detail: '提上睑肌拉升上眼睑，增大眼裂与瞳孔进光视野。' },
+      { icon: '🌑', title: '环境光照与远眺需求', detail: '大厅顶灯骤暗且投影右下角注解字号较小，视觉系统本能扩大进光并聚焦搜索。' },
+      { icon: '🔎', title: '物理结构局限', detail: 'Ekman & Friesen 提醒光照、注视目标及眼部结构均会显著改变上眼睑外观。' }
+    ],
+    question: '面对这名听众出现的 AU5 上眼睑抬升线索，符合科学的侦探核查顺序是：',
+    options: [
+      { label: '先排查环境变暗与远眺辨认小字等视觉刺激变量，再顺着注视目标核实情境，不凭单动作断定恐慌', biasId: 'ml-005', isCorrect: true, explanation: 'AU5 扩大了视觉信息采集通道，常见于光线转暗、精细辨识及注意力跃迁，必须先排除视觉物理因素。' },
+      { label: '只要露出虹膜上缘眼白就代表 100% 的恐惧情绪，无需考虑灯光和屏幕字号', biasId: 'ignore-env', isCorrect: false, explanation: '忽视环境照度与注视目标将导致极高误判率。' },
+      { label: '听众一定是想趁黑偷偷盗拍商业机密，因为惊恐睁眼等同于犯罪心理', biasId: 'false-crime', isCorrect: false, explanation: '典型无证据跳跃归因，完全违背 FACS 规范。' },
+      { label: '上眼睑抬升是由皱眉肌向下拉扯导致的', biasId: 'muscle-err', isCorrect: false, explanation: '皱眉肌负责下压眉毛（AU4），上眼睑抬升由提上睑肌（AU5）完成。' }
+    ],
+    lawLearned: '上眼睑抬升动作 AU5（ML005）',
+    lawId: 'ml-005'
+  },
+  {
+    id: 'case-ml006-au6',
+    title: '微表情卷宗（ML006）：酒会鱼尾纹与假性签约幻觉',
+    scenario: '行业酒会上，某客户代表握手时苹果肌上提、眼角浮现明显笑纹（AU6+AU12）。实习生看后笃定“眼轮匝肌是绝不骗人的真诚快乐密码，明天百分百签大单！”然而次周回访发现对方核心预算早已另有所属，当日只是职业化公关微笑。',
+    evidence: [
+      { icon: '😊', title: '脸颊抬升（AU6）', detail: '颧部上移且眼周皮肤收紧，令笑容极富感染力与亲和度。' },
+      { icon: '🎭', title: '社交与职业习惯训练', detail: '现代对照实验证明多数公关与演员能自主激活带 AU6 的逼真社交微笑。' },
+      { icon: '📋', title: '实质动作线索缺位', detail: '握手寒暄后对方既未追问交付排期，也未保留团队决策窗口。' }
+    ],
+    question: '本案拆穿了哪项广为流传却经不起实验检验的“微表情鉴伪神话”？',
+    options: [
+      { label: '“只要笑出眼周收紧（AU6）就绝对是发自内心的真实快乐与认可，绝不可能出于礼貌或训练”', biasId: 'ml-006', isCorrect: true, explanation: 'AU6 虽常随愉悦微笑出现，但也会受练习表演、年龄皮肤弹性或眯眼习惯影响，绝非鉴真绝对标准。' },
+      { label: '“任何嘴角动了的人其实内心都在暗中讨厌对方”', biasId: 'over-cynic', isCorrect: false, explanation: '反向绝对化同样不科学，AU6+AU12 可以只是标准礼仪。' },
+      { label: '“眼轮匝肌在人类成年后会彻底退化消失”', biasId: 'bio-false', isCorrect: false, explanation: '眼轮匝肌终生参与眨眼与脸颊眼周联动。' },
+      { label: '“真正想签约的客户在酒会上绝不会跟任何人握手”', biasId: 'irrelevant', isCorrect: false, explanation: '评估合作意图的金标准是条款细节问询与资源排期承诺，而非是否出现鱼尾纹。' }
+    ],
+    lawLearned: '脸颊抬升与眼周动作 AU6（ML006）',
+    lawId: 'ml-006'
   }
 ];
 
 export const MindDetectiveGame: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { recordGameResult } = useApp();
+  const { recordGameResult, updateLawMastery } = useApp();
 
   const urlDiff = searchParams.get('difficulty') as GameDifficulty | null;
   const initialDiff: GameDifficulty = urlDiff && DIFFICULTY_LIST.includes(urlDiff) ? urlDiff : '中';
@@ -293,6 +370,9 @@ export const MindDetectiveGame: React.FC = () => {
       setCombo(nextCombo);
       setMaxCombo((prev) => Math.max(prev, nextCombo));
       setCorrectCount((prev) => prev + 1);
+      if (currentCase.lawId) {
+        updateLawMastery(currentCase.lawId, 95);
+      }
 
       const earned = Math.round((basePts + nextCombo * 300) * diffConfig.scoreMultiplier);
       setScore((prev) => prev + earned);
@@ -395,6 +475,8 @@ export const MindDetectiveGame: React.FC = () => {
             <Play className="w-4 h-4 fill-white" />
             <span>开启案卷侦破（{difficulty}难度 · {diffConfig.multiplierText}）</span>
           </button>
+
+          <MicroexpressionGameDispatchCard gameId="mind-detective" />
         </div>
       ) : gameState === 'playing' && currentCase ? (
         <div className="w-full game-arcade-card rounded-3xl p-6 sm:p-8 border-amber-200/80 shadow-2xl space-y-6 animate-fadeIn">
@@ -564,6 +646,8 @@ export const MindDetectiveGame: React.FC = () => {
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
+
+          <MicroexpressionGameDispatchCard gameId="mind-detective" compact />
         </div>
       )}
     </div>

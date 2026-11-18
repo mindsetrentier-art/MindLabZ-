@@ -4,9 +4,14 @@ import { createServer as createHttpServer } from "node:http";
 import path from "path";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { existsSync } from "node:fs";
+import { randomInt } from "node:crypto";
 import { createServer as createViteServer } from "vite";
 import { WebSocketServer } from "ws";
-import { GoogleGenAI, LiveServerMessage, Modality } from "@google/genai";
+import { GoogleGenAI, LiveServerMessage, Modality, Type } from "@google/genai";
+import {
+  MICROEXPRESSION_CATALOG,
+  type MicroexpressionCatalogEntry,
+} from "./src/data/microexpressionCatalog";
 
 function getValidGeminiModel(envModel?: string): string {
   if (envModel && (envModel.startsWith("gemini-") || envModel.startsWith("models/gemini-"))) {
@@ -653,6 +658,288 @@ ${combinedText}
       return res.status(500).json({
         error: "Weather analysis failed",
         detail: String(err?.message || err),
+      });
+    }
+  });
+
+  // 4.3 AI-Generated Interactive Microexpression Diagnostic Scenario (ML001-ML010)
+  const microexpressionScenarioSchema = {
+    type: Type.OBJECT,
+    properties: {
+      narrativeTitle: {
+        type: Type.STRING,
+        description: "富有画面感与情感张力的中文场景标题（10到22字，不要剧透AU编号或定律名称）。",
+      },
+      setting: {
+        type: Type.STRING,
+        description: "具体时空、场所与交流环境（如：深夜急诊分诊台 · 强顶灯光线与紧张家属对话）。",
+      },
+      conflictActors: {
+        type: Type.STRING,
+        description: "冲突双方角色与核心情感冲突张力摘要（例如：项目主设计师 vs. 临时推翻方案的投资人 — 尊严防卫与信任裂痕冲突）。",
+      },
+      actorAction: {
+        type: Type.STRING,
+        description:
+          "130到210字的角色情感冲突互动剧情描述。必须包含双方语言交锋或心理立场矛盾，并在关键瞬间精细描绘目标角色在面部的客观肌肉位移与场景外因。绝对禁止在文本中直接写出 AU1/AU2/AU4/AU5/AU6/AU12/AU15 等编码代号或直接点出定律中文全称。",
+      },
+      observableFacialCues: {
+        type: Type.ARRAY,
+        items: { type: Type.STRING },
+        description: "恰好3条客观可见的面部动作位移与现场冲突情境线索（不泄露AU编号或定律名）。",
+      },
+      questionPrompt: {
+        type: Type.STRING,
+        description:
+          "要求用户在上述情感冲突诊断场景中，精准识别关键人物表现出的特定面部动作单元（AU）或其背后的科学心理原则与限定边界的单选题题干。",
+      },
+      correctOption: {
+        type: Type.STRING,
+        description:
+          "唯一正确答案：必须明确点出该定律对应的 AU 编号（或心理原则名称），同时清晰交代其在当前情感冲突场景中的科学解释与限制边界（45到80字）。",
+      },
+      distractors: {
+        type: Type.ARRAY,
+        items: { type: Type.STRING },
+        description:
+          "恰好3个具有高度迷惑性的错误干扰选项，例如张冠李戴了其他AU编号、把皱眉/微笑直接等价于绝对欺骗/怒火/快乐，或违背科学循证边界（每个45到80字）。",
+      },
+      explanation: {
+        type: Type.STRING,
+        description: "90到160字解析，紧扣角色情感冲突与原著学者实证研究解释为何选该项。",
+      },
+      scientificLimitation: {
+        type: Type.STRING,
+        description: "35到75字明确指出该动作单元或心理学原则在情感冲突观察中的科学局限边界。",
+      },
+      socraticQuestion: {
+        type: Type.STRING,
+        description: "1句苏格拉底式启发追问（禁止出现 AU 编号或定律名称）。",
+      },
+      socraticClue: {
+        type: Type.STRING,
+        description: "1句引导定位肌肉位置或排除伪科学读心选项的推理线索（禁止出现 AU 编号或定律名称）。",
+      },
+    },
+    required: [
+      "narrativeTitle",
+      "setting",
+      "conflictActors",
+      "actorAction",
+      "observableFacialCues",
+      "questionPrompt",
+      "correctOption",
+      "distractors",
+      "explanation",
+      "scientificLimitation",
+      "socraticQuestion",
+      "socraticClue",
+    ],
+  };
+
+  app.post("/api/microexpressions/generate-scenario", async (req, res) => {
+    try {
+      const {
+        lawId,
+        codeId,
+        excludeLawIds = [],
+        cityContext = "",
+      } = req.body || {};
+
+      const ai = getAI();
+      if (!ai) {
+        return res.status(503).json({
+          error: "GEMINI_API_KEY_MISSING",
+          message:
+            "未检测到 Gemini API 密钥。请在 AI Studio 的 Settings > Secrets 面板配置 GEMINI_API_KEY 后，再启用 AI 互动微表情诊断场景生成。",
+        });
+      }
+
+      // Select requested law or randomly sample 1 law from ML001-ML010 avoiding recent exclusions
+      let selectedLaw: MicroexpressionCatalogEntry | undefined;
+      if (lawId || codeId) {
+        const q = String(lawId || codeId).trim().toLowerCase();
+        selectedLaw = MICROEXPRESSION_CATALOG.find(
+          (entry) =>
+            entry.lawId.toLowerCase() === q || entry.codeId.toLowerCase() === q
+        );
+      }
+
+      if (!selectedLaw) {
+        const excludeSet = new Set(
+          Array.isArray(excludeLawIds)
+            ? excludeLawIds.map((item: unknown) => String(item).toLowerCase())
+            : []
+        );
+        const filtered = MICROEXPRESSION_CATALOG.filter(
+          (entry) =>
+            !excludeSet.has(entry.lawId.toLowerCase()) &&
+            !excludeSet.has(entry.codeId.toLowerCase())
+        );
+        const pool = filtered.length > 0 ? filtered : MICROEXPRESSION_CATALOG;
+        selectedLaw = pool[randomInt(0, pool.length)];
+      }
+
+      const conflictThemes = [
+        "职场绩效面谈与晋升失落的心理拉扯",
+        "亲密伴侣因旧事重提引发的克制与委屈交锋",
+        "医疗或心理支持场景下当事人隐忍痛感与防备",
+        "跨代家庭聚餐中关于人生选择的期望冲突",
+        "学术答辩或商业谈判桌上的质疑与自证压力",
+        "多年挚友在合作拆伙边缘的体面掩饰与心结",
+      ];
+      const chosenConflictTheme =
+        conflictThemes[randomInt(0, conflictThemes.length)];
+
+      const prompt = `请你作为认知神经科学与微表情观察专家，针对以下随机抽中的微表情心理学定律，全新创作一道高质量「互动微表情诊断场景选择题」。
+
+【本次随机抽中的目标定律】
+- 定律编号：${selectedLaw.codeId}（内部 ID：${selectedLaw.lawId}）
+- 对应动作单元/心理原则：${selectedLaw.actionUnitCode}
+- 中文标题：${selectedLaw.titleZh}（${selectedLaw.titleEn}）
+- 所属分类：${selectedLaw.category}分类（排行 #${selectedLaw.categoryRank}） · 建议难度：${selectedLaw.difficulty}
+- 核心研究学者与年份：${selectedLaw.researcher} (${selectedLaw.year})
+- 可观察体征：${selectedLaw.observableSigns.join("、")}
+- 科学核心原理：${selectedLaw.corePrinciple}
+- 严谨科学边界：${selectedLaw.limitations}
+- 参考冲突底色灵感：${chosenConflictTheme}${
+        cityContext ? `；可自然融入「${String(cityContext)}」的人文交流氛围` : ""
+      }
+
+【严格命题规范】
+1. **必须体现角色情感冲突**：在 actorAction 中刻画两位角色之间有温度、有张力的情感冲突或信任误解（如委屈、防备、克制、失望、强颜体面或压力争执），并让一方产生过度臆测情绪标签的冲动。
+2. **禁止题干/剧情提前剧透答案**：在 narrativeTitle、actorAction、observableFacialCues、socraticQuestion、socraticClue 中，**绝对不要**直接出现「${selectedLaw.actionUnitCode}」或「${selectedLaw.codeId}」或完整定律标题，也不要写“这触发了 AU4”——请只描写眼睛可见的解剖学肌肉部位变化（如眉内侧靠鼻梁端上移、外侧眉梢上挑、两眉向中线下压聚拢挤出竖纹、上眼睑骤升、脸颊上提并收紧眼外角、嘴角向耳后上方拉起、嘴角向下垂拉等）及环境/生理干扰因素！
+3. **精准考察识别 AU 或心理原则**：questionPrompt 须引导作答者识别关键角色的特定面部动作单元（AU）或背后核心心理原则，且唯一正确答案 correctOption 必须明确标出「${selectedLaw.actionUnitCode}」及「${selectedLaw.titleZh}」并坚守科学限定边界；3 个 distractors 必须极具思考辨析度（含错配 AU 编号与“绝对读心/测谎”误区）。
+4. **严格遵守循证心理学**：始终坚持“动作单元描述 ≠ 直接读心或绝对测谎”，引用或呼应 ${selectedLaw.researcher} (${selectedLaw.year}) 的严谨边界。`;
+
+      let responseText = "";
+      let lastErr: any = null;
+      const maxAttempts = 3;
+
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        try {
+          const response = await ai.models.generateContent({
+            model: "gemini-4-hydrogen",
+            contents: prompt,
+            config: {
+              systemInstruction:
+                "你是智心堂（MindLabZ）微表情与情绪科学出题专家。严格按 JSON Schema 输出高质量教学诊断题，既富有文学化的情感冲突张力，又严守 Paul Ekman FACS 解剖编码及 Barrett (2019)、Coles (2019) 等现代心理学科学边界。",
+              responseMimeType: "application/json",
+              responseSchema: microexpressionScenarioSchema,
+            },
+          });
+          responseText = (response.text || "").trim();
+          if (responseText) break;
+        } catch (err: any) {
+          lastErr = err;
+          const status = err?.status || err?.code;
+          const isRetryable = status === 429 || status === 503 || status === 500;
+          if (isRetryable && attempt < maxAttempts - 1) {
+            await new Promise((resolve) =>
+              setTimeout(resolve, 600 * Math.pow(2, attempt))
+            );
+            continue;
+          }
+          throw err;
+        }
+      }
+
+      if (!responseText) {
+        throw lastErr || new Error("Gemini returned an empty scenario payload");
+      }
+
+      let cleanText = responseText;
+      if (cleanText.startsWith("```json")) {
+        cleanText = cleanText.replace(/^```json\s*/i, "").replace(/\s*```$/, "");
+      } else if (cleanText.startsWith("```")) {
+        cleanText = cleanText.replace(/^```\s*/i, "").replace(/\s*```$/, "");
+      }
+
+      const generated = JSON.parse(cleanText);
+      const distractors = Array.isArray(generated.distractors)
+        ? generated.distractors
+            .map((d: unknown) => String(d).trim())
+            .filter(
+              (d: string) => d.length > 0 && d !== String(generated.correctOption || "").trim()
+            )
+            .slice(0, 3)
+        : [];
+
+      if (
+        !generated.narrativeTitle ||
+        !generated.actorAction ||
+        !generated.questionPrompt ||
+        !generated.correctOption ||
+        distractors.length < 3
+      ) {
+        return res.status(502).json({
+          error: "INVALID_AI_PAYLOAD",
+          message: "AI 返回的诊断场景结构不完整，请点击重试重新生成。",
+        });
+      }
+
+      // Server-side CSPRNG option shuffle
+      const tagged = [
+        { text: String(generated.correctOption).trim(), isCorrect: true },
+        ...distractors.map((text: string) => ({ text, isCorrect: false })),
+      ];
+      for (let i = tagged.length - 1; i > 0; i--) {
+        const j = randomInt(0, i + 1);
+        const tmp = tagged[i];
+        tagged[i] = tagged[j];
+        tagged[j] = tmp;
+      }
+      const correctAnswer = Math.max(
+        0,
+        tagged.findIndex((item) => item.isCorrect)
+      );
+
+      return res.json({
+        law: selectedLaw,
+        model: "gemini-4-hydrogen",
+        scenario: {
+          narrativeTitle: String(generated.narrativeTitle).trim(),
+          setting: String(generated.setting || "社会互动现场").trim(),
+          conflictActors: String(generated.conflictActors || "").trim(),
+          actorAction: String(generated.actorAction).trim(),
+          observableFacialCues: Array.isArray(generated.observableFacialCues)
+            ? generated.observableFacialCues
+                .map((c: unknown) => String(c).trim())
+                .filter(Boolean)
+                .slice(0, 3)
+            : selectedLaw.observableSigns,
+          questionPrompt: String(generated.questionPrompt).trim(),
+          options: tagged.map((item) => item.text),
+          correctAnswer,
+          explanation: String(generated.explanation || selectedLaw.corePrinciple).trim(),
+          scientificLimitation: String(
+            generated.scientificLimitation || selectedLaw.limitations
+          ).trim(),
+          socraticQuestion: String(generated.socraticQuestion || "").trim(),
+          socraticClue: String(generated.socraticClue || "").trim(),
+        },
+      });
+    } catch (err: any) {
+      console.error("Microexpression AI scenario generation error:", err);
+      const status = Number(err?.status || err?.httpStatusCode) || 500;
+      const rawMessage = String(err?.message || err);
+
+      if (status === 400 || status === 403 || rawMessage.includes("API_KEY")) {
+        return res.status(status === 403 ? 403 : 400).json({
+          error: "GEMINI_AUTH_ERROR",
+          message:
+            "Gemini API 密钥无效或无权限，请在 Settings > Secrets 面板核查密钥配置后重试。",
+        });
+      }
+      if (status === 429) {
+        return res.status(429).json({
+          error: "GEMINI_RATE_LIMITED",
+          message: "Gemini API 请求配额暂时达到上限，请稍等几秒后重试。",
+        });
+      }
+      return res.status(500).json({
+        error: "AI_GENERATION_FAILED",
+        message: `AI 生成互动微表情诊断场景失败：${rawMessage}`,
       });
     }
   });

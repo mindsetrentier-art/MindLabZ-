@@ -6,6 +6,7 @@ import { GameDifficulty, DIFFICULTY_CONFIGS, DIFFICULTY_LIST, shuffleArray } fro
 import { DifficultySelector } from './DifficultySelector';
 import { GameDebriefModal, DebriefData } from './GameDebriefModal';
 import { GameHeaderHud } from './GameHeaderHud';
+import { MicroexpressionGameDispatchCard } from './MicroexpressionGameDispatchCard';
 import { gameAudio } from '../../utils/gameAudio';
 
 interface ZeroPriceChoice {
@@ -91,12 +92,34 @@ const SCENARIOS_POOL: ZeroPriceScenario[] = [
     ],
     rationalInsight: '天下最贵的东西往往标价免费。真正的成本从来不是货币数字，而是注意力与时间机会成本。',
   },
+  {
+    id: 'scen-ml007-smile-promo',
+    title: '“AU12 社交微笑”叠加 0 元赠品的双料营销陷阱（ML007 + ML009）',
+    context: '品牌快闪店导购挂着亲切迷人的嘴角上扬微笑（AU12 / ML007），热情把你迎进柜台并让你试用轻盈香氛，递上“0元免费领定制真无线耳机”登记卡（小字注明需绑定 24 个月 158 元通信套餐）。',
+    choices: [
+      {
+        label: '方案 A：剥离社交微笑光环，算清 24 个月总合约成本（3,792 元），礼貌谢绝后离开。',
+        isFreeBait: false,
+        isOptimal: true,
+        costBreakdown: '避免为了所谓“0元赠品”被绑定近四千元长期刚性现金流出。',
+        opportunityCost: '清醒区分礼貌社交微笑（AU12）与合约真实价格！',
+      },
+      {
+        label: '方案 B：导购笑得那么真诚开心，心情跟着愉悦起来，“0元领耳机”顺手签了吧！',
+        isFreeBait: true,
+        isOptimal: false,
+        costBreakdown: '表面 0 元，实际锁定高额通信月租，总溢价远超耳机自身市价。',
+        opportunityCost: '陷入 AU12 职业礼貌微笑误读与零价格多巴胺冲动。',
+      },
+    ],
+    rationalInsight: 'ML007 提示：AU12（嘴角上扬）常承担礼貌、推销或社交配合功能，并不等同于私人善意或真实让利；叠加“0元”刺激更会削弱风险评估，务必先核对条款总成本。',
+  },
 ];
 
 export const ZeroPriceTrapGame: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user, recordGameResult } = useApp();
+  const { user, recordGameResult, updateLawMastery } = useApp();
 
   const urlDiff = searchParams.get('difficulty') as GameDifficulty | null;
   const initialDiff: GameDifficulty = urlDiff && DIFFICULTY_LIST.includes(urlDiff) ? urlDiff : '中';
@@ -161,10 +184,12 @@ export const ZeroPriceTrapGame: React.FC = () => {
         reactionTime: 920,
         xpGained: calculatedXp,
         comboMax: correctCount,
-        conceptLearned: '零价格效应（Zero-Price Effect）与非理性心理账户',
+        conceptLearned: '零价格效应（Zero-Price Effect）与 AU12 社交微笑去魅',
         lawId: 'sunk-cost-fallacy',
         difficulty,
       });
+      updateLawMastery('ml-007', correctCount > 0 ? 92 : 72);
+      updateLawMastery('ml-009', correctCount > 0 ? 88 : 70);
 
       setGameState('debrief');
     }
@@ -247,6 +272,10 @@ export const ZeroPriceTrapGame: React.FC = () => {
             <Gift className="w-4 h-4 text-white" />
             <span>开启决策攻防（{difficulty}难度 · {diffConfig.multiplierText} 积分加成）</span>
           </button>
+
+          <div className="relative z-10">
+            <MicroexpressionGameDispatchCard gameId="zero-price-trap" compact />
+          </div>
         </div>
       </div>
     );
@@ -254,12 +283,13 @@ export const ZeroPriceTrapGame: React.FC = () => {
 
   if (gameState === 'debrief') {
     return (
-      <div className="py-4 px-2">
+      <div className="py-4 px-2 space-y-5 max-w-lg mx-auto">
         <GameDebriefModal
           data={debriefData}
           onRestart={() => startSession(difficulty)}
           onReturn={() => navigate('/games')}
         />
+        <MicroexpressionGameDispatchCard gameId="zero-price-trap" compact />
       </div>
     );
   }

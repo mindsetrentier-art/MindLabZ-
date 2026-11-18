@@ -6,6 +6,7 @@ import { GameDifficulty, DIFFICULTY_CONFIGS, DIFFICULTY_LIST } from '../../data/
 import { DifficultySelector } from './DifficultySelector';
 import { GameDebriefModal, DebriefData } from './GameDebriefModal';
 import { GameHeaderHud } from './GameHeaderHud';
+import { MicroexpressionGameDispatchCard } from './MicroexpressionGameDispatchCard';
 import { gameAudio } from '../../utils/gameAudio';
 
 interface TestAttempt {
@@ -17,7 +18,7 @@ interface TestAttempt {
 export const FalsificationChallengeGame: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user, recordGameResult } = useApp();
+  const { user, recordGameResult, updateLawMastery } = useApp();
 
   const urlDiff = searchParams.get('difficulty') as GameDifficulty | null;
   const initialDiff: GameDifficulty = urlDiff && DIFFICULTY_LIST.includes(urlDiff) ? urlDiff : '中';
@@ -92,10 +93,12 @@ export const FalsificationChallengeGame: React.FC = () => {
       reactionTime: 890,
       xpGained: calculatedXp,
       comboMax: falsificationCount,
-      conceptLearned: '可证伪思维（Falsificationism）与确认偏误防御机制',
+      conceptLearned: '可证伪思维（Falsificationism）与微表情“读心/真笑字典”证伪',
       lawId: 'confirmation-bias',
       difficulty,
     });
+    updateLawMastery('ml-006', isCorrect ? 94 : 74);
+    updateLawMastery('ml-010', isCorrect ? 96 : 76);
 
     setGameState('debrief');
   };
@@ -115,7 +118,7 @@ export const FalsificationChallengeGame: React.FC = () => {
       '彼得·沃森（Peter Wason 1960）经典的 2-4-6 实验中，80% 的受试者初测全部失败！他们被脑海中的“偶数等差递增”直觉紧紧束缚，只测试支持自身假设的数字（如 8-10-12）。唯有敢于主动测试非偶数、不等差乃至倒序的探索者，才能打破确认偏误（Confirmation Bias）。',
     actionableSummary: [
       '“红队思维（Red Teaming）”：在推出新业务前，专门设法证明“这个项目为什么一定会死”。',
-      '反直觉求证：当极度确信一个观点时，主动搜寻 3 篇高质量的反方论据并认真读完。',
+      '微表情证伪法则（ML006 / ML010）：当你认定“有鱼尾纹 AU6 就是真快乐”或“皱眉 AU4 就是心虚生气”时，请主动寻找反例情景，避免落入确认偏误读心陷阱。',
       '在做重大投资决策前：列出必须满足的“止损与证伪边界”，而非只搜集看多新闻。',
     ],
   };
@@ -182,6 +185,10 @@ export const FalsificationChallengeGame: React.FC = () => {
             <SearchCheck className="w-4 h-4 text-white" />
             <span>启动反证实验（{difficulty}难度 · {diffConfig.multiplierText} 积分加成）</span>
           </button>
+
+          <div className="relative z-10">
+            <MicroexpressionGameDispatchCard gameId="falsification-challenge" compact />
+          </div>
         </div>
       </div>
     );
@@ -189,7 +196,7 @@ export const FalsificationChallengeGame: React.FC = () => {
 
   if (gameState === 'debrief') {
     return (
-      <div className="py-4 px-2">
+      <div className="py-4 px-2 space-y-5 max-w-lg mx-auto">
         <GameDebriefModal
           data={debriefData}
           onRestart={() => {
@@ -199,6 +206,7 @@ export const FalsificationChallengeGame: React.FC = () => {
           }}
           onReturn={() => navigate('/games')}
         />
+        <MicroexpressionGameDispatchCard gameId="falsification-challenge" compact />
       </div>
     );
   }

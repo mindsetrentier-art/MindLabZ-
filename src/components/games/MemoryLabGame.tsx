@@ -5,12 +5,13 @@ import { useApp } from '../../context/AppContext';
 import { GameDifficulty, DIFFICULTY_CONFIGS, DIFFICULTY_LIST } from '../../data/difficulty';
 import { DifficultySelector } from './DifficultySelector';
 import { GameHeaderHud } from './GameHeaderHud';
+import { MicroexpressionGameDispatchCard } from './MicroexpressionGameDispatchCard';
 import { gameAudio } from '../../utils/gameAudio';
 
 export const MemoryLabGame: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { recordGameResult } = useApp();
+  const { recordGameResult, updateLawMastery } = useApp();
 
   const urlDiff = searchParams.get('difficulty') as GameDifficulty | null;
   const initialDiff: GameDifficulty = urlDiff && DIFFICULTY_LIST.includes(urlDiff) ? urlDiff : '中';
@@ -202,10 +203,12 @@ export const MemoryLabGame: React.FC = () => {
       reactionTime: avgReactionTime,
       xpGained: earnedXp,
       comboMax: maxCombo,
-      conceptLearned: '工作记忆容量与空间网格编码（Spatial Grid Cells）',
+      conceptLearned: '工作记忆容量与 FACS 面部动作分区空间编码',
       lawId: 'primacy-effect',
       difficulty,
     });
+    updateLawMastery('ml-001', level >= 3 ? 92 : 82);
+    updateLawMastery('ml-003', level >= 3 ? 90 : 80);
 
     navigate('/games');
   };
@@ -266,6 +269,8 @@ export const MemoryLabGame: React.FC = () => {
             <Play className="w-4 h-4 fill-white" />
             <span>启动神经网格测试（{difficulty}难度 · {diffConfig.multiplierText}）</span>
           </button>
+
+          <MicroexpressionGameDispatchCard gameId="memory-lab" compact />
         </div>
       ) : gameState === 'game_over' ? (
         /* Game Over Result */
@@ -304,10 +309,10 @@ export const MemoryLabGame: React.FC = () => {
           <div className="bg-gradient-to-br from-indigo-50/60 to-purple-50/60 p-4 rounded-2xl text-left border border-indigo-200/60 space-y-1.5">
             <h4 className="text-xs font-bold text-indigo-950 flex items-center gap-1.5 font-serif-editorial">
               <Sparkles className="w-4 h-4 text-indigo-600" />
-              脑科学原理 · 空间网格编码（Grid Cells）
+              脑科学原理 · 空间网格编码与 FACS 动作单元分区（ML001 / ML003）
             </h4>
             <p className="text-[11px] text-stone-700 leading-relaxed">
-              海马体与内嗅皮层的空间网格细胞在快速记忆点阵时会形成动态认知地图。随着难度提升与随机分布变换，大脑需要更强大的组块化（Chunking）能力以突破米勒 7±2 容量限制。
+              海马体与内嗅皮层的空间网格细胞在快速记忆点阵时会形成动态认知地图；同样，FACS（面部动作编码系统 ML001）也是把整张脸拆解为眉眼鼻唇独立区域，帮助观察者用有限工作记忆精准捕获诸如外眉上提（AU2 / ML003）的细微肌肉轨迹而不靠直觉臆测。
             </p>
           </div>
 
@@ -327,6 +332,8 @@ export const MemoryLabGame: React.FC = () => {
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
+
+          <MicroexpressionGameDispatchCard gameId="memory-lab" compact />
         </div>
       ) : (
         /* Playing Grid Screen */

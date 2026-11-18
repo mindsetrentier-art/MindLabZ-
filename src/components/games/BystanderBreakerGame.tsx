@@ -6,6 +6,7 @@ import { GameDifficulty, DIFFICULTY_CONFIGS, DIFFICULTY_LIST, shuffleArray } fro
 import { DifficultySelector } from './DifficultySelector';
 import { GameDebriefModal, DebriefData } from './GameDebriefModal';
 import { GameHeaderHud } from './GameHeaderHud';
+import { MicroexpressionGameDispatchCard } from './MicroexpressionGameDispatchCard';
 import { gameAudio } from '../../utils/gameAudio';
 
 interface CommandOption {
@@ -70,12 +71,32 @@ const SCENARIOS_POOL: BystanderScenario[] = [
       },
     ],
   },
+  {
+    id: 'scen-mall-au1-au5',
+    title: '商场中庭微表情求助识别 · AU1 + AU5 急性惊恐破局',
+    emergency: '扶梯口一名老人扶着胸口喘息，你能清楚看到其额头内侧上提形成八字眉（AU1 / ML002）且上眼睑明显抬高露白（AU5 / ML005），呈现强烈生理惊恐与求助线索，但周围逛街人群误以为只是普通歇脚。',
+    crowdState: '二十多名路人不断从身旁经过，由于多元无知（别人都不停步，说明不严重），无人上前核实。',
+    options: [
+      {
+        text: '“看着老人只是稍微紧张（AU1+AU5 不代表真生病），先站在远处再观察五分钟吧。”',
+        isEffective: false,
+        responsibilityLock: 10,
+        crowdReaction: '虽然单个 AU1/AU5 不能武断下临床结论，但在扶胸喘息的高风险情境下延误核实导致错失黄金救助窗口！',
+      },
+      {
+        text: '“穿绿色羽绒服的保安大哥，这位老人出现急性惊恐与不适，请立刻带急救箱过来！右边举手机的小伙子，请马上通知服务台拨打 120！”',
+        isEffective: true,
+        responsibilityLock: 99,
+        crowdReaction: '你结合微动作线索（AU1+AU5）与扶胸情境果断发出定向指令，责任即刻锁定，老人第一时间获救！',
+      },
+    ],
+  },
 ];
 
 export const BystanderBreakerGame: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user, recordGameResult } = useApp();
+  const { user, recordGameResult, updateLawMastery } = useApp();
 
   const urlDiff = searchParams.get('difficulty') as GameDifficulty | null;
   const initialDiff: GameDifficulty = urlDiff && DIFFICULTY_LIST.includes(urlDiff) ? urlDiff : '中';
@@ -112,6 +133,10 @@ export const BystanderBreakerGame: React.FC = () => {
     const chosen = scen.options[idx];
     if (chosen.isEffective) {
       gameAudio.playSuccess();
+      if (scen.id === 'scen-mall-au1-au5') {
+        updateLawMastery('ml-002', 92);
+        updateLawMastery('ml-005', 92);
+      }
       const pts = Math.round(1500 * diffConfig.scoreMultiplier);
       setScore(prev => prev + pts);
       setCorrectCount(prev => prev + 1);
@@ -224,6 +249,10 @@ export const BystanderBreakerGame: React.FC = () => {
             <LifeBuoy className="w-4 h-4 text-white" />
             <span>开启破局指令（{difficulty}难度 · {diffConfig.multiplierText} 积分加成）</span>
           </button>
+
+          <div className="relative z-10">
+            <MicroexpressionGameDispatchCard gameId="bystander-breaker" compact />
+          </div>
         </div>
       </div>
     );
@@ -231,12 +260,13 @@ export const BystanderBreakerGame: React.FC = () => {
 
   if (gameState === 'debrief') {
     return (
-      <div className="py-4 px-2">
+      <div className="py-4 px-2 space-y-5 max-w-lg mx-auto">
         <GameDebriefModal
           data={debriefData}
           onRestart={() => startSession(difficulty)}
           onReturn={() => navigate('/games')}
         />
+        <MicroexpressionGameDispatchCard gameId="bystander-breaker" compact />
       </div>
     );
   }

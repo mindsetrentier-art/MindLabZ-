@@ -5,6 +5,7 @@ import { useApp } from '../../context/AppContext';
 import { GameDifficulty, DIFFICULTY_CONFIGS, DIFFICULTY_LIST, shuffleArray } from '../../data/difficulty';
 import { DifficultySelector } from './DifficultySelector';
 import { GameHeaderHud } from './GameHeaderHud';
+import { MicroexpressionGameDispatchCard } from './MicroexpressionGameDispatchCard';
 import { gameAudio } from '../../utils/gameAudio';
 
 interface StroopTrial {
@@ -24,6 +25,7 @@ interface ReflectionTrial {
   correctAnswer: string;
   intuitiveTrap: string;
   explanation: string;
+  lawId?: string;
 }
 
 type Trial = StroopTrial | ReflectionTrial;
@@ -121,12 +123,54 @@ const ALL_REFLECTION_QUESTIONS: ReflectionTrial[] = [
     intuitiveTrap: '直觉下意识做减法 17 - 9 = 8',
     explanation: '仔细审题：“除了 9 只以外全部死了”，说明活着剩下的正好就是那 9 只！',
   },
+  {
+    type: 'reflection',
+    lawId: 'ml-004',
+    question: '微表情实证题（AU4 眉间下压 / ML004）：产品评审会上工程师紧盯架构图、眉毛明显向内下压且眉间出现竖纹。根据 FACS 科学原则，最客观的判断是：',
+    options: [
+      '只能观察到 AU4 动作，可能代表高认知专注或视觉费力，不能直接断定正在愤怒',
+      '100% 说明他在压抑对方案的敌意与暴怒',
+      'AU4 出现必然伴随欺骗意图',
+      '说明他此时此刻大脑处于完全放松状态',
+    ],
+    correctAnswer: '只能观察到 AU4 动作，可能代表高认知专注或视觉费力，不能直接断定正在愤怒',
+    intuitiveTrap: '直觉把“皱眉 AU4”直接等同于“愤怒/敌意”',
+    explanation: 'Ekman & Friesen（1978）FACS 明确区分客观肌肉运动与主观情绪诊断：AU4 频繁出现在专注思考、强光刺眼、困惑与努力阅读中。',
+  },
+  {
+    type: 'reflection',
+    lawId: 'ml-006',
+    question: '微表情辨伪题（AU6 脸颊抬升 / ML006）：短视频博主宣称“只要眼角出现鱼尾纹（AU6+AU12），就绝对是发自内心的真诚喜悦，伪装不出来”。关于该说法的科学实证结论是：',
+    options: [
+      '错误：AU6 确与部分愉悦微笑相关，但受眼部结构、刻意训练与交流语境影响，并非绝对诚实标记',
+      '完全正确：眼轮匝肌完全不受意识控制',
+      '正确且可单独作为测谎金标准',
+      'AU6 只会在悲伤时自动触发',
+    ],
+    correctAnswer: '错误：AU6 确与部分愉悦微笑相关，但受眼部结构、刻意训练与交流语境影响，并非绝对诚实标记',
+    intuitiveTrap: '直觉迷信“杜乡微笑真伪二元论”神化判断',
+    explanation: 'ML006 明确指出：年龄、眼部解剖结构、说话力度与演员训练均可影响 AU6 外观，不能当作判定“真快乐或诚实”的绝对准则。',
+  },
+  {
+    type: 'reflection',
+    lawId: 'ml-010',
+    question: '表情心理综述题（Barrett et al., 2019 / ML010）：面对不同文化背景者的同一组眉眼动作，以下哪项最符合 2019 年权威科学综述结论？',
+    options: [
+      '面部表情与特定情绪并非简单一一对应，必须结合情境、文化背景与个体差异综合评估',
+      '每种基本情绪都对应一套全世界人类完全固定不变的肌肉指纹',
+      '脱离现场对话，单靠 0.2 秒截图即可精准读心',
+      '面部表情完全由随机噪声决定，与社会语境毫无关联',
+    ],
+    correctAnswer: '面部表情与特定情绪并非简单一一对应，必须结合情境、文化背景与个体差异综合评估',
+    intuitiveTrap: '直觉喜欢“查表情字典一对一读心”的捷径',
+    explanation: 'Barrett et al. (2019) 综述表明“同一情绪可以有多种面部表达，同一表情也对应多种心理状态”，脱离情境做情绪定罪属于伪科学推论。',
+  },
 ];
 
 export const MindTrapGame: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { recordGameResult } = useApp();
+  const { recordGameResult, updateLawMastery } = useApp();
 
   const urlDiff = searchParams.get('difficulty') as GameDifficulty | null;
   const initialDiff: GameDifficulty = urlDiff && DIFFICULTY_LIST.includes(urlDiff) ? urlDiff : '中';
@@ -255,6 +299,9 @@ export const MindTrapGame: React.FC = () => {
 
     if (isCorrect) {
       gameAudio.playSuccess();
+      if (trial.type === 'reflection' && trial.lawId) {
+        updateLawMastery(trial.lawId, 92);
+      }
       const newCombo = combo + 1;
       setCombo(newCombo);
       setMaxCombo((prev) => Math.max(prev, newCombo));
@@ -371,6 +418,8 @@ export const MindTrapGame: React.FC = () => {
             <Play className="w-4 h-4 fill-white" />
             <span>开始思维陷阱挑战（{difficulty}难度 · {diffConfig.multiplierText}）</span>
           </button>
+
+          <MicroexpressionGameDispatchCard gameId="mind-trap" compact />
         </div>
       ) : gameState === 'game_over' ? (
         <div className="w-full game-arcade-card rounded-3xl p-6 sm:p-8 border-amber-200/80 shadow-2xl text-center space-y-6 animate-fadeIn relative overflow-hidden">
@@ -431,6 +480,8 @@ export const MindTrapGame: React.FC = () => {
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
+
+          <MicroexpressionGameDispatchCard gameId="mind-trap" compact />
         </div>
       ) : (
         /* Active Trial Arena */

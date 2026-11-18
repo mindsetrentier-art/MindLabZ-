@@ -25,6 +25,7 @@ import { useApp } from '../../context/AppContext';
 import { GameDifficulty } from '../../data/difficulty';
 import { GameDebriefModal, DebriefData } from './GameDebriefModal';
 import { GameHeaderHud } from './GameHeaderHud';
+import { MicroexpressionGameDispatchCard } from './MicroexpressionGameDispatchCard';
 import { gameAudio } from '../../utils/gameAudio';
 import { FirstImpressionGameIcon } from './FirstImpressionGameIcon';
 import {
@@ -99,7 +100,7 @@ const LEVEL_CONFIGS: Record<GameLevel, LevelConfig> = {
 export const FirstImpressionGame: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user, recordGameResult } = useApp();
+  const { user, recordGameResult, updateLawMastery } = useApp();
 
   const urlDiff = searchParams.get('difficulty');
   const initialLevel: GameLevel = urlDiff === '高' ? '高级' : urlDiff === '中' ? '中级' : '初级';
@@ -409,6 +410,8 @@ export const FirstImpressionGame: React.FC = () => {
         practicePrecisionCount,
       }
     );
+    updateLawMastery('ml-003', accuracy >= 60 ? 90 : 78);
+    updateLawMastery('ml-007', accuracy >= 60 ? 92 : 80);
 
     const avgReactionSec = Number((avgReaction / 1000).toFixed(2));
     const newSessionRecord: ValuationSessionRecord = {
@@ -755,6 +758,10 @@ export const FirstImpressionGame: React.FC = () => {
               </button>
             </div>
           )}
+
+          <div className="relative z-10 pt-1">
+            <MicroexpressionGameDispatchCard gameId="first-impression" theme="dark" compact />
+          </div>
         </div>
         {renderModals()}
       </div>
@@ -801,6 +808,9 @@ export const FirstImpressionGame: React.FC = () => {
             historySessions={sessionHistory}
           />
         </GameDebriefModal>
+        <div className="max-w-lg mx-auto mt-5">
+          <MicroexpressionGameDispatchCard gameId="first-impression" compact />
+        </div>
         {renderModals()}
       </div>
     );

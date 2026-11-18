@@ -29,6 +29,7 @@ import { StructuredLawData, StructuredLawQuizItem } from '../types';
 import { OverlappingStack, OverlappingItem } from '../components/ui/OverlappingStack';
 import { THINKER_ITEMS } from '../components/ui/OverlappingStackLabModal';
 import { KineticCutoutHero } from '../components/ui/KineticCutoutHero';
+import { PSYCHOLOGY_GAMES } from '../data/games';
 
 export const LawDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -107,7 +108,7 @@ export const LawDetailPage: React.FC = () => {
       setIsLoading(false);
     }, 150);
 
-    if (law && !law.isLoveCodex) {
+    if (law && !law.isLoveCodex && !law.isMicroexpression) {
       void fetchStructuredLaw(law.codeId || law.id, false);
     }
 
@@ -314,6 +315,20 @@ export const LawDetailPage: React.FC = () => {
                 </span>
               </>
             )}
+            {law.isMicroexpression && (
+              <>
+                <span className="text-stone-300" aria-hidden="true">·</span>
+                <span className="font-semibold text-indigo-800 tabular-nums">
+                  {law.categoryZh}分类排行第 {law.categoryRank || 1} 名 · 微表情总榜 #{law.microGlobalRank || 1}
+                </span>
+                {law.actionUnitCode && (
+                  <>
+                    <span className="text-stone-300" aria-hidden="true">·</span>
+                    <span className="font-mono font-bold text-stone-800">{law.actionUnitCode}</span>
+                  </>
+                )}
+              </>
+            )}
           </div>
 
           <div className="flex items-center gap-2 self-start sm:self-auto">
@@ -420,7 +435,106 @@ export const LawDetailPage: React.FC = () => {
         <p className="text-sm sm:text-base text-stone-700 leading-relaxed sm:leading-loose">
           {displayMechanism}
         </p>
+
+        {/* Microexpression Scientific Attribution, Observable Signs & Limitations */}
+        {law.isMicroexpression && (
+          <div className="pt-4 border-t border-stone-200/80 space-y-4">
+            {law.observableSigns && law.observableSigns.length > 0 && (
+              <div className="space-y-1.5">
+                <span className="text-xs font-bold text-stone-800">可观察面部动作线索（Observable Signs）：</span>
+                <p className="text-sm text-stone-700 font-medium">
+                  {law.observableSigns.join('  ·  ')}
+                </p>
+              </div>
+            )}
+
+            {law.limitations && (
+              <div className="p-4 rounded-xl bg-rose-50/70 border border-rose-200/80 space-y-1">
+                <span className="text-xs font-bold text-rose-900">科学解释边界与误读警示（Limitations）：</span>
+                <p className="text-sm text-rose-900/90 leading-relaxed">{law.limitations}</p>
+              </div>
+            )}
+
+            {(law.researcher || law.sourceCitation) && (
+              <div className="text-xs text-stone-500 flex flex-wrap items-center gap-x-3 gap-y-1">
+                {law.researcher && (
+                  <span>
+                    <strong className="text-stone-700">核心研究者：</strong>
+                    {law.researcher} ({law.studyYear})
+                  </span>
+                )}
+                {law.sourceCitation && (
+                  <span className="font-mono text-[11px] text-stone-500">
+                    {law.sourceCitation}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </section>
+
+      {/* Dedicated Story Scenario Section for Microexpression Laws */}
+      {law.storyScenario && (
+        <section className="editorial-card rounded-2xl p-7 sm:p-10 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-stone-200/80">
+            <div>
+              <span className="editorial-kicker text-[10px] text-amber-700 block mb-1">
+                Story Scenario · 沉浸式故事场景实案
+              </span>
+              <h3 className="font-serif-editorial text-lg sm:text-xl font-bold text-stone-900">
+                {law.storyScenario.title}
+              </h3>
+            </div>
+            <span className="text-xs text-stone-500 font-medium">
+              {law.storyScenario.setting}
+            </span>
+          </div>
+
+          <p className="text-sm sm:text-base text-stone-700 leading-relaxed sm:leading-loose">
+            {law.storyScenario.narrative}
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+            <div className="p-4 rounded-xl bg-[#FAF8F5] border border-stone-200/80 space-y-1.5">
+              <span className="text-xs font-bold text-indigo-900">客观编码与解码拆解</span>
+              <p className="text-xs sm:text-sm text-stone-700 leading-relaxed">
+                {law.storyScenario.decodingBreakdown}
+              </p>
+            </div>
+            <div className="p-4 rounded-xl bg-amber-50/60 border border-amber-200/80 space-y-1.5">
+              <span className="text-xs font-bold text-amber-900">故事带走的一句话法则</span>
+              <p className="text-xs sm:text-sm text-amber-950 font-medium leading-relaxed">
+                {law.storyScenario.takeaway}
+              </p>
+            </div>
+          </div>
+
+          {law.dispatchedGames && law.dispatchedGames.length > 0 && (
+            <div className="pt-3 border-t border-stone-200/80 space-y-2.5">
+              <span className="text-xs font-bold text-stone-800 block">
+                该知识点已同步分派至以下认知竞技场小游戏（点击立即上手体验与解答）：
+              </span>
+              <div className="flex flex-wrap gap-2">
+                {law.dispatchedGames.map((gid) => {
+                  const g = PSYCHOLOGY_GAMES.find((item) => item.id === gid);
+                  if (!g) return null;
+                  return (
+                    <button
+                      key={gid}
+                      onClick={() => navigate(`/game/${gid}`)}
+                      className="px-3.5 py-2 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer"
+                    >
+                      <Gamepad2 className="w-3.5 h-3.5 text-amber-400" />
+                      <span>{g.nameZh}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </section>
+      )}
 
       {/* 3. Module 3: 4 Real-World Cases */}
       <section className="editorial-card rounded-2xl p-7 sm:p-10 space-y-5">

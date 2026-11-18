@@ -1,10 +1,11 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bookmark, ChevronRight, CheckCircle2, Sparkles, Heart } from 'lucide-react';
+import { Bookmark, ChevronRight, CheckCircle2, Sparkles, Heart, Eye, Gamepad2, BookOpen } from 'lucide-react';
 import { PsychologyLaw, CategoryZh } from '../../types';
 import { useApp } from '../../context/AppContext';
 import { gameAudio } from '../../utils/gameAudio';
 import { getLawEmotionalMapping } from '../../data/emotionalLaws';
+import { PSYCHOLOGY_GAMES } from '../../data/games';
 
 interface PsychologyLawCardProps {
   law: PsychologyLaw;
@@ -98,6 +99,19 @@ export const PsychologyLawCard: React.FC<PsychologyLawCardProps> = ({ law, compa
             >
               <Heart className="w-2.5 h-2.5 fill-current" />
               <span>爱情心理 · {law.subTag}</span>
+            </span>
+          )}
+
+          {law.isMicroexpression && (
+            <span
+              className="inline-flex items-center gap-1 font-mono text-[10px] font-bold px-2 py-0.5 rounded-md border bg-indigo-50 text-indigo-800 border-indigo-200 shadow-2xs tabular-nums"
+              title={law.microDomainTitle || '微表情与面部动作'}
+            >
+              <Eye className="w-2.5 h-2.5" />
+              <span>
+                {law.categoryZh}排行 #{law.categoryRank || 1}
+                {law.actionUnitCode ? ` · ${law.actionUnitCode}` : ''}
+              </span>
             </span>
           )}
 
@@ -221,6 +235,63 @@ export const PsychologyLawCard: React.FC<PsychologyLawCardProps> = ({ law, compa
                 <p className="text-stone-600 leading-relaxed font-sans pl-2.5 border-l-2 border-amber-200">
                   {law.relationshipCase || law.realLifeExample}
                 </p>
+              </div>
+            )}
+
+            {/* Story Scenario & Observable Signs for Microexpression Laws */}
+            {law.storyScenario && (
+              <div className="p-3.5 rounded-xl bg-amber-50/70 border border-amber-200/80 space-y-1.5">
+                <div className="flex items-center justify-between gap-2 text-[11px] font-bold text-amber-900">
+                  <span className="flex items-center gap-1.5">
+                    <BookOpen className="w-3.5 h-3.5 text-amber-700" />
+                    <span>故事场景 · {law.storyScenario.title}</span>
+                  </span>
+                  <span className="text-[10px] font-normal text-amber-800/80">
+                    {law.storyScenario.setting}
+                  </span>
+                </div>
+                <p className="text-stone-700 leading-relaxed font-sans">
+                  {law.storyScenario.narrative}
+                </p>
+                {law.observableSigns && law.observableSigns.length > 0 && (
+                  <p className="text-[11px] text-stone-600 pt-1">
+                    <strong className="text-stone-800">可观察特征：</strong>
+                    {law.observableSigns.join(' · ')}
+                  </p>
+                )}
+                {law.limitations && (
+                  <p className="text-[11px] text-rose-800/90">
+                    <strong>科学局限：</strong>
+                    {law.limitations}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Dispatched Arena Games */}
+            {law.dispatchedGames && law.dispatchedGames.length > 0 && (
+              <div className="flex items-center flex-wrap gap-1.5 pt-0.5 text-[11px]">
+                <span className="text-stone-500 font-semibold flex items-center gap-1 mr-1">
+                  <Gamepad2 className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>竞技场分派游戏:</span>
+                </span>
+                {law.dispatchedGames.map((gid) => {
+                  const g = PSYCHOLOGY_GAMES.find((item) => item.id === gid);
+                  if (!g) return null;
+                  return (
+                    <button
+                      key={gid}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        gameAudio.playTap();
+                        navigate(`/game/${gid}`);
+                      }}
+                      className="px-2 py-0.5 rounded-md bg-indigo-50 hover:bg-indigo-100 text-indigo-800 border border-indigo-200 font-medium transition-colors cursor-pointer"
+                    >
+                      {g.nameZh} →
+                    </button>
+                  );
+                })}
               </div>
             )}
 

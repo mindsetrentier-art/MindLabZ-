@@ -6,6 +6,7 @@ import { GameDifficulty, DIFFICULTY_CONFIGS, DIFFICULTY_LIST } from '../../data/
 import { DifficultySelector } from './DifficultySelector';
 import { GameDebriefModal, DebriefData } from './GameDebriefModal';
 import { GameHeaderHud } from './GameHeaderHud';
+import { MicroexpressionGameDispatchCard } from './MicroexpressionGameDispatchCard';
 import { gameAudio } from '../../utils/gameAudio';
 
 interface BigGoal {
@@ -78,12 +79,32 @@ const GOALS_LIST: BigGoal[] = [
       '浏览器书签栏隐藏摸鱼新闻网站',
     ],
   },
+  {
+    id: 'goal-facial-reset',
+    title: '面部肌肉微放松与高压稳态调节（ML009 面部反馈科学版）',
+    vaguePrompt: '“我要每天靠对着镜子强迫假笑一小时来治愈所有焦虑！”（Coles 2019 元分析提示面部反馈仅具小幅调节效应，强迫硬撑极易反噬挫败）',
+    microActions: [
+      { text: '深呼气 20 秒并温和松开紧绷眉间 AU4 与咬肌，顺势做 1 项低阻力手头推进', frictionLevel: '极低 (2分钟定律)', isOptimal: true },
+      { text: '每天对镜咬筷子保持夸张大笑 45 分钟', frictionLevel: '过高易放弃', isOptimal: false },
+      { text: '焦虑时写完 3000 字自我心理剖析日记', frictionLevel: '适中', isOptimal: false },
+    ],
+    existingAnchors: [
+      '每当我刚开完一场高压对齐会议摘下耳机时',
+      '每当我发现自己皱眉（AU4）盯屏幕超过 30 分钟时',
+      '每当我午休后重新坐回工位打开电脑前',
+    ],
+    environmentTweaks: [
+      '在显示器右下角贴一张淡色小便签：“松眉间 · 呼一口长气（仅辅助情绪微调）”',
+      '把水杯放在起身拿得到的桌面边缘，借倒水 30 秒切换躯体肌张力状态',
+      '设置柔和护眼灯光避免强光诱发习惯性皱眉（AU4）',
+    ],
+  },
 ];
 
 export const MicroHabitGame: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user, recordGameResult } = useApp();
+  const { user, recordGameResult, updateLawMastery } = useApp();
 
   const urlDiff = searchParams.get('difficulty') as GameDifficulty | null;
   const initialDiff: GameDifficulty = urlDiff && DIFFICULTY_LIST.includes(urlDiff) ? urlDiff : '中';
@@ -142,10 +163,11 @@ export const MicroHabitGame: React.FC = () => {
       reactionTime: 820,
       xpGained: calculatedXp,
       comboMax: 3,
-      conceptLearned: '习惯回路（Habit Loop: 提示-渴求-反应-奖励）与环境选择架构',
+      conceptLearned: '习惯回路（Habit Loop: 提示-渴求-反应-奖励）与面部反馈小效应微调',
       lawId: 'delay-discounting',
       difficulty,
     });
+    updateLawMastery('ml-009', currentGoal.id === 'goal-facial-reset' ? 94 : 85);
 
     setGameState('debrief');
   };
@@ -227,6 +249,10 @@ export const MicroHabitGame: React.FC = () => {
             <Sparkles className="w-4 h-4 text-white" />
             <span>进入习惯回路工坊（{difficulty}难度 · {diffConfig.multiplierText} 积分加成）</span>
           </button>
+
+          <div className="relative z-10">
+            <MicroexpressionGameDispatchCard gameId="micro-habit" compact />
+          </div>
         </div>
       </div>
     );
@@ -234,12 +260,13 @@ export const MicroHabitGame: React.FC = () => {
 
   if (gameState === 'debrief') {
     return (
-      <div className="py-4 px-2">
+      <div className="py-4 px-2 space-y-5 max-w-lg mx-auto">
         <GameDebriefModal
           data={debriefData}
           onRestart={() => startSession(difficulty)}
           onReturn={() => navigate('/games')}
         />
+        <MicroexpressionGameDispatchCard gameId="micro-habit" compact />
       </div>
     );
   }

@@ -6,6 +6,7 @@ import { GameDifficulty, DIFFICULTY_CONFIGS, DIFFICULTY_LIST, shuffleArray } fro
 import { DifficultySelector } from './DifficultySelector';
 import { GameDebriefModal, DebriefData } from './GameDebriefModal';
 import { GameHeaderHud } from './GameHeaderHud';
+import { MicroexpressionGameDispatchCard } from './MicroexpressionGameDispatchCard';
 import { gameAudio } from '../../utils/gameAudio';
 
 interface AnchoringItem {
@@ -80,12 +81,26 @@ const ITEMS_POOL: AnchoringItem[] = [
     unit: '元',
     debiasingHint: '真正的优质纯羊绒仅面料原料成本即高达数千元，千元低价通常严重混纺或掺杂化纤。',
   },
+  {
+    id: 'item-art-print',
+    title: '当代青年艺术家限量丝网版画（AU2 惊叹铺垫 + AU12 亲和报价）',
+    category: '艺术品议价',
+    description: '编号 45/100 限量版画，附艺术家签章与画廊装裱证书。',
+    anchorType: 'high',
+    anchorValue: 28000,
+    anchorContext: '画廊经纪人先挑起外侧眉毛（AU2 / ML003）露出“罕见惊叹”神情，随后挂着温和社交微笑（AU12 / ML007）报出“收藏家内购锚定价 28,000 元”。',
+    actualMarketValue: 6200,
+    minRange: 1500,
+    maxRange: 35000,
+    unit: '元',
+    debiasingHint: 'AU2（眉外侧上提）与 AU12（嘴角上扬）是高频议价表演组合，不能证明作品稀有度或真实情绪溢价，务必查核同类编号二级市场真实成交记录。',
+  },
 ];
 
 export const AnchoringLabGame: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user, recordGameResult } = useApp();
+  const { user, recordGameResult, updateLawMastery } = useApp();
 
   const urlDiff = searchParams.get('difficulty') as GameDifficulty | null;
   const initialDiff: GameDifficulty = urlDiff && DIFFICULTY_LIST.includes(urlDiff) ? urlDiff : '中';
@@ -157,10 +172,12 @@ export const AnchoringLabGame: React.FC = () => {
         reactionTime: 920,
         xpGained: calculatedXp,
         comboMax: items.length,
-        conceptLearned: '锚定效应（Anchoring Effect）与去锚定理性评估法',
+        conceptLearned: '锚定效应（Anchoring Effect）与 AU2/AU12 议价表演去锚',
         lawId: 'anchoring-effect',
         difficulty,
       });
+      updateLawMastery('ml-003', 90);
+      updateLawMastery('ml-007', 90);
 
       setGameState('debrief');
     }
@@ -243,6 +260,10 @@ export const AnchoringLabGame: React.FC = () => {
             <Anchor className="w-4 h-4 text-white" />
             <span>进入估值实验室（{difficulty}难度 · {diffConfig.multiplierText} 积分加成）</span>
           </button>
+
+          <div className="relative z-10">
+            <MicroexpressionGameDispatchCard gameId="anchoring-lab" compact />
+          </div>
         </div>
       </div>
     );
@@ -250,12 +271,13 @@ export const AnchoringLabGame: React.FC = () => {
 
   if (gameState === 'debrief') {
     return (
-      <div className="py-4 px-2">
+      <div className="py-4 px-2 space-y-5 max-w-lg mx-auto">
         <GameDebriefModal
           data={debriefData}
           onRestart={() => startSession(difficulty)}
           onReturn={() => navigate('/games')}
         />
+        <MicroexpressionGameDispatchCard gameId="anchoring-lab" compact />
       </div>
     );
   }

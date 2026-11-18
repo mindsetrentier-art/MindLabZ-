@@ -7,6 +7,7 @@ import { DifficultySelector } from './DifficultySelector';
 import { GameDebriefModal, DebriefData } from './GameDebriefModal';
 import { GameHeaderHud } from './GameHeaderHud';
 import { gameAudio } from '../../utils/gameAudio';
+import { MicroexpressionGameDispatchCard } from './MicroexpressionGameDispatchCard';
 
 type SentenceType = 'fact' | 'emotion' | 'speculation';
 
@@ -73,12 +74,56 @@ const CASES_POOL: DialogueCase[] = [
       },
     ],
   },
+  {
+    id: 'case-ml002-au1-au15',
+    title: '微表情实录（ML002 & ML008）：排班讨论时的眉毛与嘴角变化',
+    scene: '社团排班沟通结束后，观察记录员对高中生小雨的面部动作做出三种截然不同的记录陈述：',
+    statements: [
+      {
+        text: '“小雨靠近鼻梁的眉毛内侧两次向上移动（AU1），且听完排班后嘴角呈静息微垂弧度（AU15）。”',
+        correctType: 'fact',
+        explanation: '这是符合 FACS 标准的纯解剖学观察事实（ML002/ML008），只描述可见肌肉运动而未直接下情绪定论。',
+      },
+      {
+        text: '“哎呀，她心里肯定是伤心透顶、失望极了，才会这样！”',
+        correctType: 'emotion',
+        explanation: '直接用主观情绪标签代替客观事实求证，违背 AU1 与 AU15 不能独立诊断悲伤的科学边界。',
+      },
+      {
+        text: '“她绝对是故意装出一副可怜委屈八字眉，想逃避周末值班任务！”',
+        correctType: 'speculation',
+        explanation: '毫无事实依据地对他人动机做恶意读心推论；实际上对方只是近视眯眼看黑板和自然静息嘴型。',
+      },
+    ],
+  },
+  {
+    id: 'case-ml004-au4-focus',
+    title: '微表情实录（ML004）：窗边审稿工位前的皱眉插曲',
+    scene: '新人插画师把设计稿递给坐在强逆光窗边的总监，随后在复盘笔记本里写下三条笔记：',
+    statements: [
+      {
+        text: '“总监抬头注视海报时眉毛向下移动、眉间出现两条纵向皱纹（AU4），持续约 4 秒。”',
+        correctType: 'fact',
+        explanation: '精确记录眉毛下压与眉间纹路出现的客观物理现象（ML004），不夹带个人臆测。',
+      },
+      {
+        text: '“我看到这个川字纹内心瞬间紧绷挫败，觉得氛围好压抑。”',
+        correctType: 'emotion',
+        explanation: '诚实表达了观察者本人当时的主观担忧体验，属于情绪觉察而非恶意臆断他人。',
+      },
+      {
+        text: '“总监盯着我皱眉，一定是极度愤怒嫌弃我的画稿太垃圾！”',
+        correctType: 'speculation',
+        explanation: '把 AU4 皱眉直接等同于愤怒与否定，忽视了窗外逆光刺眼及专注审视配色的生理/认知情境。',
+      },
+    ],
+  },
 ];
 
 export const EmotionDetectiveGame: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user, recordGameResult } = useApp();
+  const { user, recordGameResult, updateLawMastery } = useApp();
 
   const urlDiff = searchParams.get('difficulty') as GameDifficulty | null;
   const initialDiff: GameDifficulty = urlDiff && DIFFICULTY_LIST.includes(urlDiff) ? urlDiff : '中';
@@ -149,14 +194,18 @@ export const EmotionDetectiveGame: React.FC = () => {
         ? Math.round(38 * diffConfig.xpMultiplier)
         : Math.round(10 * diffConfig.xpMultiplier);
 
+      updateLawMastery('ml-002', 90);
+      updateLawMastery('ml-004', 90);
+      updateLawMastery('ml-008', 90);
+
       recordGameResult('emotion-detective', {
         score,
         accuracy: 94,
         reactionTime: 850,
         xpGained: calculatedXp,
         comboMax: 4,
-        conceptLearned: '情绪启发（Affect Heuristic）与事实/推论精准分离技术',
-        lawId: 'halo-effect',
+        conceptLearned: '情绪启发（Affect Heuristic）与微表情事实/推论精准分离技术',
+        lawId: 'ml-002',
         difficulty,
       });
 
@@ -241,6 +290,10 @@ export const EmotionDetectiveGame: React.FC = () => {
             <HeartPulse className="w-4 h-4 text-white" />
             <span>进入事实解剖室（{difficulty}难度 · {diffConfig.multiplierText} 积分加成）</span>
           </button>
+
+          <div className="relative z-10">
+            <MicroexpressionGameDispatchCard gameId="emotion-detective" />
+          </div>
         </div>
       </div>
     );
@@ -248,12 +301,13 @@ export const EmotionDetectiveGame: React.FC = () => {
 
   if (gameState === 'debrief') {
     return (
-      <div className="py-4 px-2">
+      <div className="py-4 px-2 space-y-5 max-w-2xl mx-auto">
         <GameDebriefModal
           data={debriefData}
           onRestart={() => startSession(difficulty)}
           onReturn={() => navigate('/games')}
         />
+        <MicroexpressionGameDispatchCard gameId="emotion-detective" compact />
       </div>
     );
   }

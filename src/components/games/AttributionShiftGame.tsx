@@ -7,6 +7,7 @@ import { DifficultySelector } from './DifficultySelector';
 import { GameDebriefModal, DebriefData } from './GameDebriefModal';
 import { GameHeaderHud } from './GameHeaderHud';
 import { gameAudio } from '../../utils/gameAudio';
+import { MicroexpressionGameDispatchCard } from './MicroexpressionGameDispatchCard';
 
 interface AttributionScenario {
   id: string;
@@ -51,12 +52,32 @@ const SCENARIOS_POOL: AttributionScenario[] = [
     ],
     empathyShiftReasoning: '在马路上，我们总是把别人的变道归因于“流氓自私”，却把自己的变道解释为“我确实赶急事”。',
   },
+  {
+    id: 'scen-ml004-au4',
+    triggerEvent: '（ML004 微表情情境）你走近工位递交设计稿时，团队总监抬头眉间下压、露出明显纵向川字纹（AU4）。',
+    internalBlame: '特质归因直觉：“他一定极度讨厌我，对我交的方案生气发火！”',
+    hiddenContext: [
+      { clue: '逆光强刺激遮挡', details: '总监座位正对西晒玻璃窗，每当有人站在逆光侧，眼肌会条件反射式下压眉毛遮挡刺眼光线。' },
+      { clue: '高认知负荷运算', details: '他此前正盯着屏幕核对密密麻麻的数据指标，皱眉肌持续收缩纯粹源自系统 2 视觉与脑力聚焦。' },
+    ],
+    empathyShiftReasoning: 'ML004 定律提示：AU4 眉间下压极常来自强光照射、近视辨认或高度专注任务，绝不能草率将其与愤怒或敌意画等号。',
+  },
+  {
+    id: 'scen-ml008-au15',
+    triggerEvent: '（ML008 微表情情境）老制作人在隔音室戴耳机审听你的样音时，嘴角始终呈向下拉低弧度（似 AU15）。',
+    internalBlame: '特质归因直觉：“他嘴角挂着苦瓜脸，肯定对我的表现失望透顶！”',
+    hiddenContext: [
+      { clue: '静息原生面肌基线', details: '制作人在全神贯注放松不说话时，面颌肌肉自然随重力微沉，属于他十几年不变的静态中性脸基准线。' },
+      { clue: '内部默念发音咬字', details: '他当时正在心里默读开场白的爆破音衔接节奏，说话前口型筹备自然带动双唇下缘微沉。' },
+    ],
+    empathyShiftReasoning: 'ML008 定律表明：不了解对方的中性静态基线或发言口型习惯，极易把嘴角静息下垂误判成悲伤或失望。',
+  },
 ];
 
 export const AttributionShiftGame: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user, recordGameResult } = useApp();
+  const { user, recordGameResult, updateLawMastery } = useApp();
 
   const urlDiff = searchParams.get('difficulty') as GameDifficulty | null;
   const initialDiff: GameDifficulty = urlDiff && DIFFICULTY_LIST.includes(urlDiff) ? urlDiff : '中';
@@ -109,14 +130,17 @@ export const AttributionShiftGame: React.FC = () => {
         ? Math.round(38 * diffConfig.xpMultiplier)
         : Math.round(10 * diffConfig.xpMultiplier);
 
+      updateLawMastery('ml-004', 90);
+      updateLawMastery('ml-008', 90);
+
       recordGameResult('attribution-shift', {
         score: newScore,
         accuracy: 95,
         reactionTime: 860,
         xpGained: calculatedXp,
         comboMax: 3,
-        conceptLearned: '基本归因错误（Fundamental Attribution Error）与同理心重构',
-        lawId: 'fundamental-attribution-error',
+        conceptLearned: '基本归因错误与面部表情情境纠偏（AU4 / AU15）',
+        lawId: 'ml-004',
         difficulty,
       });
 
@@ -201,6 +225,10 @@ export const AttributionShiftGame: React.FC = () => {
             <Shuffle className="w-4 h-4 text-white" />
             <span>开启归因翻转（{difficulty}难度 · {diffConfig.multiplierText} 积分加成）</span>
           </button>
+
+          <div className="relative z-10">
+            <MicroexpressionGameDispatchCard gameId="attribution-shift" />
+          </div>
         </div>
       </div>
     );
@@ -208,12 +236,13 @@ export const AttributionShiftGame: React.FC = () => {
 
   if (gameState === 'debrief') {
     return (
-      <div className="py-4 px-2">
+      <div className="py-4 px-2 space-y-5 max-w-2xl mx-auto">
         <GameDebriefModal
           data={debriefData}
           onRestart={() => startSession(difficulty)}
           onReturn={() => navigate('/games')}
         />
+        <MicroexpressionGameDispatchCard gameId="attribution-shift" compact />
       </div>
     );
   }

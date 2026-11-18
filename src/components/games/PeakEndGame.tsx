@@ -6,6 +6,7 @@ import { GameDifficulty, DIFFICULTY_CONFIGS, DIFFICULTY_LIST } from '../../data/
 import { DifficultySelector } from './DifficultySelector';
 import { GameDebriefModal, DebriefData } from './GameDebriefModal';
 import { GameHeaderHud } from './GameHeaderHud';
+import { MicroexpressionGameDispatchCard } from './MicroexpressionGameDispatchCard';
 import { gameAudio } from '../../utils/gameAudio';
 
 interface JourneyStep {
@@ -16,7 +17,7 @@ interface JourneyStep {
 export const PeakEndGame: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user, recordGameResult } = useApp();
+  const { user, recordGameResult, updateLawMastery } = useApp();
 
   const urlDiff = searchParams.get('difficulty') as GameDifficulty | null;
   const initialDiff: GameDifficulty = urlDiff && DIFFICULTY_LIST.includes(urlDiff) ? urlDiff : '中';
@@ -29,7 +30,7 @@ export const PeakEndGame: React.FC = () => {
     { name: '2. 选座点单与就座', defaultScore: 6 },
     { name: '3. 主菜品尝 (潜在峰值)', defaultScore: 9 },
     { name: '4. 中场茶歇与环境', defaultScore: 6 },
-    { name: '5. 结账离店 (结束时刻)', defaultScore: 9 },
+    { name: '5. 结账离店 (结束时刻 · AU6+AU12 微笑送别)', defaultScore: 9 },
   ];
 
   const [scores, setScores] = useState<number[]>([6, 6, 9, 6, 9]);
@@ -69,10 +70,12 @@ export const PeakEndGame: React.FC = () => {
       reactionTime: 880,
       xpGained: calculatedXp,
       comboMax: 5,
-      conceptLearned: '峰终定律（Peak-End Rule）与体验心理学设计',
+      conceptLearned: '峰终定律（Peak-End Rule）与结尾 AU6+AU12 微笑体验记忆',
       lawId: 'peak-end-rule',
       difficulty,
     });
+    updateLawMastery('ml-006', 88);
+    updateLawMastery('ml-007', 92);
 
     setGameState('debrief');
   };
@@ -92,8 +95,8 @@ export const PeakEndGame: React.FC = () => {
       '诺贝尔经济学奖得主丹尼尔·卡尼曼通过大样本结肠镜检查实验证明：经历更长时间但最后几分钟痛觉平缓减弱的病患，其对整个手术的痛苦回忆，反而显著轻于时间虽短但在最痛一刻戛然而止的病患！峰终定律（Peak-End Rule）深刻主导了客户忠诚度与人生回忆。',
     actionableSummary: [
       '宜家（IKEA）1元甜筒法则：逛完全程疲惫不堪后，出口处的低价冰淇淋制造完美甜美收尾。',
-      '工作报告与演讲设计：开头可以平实，但必须有一个令人惊叹的核心金句（峰值），并在结尾给出振奋人心的行动愿景（终点）。',
-      '亲密关系修复：一次愉快的约会如果以争吵抢车位结尾，整晚回忆都会被染成灰色；始终保证离别时的一记拥抱与真诚微笑。',
+      '服务收尾与表情识别边界（ML006 / ML007）：结账时友好的 AU6 眼周收紧与 AU12 嘴角上扬显著抬升“结尾分”，但从观察者角度，它们既可能是愉悦反应，也可能是职业礼貌规范，不可凭笑容断言内心真实情绪。',
+      '亲密关系修复：一次愉快的约会如果以争吵收尾，整晚回忆都会被染成灰色；重视告别阶段的温和情绪收束。',
     ],
   };
 
@@ -154,6 +157,10 @@ export const PeakEndGame: React.FC = () => {
             <Activity className="w-4 h-4 text-white" />
             <span>开始波形设计（{difficulty}难度 · {diffConfig.multiplierText} 积分加成）</span>
           </button>
+
+          <div className="relative z-10">
+            <MicroexpressionGameDispatchCard gameId="peak-end" compact />
+          </div>
         </div>
       </div>
     );
@@ -161,12 +168,13 @@ export const PeakEndGame: React.FC = () => {
 
   if (gameState === 'debrief') {
     return (
-      <div className="py-4 px-2">
+      <div className="py-4 px-2 space-y-5 max-w-lg mx-auto">
         <GameDebriefModal
           data={debriefData}
           onRestart={() => setGameState('designing')}
           onReturn={() => navigate('/games')}
         />
+        <MicroexpressionGameDispatchCard gameId="peak-end" compact />
       </div>
     );
   }

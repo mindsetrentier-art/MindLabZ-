@@ -5,6 +5,7 @@ import { useApp } from '../../context/AppContext';
 import { GameDifficulty, DIFFICULTY_CONFIGS, DIFFICULTY_LIST } from '../../data/difficulty';
 import { DifficultySelector } from './DifficultySelector';
 import { GameHeaderHud } from './GameHeaderHud';
+import { MicroexpressionGameDispatchCard } from './MicroexpressionGameDispatchCard';
 import { gameAudio } from '../../utils/gameAudio';
 
 interface FlankerTrial {
@@ -19,7 +20,7 @@ interface FlankerTrial {
 export const BrainRushGame: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { recordGameResult } = useApp();
+  const { recordGameResult, updateLawMastery } = useApp();
 
   const urlDiff = searchParams.get('difficulty') as GameDifficulty | null;
   const initialDiff: GameDifficulty = urlDiff && DIFFICULTY_LIST.includes(urlDiff) ? urlDiff : '中';
@@ -208,10 +209,12 @@ export const BrainRushGame: React.FC = () => {
       reactionTime: avgReactionTime,
       xpGained,
       comboMax: maxCombo,
-      conceptLearned: '选择性注意与干扰侧翼抑制（Flanker Inhibition & Selective Attention）',
+      conceptLearned: '选择性注意、干扰侧翼抑制与眼眉微动作捕获（AU1/AU5）',
       lawId: 'cocktail-party-effect',
       difficulty,
     });
+    updateLawMastery('ml-002', accuracy >= 60 ? 90 : 78);
+    updateLawMastery('ml-005', accuracy >= 60 ? 90 : 78);
 
     navigate('/games');
   };
@@ -271,6 +274,8 @@ export const BrainRushGame: React.FC = () => {
             <Play className="w-4 h-4 fill-white" />
             <span>启动注意力风暴（{difficulty}难度 · {diffConfig.multiplierText}）</span>
           </button>
+
+          <MicroexpressionGameDispatchCard gameId="brain-rush" compact />
         </div>
       ) : gameState === 'game_over' ? (
         <div className="w-full game-arcade-card rounded-3xl p-6 sm:p-8 border-amber-200/80 shadow-2xl text-center space-y-6 animate-fadeIn relative overflow-hidden">
@@ -308,10 +313,10 @@ export const BrainRushGame: React.FC = () => {
           <div className="bg-gradient-to-br from-emerald-50/70 to-teal-50/70 p-4 rounded-2xl text-left border border-emerald-200/60 space-y-1.5">
             <h4 className="text-xs font-bold text-emerald-950 flex items-center gap-1.5 font-serif-editorial">
               <Sparkles className="w-4 h-4 text-emerald-600" />
-              认知科学视角 · 空间注意力过滤机制
+              认知科学视角 · 空间注意力过滤与眉眼微动作捕获（ML002 / ML005）
             </h4>
             <p className="text-[11px] text-stone-700 leading-relaxed">
-              当侧翼刺激与目标冲突时，视觉顶叶与额叶网络对两侧干扰进行毫秒级主动抑制。随机刺激与规则变换锻炼了认知灵活性与前额叶执行控制网。
+              当侧翼刺激与目标冲突时，视觉顶叶与额叶网络对两侧干扰进行毫秒级主动抑制。这种靶向选择性注意同样决定你能否在说话口型干扰下客观分辨眉毛内侧上提（AU1 / ML002）与上眼睑抬升（AU5 / ML005），同时铭记二者仅作观察线索，不可单凭动作武断定性情绪。
             </p>
           </div>
 
@@ -331,6 +336,8 @@ export const BrainRushGame: React.FC = () => {
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
+
+          <MicroexpressionGameDispatchCard gameId="brain-rush" compact />
         </div>
       ) : (
         /* Playing Arena */

@@ -7,6 +7,7 @@ import { DifficultySelector } from './DifficultySelector';
 import { GameDebriefModal, DebriefData } from './GameDebriefModal';
 import { GameHeaderHud } from './GameHeaderHud';
 import { gameAudio } from '../../utils/gameAudio';
+import { MicroexpressionGameDispatchCard } from './MicroexpressionGameDispatchCard';
 
 interface ConformityScenario {
   id: string;
@@ -63,12 +64,40 @@ const SCENARIOS_POOL: ConformityScenario[] = [
     rationalChoice: '遵医嘱规范治疗，温和拒绝群体偏方压力',
     rationalReasoning: '医学决策必须基于循证证据等级，而非个案故事与群体情感绑架。',
   },
+  {
+    id: 'scen-ml007-smile',
+    topic: '（ML007 微表情专题）全桌微笑点头背后的激进预算表决',
+    context: '年度预算汇报会上，你展示了一套极高风险的扩招方案。环顾十人会议室，8 位同事一边听一边朝你露出标准流畅的嘴角上扬（AU12）微笑点头，助理小声说：“大家都笑得多赞许啊，全票通过无疑，别啰嗦直接拍板执行！”',
+    majorityChoice: '把现场整齐的 AU12 微笑视作发自内心的满意与绝对赞同，直接跳过风险匿名评议强推落地',
+    majorityPercentage: 84,
+    majorityReasoning: '在场多数人都全程面带温和笑容并礼貌点头，没人想提出扫兴反对意见。',
+    evidenceItems: [
+      'ML007 科学定律揭示：AU12（嘴角上扬）广泛承担礼貌倾听、维持表面和谐或缓解尴尬等社交功能，绝不等于真心快乐或赞同。',
+      '会后匿名调研数据显示，该方案在核心回本周期和现金流冗余上存在多处明显财务漏洞。',
+    ],
+    rationalChoice: '微笑致谢之余启动“匿名书面挑刺表单”，将社交微笑与实质财务评审彻底拆开',
+    rationalReasoning: '聪明的决策者把 AU12 当作社交礼貌的润滑剂，而非真金白银的投资公证书。',
+  },
+  {
+    id: 'scen-ml010-barrett',
+    topic: '（ML010 微表情边界专题）评委室里的“看脸定罪”群体共识',
+    context: '答辩主讲人刚退场，4 名评委异口同声说：“他全程没笑且紧抿嘴唇，一看就是心里发虚、代码肯定找人代写的！全员淘汰他吧！”此时只有你留意到档案里他顶着高烧重度咽喉炎参会，且书面逻辑全部自洽。',
+    majorityChoice: '顺从 4 位权威评委的一致观感，共同勾选“表情可疑淘汰”',
+    majorityPercentage: 80,
+    majorityReasoning: '四位资深评委看法如此一致，一个人逆着大家翻案实在太不合群。',
+    evidenceItems: [
+      'Lisa Feldman Barrett 等（2019）PSPI 权威综述证实：面部动作与内在心理或欺骗之间并非一一对应，不存在固定表情读心密码。',
+      '后台 Git 逐行提交时间戳与现场黑板算法推导逻辑闭环完备，不存在任何代写实据。',
+    ],
+    rationalChoice: '坚持循证评估准则，请评委组先审阅完整代码提交链路再下结论，拒绝看脸从众定罪',
+    rationalReasoning: '抵抗群体“看脸共识”的最好武器是坚守 Barrett (2019) 科学底线：用客观可复现记录说话。',
+  },
 ];
 
 export const MajorityAnswerGame: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user, recordGameResult } = useApp();
+  const { user, recordGameResult, updateLawMastery } = useApp();
 
   const urlDiff = searchParams.get('difficulty') as GameDifficulty | null;
   const initialDiff: GameDifficulty = urlDiff && DIFFICULTY_LIST.includes(urlDiff) ? urlDiff : '中';
@@ -122,14 +151,17 @@ export const MajorityAnswerGame: React.FC = () => {
         ? Math.round(38 * diffConfig.xpMultiplier)
         : Math.round(10 * diffConfig.xpMultiplier);
 
+      updateLawMastery('ml-007', 90);
+      updateLawMastery('ml-010', 90);
+
       recordGameResult('majority-answer', {
         score,
         accuracy: scenarios.length > 0 ? Math.round((correctCount / scenarios.length) * 100) : 100,
         reactionTime: 980,
         xpGained: calculatedXp,
         comboMax: correctCount,
-        conceptLearned: '阿希从众效应（Asch Conformity）与群体压力抵抗力',
-        lawId: 'social-proof',
+        conceptLearned: '阿希从众效应与社交微笑/表情解读边界（ML007 & ML010）',
+        lawId: 'ml-010',
         difficulty,
       });
 
@@ -214,6 +246,10 @@ export const MajorityAnswerGame: React.FC = () => {
             <Users className="w-4 h-4 text-white" />
             <span>开始从众对抗（{difficulty}难度 · {diffConfig.multiplierText} 积分加成）</span>
           </button>
+
+          <div className="relative z-10">
+            <MicroexpressionGameDispatchCard gameId="majority-answer" />
+          </div>
         </div>
       </div>
     );
@@ -221,12 +257,13 @@ export const MajorityAnswerGame: React.FC = () => {
 
   if (gameState === 'debrief') {
     return (
-      <div className="py-4 px-2">
+      <div className="py-4 px-2 space-y-5 max-w-2xl mx-auto">
         <GameDebriefModal
           data={debriefData}
           onRestart={() => startSession(difficulty)}
           onReturn={() => navigate('/games')}
         />
+        <MicroexpressionGameDispatchCard gameId="majority-answer" compact />
       </div>
     );
   }

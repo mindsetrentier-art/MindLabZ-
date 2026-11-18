@@ -23,6 +23,7 @@ import {
   Crown,
   Sparkle,
   Layers,
+  Eye,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useFontScale } from '../context/FontScaleContext';
@@ -43,6 +44,10 @@ import {
   LOVE_PSYCHOLOGY_LAWS,
   LOVE_SUBTAGS,
 } from '../data/lovePsychologyCodex';
+import {
+  MICROEXPRESSION_DOMAINS,
+  MICROEXPRESSION_LAWS,
+} from '../data/microexpressionLaws';
 
 interface CategoryOption {
   key: 'all' | CategoryZh;
@@ -154,16 +159,21 @@ export const LearnPage: React.FC = () => {
   const initialQuery = searchParams.get('q') || '';
   const initialCategory = (searchParams.get('category') as CategoryZh) || 'all';
   const modeParam = searchParams.get('mode');
-  const initialMode: 'love_codex' | 'emotional_sections' | 'classic_domains' =
+  const initialMode: 'love_codex' | 'emotional_sections' | 'microexpressions' | 'classic_domains' =
     modeParam === 'classic'
       ? 'classic_domains'
       : modeParam === 'emotional'
       ? 'emotional_sections'
+      : modeParam === 'microexpressions'
+      ? 'microexpressions'
       : 'love_codex';
   const initialSectionParam = searchParams.get('section');
   const initialSection = initialSectionParam ? (Number(initialSectionParam) as number) || 'all' : 'all';
 
-  const [curationMode, setCurationMode] = useState<'love_codex' | 'emotional_sections' | 'classic_domains'>(initialMode);
+  const [curationMode, setCurationMode] = useState<
+    'love_codex' | 'emotional_sections' | 'microexpressions' | 'classic_domains'
+  >(initialMode);
+  const [selectedMicroCategory, setSelectedMicroCategory] = useState<'all' | '认知' | '情绪' | '社会' | '行为'>('all');
   const [selectedLoveDomain, setSelectedLoveDomain] = useState<'all' | LoveDomainId>('all');
   const [selectedLoveSubTag, setSelectedLoveSubTag] = useState<string>('all');
   const [selectedDifficulty, setSelectedDifficulty] = useState<'all' | DifficultyLevel>('all');
@@ -185,9 +195,19 @@ export const LearnPage: React.FC = () => {
     if (urlQ !== null && urlQ !== searchQuery) {
       setSearchQuery(urlQ);
     }
+    const urlMode = searchParams.get('mode');
+    if (urlMode === 'microexpressions') {
+      setCurationMode('microexpressions');
+    } else if (urlMode === 'classic') {
+      setCurationMode('classic_domains');
+    } else if (urlMode === 'emotional') {
+      setCurationMode('emotional_sections');
+    }
   }, [searchParams]);
 
-  const handleCurationModeChange = (mode: 'love_codex' | 'emotional_sections' | 'classic_domains') => {
+  const handleCurationModeChange = (
+    mode: 'love_codex' | 'emotional_sections' | 'microexpressions' | 'classic_domains'
+  ) => {
     if (curationMode === mode) return;
     gameAudio.playTap();
     setIsLoading(true);
@@ -270,12 +290,24 @@ export const LearnPage: React.FC = () => {
           law.nameEn.toLowerCase().includes(q) ||
           law.shortExplanation.toLowerCase().includes(q) ||
           law.detailedExplanation.toLowerCase().includes(q) ||
+          (law.actionUnitCode && law.actionUnitCode.toLowerCase().includes(q)) ||
+          (law.researcher && law.researcher.toLowerCase().includes(q)) ||
+          (law.storyScenario?.title && law.storyScenario.title.toLowerCase().includes(q)) ||
+          (law.observableSigns && law.observableSigns.join(' ').toLowerCase().includes(q)) ||
           (law.subTag && law.subTag.toLowerCase().includes(q)) ||
           (law.assignedCityZh && law.assignedCityZh.toLowerCase().includes(q)) ||
           (law.chapter && law.chapter.toLowerCase().includes(q));
 
         const matchesBookmark = !onlyBookmarked || user.bookmarks.includes(law.id);
         if (!matchesSearch || !matchesBookmark) return false;
+
+        if (curationMode === 'microexpressions') {
+          if (!law.isMicroexpression) return false;
+          if (selectedMicroCategory !== 'all' && law.categoryZh !== selectedMicroCategory) {
+            return false;
+          }
+          return true;
+        }
 
         if (curationMode === 'love_codex') {
           if (!law.isLoveCodex) return false;
@@ -309,6 +341,12 @@ export const LearnPage: React.FC = () => {
         return matchesCategory && matchesChapter;
       })
       .sort((a, b) => {
+        if (curationMode === 'microexpressions') {
+          if (selectedMicroCategory !== 'all') {
+            return (a.categoryRank || 99) - (b.categoryRank || 99);
+          }
+          return (a.microGlobalRank || 99) - (b.microGlobalRank || 99);
+        }
         if (curationMode === 'emotional_sections') {
           const metaA = getLawEmotionalMapping(a);
           const metaB = getLawEmotionalMapping(b);
@@ -322,6 +360,7 @@ export const LearnPage: React.FC = () => {
     laws,
     searchQuery,
     curationMode,
+    selectedMicroCategory,
     selectedLoveDomain,
     selectedLoveSubTag,
     selectedDifficulty,
@@ -379,7 +418,7 @@ export const LearnPage: React.FC = () => {
               </span>
               <span className="text-stone-500" aria-hidden="true">/</span>
               <span className="text-stone-300 font-serif-editorial italic font-sans">
-                LAW001 – LAW142 · LOVE001 – LOVE{LOVE_PSYCHOLOGY_LAWS.length}
+                ML001 – ML010 · LAW001 – LAW142 · LOVE001 – LOVE{LOVE_PSYCHOLOGY_LAWS.length}
               </span>
             </div>
 
@@ -390,7 +429,7 @@ export const LearnPage: React.FC = () => {
 
             {/* Editorial Dek */}
             <p className="text-xs sm:text-sm text-stone-300/90 font-normal leading-relaxed">
-              系统收录 142 条经典心智规律与 {LOVE_PSYCHOLOGY_LAWS.length} 条爱情心理学科学词条（已按依恋、沟通、认知、情绪、边界、择偶、成长 7 大分析类别整理，并同步部署至 50 座世界首都关卡与竞技场）。
+              系统收录 10 条微表情与面部动作实证定律（附沉浸式故事场景及全竞技场分派）、142 条经典心智规律与 {LOVE_PSYCHOLOGY_LAWS.length} 条爱情心理学科学词条。
             </p>
 
             {/* Curatorial Index Stats */}
@@ -595,6 +634,21 @@ export const LearnPage: React.FC = () => {
             </button>
 
             <button
+              onClick={() => handleCurationModeChange('microexpressions')}
+              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer active:scale-95 ${
+                curationMode === 'microexpressions'
+                  ? 'bg-indigo-900 text-indigo-100 shadow-md border border-indigo-400/35'
+                  : 'text-stone-600 hover:text-stone-900'
+              }`}
+            >
+              <Eye className={`w-3.5 h-3.5 ${curationMode === 'microexpressions' ? 'text-amber-300' : 'text-indigo-600'}`} />
+              <span>微表情与面部动作 · 分类排行</span>
+              <span className="font-mono text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-400/20 text-indigo-200 font-normal">
+                {MICROEXPRESSION_LAWS.length} 律
+              </span>
+            </button>
+
+            <button
               onClick={() => handleCurationModeChange('classic_domains')}
               className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer active:scale-95 ${
                 curationMode === 'classic_domains'
@@ -605,7 +659,7 @@ export const LearnPage: React.FC = () => {
               <Layers className="w-3.5 h-3.5" />
               <span>❖ 六大经典心智展厅</span>
               <span className="font-mono text-[10px] px-1.5 py-0.5 rounded-full bg-white/20 text-stone-300 font-normal">
-                142 律
+                152 律
               </span>
             </button>
           </div>
@@ -617,7 +671,118 @@ export const LearnPage: React.FC = () => {
         </div>
 
         {/* 3. Category Controls depending on active Taxonomy Mode */}
-        {curationMode === 'love_codex' ? (
+        {curationMode === 'microexpressions' ? (
+          <div className="space-y-4">
+            {/* Microexpression Category Tabs */}
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+              <button
+                onClick={() => {
+                  gameAudio.playSelect();
+                  setSelectedMicroCategory('all');
+                }}
+                className={`text-xs font-bold px-4 py-2.5 rounded-2xl transition-all shrink-0 whitespace-nowrap cursor-pointer flex items-center gap-2 active:scale-95 shadow-xs ${
+                  selectedMicroCategory === 'all'
+                    ? 'bg-stone-900 text-white shadow-md'
+                    : 'bg-white text-stone-700 border border-stone-200 hover:border-stone-400'
+                }`}
+              >
+                <Eye className="w-3.5 h-3.5 text-amber-500" />
+                <span>全部微表情定律 ({MICROEXPRESSION_LAWS.length})</span>
+              </button>
+
+              {MICROEXPRESSION_DOMAINS.map((dom) => {
+                const isSelected = selectedMicroCategory === dom.categoryZh;
+                const count = MICROEXPRESSION_LAWS.filter((l) => l.categoryZh === dom.categoryZh).length;
+                return (
+                  <button
+                    key={dom.id}
+                    onClick={() => {
+                      gameAudio.playSelect();
+                      setSelectedMicroCategory(dom.categoryZh);
+                    }}
+                    className={`text-xs font-bold px-4 py-2.5 rounded-2xl transition-all shrink-0 whitespace-nowrap cursor-pointer flex items-center gap-2 active:scale-95 shadow-xs ${
+                      isSelected
+                        ? 'text-white shadow-md'
+                        : 'bg-white text-stone-700 border border-stone-200 hover:border-stone-400 hover:text-stone-900'
+                    }`}
+                    style={isSelected ? { backgroundColor: dom.color } : undefined}
+                  >
+                    <span className="tabular-nums">{dom.categoryZh}分类排行 ({count})</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Category Ranking Matrix Summary Card */}
+            <div className="bg-white rounded-2xl p-4 sm:p-5 border border-stone-200/90 shadow-xs space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-2.5 border-b border-stone-200/70">
+                <div>
+                  <h3 className="font-serif-editorial text-sm sm:text-base font-bold text-stone-900">
+                    微表情与面部动作十大定律 · 分类排行榜（ML001–ML010）
+                  </h3>
+                  <p className="text-xs text-stone-500">
+                    按「认知、情绪、社会、行为」四大心理学分类依次排榜，每条均附完整故事场景、科学边界并已同步分派至竞技场小游戏。
+                  </p>
+                </div>
+                <span className="text-[11px] font-mono text-stone-500 shrink-0 tabular-nums">
+                  证据等级 A · 点击任一排行直达详情
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {MICROEXPRESSION_DOMAINS.filter(
+                  (d) => selectedMicroCategory === 'all' || d.categoryZh === selectedMicroCategory
+                ).map((dom) => {
+                  const ranked = MICROEXPRESSION_LAWS.filter((l) => l.categoryZh === dom.categoryZh).sort(
+                    (a, b) => (a.categoryRank || 99) - (b.categoryRank || 99)
+                  );
+                  return (
+                    <div
+                      key={dom.id}
+                      className="rounded-xl p-3 bg-[#FAF8F5] border border-stone-200/80 space-y-2"
+                    >
+                      <div className="flex items-center justify-between border-b border-stone-200/70 pb-1.5">
+                        <span className="text-xs font-bold" style={{ color: dom.color }}>
+                          {dom.categoryZh}分类榜
+                        </span>
+                        <span className="text-[11px] font-mono text-stone-500 tabular-nums">
+                          共 {ranked.length} 律
+                        </span>
+                      </div>
+                      <ul className="space-y-1.5">
+                        {ranked.map((item) => (
+                          <li key={item.id}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                gameAudio.playTap();
+                                navigate(`/law/${item.id}`);
+                              }}
+                              className="w-full text-left flex items-baseline gap-2 text-xs hover:text-indigo-700 transition-colors cursor-pointer"
+                            >
+                              <span
+                                className="font-mono font-bold text-[11px] tabular-nums shrink-0"
+                                style={{ color: dom.color }}
+                              >
+                                #{item.categoryRank}
+                              </span>
+                              <span className="font-semibold text-stone-800 truncate flex-1">
+                                {item.nameZh}
+                              </span>
+                              <span className="font-mono text-[10px] text-stone-400 shrink-0">
+                                {item.codeId}
+                              </span>
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        ) : curationMode === 'love_codex' ? (
           <div className="space-y-3.5">
             {/* 7 Analyzed Love Psychology Domain Tabs */}
             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
@@ -1062,6 +1227,8 @@ export const LearnPage: React.FC = () => {
           ? selectedLoveDomain !== 'all' || selectedLoveSubTag !== 'all' || selectedDifficulty !== 'all'
           : curationMode === 'emotional_sections'
           ? selectedEmotionalSection !== 'all'
+          : curationMode === 'microexpressions'
+          ? selectedMicroCategory !== 'all'
           : selectedCategory !== 'all' || selectedChapter !== 'all') ||
           onlyBookmarked ||
           searchQuery) && (
@@ -1069,6 +1236,7 @@ export const LearnPage: React.FC = () => {
             onClick={() => {
               gameAudio.playTap();
               setSearchQuery('');
+              setSelectedMicroCategory('all');
               setSelectedLoveDomain('all');
               setSelectedLoveSubTag('all');
               setSelectedDifficulty('all');

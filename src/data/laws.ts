@@ -1,6 +1,7 @@
 import { PsychologyLaw, CategoryType, CategoryZh, DifficultyLevel, GameType } from '../types';
 import manifestData from '../../data/laws.manifest.json';
 import { LOVE_PSYCHOLOGY_LAWS } from './lovePsychologyCodex';
+import { MICROEXPRESSION_LAWS, MICROEXPRESSION_CHAPTER } from './microexpressionLaws';
 
 const CORE_PSYCHOLOGY_LAWS: PsychologyLaw[] = [
   {
@@ -536,6 +537,7 @@ export const EMOTIONAL_CHAPTERS = [
 ];
 
 export const MINDLABZ_CHAPTERS: string[] = [
+  MICROEXPRESSION_CHAPTER,
   ...manifestData.chapters,
   ...EMOTIONAL_CHAPTERS,
 ];
@@ -743,9 +745,10 @@ export const CORE_AND_EMOTIONAL_LAWS: PsychologyLaw[] = [
   ...UNIQUE_EMOTIONAL_LAWS,
 ];
 
-export { LOVE_PSYCHOLOGY_LAWS };
+export { LOVE_PSYCHOLOGY_LAWS, MICROEXPRESSION_LAWS };
 
 export const INITIAL_PSYCHOLOGY_LAWS: PsychologyLaw[] = [
+  ...MICROEXPRESSION_LAWS,
   ...CORE_MANIFEST_LAWS,
   ...UNIQUE_EMOTIONAL_LAWS,
   ...LOVE_PSYCHOLOGY_LAWS,

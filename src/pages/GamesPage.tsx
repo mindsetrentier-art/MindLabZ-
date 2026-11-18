@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { GameCard } from '../components/cards/GameCard';
 import { GameCardSkeleton } from '../components/ui/Skeleton';
 import { PSYCHOLOGY_GAMES } from '../data/games';
-import { Brain, Trophy, Zap, Sparkles, Shuffle, ShieldCheck, Flame, Crown, CheckCircle2, Volume2, VolumeX, Gamepad2, Award, ArrowRight } from 'lucide-react';
+import { Brain, Trophy, Zap, Sparkles, Shuffle, ShieldCheck, Flame, Crown, CheckCircle2, Volume2, VolumeX, Gamepad2, Award, ArrowRight, Heart, RotateCcw, Eye, BookOpen } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { GameDifficulty, DEFAULT_DIFFICULTY, DIFFICULTY_LIST, DIFFICULTY_CONFIGS } from '../data/difficulty';
 import { DifficultySelector } from '../components/games/DifficultySelector';
@@ -11,7 +11,7 @@ import { GameLeaderboardModule } from '../components/games/GameLeaderboardModule
 import { ArenaHorizontalAccordion } from '../components/games/ArenaHorizontalAccordion';
 import { gameAudio } from '../utils/gameAudio';
 import { getAleatoricStats, resetAleatoricDeck } from '../utils/aleatoricEngine';
-import { Heart, RotateCcw } from 'lucide-react';
+import { MICROEXPRESSION_LAWS } from '../data/microexpressionLaws';
 
 const GAME_CATEGORIES = ['全部', '心理学核心实验', '认知', '决策', '社会', '情绪', '习惯', '记忆', '逻辑'];
 
@@ -341,6 +341,109 @@ export const GamesPage: React.FC = () => {
 
       {/* Arena Horizontal Accordion: Psychological Experiments Canvas */}
       <ArenaHorizontalAccordion difficulty={arenaDifficulty} />
+
+      {/* Microexpressions ML001-ML010 Full Arena Dispatch Matrix */}
+      <section className="editorial-card rounded-3xl p-5 sm:p-7 border border-indigo-200/80 bg-gradient-to-br from-[#F9F9FF] via-white to-[#F6F9FC] shadow-sm space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-stone-200/70 pb-4">
+          <div className="space-y-1">
+            <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono text-indigo-700 font-bold">
+              <Eye className="w-3.5 h-3.5 text-indigo-600" />
+              <span>MIND LABS · MICROEXPRESSIONS DISPATCH</span>
+              <span className="text-stone-300" aria-hidden="true">/</span>
+              <span className="text-stone-600">Evidence Level A · 10 律全游戏分派</span>
+            </div>
+            <h2 className="font-serif-editorial text-xl sm:text-2xl font-bold text-stone-900">
+              微表情与面部动作（ML001–ML010）竞技场分派矩阵
+            </h2>
+            <p className="text-xs sm:text-sm text-stone-600 leading-relaxed max-w-2xl">
+              全部 10 条 FACS 动作单元与元分析定律已按「认知 / 情绪 / 社会 / 行为」分类排行，并分派至下列对应小游戏内。进入游戏即可阅读故事实案并完成随堂交互解答。
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              gameAudio.playTap();
+              navigate('/learn?mode=microexpressions');
+            }}
+            className="px-4 py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold transition-all shrink-0 cursor-pointer active:scale-95 flex items-center gap-1.5"
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            <span>定律库看分类排行</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+          {MICROEXPRESSION_LAWS.map((law) => {
+            const mastery = user.lawMasteryMap?.[law.id] ?? 0;
+            const gamesList = (law.dispatchedGames || [])
+              .map((gid) => PSYCHOLOGY_GAMES.find((g) => g.id === gid))
+              .filter((g): g is NonNullable<typeof g> => Boolean(g));
+
+            return (
+              <div
+                key={law.id}
+                className="rounded-2xl bg-white border border-stone-200/90 hover:border-indigo-300 p-4 space-y-2.5 transition-all"
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="space-y-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-mono">
+                      <span className="font-bold text-indigo-700">
+                        {law.id.toUpperCase()}
+                      </span>
+                      <span className="text-stone-300" aria-hidden="true">·</span>
+                      <span className="font-semibold text-stone-600">
+                        {law.actionUnitCode}
+                      </span>
+                      <span className="text-stone-300" aria-hidden="true">·</span>
+                      <span className="font-sans font-bold text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200/80">
+                        {law.categoryZh} #{law.categoryRank}
+                      </span>
+                    </div>
+                    <h3 className="text-sm font-bold text-stone-900 font-serif-editorial truncate">
+                      {law.nameZh}
+                    </h3>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={() => navigate(`/law/${law.id}`)}
+                    className="text-[11px] font-numeric font-bold text-stone-600 hover:text-indigo-700 bg-stone-50 hover:bg-indigo-50 px-2 py-1 rounded-lg border border-stone-200 shrink-0 cursor-pointer transition-colors"
+                    title="查看定律详细机制与完整故事场景"
+                  >
+                    掌握 {mastery}%
+                  </button>
+                </div>
+
+                {law.storyScenario && (
+                  <p className="text-[11px] text-stone-600 leading-relaxed line-clamp-1">
+                    <span className="font-semibold text-stone-800">实案：</span>
+                    {law.storyScenario.title}
+                  </p>
+                )}
+
+                <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                  {gamesList.map((g) => (
+                    <button
+                      key={g.id}
+                      type="button"
+                      onClick={() => {
+                        gameAudio.playTap();
+                        navigate(`/game/${g.id}?difficulty=${encodeURIComponent(arenaDifficulty)}`);
+                      }}
+                      className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-indigo-50/70 hover:bg-indigo-600 text-indigo-800 hover:text-white border border-indigo-200/80 transition-colors cursor-pointer flex items-center gap-1"
+                    >
+                      <span>{g.nameZh}</span>
+                      <ArrowRight className="w-3 h-3" />
+                    </button>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
 
       {/* Category Filter Controls */}
       <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">

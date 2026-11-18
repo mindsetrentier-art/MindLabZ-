@@ -6,6 +6,7 @@ import { GameDifficulty, DIFFICULTY_CONFIGS, DIFFICULTY_LIST, shuffleArray } fro
 import { DifficultySelector } from './DifficultySelector';
 import { GameHeaderHud } from './GameHeaderHud';
 import { gameAudio } from '../../utils/gameAudio';
+import { MicroexpressionGameDispatchCard } from './MicroexpressionGameDispatchCard';
 
 interface LabChoice {
   key: string;
@@ -278,6 +279,81 @@ const ALL_EXPERIMENTS: LabExperiment[] = [
     insight: '当注意力高度集中在白衣传球这一项特定认知任务上时，一半的健康成年人完全看不见黑猩猩！我们不仅对身边的显著事实视而不见，而且更可怕的是，我们对自己“看不见”这一事实浑然不觉。',
     lawId: 'inattentional-blindness',
   },
+  {
+    id: 'facs-microexpression-lab',
+    nameZh: '面部动作编码系统范式（ML001）',
+    nameEn: 'Facial Action Coding System (FACS)',
+    researcher: 'Paul Ekman & Wallace V. Friesen',
+    year: '1978',
+    background: '为了解决早期观察者用“我觉得他很愧疚/心虚”等主观情绪词混乱记账的弊端，研究者构建了一套基于解剖学肌肉运动的编码体系（AU）。现让两组培训员观察同一段皱眉+咬紧下颌的急诊患者录像：',
+    question: '符合 FACS 原教旨科学边界的客观观察结论应当是：',
+    choices: [
+      {
+        key: 'A',
+        label: '只记录观察到 AU4 眉间下压与下颌肌肉收紧，不直接定论患者正在“心虚说谎”。',
+        biasDescription: '严守 FACS 解剖动作描述与内心意图分离准则',
+        globalPercentage: 36,
+      },
+      {
+        key: 'B',
+        label: '只要比对动作编号即可 100% 在录像里读出患者当时内心正感到愧疚与隐瞒。',
+        biasDescription: '常见大众读心术误读，把物理肌肉运动直接等同于心理诊断',
+        globalPercentage: 64,
+      },
+    ],
+    insight: 'Ekman 与 Friesen（1978）反复警示：FACS 是精密的解剖动作编码器，不是测谎仪或读心器。实际临床排查发现，许多紧绷眉颌来自牙痛或顶灯刺眼。',
+    lawId: 'ml-001',
+  },
+  {
+    id: 'facial-feedback-meta-2019',
+    nameZh: '面部反馈假说 138 项荟萃研究（ML009）',
+    nameEn: 'Facial Feedback Hypothesis Meta-Analysis',
+    researcher: 'Nicholas A. Coles, Jeff T. Larsen & Heather C. Lench',
+    year: '2019',
+    background: '“咬住铅笔假笑会让我们觉得更好笑吗？”由于早年单个小实验曾多次复现失败，Coles 团队（2019）在《Psychological Bulletin》综合了 138 项独立研究、共 286 个效应量（DOI: 10.1037/bul0000194）进行大数据实证检验：',
+    question: '综合 138 项研究之后，科学界对“面部动作影响主观情绪”达成的真实结论是：',
+    choices: [
+      {
+        key: 'A',
+        label: '效应真实存在但总体较小且因研究条件而异，不能视为能随心控制情绪的绝对开关。',
+        biasDescription: '循证科学严谨态：小而可变的双向调节效应（Small and variable）',
+        globalPercentage: 41,
+      },
+      {
+        key: 'B',
+        label: '拥有决定性巨大魔力：强迫痛苦的人横咬笔杆大笑一分钟即可立即治愈负性情绪。',
+        biasDescription: '畅销书夸大简化的迷思，无视小效应量与情境依赖限制',
+        globalPercentage: 59,
+      },
+    ],
+    insight: '2019 年这篇重磅荟萃分析示范了心理学严谨自我纠偏：面部肌肉活动确实对主观心情存在微弱的辅助微调作用（例如温和放松紧绷的眉心），但它绝非万能的情绪开关。',
+    lawId: 'ml-009',
+  },
+  {
+    id: 'barrett-expression-mapping-2019',
+    nameZh: '表情与情绪非一一对应综述（ML010）',
+    nameEn: 'Emotional Expressions Reconsidered (PSPI)',
+    researcher: 'Lisa Feldman Barrett et al.',
+    year: '2019',
+    background: '流行观点声称人类快乐就笑、愤怒就皱眉、悲伤就嘴角下垂，存在一套全球通用的“一对一读心密码表”。2019 年 Barrett 等五位权威学者在《PSPI》审视了千余篇跨文化与神经影像文献后指出：',
+    question: '根据 Barrett 等人（2019，DOI: 10.1177/1529100619832930）的研究证据，现实中表情与情绪的关系是：',
+    choices: [
+      {
+        key: 'A',
+        label: '同一情绪有多种表情方式，同一肌肉动作也对应多种非情绪意义，高度依赖具体语境与文化。',
+        biasDescription: '科学主流共识：多对多概率线索模型，否定固定密码字典',
+        globalPercentage: 38,
+      },
+      {
+        key: 'B',
+        label: '高度机械一一对应：AI 仅靠单帧照片就能准确识别任何人的真实内心状态。',
+        biasDescription: '被多国监管与权威综述明确叫停的“伪精确读心假设”',
+        globalPercentage: 62,
+      },
+    ],
+    insight: '面部表情更像语音中的一个多义词：微笑既可能是欢喜，也可能是礼貌、羞涩、挑衅或防卫。离开事件前因后果与对话背景的“看脸读心”几乎必定失准。',
+    lawId: 'ml-010',
+  },
 ];
 
 export const PsychExperimentGame: React.FC = () => {
@@ -423,6 +499,8 @@ export const PsychExperimentGame: React.FC = () => {
             <Play className="w-4 h-4 fill-white" />
             <span>进入心理学实验室（{difficulty}难度 · {diffConfig.multiplierText}）</span>
           </button>
+
+          <MicroexpressionGameDispatchCard gameId="psych-experiment" />
         </div>
       ) : gameState === 'playing' && exp ? (
         <div className="w-full game-arcade-card rounded-3xl p-6 sm:p-8 border-blue-200/80 shadow-2xl space-y-6 animate-fadeIn">
@@ -579,6 +657,8 @@ export const PsychExperimentGame: React.FC = () => {
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
+
+          <MicroexpressionGameDispatchCard gameId="psych-experiment" compact />
         </div>
       )}
     </div>

@@ -51,9 +51,23 @@ export type LoveDomainId =
   | 'mate-dynamics'
   | 'growth-autonomy';
 
+export type MicroDomainId =
+  | 'cognitive-decoding'
+  | 'emotion-action-units'
+  | 'social-boundary'
+  | 'behavioral-feedback';
+
+export interface MicroexpressionStoryScenario {
+  title: string;
+  setting: string;
+  narrative: string;
+  decodingBreakdown: string;
+  takeaway: string;
+}
+
 export interface PsychologyLaw {
   id: string;
-  codeId?: string; // e.g. LAW001 - LAW100, LOVE001 - LOVE696
+  codeId?: string; // e.g. LAW001 - LAW100, LOVE001 - LOVE696, ML001 - ML010
   chapter?: string;
   xpReward?: number;
   evidenceLevel?: string;
@@ -85,6 +99,19 @@ export interface PsychologyLaw {
   assignedCityIndex?: number;
   assignedCityZh?: string;
   healthyBoundary?: string;
+  isMicroexpression?: boolean;
+  microDomainId?: MicroDomainId;
+  microDomainTitle?: string;
+  categoryRank?: number; // Rank #1..#N inside its categoryZh
+  microGlobalRank?: number; // Rank #1..#10 across microexpression laws
+  actionUnitCode?: string; // e.g. FACS, AU1, AU2, AU4, AU5, AU6, AU12, AU15
+  researcher?: string;
+  studyYear?: number;
+  observableSigns?: string[];
+  limitations?: string;
+  sourceCitation?: string;
+  dispatchedGames?: GameType[];
+  storyScenario?: MicroexpressionStoryScenario;
   experimentSetup?: {
     scenario: string;
     optionA: { label: string; biasDescription?: string; rationalDescription?: string; description?: string };

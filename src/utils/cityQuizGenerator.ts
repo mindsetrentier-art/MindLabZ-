@@ -10,10 +10,19 @@ import {
   WorldCapitalCity,
 } from '../data/worldCapitals';
 import { DifficultyLevel, PsychologyLaw, QuizQuestion } from '../types';
+import { cryptoRandom, cryptoShuffle } from './aleatoricEngine';
+import {
+  MICROEXPRESSION_QUIZ_SCENARIOS,
+  MicroexpressionScenarioMeta,
+  buildMicroexpressionChapterQuestion,
+} from '../data/microexpressionQuizScenarios';
 
 export interface CityChapterQuestion extends QuizQuestion {
   chapterTheme: string;
   cityTag: string;
+  subTag?: string;
+  sequenceToken?: string;
+  microScenario?: MicroexpressionScenarioMeta;
 }
 
 const CHAPTER_THEMES_ZH = [
@@ -40,27 +49,78 @@ const POINT_CATEGORIES: Array<'认知' | '记忆' | '决策' | '社会' | '情�
   '决策',
 ];
 
-// Deterministic PRNG (Mulberry32) so each (city, point, chapter) has stable reproducible 20 questions
-function createSeededRng(seed: number): () => number {
-  let a = seed >>> 0;
-  return function () {
-    a |= 0;
-    a = (a + 0x6d2b79f5) | 0;
-    let t = Math.imul(a ^ (a >>> 15), 1 | a);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
+const RAPID_SEQUENCE_STORAGE_KEY = 'mindlabz_rapid_quiz_aleatoric_seq_v1';
+const RECENT_COOLDOWN_SIZE = 60;
+const LOVE_VARIANT_COUNT = 5;
+
+interface RapidSequenceHistory {
+  seenSignatures: string[]; // `${lawId}::${variantType}`
+  recentLawIds: string[]; // Rolling cooldown so adjacent sessions don't repeat laws
+  lastLevelOrders: Record<string, string>; // `${city}-${point}-${chapter}` -> sequence hash
+  totalRuns: number;
 }
 
-function shuffleWithRng<T>(arr: T[], rng: () => number): T[] {
-  const copy = [...arr];
-  for (let i = copy.length - 1; i > 0; i--) {
-    const j = Math.floor(rng() * (i + 1));
-    const tmp = copy[i];
-    copy[i] = copy[j];
-    copy[j] = tmp;
+function loadSequenceHistory(): RapidSequenceHistory {
+  try {
+    if (typeof window === 'undefined') {
+      return { seenSignatures: [], recentLawIds: [], lastLevelOrders: {}, totalRuns: 0 };
+    }
+    const raw = window.localStorage.getItem(RAPID_SEQUENCE_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return {
+        seenSignatures: Array.isArray(parsed.seenSignatures) ? parsed.seenSignatures : [],
+        recentLawIds: Array.isArray(parsed.recentLawIds) ? parsed.recentLawIds : [],
+        lastLevelOrders:
+          parsed.lastLevelOrders && typeof parsed.lastLevelOrders === 'object'
+            ? parsed.lastLevelOrders
+            : {},
+        totalRuns: typeof parsed.totalRuns === 'number' ? parsed.totalRuns : 0,
+      };
+    }
+  } catch {
+    // ignore storage errors
   }
-  return copy;
+  return { seenSignatures: [], recentLawIds: [], lastLevelOrders: {}, totalRuns: 0 };
+}
+
+function saveSequenceHistory(history: RapidSequenceHistory): void {
+  try {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(RAPID_SEQUENCE_STORAGE_KEY, JSON.stringify(history));
+  } catch {
+    // ignore quota errors
+  }
+}
+
+export function resetRapidQuizSequenceHistory(): void {
+  saveSequenceHistory({
+    seenSignatures: [],
+    recentLawIds: [],
+    lastLevelOrders: {},
+    totalRuns: 0,
+  });
+}
+
+export function getRapidQuizSequenceStats(): {
+  totalLoveLaws: number;
+  totalMicroLaws: number;
+  totalUniqueQuestionVariants: number;
+  seenVariantsCount: number;
+  uniqueLawsEncountered: number;
+  totalRuns: number;
+} {
+  const history = loadSequenceHistory();
+  const uniqueLaws = new Set(history.seenSignatures.map((s) => s.split('::')[0]));
+  return {
+    totalLoveLaws: LOVE_PSYCHOLOGY_LAWS.length,
+    totalMicroLaws: MICROEXPRESSION_QUIZ_SCENARIOS.length,
+    totalUniqueQuestionVariants:
+      LOVE_PSYCHOLOGY_LAWS.length * LOVE_VARIANT_COUNT + MICROEXPRESSION_QUIZ_SCENARIOS.length,
+    seenVariantsCount: history.seenSignatures.length,
+    uniqueLawsEncountered: uniqueLaws.size,
+    totalRuns: history.totalRuns,
+  };
 }
 
 function buildShuffledOptions(
@@ -68,8 +128,9 @@ function buildShuffledOptions(
   distractors: string[],
   rng: () => number
 ): { options: string[]; correctAnswer: number } {
+  const cleanCorrect = correctText.trim();
   const uniqueDistractors = Array.from(
-    new Set(distractors.filter((d) => d && d.trim() !== correctText.trim()))
+    new Set(distractors.map((d) => d.trim()).filter((d) => d && d !== cleanCorrect))
   ).slice(0, 3);
 
   while (uniqueDistractors.length < 3) {
@@ -77,13 +138,19 @@ function buildShuffledOptions(
   }
 
   const tagged = [
-    { text: correctText, isCorrect: true },
+    { text: cleanCorrect, isCorrect: true },
     ...uniqueDistractors.map((text) => ({ text, isCorrect: false })),
   ];
-  const shuffled = shuffleWithRng(tagged, rng);
-  const correctAnswer = shuffled.findIndex((item) => item.isCorrect);
+  // Fisher-Yates shuffle using CSPRNG
+  for (let i = tagged.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    const tmp = tagged[i];
+    tagged[i] = tagged[j];
+    tagged[j] = tmp;
+  }
+  const correctAnswer = tagged.findIndex((item) => item.isCorrect);
   return {
-    options: shuffled.map((item) => item.text),
+    options: tagged.map((item) => item.text),
     correctAnswer: correctAnswer >= 0 ? correctAnswer : 0,
   };
 }
@@ -98,7 +165,7 @@ function pickDistinctLaws(
   const picked: PsychologyLaw[] = [];
   const usedIds = new Set<string>();
   let guard = 0;
-  while (picked.length < count && guard < 80) {
+  while (picked.length < count && guard < 120 && pool.length > 0) {
     guard++;
     const candidate = pool[Math.floor(rng() * pool.length)];
     if (candidate && !usedIds.has(candidate.id)) {
@@ -116,7 +183,7 @@ function buildCapitalGeographyQuestions(
   rng: () => number
 ): CityChapterQuestion[] {
   const otherCities = WORLD_CAPITALS.filter((c) => c.index !== city.index);
-  const randomCities = shuffleWithRng(otherCities, rng);
+  const randomCities = cryptoShuffle(otherCities);
   const district = city.districts[pointIndex] || city.districts[0];
   const chapterTheme = CHAPTER_THEMES_ZH[chapterIndex] || `第 ${chapterIndex + 1} 章`;
   const cityTag = `${city.cityFr} · ${city.cityZh}`;
@@ -137,6 +204,7 @@ function buildCapitalGeographyQuestions(
       difficulty: 'Easy' as const,
       chapterTheme,
       cityTag,
+      subTag: '地理坐标',
     };
   })();
 
@@ -156,6 +224,7 @@ function buildCapitalGeographyQuestions(
       difficulty: 'Easy' as const,
       chapterTheme,
       cityTag,
+      subTag: '水脉记忆',
     };
   })();
 
@@ -178,6 +247,7 @@ function buildCapitalGeographyQuestions(
       difficulty: 'Medium' as const,
       chapterTheme,
       cityTag,
+      subTag: '都市街区',
     };
   })();
 
@@ -207,10 +277,11 @@ function buildCapitalGeographyQuestions(
       difficulty: 'Easy' as const,
       chapterTheme,
       cityTag,
+      subTag: '大洲定位',
     };
   })();
 
-  return [qCountry, qRiver, qDistrict, qContinent];
+  return cryptoShuffle([qCountry, qRiver, qDistrict, qContinent]);
 }
 
 function buildPsychologyLawQuestion(
@@ -228,15 +299,17 @@ function buildPsychologyLawQuestion(
   const cityTag = `${city.cityFr} · ${city.cityZh}`;
   const district = city.districts[pointIndex] || city.districts[0];
   const category = POINT_CATEGORIES[pointIndex] || law.categoryZh || '认知';
-  const difficulty: DifficultyLevel = law.difficulty || (chapterIndex < 3 ? 'Easy' : chapterIndex < 7 ? 'Medium' : 'Hard');
+  const difficulty: DifficultyLevel =
+    law.difficulty || (chapterIndex < 3 ? 'Easy' : chapterIndex < 7 ? 'Medium' : 'Hard');
   const domainLabel = law.isLoveCodex ? `爱情心理·${law.subTag || '关系'}` : '心理定律';
+  const sequenceToken = `${law.id}::${variantType}`;
 
   if (variantType === 0 && law.answers && law.answers.length >= 4) {
     const correctText = law.answers[law.correctAnswer] || law.answers[0];
-    const wrongTexts = law.answers.filter((_, idx) => idx !== law.correctAnswer);
+    const wrongTexts = distractors.map((d) => d.shortExplanation);
     const { options, correctAnswer } = buildShuffledOptions(correctText, wrongTexts, rng);
     return {
-      id: `psy-direct-${city.index}-${pointIndex}-${chapterIndex}-${qIdx}`,
+      id: `psy-direct-${city.index}-${pointIndex}-${chapterIndex}-${law.id}-${qIdx}`,
       category,
       question: `【${district.zh} · ${domainLabel}】${law.question}`,
       options,
@@ -246,23 +319,24 @@ function buildPsychologyLawQuestion(
       relatedLawId: law.id,
       chapterTheme,
       cityTag,
+      subTag: law.subTag || law.categoryZh,
+      sequenceToken,
     };
   }
 
   if (variantType === 1) {
-    const promptSnippet =
-      law.isLoveCodex
-        ? law.shortExplanation
-        : law.realLifeExample && law.realLifeExample.length > 16
-        ? law.realLifeExample
-        : law.shortExplanation;
+    const promptSnippet = law.isLoveCodex
+      ? law.shortExplanation
+      : law.realLifeExample && law.realLifeExample.length > 16
+      ? law.realLifeExample
+      : law.shortExplanation;
     const { options, correctAnswer } = buildShuffledOptions(
       `${law.nameZh} (${law.nameEn})`,
       distractors.map((d) => `${d.nameZh} (${d.nameEn})`),
       rng
     );
     return {
-      id: `psy-case-${city.index}-${pointIndex}-${chapterIndex}-${qIdx}`,
+      id: `psy-case-${city.index}-${pointIndex}-${chapterIndex}-${law.id}-${qIdx}`,
       category,
       question: `【都市情境映射 · ${city.cityZh}】试想在「${district.zh}」分析以下规律：“${promptSnippet}”，这精准对应哪一项心理学概念？`,
       options,
@@ -272,6 +346,8 @@ function buildPsychologyLawQuestion(
       relatedLawId: law.id,
       chapterTheme,
       cityTag,
+      subTag: law.subTag || law.categoryZh,
+      sequenceToken,
     };
   }
 
@@ -282,7 +358,7 @@ function buildPsychologyLawQuestion(
       rng
     );
     return {
-      id: `psy-mech-${city.index}-${pointIndex}-${chapterIndex}-${qIdx}`,
+      id: `psy-mech-${city.index}-${pointIndex}-${chapterIndex}-${law.id}-${qIdx}`,
       category,
       question: `【${domainLabel} · 机制溯源】关于「${law.nameZh}（${law.nameEn}）」，以下哪项准确揭示了其科学内涵？`,
       options,
@@ -292,38 +368,41 @@ function buildPsychologyLawQuestion(
       relatedLawId: law.id,
       chapterTheme,
       cityTag,
+      subTag: law.subTag || law.categoryZh,
+      sequenceToken,
     };
   }
 
   if (variantType === 3) {
     const { options, correctAnswer } = buildShuffledOptions(
-      law.keyTakeaway,
-      distractors.map((d) => d.keyTakeaway),
+      law.healthyBoundary || law.keyTakeaway,
+      distractors.map((d) => d.healthyBoundary || d.keyTakeaway),
       rng
     );
     return {
-      id: `psy-action-${city.index}-${pointIndex}-${chapterIndex}-${qIdx}`,
+      id: `psy-action-${city.index}-${pointIndex}-${chapterIndex}-${law.id}-${qIdx}`,
       category,
       question: `【${district.zh} · 健康边界】理解并运用「${law.nameZh}」时，以下哪项健康原则与边界最应当坚守？`,
       options,
       correctAnswer,
-      explanation: `科学应对「${law.nameZh}」的关键边界在于：${law.keyTakeaway}`,
+      explanation: `科学应对「${law.nameZh}」的关键边界在于：${law.healthyBoundary || law.keyTakeaway}`,
       difficulty,
       relatedLawId: law.id,
       chapterTheme,
       cityTag,
+      subTag: law.subTag || law.categoryZh,
+      sequenceToken,
     };
   }
 
-  // Variant 4: Contrasting classification / domain diagnosis
-  const targetLabel = `${law.nameZh} — ${law.keyTakeaway}`;
+  const targetLabel = `${law.nameZh} — ${law.healthyBoundary || law.keyTakeaway}`;
   const { options, correctAnswer } = buildShuffledOptions(
     targetLabel,
-    distractors.map((d) => `${d.nameZh} — ${d.keyTakeaway}`),
+    distractors.map((d) => `${d.nameZh} — ${d.healthyBoundary || d.keyTakeaway}`),
     rng
   );
   return {
-    id: `psy-contrast-${city.index}-${pointIndex}-${chapterIndex}-${qIdx}`,
+    id: `psy-contrast-${city.index}-${pointIndex}-${chapterIndex}-${law.id}-${qIdx}`,
     category,
     question: `【高阶思辨 · ${city.cityZh}】若伴侣或人际互动中出现「${law.subTag || law.categoryZh}」课题（${law.shortExplanation.slice(0, 42)}…），最贴合的概念与校准指引是？`,
     options,
@@ -333,14 +412,66 @@ function buildPsychologyLawQuestion(
     relatedLawId: law.id,
     chapterTheme,
     cityTag,
+    subTag: law.subTag || law.categoryZh,
+    sequenceToken,
   };
 }
 
 /**
- * Deterministically generates exactly 20 distinct, educational questions
- * for any (cityIndex 0..49, pointIndex 0..7, chapterIndex 0..9).
- * Prioritizes the city's dedicated Love Psychology Laws (ordered Easy -> Medium -> Hard across all 50 cities)
- * supplemented with same-tier love & classic cognitive psychology laws.
+ * Constraint-aware CSPRNG sequence arranger:
+ * Separates adjacent same-subTag / same-category questions and guarantees the
+ * resulting sequence never matches the previous sequence run on the same level.
+ */
+function sequenceQuestionsNonRepeating(
+  items: CityChapterQuestion[],
+  previousOrderHash?: string
+): CityChapterQuestion[] {
+  const pool = cryptoShuffle(items);
+  const arranged: CityChapterQuestion[] = [];
+  const remaining = [...pool];
+
+  while (remaining.length > 0) {
+    const prev = arranged[arranged.length - 1];
+    let pickedIdx = 0;
+
+    if (prev) {
+      // Find first candidate that doesn't share subTag or category with previous item
+      const diverseIdx = remaining.findIndex(
+        (cand) =>
+          (cand.relatedLawId ? cand.relatedLawId !== prev.relatedLawId : true) &&
+          (cand.subTag ? cand.subTag !== prev.subTag : cand.category !== prev.category)
+      );
+      if (diverseIdx !== -1) {
+        pickedIdx = diverseIdx;
+      } else {
+        const diffLawIdx = remaining.findIndex(
+          (cand) => !cand.relatedLawId || cand.relatedLawId !== prev.relatedLawId
+        );
+        if (diffLawIdx !== -1) pickedIdx = diffLawIdx;
+      }
+    }
+
+    arranged.push(remaining.splice(pickedIdx, 1)[0]);
+  }
+
+  // Verify the order never duplicates the exact last run for this capital/point/chapter
+  const buildHash = (arr: CityChapterQuestion[]) =>
+    arr.map((q) => q.relatedLawId || q.id.split('-')[1] || q.id).join(',');
+
+  if (previousOrderHash && buildHash(arranged) === previousOrderHash && arranged.length > 3) {
+    const first = arranged.shift()!;
+    const mid = arranged.splice(Math.floor(arranged.length / 2), 1)[0];
+    arranged.splice(2, 0, first);
+    arranged.push(mid);
+  }
+
+  return arranged;
+}
+
+/**
+ * Dynamically generates 20 questions for any (cityIndex 0..49, pointIndex 0..7, chapterIndex 0..9)
+ * using CSPRNG Fisher-Yates randomization + persistent cross-session non-repeating tracking across
+ * the full 696 Love Psychology Laws (covering all 500+ imported laws) & 50 world-capital levels.
  */
 export function generateChapterQuestions(
   cityIndex: number,
@@ -353,14 +484,17 @@ export function generateChapterQuestions(
 
   const city = WORLD_CAPITALS[safeCityIdx];
   const cityTier = getCityLoveDifficultyTier(safeCityIdx);
-  const seed =
-    (safeCityIdx + 1) * 10007 + (safePointIdx + 1) * 977 + (safeChapterIdx + 1) * 131;
-  const rng = createSeededRng(seed);
+  const levelKey = `${safeCityIdx}-${safePointIdx}-${safeChapterIdx}`;
+  const rng = cryptoRandom;
 
   const chapterTheme = CHAPTER_THEMES_ZH[safeChapterIdx];
   const cityTag = `${city.cityFr} · ${city.cityZh}`;
 
-  // 1. 3 World Capital Geography & Heritage Questions
+  let history = loadSequenceHistory();
+  const seenSet = new Set(history.seenSignatures);
+  const recentSet = new Set(history.recentLawIds);
+
+  // 1. 3 World Capital Geography & Heritage Questions (shuffled options each run)
   const geoQuestions = buildCapitalGeographyQuestions(
     city,
     safePointIdx,
@@ -368,105 +502,209 @@ export function generateChapterQuestions(
     rng
   ).slice(0, 3);
 
-  // 2. City's Dedicated Love Psychology Pool (13-14 laws assigned specifically to this capital)
+  // 2. Inject 2 Non-Repeating Microexpression & Facial Action Narrative Challenges (ML001-ML010)
+  const microQuestions: CityChapterQuestion[] = [];
+  const usedLawsInBatch = new Set<string>();
+  const shuffledMicro = cryptoShuffle([...MICROEXPRESSION_QUIZ_SCENARIOS]);
+  const rankedMicro = [
+    ...shuffledMicro.filter((m) => !seenSet.has(`${m.lawId}::narrative`) && !recentSet.has(m.lawId)),
+    ...shuffledMicro.filter((m) => !seenSet.has(`${m.lawId}::narrative`) && recentSet.has(m.lawId)),
+    ...shuffledMicro.filter((m) => seenSet.has(`${m.lawId}::narrative`) && !recentSet.has(m.lawId)),
+    ...shuffledMicro.filter((m) => seenSet.has(`${m.lawId}::narrative`) && recentSet.has(m.lawId)),
+  ];
+  const targetMicroCount = 2;
+  for (const item of rankedMicro) {
+    if (microQuestions.length >= targetMicroCount) break;
+    if (usedLawsInBatch.has(item.lawId)) continue;
+    usedLawsInBatch.add(item.lawId);
+    microQuestions.push(
+      buildMicroexpressionChapterQuestion(item, {
+        city,
+        pointIndex: safePointIdx,
+        chapterIndex: safeChapterIdx,
+        qIdx: microQuestions.length,
+        chapterTheme,
+        rng,
+      })
+    );
+  }
+
+  // 3. Build Tiered Love Psychology Candidate Pools utilizing all 696 imported laws across the 50 capitals
   const cityLoveLaws = getLoveLawsForCity(safeCityIdx);
   const sameTierLoveLaws = LOVE_PSYCHOLOGY_LAWS.filter(
     (l) => l.difficulty === cityTier.difficulty && l.assignedCityIndex !== safeCityIdx
   );
-  const targetCat = POINT_CATEGORIES[safePointIdx];
-  const classicDomainLaws = INITIAL_PSYCHOLOGY_LAWS.filter(
-    (l) => !l.isLoveCodex && l.categoryZh === targetCat
+  const allLoveFallback = LOVE_PSYCHOLOGY_LAWS.filter(
+    (l) => l.difficulty !== cityTier.difficulty
   );
 
-  // Build progressive chapter order: city's dedicated love laws lead, then same-tier neighbors & classic cognitive bridges
-  const orderedCityLaws = shuffleWithRng(cityLoveLaws, rng);
-  const orderedNeighborLove = shuffleWithRng(sameTierLoveLaws, rng);
-  const orderedClassic = shuffleWithRng(classicDomainLaws, rng);
+  const targetCat = POINT_CATEGORIES[safePointIdx];
+  const classicDomainLaws = INITIAL_PSYCHOLOGY_LAWS.filter(
+    (l) => !l.isLoveCodex && !l.isMicroexpression && l.categoryZh === targetCat
+  );
 
   const distractorReferencePool =
     sameTierLoveLaws.length > 10 ? [...cityLoveLaws, ...sameTierLoveLaws] : LOVE_PSYCHOLOGY_LAWS;
 
-  const psychNeeded = QUESTIONS_PER_CHAPTER - geoQuestions.length; // 17 questions
+  const psychNeeded = Math.max(0, QUESTIONS_PER_CHAPTER - geoQuestions.length - microQuestions.length); // 15 questions
   const psychQuestions: CityChapterQuestion[] = [];
-  const usedLawTemplates = new Set<string>();
 
-  // Inject up to 11 questions directly from THIS capital's stationed Love Psychology Laws
-  const citySliceCount = Math.min(11, orderedCityLaws.length);
-  const cityOffset = (safePointIdx * 3 + safeChapterIdx * 5) % Math.max(1, orderedCityLaws.length);
-  for (let i = 0; i < citySliceCount; i++) {
-    const law = orderedCityLaws[(cityOffset + i) % orderedCityLaws.length];
-    const variantType = (i + safePointIdx + safeChapterIdx) % 5;
-    usedLawTemplates.add(`${law.id}:${variantType}`);
-    psychQuestions.push(
-      buildPsychologyLawQuestion(
-        law,
-        distractorReferencePool,
-        variantType,
-        city,
-        safePointIdx,
-        safeChapterIdx,
-        i,
-        rng
-      )
-    );
-  }
+  type CandidatePick = { law: PsychologyLaw; variantType: number };
 
-  // Fill remaining slots from same-difficulty tier Love Psychology + Classic Domain Laws (progression Easy -> Hard)
-  let fillCursor = (safeCityIdx * 7 + safePointIdx * 5 + safeChapterIdx * 11) % Math.max(1, orderedNeighborLove.length);
-  let classicCursor = (safeCityIdx + safePointIdx + safeChapterIdx) % Math.max(1, orderedClassic.length);
-  let guard = 0;
+  const buildRankedCandidates = (lawsPool: PsychologyLaw[]): CandidatePick[] => {
+    const freshCool: CandidatePick[] = [];
+    const freshWarm: CandidatePick[] = [];
+    const replayCool: CandidatePick[] = [];
 
-  while (psychQuestions.length < psychNeeded && guard < 100) {
-    guard++;
-    const idx = psychQuestions.length;
-
-    if (idx === psychNeeded - 1 && safeChapterIdx % 4 === 0 && RAPID_QUIZ_QUESTIONS.length > 0) {
-      const rq =
-        RAPID_QUIZ_QUESTIONS[(safeCityIdx + safePointIdx + safeChapterIdx) % RAPID_QUIZ_QUESTIONS.length];
-      if (rq) {
-        const { options, correctAnswer } = buildShuffledOptions(
-          rq.options[rq.correctAnswer] || rq.options[0],
-          rq.options.filter((_, oIdx) => oIdx !== rq.correctAnswer),
-          rng
-        );
-        psychQuestions.push({
-          ...rq,
-          id: `rq-${safeCityIdx}-${safePointIdx}-${safeChapterIdx}-${idx}`,
-          options,
-          correctAnswer,
-          chapterTheme,
-          cityTag,
-        });
-        continue;
+    for (const law of cryptoShuffle(lawsPool)) {
+      const variants = cryptoShuffle([0, 1, 2, 3, 4]);
+      const isRecent = recentSet.has(law.id);
+      for (const v of variants) {
+        const sig = `${law.id}::${v}`;
+        if (!seenSet.has(sig)) {
+          if (!isRecent) freshCool.push({ law, variantType: v });
+          else freshWarm.push({ law, variantType: v });
+        } else if (!isRecent) {
+          replayCool.push({ law, variantType: v });
+        }
       }
     }
 
-    const useClassic = idx % 3 === 2 && orderedClassic.length > 0;
-    const law = useClassic
-      ? orderedClassic[classicCursor++ % orderedClassic.length]
-      : orderedNeighborLove[fillCursor++ % orderedNeighborLove.length];
+    return [...freshCool, ...freshWarm, ...replayCool];
+  };
 
-    if (!law) break;
-    const variantType = (idx + safeChapterIdx) % 5;
-    const key = `${law.id}:${variantType}`;
-    if (usedLawTemplates.has(key)) continue;
-    usedLawTemplates.add(key);
+  // Up to 9 questions drawn from THIS capital's stationed laws (non-repeating variant first)
+  const cityRanked = buildRankedCandidates(cityLoveLaws);
+  const targetCityCount = Math.min(9, cityLoveLaws.length);
 
+  for (const cand of cityRanked) {
+    if (psychQuestions.length >= targetCityCount) break;
+    if (usedLawsInBatch.has(cand.law.id)) continue;
+    usedLawsInBatch.add(cand.law.id);
     psychQuestions.push(
       buildPsychologyLawQuestion(
-        law,
-        law.isLoveCodex ? distractorReferencePool : INITIAL_PSYCHOLOGY_LAWS,
-        variantType,
+        cand.law,
+        distractorReferencePool,
+        cand.variantType,
         city,
         safePointIdx,
         safeChapterIdx,
-        idx,
+        psychQuestions.length,
         rng
       )
     );
   }
 
-  // Interleave geography and psychology smoothly -> exactly 20 questions
-  const combined = shuffleWithRng([...psychQuestions, ...geoQuestions], rng);
-  return combined.slice(0, QUESTIONS_PER_CHAPTER);
+  // Remaining slots drawn across the tier's world-capital pool + all 696 love laws + classic anchors
+  const tierAndGlobalRanked = [
+    ...buildRankedCandidates(sameTierLoveLaws),
+    ...buildRankedCandidates(allLoveFallback),
+  ];
+
+  // Occasionally include 1 curated classic/rapid item for cross-disciplinary contrast
+  const shouldIncludeClassic = rng() < 0.45 && classicDomainLaws.length > 0;
+  if (shouldIncludeClassic && psychQuestions.length < psychNeeded) {
+    const classicCand = cryptoShuffle(classicDomainLaws).find((c) => !usedLawsInBatch.has(c.id));
+    if (classicCand) {
+      usedLawsInBatch.add(classicCand.id);
+      const variantType = Math.floor(rng() * 5);
+      psychQuestions.push(
+        buildPsychologyLawQuestion(
+          classicCand,
+          INITIAL_PSYCHOLOGY_LAWS,
+          variantType,
+          city,
+          safePointIdx,
+          safeChapterIdx,
+          psychQuestions.length,
+          rng
+        )
+      );
+    }
+  } else if (RAPID_QUIZ_QUESTIONS.length > 0 && rng() < 0.25 && psychQuestions.length < psychNeeded) {
+    const rq = RAPID_QUIZ_QUESTIONS[Math.floor(rng() * RAPID_QUIZ_QUESTIONS.length)];
+    if (rq) {
+      const { options, correctAnswer } = buildShuffledOptions(
+        rq.options[rq.correctAnswer] || rq.options[0],
+        rq.options.filter((_, oIdx) => oIdx !== rq.correctAnswer),
+        rng
+      );
+      psychQuestions.push({
+        ...rq,
+        id: `rq-${safeCityIdx}-${safePointIdx}-${safeChapterIdx}-${Math.floor(rng() * 99999)}`,
+        options,
+        correctAnswer,
+        chapterTheme,
+        cityTag,
+        subTag: rq.category,
+      });
+    }
+  }
+
+  for (const cand of tierAndGlobalRanked) {
+    if (psychQuestions.length >= psychNeeded) break;
+    if (usedLawsInBatch.has(cand.law.id)) continue;
+    usedLawsInBatch.add(cand.law.id);
+    psychQuestions.push(
+      buildPsychologyLawQuestion(
+        cand.law,
+        distractorReferencePool,
+        cand.variantType,
+        city,
+        safePointIdx,
+        safeChapterIdx,
+        psychQuestions.length,
+        rng
+      )
+    );
+  }
+
+  // If the entire 3,480+ universe of unseen variants has been explored, reset stale signatures cleanly and top up
+  if (psychQuestions.length < psychNeeded) {
+    history.seenSignatures = [];
+    seenSet.clear();
+    for (const cand of buildRankedCandidates(LOVE_PSYCHOLOGY_LAWS)) {
+      if (psychQuestions.length >= psychNeeded) break;
+      if (usedLawsInBatch.has(cand.law.id)) continue;
+      usedLawsInBatch.add(cand.law.id);
+      psychQuestions.push(
+        buildPsychologyLawQuestion(
+          cand.law,
+          LOVE_PSYCHOLOGY_LAWS,
+          cand.variantType,
+          city,
+          safePointIdx,
+          safeChapterIdx,
+          psychQuestions.length,
+          rng
+        )
+      );
+    }
+  }
+
+  // Apply anti-repeat, category-declustered CSPRNG sequencing
+  const combined = sequenceQuestionsNonRepeating(
+    [...psychQuestions, ...microQuestions, ...geoQuestions].slice(0, QUESTIONS_PER_CHAPTER),
+    history.lastLevelOrders[levelKey]
+  );
+
+  // Persist non-repeating tracking ledger
+  const nextRecent = [...history.recentLawIds];
+  for (const q of combined) {
+    if (q.sequenceToken && !seenSet.has(q.sequenceToken)) {
+      seenSet.add(q.sequenceToken);
+      history.seenSignatures.push(q.sequenceToken);
+    }
+    if (q.relatedLawId) {
+      nextRecent.push(q.relatedLawId);
+    }
+  }
+  history.recentLawIds = nextRecent.slice(-RECENT_COOLDOWN_SIZE);
+  history.lastLevelOrders[levelKey] = combined
+    .map((q) => q.relatedLawId || q.id.split('-')[1] || q.id)
+    .join(',');
+  history.totalRuns += 1;
+  saveSequenceHistory(history);
+
+  return combined;
 }
