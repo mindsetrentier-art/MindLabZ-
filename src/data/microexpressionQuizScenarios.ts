@@ -1,6 +1,10 @@
 import { DifficultyLevel, QuizQuestion } from '../types';
 import { WorldCapitalCity } from './worldCapitals';
 import { cryptoRandom, cryptoShuffle } from '../utils/aleatoricEngine';
+import type {
+  AdaptiveDifficultyProfile,
+  ScenarioComplexityLevel,
+} from '../utils/adaptiveDifficulty';
 
 export interface MicroexpressionScenarioMeta {
   codeId: string;
@@ -16,6 +20,10 @@ export interface MicroexpressionScenarioMeta {
   isAiGenerated?: boolean;
   socraticQuestion?: string;
   socraticClue?: string;
+  difficultyCoefficient?: number;
+  scenarioComplexity?: ScenarioComplexityLevel;
+  distractorCount?: number;
+  recentAccuracy?: number;
 }
 
 export interface MicroexpressionQuizItem {
@@ -29,7 +37,10 @@ export interface MicroexpressionQuizItem {
   narrativeTitle: string;
   setting: string;
   actorAction: string;
+  simpleActorAction: string;
+  advancedActorAction: string;
   observableFacialCues: string[];
+  advancedCue: string;
   questionPrompt: string;
   correctOption: string;
   distractors: string[];
@@ -60,11 +71,16 @@ export const MICROEXPRESSION_QUIZ_SCENARIOS: MicroexpressionQuizItem[] = [
     setting: '凌晨医院神经科急诊问询室 · 顶灯强光环境',
     actorAction:
       '实习医生看到车祸擦伤患者频繁拧紧双眉并咬紧下颌，脱口断定“他神情心虚烦躁，肯定在隐瞒饮酒”。资深导师当即要求划掉主观情绪标签，只客观测记眉部、眼睑、嘴部与下颌的可见动作位移——追问才知患者撞裂了一颗磨牙且受强光刺痛。',
+    simpleActorAction:
+      '急诊室里，患者因强光刺眼与牙痛而频繁拧紧双眉并咬紧下颌。资深导师要求实习生只客观记录眉部、眼睑与下颌的肌肉位移，不要直接给患者贴上“烦躁或隐瞒”的情绪标签。',
+    advancedActorAction:
+      '夜班急诊室内，车祸擦伤患者一方面因剧痛反复收紧双眉并咬紧下颌，另一方面又为体面配合家属询问而强行扯动嘴角微笑。两位实习生分别贴上“心虚装笑”和“痛极发怒”标签，资深导师却要求先拆解各区域客观动作位移并核查口腔外伤史。',
     observableFacialCues: [
       '前额与眉间区域出现频繁收缩',
       '咬肌绷紧伴随下颌短暂紧缩',
       '顶灯强光直射且存在局部躯体疼痛情境',
     ],
+    advancedCue: '患者在疼痛间隙还叠加了社交性嘴角牵拉，造成多区域混合伪装表象',
     questionPrompt:
       '在这段医患互动中，导师要求遵循的核心心理学原理与系统（ML001）是什么？',
     correctOption:
@@ -73,6 +89,8 @@ export const MICROEXPRESSION_QUIZ_SCENARIOS: MicroexpressionQuizItem[] = [
       '情绪指纹读心法则：每出现一次皱眉加咬牙即可 100% 认定当事人在蓄意欺骗隐瞒',
       '杜乡肌肉自动显影定律：只要记录肌肉强度即可跨情境直接输出真实动机报告',
       '静息情绪诊断定理：无须排查光线、疼痛等生理外因，面部动作即等价于主观情绪',
+      'AU4 情绪直译公理：前额眉间肌肉收缩一旦与下颌咬紧并发，即构成可呈堂证供的心虚证据',
+      '复合动作单义定则：当脸部同时出现两个动作变化时，必然精准对应且仅对应一种混合罪责情绪',
     ],
     explanation:
       'Ekman 与 Friesen 于 1978 年创立的面部动作编码系统（FACS / ML001）核心在于将“可见肌肉运动的客观描述”与“内心情绪/动机推断”严格分离，避免在痛觉或强光干扰下草率贴标签。',
@@ -95,11 +113,16 @@ export const MICROEXPRESSION_QUIZ_SCENARIOS: MicroexpressionQuizItem[] = [
     setting: '青少年支持中心 · 下午茶话交流桌',
     actorAction:
       '社工与高中生讨论社团分工时，观察到对方靠近鼻梁那一侧的眉毛向上掀起，而外侧眉梢平缓，眉形呈微微上翘的“八字弧度”。社工没有武断说“你看起来好悲伤”，而是温柔确认后得知：学生既有点操心分工，又因为近视在努力辨认黑板小字。',
+    simpleActorAction:
+      '交流桌前，高中生靠近鼻梁那一侧的眉毛内端明显向上掀起，外侧眉梢保持平缓。社工没有直接断定“你一定很悲伤”，而是温和询问后发现对方只是在看远处小字并担忧分工。',
+    advancedActorAction:
+      '青少年支持小组现场，学生一边礼貌维持微扬嘴角，一边被社工捕捉到靠近鼻梁的眉毛内端频繁向上掀动、额心现出短细横纹；旁观实习生以为这是“假笑掩饰极度痛苦”，沟通后却得知其高度近视未戴眼镜且刚听到繁重分工任务。',
     observableFacialCues: [
       '靠近鼻梁内端的前额眉部明显上移',
       '外侧眉尾相对平缓，形成内高外低的八字轮廓',
       '额头中央呈现细微短水平褶皱',
     ],
+    advancedCue: '受访者同时保持轻微社交礼貌笑意并频繁微眯眼辨认远处板书',
     questionPrompt:
       '在本次互动场景中，对方出现的特征性面部动作单元编号（ML002）及其准确解码边界是？',
     correctOption:
@@ -108,6 +131,8 @@ export const MICROEXPRESSION_QUIZ_SCENARIOS: MicroexpressionQuizItem[] = [
       'AU1（绝对悲伤诊断单元）：只要鼻梁端眉毛一动，即可 100% 确诊临床级悲痛抑郁',
       'AU15（嘴角下拉动作）：主要源于降口角肌牵拉，专用于诊断对分工安排的愤怒怨恨',
       'AU12（颧大肌微笑牵引）：表示当事人内心处于高度兴奋与绝对配合状态',
+      'AU2（Outer Brow Raiser / 眉毛外侧上提）：属于额肌外侧束收缩，表明学生对社团分工极度惊喜',
+      'AU4（Brow Lowerer / 眉间下压动作）：由皱眉肌向鼻根挤压下拉所致，证明对方心怀强烈抗拒',
     ],
     explanation:
       'FACS 将额肌内侧部分带动的眉毛靠鼻梁端上移编码为 AU1（Inner Brow Raiser / ML002）。它在担忧、悲伤或求助情境中常见，但也受仰视、眯眼看字影响，绝非悲伤的直接诊断。',
@@ -130,11 +155,16 @@ export const MICROEXPRESSION_QUIZ_SCENARIOS: MicroexpressionQuizItem[] = [
     setting: '新品媒体沙龙 · 记者专访圆桌',
     actorAction:
       '设计师在介绍“14 天续航”时，看见资深科技主编靠近太阳穴一侧的左眉眉梢迅速向上挑了一下又落回笔记上。设计师差点误以为对方质疑数据造假而自乱阵脚，事后却得知那是主编听到信息亮点做记录时的个人习惯动作。',
+    simpleActorAction:
+      '新品沙龙上，科技主编听到“14 天续航”时，靠近太阳穴一侧的外侧眉梢迅速挑起又落下。主讲人没有把单个挑眉直接当成怀疑或惊讶，而是结合后续记录上下文客观看待。',
+    advancedActorAction:
+      '竞争激烈的媒体圆桌专访中，主编先是以职业化微笑点头，紧接着在听见敏感续航数据时，靠近太阳穴一侧的左眉外梢极快向上挑动并伴随短暂眼神低垂看笔。公关顾问误判其“轻蔑质疑即将发难”，实则是速记亮点与调整老花镜视野焦距的双重叠加。',
     observableFacialCues: [
       '靠近太阳穴方向的眉梢外侧三分之一段向上抬起',
       '眉弓外端弧度短暂变陡，眉角上方出现弧形浅纹',
       '并未同步伴随上眼睑大幅瞪大或否定性言语',
     ],
+    advancedCue: '速记过程中叠加礼貌微笑与俯身调焦动作，形成强烈视觉歧义',
     questionPrompt:
       '媒体主编在听取关键数字时呈现的面部动作（ML003）属于哪一编码单元，又该如何避免误读？',
     correctOption:
@@ -143,6 +173,8 @@ export const MICROEXPRESSION_QUIZ_SCENARIOS: MicroexpressionQuizItem[] = [
       'AU2（绝对轻蔑与质疑编码）：单侧眉尾挑动出现即证明听众完全不相信发言人的数据',
       'AU4（眉间区域下压动作）：由皱眉肌向中线拉低双眉，必然代表强烈的愤怒反感',
       'AU6（眼轮匝肌颊部抬升）：证明听众正在克制发自肺腑的大笑愉悦',
+      'AU1（额肌内侧八字抬升）：靠近鼻梁端眉毛牵拉上提，表明主编正在深刻同情产品团队',
+      'AU5（Upper Lid Raiser / 上眼睑骤升）：眼睑上缘突发抬高，单独即可确诊听众受到极度惊吓',
     ],
     explanation:
       'FACS 将眉毛外侧部分向上拉动编码为 AU2（Outer Brow Raiser / ML003）。人类在强调语气或捕捉信息亮点时常孤立激活额肌外侧束，不可仅凭单次挑眉推定惊讶、怀疑或轻蔑。',
@@ -165,11 +197,16 @@ export const MICROEXPRESSION_QUIZ_SCENARIOS: MicroexpressionQuizItem[] = [
     setting: '互联网设计工作室 · 窗边逆光办公桌',
     actorAction:
       '新人每次站在总监工位旁交接设计稿，都看见总监双眉向下向内收拢、两眉正中拧出两条明显竖纹。新人为此焦虑了三天以为“总监对我极其不满愤怒”；团建才真相大白——总监只是因为逆光眩光加精细校对色差时习惯性收紧眉弓。',
+    simpleActorAction:
+      '窗边办公桌前，总监顶着刺眼逆光精细校对设计色差时，双眉向中线下压并挤出竖纹。这说明仅凭皱眉肌肉收缩不能直接断定对方处于愤怒状态。',
+    advancedActorAction:
+      '季度裁员传闻发酵期，新人汇报改稿方案时，看见总监双眉急剧向下向内收拢、眉心挤压出两道深竖纹且嘴角保持冷硬平直，同组同事也小声暗示“领导脸色大怒”。但核查现场可知窗外夕阳直射屏幕形成强眩光，总监正高负荷比对 CMYK 色值误差。',
     observableFacialCues: [
       '左右双眉整体向斜下方与鼻根中线移动',
       '两眉之间皮肤挤压出现明显纵向皱纹',
       '现场处于窗边斜射强逆光且在进行高精细度审图',
     ],
+    advancedCue: '办公室内“裁员焦虑传闻”构成强烈的群体情绪归因偏差诱导',
     questionPrompt:
       '在这个高误读率职场情景中，新人观察到的肌肉动作（ML004）及正确科学归因是？',
     correctOption:
@@ -178,6 +215,8 @@ export const MICROEXPRESSION_QUIZ_SCENARIOS: MicroexpressionQuizItem[] = [
       'AU4（敌意爆发铁律）：两眉间只要挤压出纵向纹路，95% 以上证明对方即将发起人际攻击',
       'AU5（提上睑肌睁大动作）：强光下眼睛本能扩大眼裂以引入更多刺眼阳光',
       'AU1（额肌内侧八字抬升）：代表总监内心极为恐惧无法胜任审稿工作',
+      'AU2（Outer Brow Raiser / 外侧挑眉动作）：表明总监正在轻慢地嘲讽新人的设计稿件',
+      'AU6（Cheek Raiser / 颊部上提收缩）：属于眼轮匝肌发力，说明总监因强光刺眼而在掩饰笑意',
     ],
     explanation:
       'FACS 将皱眉肌等肌肉牵引眉毛向内向下移动编码为 AU4（Brow Lowerer / ML004）。该动作在深度脑力思考、视觉细查与光线刺眼防护中极常见，直接归因为“对我发火”属于典型基本归因错误。',
@@ -200,11 +239,16 @@ export const MICROEXPRESSION_QUIZ_SCENARIOS: MicroexpressionQuizItem[] = [
     setting: '晚高峰城市地铁换乘通道 · 昏暗角落扶梯出口',
     actorAction:
       '前方有人被行李箱绊倒瞬间，旁观女孩上方眼皮突然大幅向上拉升、眼睛明显睁大、虹膜上缘露出大片眼白并冻结望向出口。后方观察者察觉该警觉线索后没有随人流低头盲从，立即顺视线查看并发出精确到人的点名指令协助止停扶梯。',
+    simpleActorAction:
+      '昏暗的地铁通道出口处，前方发生突发状况，旁观者上方眼皮迅速向上抬起、眼睛明显睁大。这一可见的眼睑动作扩展了视野并提示注意力突然转移。',
+    advancedActorAction:
+      '晚高峰昏暗地铁站内，突发响动瞬间女孩上方眼皮急剧向上拉升、露出大块上巩膜，同时由于站内昏暗且正试图看清远处滚落物，她还本能微抬外侧眉梢并短暂绷紧下唇。后方同行者需区分“惊恐情绪直断”与“视觉通道扩张及照度适应”的观察边界。',
     observableFacialCues: [
       '上眼睑缘突然向眉弓方向大幅抬起',
       '眼裂张开度显著扩大，上巩膜（眼白）外露增多',
       '昏暗光线与突发安全警觉情境交织',
     ],
+    advancedCue: '昏暗站厅低照度与远距小目标追踪叠加外侧眉梢联动，容易与复合惊讶混淆',
     questionPrompt:
       '旁观女孩呈现的眼部动作编码（ML005）及其观察限定原则最准确的是？',
     correctOption:
@@ -213,6 +257,8 @@ export const MICROEXPRESSION_QUIZ_SCENARIOS: MicroexpressionQuizItem[] = [
       'AU5（纯恐惧独享信号）：只有濒死恐惧才会抬起上眼睑，正常看远处小字绝对不会触发该肌肉',
       'AU6（眼周颊肌收紧动作）：下眼睑与苹果肌大幅向上推挤使眼睛眯成一条细缝',
       'AU15（降口角肌反应）：下颌连同双唇向斜下方垂拉以发出警报',
+      'AU2（额肌外侧上提动作）：专指眉梢外三分之一上翘，与上眼睑高度改变毫无关联',
+      'AU1（眉毛内侧八字上扬）：上眼皮向上提拉的唯一解剖学原因就是额肌内侧束向鼻梁收缩',
     ],
     explanation:
       'FACS 将提上睑肌收缩引起眼睛睁大编码为 AU5（Upper Lid Raiser / ML005）。它有助于瞬间拓宽视野、提示突发注意力变动，但室内照度、远眺看清小字或个人眼睑构造也会直接影响外观。',
@@ -235,11 +281,16 @@ export const MICROEXPRESSION_QUIZ_SCENARIOS: MicroexpressionQuizItem[] = [
     setting: '行业设计大赏后厅 · 商务社交酒会',
     actorAction:
       '大客户负责人在寒暄握手时颧骨上方脸颊明显向上鼓起、眼周皮肤收紧出鱼尾纹，让实习生深信“他真心爱死咱们方案，签单稳了”。总监却提醒检验反证：对方受过多年职业公关表情训练，且提及实际预算档期时始终闪烁回避。',
+    simpleActorAction:
+      '酒会握手寒暄时，大客户脸颊向上抬升并牵动眼周皮肤形成笑纹，但实际沟通预算时却始终敷衍回避。这提醒我们眼周笑纹本身也不能当作“真心快乐”的绝对保证。',
+    advancedActorAction:
+      '高规格商务酒会强聚光灯下，久经沙场的资深客户代表在嘴角上扬的同时脸颊显著鼓起、眼外角密集收缩出鱼尾纹，令整支团队受“光环效应”鼓舞而准备放弃底线让利；但冷静拆解其强光眯眼适应、多年公关训练史与避谈核心条款的行动矛盾后，真相截然不同。',
     observableFacialCues: [
       '脸颊软组织明显向眼眶下缘方向上提',
       '眼轮匝肌收缩使眼外角产生放射状褶皱与皮肤收紧',
       '言语承诺与实质商业投入却保持回避态度',
     ],
+    advancedCue: '会场高亮度射灯引发的眼周防护性微眯叠加职业礼仪训练，极大增强假象迷惑性',
     questionPrompt:
       '针对该情境中“眼周起笑纹”的肌肉编码（ML006）以及对其流行神话的科学证伪，哪项正确？',
     correctOption:
@@ -248,6 +299,8 @@ export const MICROEXPRESSION_QUIZ_SCENARIOS: MicroexpressionQuizItem[] = [
       'AU6（绝对诚实杜乡标志）：眼轮匝肌完全不受意识支配，只要出现眼周细纹即 100% 证明真心快乐与认可',
       'AU4（眉间降眉肌下压）：表明客户正在强忍对作品的极端轻蔑与愤怒',
       'AU2（额肌外侧眉尾抬升）：客户在用单侧挑眉提醒团队补充预算细节',
+      'AU12（Lip Corner Puller / 唇角上扬）：只要出现眼角鱼尾纹，其唯一解剖来源必定是嘴角颧大肌单向拉扯',
+      'AU5（Upper Lid Raiser / 提上睑肌收缩）：眼周皮肤收紧挤出鱼尾纹证明上眼睑被强制大幅撑大',
     ],
     explanation:
       'FACS 将眼轮匝肌眼眶部收缩牵引脸颊上提、改变眼角纹路编码为 AU6（Cheek Raiser / ML006）。近年对照实验已证实大多数人经提示或训练后可主动调用 AU6，且年龄、强光眯眼也会改变眼周外观，不能当作真伪快乐的铁律。',
@@ -270,11 +323,16 @@ export const MICROEXPRESSION_QUIZ_SCENARIOS: MicroexpressionQuizItem[] = [
     setting: '跨国分公司年度预算大会 · 正式汇报场合',
     actorAction:
       '负责人台上演示激进扩招计划时，台下财务和运营同事纷纷双唇展平上弯、嘴角整齐向耳后斜上方轻扬点头，令其暗喜“全票通过”；然而匿名反馈却有七成反对。商场地推“0元领礼物”也常借高频友好笑容瘫痪消费者警惕心。',
+    simpleActorAction:
+      '正式会议中，同事们纷纷嘴角向上拉起保持得体微笑，但后续匿名投票却显示多数人并不赞成该方案。这说明嘴角上扬也常承担礼貌和社交安抚功能。',
+    advancedActorAction:
+      '年度预算闭门评审现场，高管抛出备受争议的激进扩编法案，台下平时立场尖锐的财务与运营主管非但未当面驳斥，反而在强压氛围下维持嘴角向耳后斜上方提拉的对称微笑并频频颔首，却在随后匿名表决中集体否决——同时台下有人察觉微笑仅停留在唇角而缺乏实质问询。',
     observableFacialCues: [
       '左右嘴角稳定地向外上方（斜向颧骨方向）拉起',
       '伴随礼貌性点头而未提问核实高风险预算数字',
       '处于讲究职场体面与商业亲和力的社交规范情境',
     ],
+    advancedCue: '权力不对等与职场“从众和谐压力”共同催生纯社交安抚型唇角动作',
     questionPrompt:
       '台下同事与商业推广员展现的该动作编码（ML007）及其核心社会心理学警示是？',
     correctOption:
@@ -283,6 +341,8 @@ export const MICROEXPRESSION_QUIZ_SCENARIOS: MicroexpressionQuizItem[] = [
       'AU12（绝对赞成愉悦定律）：凡在会议或推销场景出现嘴角上扬，90% 以上代表发自内心的欣喜与信任',
       'AU15（降口角肌下拉动作）：员工用下垂嘴角无声抗议超额预算安排',
       'AU1（额肌内侧眉头上扬）：表明听众希望得到演讲者的同情与照顾',
+      'AU6（Cheek Raiser / 颊部抬升编码）：纯指颧大肌牵拉嘴角向上翘起，且必然同步意味着由衷认同方案',
+      'AU12+AU4 矛盾测谎法则：只要在会议上出现礼貌微笑而不提问，即 100% 说明此人有不可告人的财务欺诈企图',
     ],
     explanation:
       'FACS 将颧大肌主导的嘴角外上方提拉编码为 AU12（Lip Corner Puller / ML007）。在现代社会交际、职场礼仪与服务商业活动中，AU12 大量承担体面附和与冲突缓冲功能，切忌误读为内心喜悦或实质同意。',
@@ -305,11 +365,16 @@ export const MICROEXPRESSION_QUIZ_SCENARIOS: MicroexpressionQuizItem[] = [
     setting: '深夜电台审听间 · 监听台玻璃窗内外',
     actorAction:
       '新人交付节目样音后，看到制作人戴着耳机一声不吭、左右嘴角明显向斜下方垂拉着，瞬间认定对方极度失望准备推翻重做。推门才知制作人在极度投入构思剪辑点，而他一完全松弛面肌时天生静息嘴角就微微下沉。',
+    simpleActorAction:
+      '深夜审听间里，制作人戴着耳机静默思考时两侧嘴角自然向下垂落。不能仅仅因为观察到嘴角下垂就断定对方正在感到悲伤或失望。',
+    advancedActorAction:
+      '高强度的深夜节目终审中，新手剪辑师隔着监听玻璃看见资深制作人双手抱胸、一语不发且左右口角持续向下方垂拉，甚至偶尔默念咬字时唇角下折更深，旁边实习生也附和“大师兄肯定要被骂惨”；其实制作人正处于极度满意的心流构思中，只是习惯性口肌静息下垂叠加默读口型。',
     observableFacialCues: [
       '左右两片口角向下方呈下弯弧度低垂',
       '当事人在长达数分钟的静态凝神倾听状态下保持静止',
       '未建立对方日常自然中性“静息基准脸”参照系',
     ],
+    advancedCue: '无声默读咬字导致的口周肌肉联动加上旁人悲观暗示，放大了误判倾向',
     questionPrompt:
       '在观察此类嘴角下沉外貌时（ML008），科学的动作编码与防误判原则是？',
     correctOption:
@@ -318,6 +383,8 @@ export const MICROEXPRESSION_QUIZ_SCENARIOS: MicroexpressionQuizItem[] = [
       'AU15（绝对失望确诊标记）：人类只在深度绝望或怀有怨气时口角才会向下移位，静息状态绝对呈水平线',
       'AU12（颧大肌上拉动作）：制作人正因欣赏佳作而克制着嘴角向斜上方微弯',
       'AU5（上睑大幅抬升）：表明制作人被音频效果惊呆而目瞪口呆',
+      'AU4（皱眉肌下压动作）：口角垂拉必然源自眉间皱眉肌向下牵拉整个下半张脸',
+      'AU1+AU15 悲痛捆绑公理：只要出现口角下拉，哪怕当事人在静息放空或说话咬字，也必然伴随内源性失望情绪',
     ],
     explanation:
       'FACS 将降口角肌下拉唇角编码为 AU15（Lip Corner Depressor / ML008）。实际观察中，口腔发音咬字、肌肉休息态下垂及天生骨骼结构都会呈现类似轮廓，必须先校准个人中性静息基线。',
@@ -340,11 +407,16 @@ export const MICROEXPRESSION_QUIZ_SCENARIOS: MicroexpressionQuizItem[] = [
     setting: '千人国际设计峰会后台候场通道',
     actorAction:
       '演讲者按畅销书说法“嘴咬铅笔硬笑三分钟”却发现焦躁丝毫未减且两颊酸痛；她转而参照 2019 年涵盖 138 项研究的系统元分析，停止强求假笑奇迹，采用温和松弛紧绷眉间与下颌肌、配合稳健呼吸与开场动作锚点顺利登台。',
+    simpleActorAction:
+      '登台前演讲者尝试强行挤出微笑来缓解焦虑却发现效果有限，于是参照 2019 年大规模元分析，转而温和放松面肌并结合深呼吸与开场动作平复状态。',
+    advancedActorAction:
+      '千人峰会开讲前 5 分钟的极端高压下，演讲者照搬“咬铅笔强笑 3 分钟逆转情绪”网红法则反致两颊痉挛、自我挫败感倍增，而同场另一位选手则断言“表情反馈完全是伪科学骗局”。她据此快速厘清 2019 年涵盖 138 项研究（286 个效应量）的荟萃分析精确尺度，既不神化也不全盘否定，转而柔和释放眉间与咬肌张力配合流程锚点平稳控场。',
     observableFacialCues: [
       '先尝试强迫维持夸张微笑肌肉姿势但主观紧张未消除',
       '随后转为轻量放松持续紧绷的皱眉肌与咬肌张力',
       '结合具体行为微习惯和情境提示共同平复心率',
     ],
+    advancedCue: '场边存在“情绪控制万能开关”与“彻底无效骗局”两种极端误区交锋',
     questionPrompt:
       '该演讲者在候场区亲历并实践了 Coles、Larsen 与 Lench（2019）哪项经典心理学发现（ML009）？',
     correctOption:
@@ -353,6 +425,8 @@ export const MICROEXPRESSION_QUIZ_SCENARIOS: MicroexpressionQuizItem[] = [
       '面部反馈万能开关定律：138 项元分析证明只要横咬铅笔强笑 2 分钟即可 100% 根治舞台恐惧与负面情绪',
       '纯神经零反馈结论：2019 年荟萃分析彻底推翻了面部肌肉运动与情绪主观体验之间的任何微弱相关性',
       '杜乡绝对逆转法则：只要牵动 AU12 微笑就一定会使皮质醇在 30 秒内清零',
+      '肌肉疲劳反向致郁定律：强迫微笑必定 100% 加重舞台焦虑，面部姿势对心情绝对只存在负向破坏效应',
+      '单向脑肌指令论：中枢情绪只能自上而下驱动面部肌肉，肌肉本体感觉绝对无法向主观体验回传任何信号',
     ],
     explanation:
       'Coles 等人（2019）发表在《Psychological Bulletin》的荟萃分析综合 138 项研究共 286 个效应量，确认面部反馈对主观情绪体验确实存在影响，但效应量总体较小且因任务与情境条件显著波动（small and variable）。',
@@ -375,11 +449,16 @@ export const MICROEXPRESSION_QUIZ_SCENARIOS: MicroexpressionQuizItem[] = [
     setting: '高校科创大赛复议听证会 · 封闭评委讨论间',
     actorAction:
       '主答辩人答辩时全程面无笑容、直视桌面紧抿嘴唇，五位评委中有四位互相附和认定“这神态绝对心虚找人代写”。资深教授当场指出：选手因重感冒失声正顶着喉痛推导公式，并调出 Git 记录与数学板书证明其扎实原创实力，扭转从众误判。',
+    simpleActorAction:
+      '答辩中，选手全程面无笑容且抿紧嘴唇，评委差点据此推断他心虚作假，最后核实才发现其因感冒喉痛且提交记录完全原创。这体现面部表情与情绪并非简单一一对应。',
+    advancedActorAction:
+      '国家级科创终审听证会上，连续高烧熬夜的主答辩人既要克制咽喉剧痛又要在紧张质询中保持权威体面，全程面无表情、垂眸紧抿双唇并偶有眉间微紧；在群体极化氛围下，四位专家迅速达成“典型作弊心虚微表情”一致共识，甚至质疑其纸面提交记录；直到主审教授援引跨文化情绪科学综述要求核验 Git 逐行提交时间戳与现场白板盲推，方才推翻了“表情字典定罪”。',
     observableFacialCues: [
       '答辩全程紧抿双唇、未挂微笑且眼神专注向下看讲台',
       '评委团队正在根据“没笑且抿嘴=心虚”产生从众一致性偏误',
       '客观记录（代码提交轨迹、现场数学推理与声带发炎病史）完整可查',
     ],
+    advancedCue: '叠加感冒发热的躯体克制、高权威压迫感与评审团从众极化，形成三重归因陷阱',
     questionPrompt:
       '那位社会心理学教授借用 Lisa Feldman Barrett 等人（2019）哪项重磅结论（ML010）说服了评审团？',
     correctOption:
@@ -388,6 +467,8 @@ export const MICROEXPRESSION_QUIZ_SCENARIOS: MicroexpressionQuizItem[] = [
       '跨文化表情固定密码本：全世界人类在心虚欺骗时都会呈现出完全统一的不笑加抿唇特征',
       '微表情测谎终审原则：在缺乏书面代码证据下，单凭答辩时 3 秒微表情即可推翻其他全部客观材料',
       'FACS 情绪等价公理：每个单独的 AU 与内心真实意图之间存在 100% 无歧义的一对一等号',
+      '情绪信息彻底归零论：2019 年综述证明人类面部动作根本不携带任何情绪相关线索，观察脸部毫无参考价值',
+      '多专家共识确真法则：只要五位资深评委同时对同一微表情做出相同情绪直觉判断，即可消除个体差异确保 100% 准确',
     ],
     explanation:
       'Barrett 等人（2019）于《PSPI》发表的系统综述强力论证：从面部肌肉运动到情绪心理状态并非一对一固定密码映射，高度受社会情境、个体基准、生理不适与文化规范塑造，脱离语境与硬证据的看脸定罪极不科学。',
@@ -403,11 +484,27 @@ export const MICROEXPRESSION_QUIZ_SCENARIOS: MicroexpressionQuizItem[] = [
 export function buildShuffledOptionsWithIndex(
   correctText: string,
   distractors: string[],
-  rng: () => number = cryptoRandom
+  rng: () => number = cryptoRandom,
+  distractorCount = 3
 ): { options: string[]; correctAnswer: number } {
+  const safeDistractorCount = Math.max(2, Math.min(5, Math.round(distractorCount)));
+  const cleanCorrect = correctText.trim();
+  const uniqueDistractors = Array.from(
+    new Set(distractors.map((d) => d.trim()).filter((d) => d && d !== cleanCorrect))
+  );
+
+  // Shuffle distractors before slicing so lower distractorCount runs still get varied foils
+  for (let i = uniqueDistractors.length - 1; i > 0; i--) {
+    const j = Math.floor(rng() * (i + 1));
+    const tmp = uniqueDistractors[i];
+    uniqueDistractors[i] = uniqueDistractors[j];
+    uniqueDistractors[j] = tmp;
+  }
+
+  const chosenDistractors = uniqueDistractors.slice(0, safeDistractorCount);
   const tagged = [
-    { text: correctText, isCorrect: true },
-    ...distractors.slice(0, 3).map((text) => ({ text, isCorrect: false })),
+    { text: cleanCorrect, isCorrect: true },
+    ...chosenDistractors.map((text) => ({ text, isCorrect: false })),
   ];
   for (let i = tagged.length - 1; i > 0; i--) {
     const j = Math.floor(rng() * (i + 1));
@@ -431,6 +528,7 @@ export function buildMicroexpressionChapterQuestion(
     qIdx?: number;
     chapterTheme?: string;
     rng?: () => number;
+    difficultyProfile?: AdaptiveDifficultyProfile;
   }
 ): InjectedMicroexpressionQuestion {
   const rng = options?.rng || cryptoRandom;
@@ -438,6 +536,12 @@ export function buildMicroexpressionChapterQuestion(
   const pointIndex = options?.pointIndex ?? 0;
   const chapterIndex = options?.chapterIndex ?? 0;
   const qIdx = options?.qIdx ?? 0;
+  const profile = options?.difficultyProfile;
+  const scenarioComplexity: ScenarioComplexityLevel =
+    profile?.scenarioComplexity || 'intermediate';
+  const distractorCount = profile?.distractorCount ?? 3;
+  const cueCount = profile?.cueCount ?? 3;
+
   const districtZh = city?.districts[pointIndex]?.zh || item.setting;
   const cityTag = city ? `${city.cityFr} · ${city.cityZh}` : 'Microexpressions Lab · 微表情专场';
   const chapterTheme =
@@ -446,8 +550,30 @@ export function buildMicroexpressionChapterQuestion(
   const { options: shuffledOptions, correctAnswer } = buildShuffledOptionsWithIndex(
     item.correctOption,
     item.distractors,
-    rng
+    rng,
+    distractorCount
   );
+
+  const adaptedActorAction =
+    scenarioComplexity === 'basic'
+      ? item.simpleActorAction
+      : scenarioComplexity === 'advanced'
+      ? item.advancedActorAction
+      : item.actorAction;
+
+  const adaptedCues =
+    scenarioComplexity === 'basic'
+      ? item.observableFacialCues.slice(0, Math.min(2, cueCount))
+      : scenarioComplexity === 'advanced'
+      ? [...item.observableFacialCues, item.advancedCue].slice(0, Math.max(3, cueCount))
+      : item.observableFacialCues.slice(0, cueCount);
+
+  const adaptedDifficulty: DifficultyLevel =
+    scenarioComplexity === 'basic'
+      ? 'Easy'
+      : scenarioComplexity === 'advanced'
+      ? 'Hard'
+      : item.difficulty;
 
   const locationContext = city ? `「${city.cityZh} · ${districtZh}」沙龙对照实案：` : '';
 
@@ -458,12 +584,12 @@ export function buildMicroexpressionChapterQuestion(
     options: shuffledOptions,
     correctAnswer,
     explanation: item.explanation,
-    difficulty: item.difficulty,
+    difficulty: adaptedDifficulty,
     relatedLawId: item.lawId,
     chapterTheme,
     cityTag,
     subTag: `微表情 · ${item.actionUnitCode}`,
-    sequenceToken: `${item.lawId}::narrative`,
+    sequenceToken: `${item.lawId}::narrative::${scenarioComplexity}`,
     microScenario: {
       codeId: item.codeId,
       actionUnitCode: item.actionUnitCode,
@@ -471,30 +597,53 @@ export function buildMicroexpressionChapterQuestion(
       categoryRank: item.categoryRank,
       narrativeTitle: item.narrativeTitle,
       setting: item.setting,
-      actorAction: item.actorAction,
-      observableFacialCues: item.observableFacialCues,
+      actorAction: adaptedActorAction,
+      observableFacialCues: adaptedCues,
       scientificLimitation: item.scientificLimitation,
+      socraticQuestion: item.socraticQuestion,
+      socraticClue: item.socraticClue,
+      difficultyCoefficient: profile?.difficultyCoefficient,
+      scenarioComplexity,
+      distractorCount: Math.max(2, shuffledOptions.length - 1),
+      recentAccuracy: profile?.recentAccuracy,
     },
   };
 }
 
 /**
- * Generates a full 10-scenario CSPRNG-randomized gauntlet covering ML001-ML010.
- * If priorityLawId is supplied (e.g. from clicking a specific ML card), places that scenario first
- * followed by the remaining 9 scenarios in fresh randomized order.
+ * Generates a full 10-scenario CSPRNG-randomized gauntlet covering ML001-ML010,
+ * adapted to the user's difficultyCoefficient / recent accuracy profile.
  */
 export function generateMicroexpressionChallengeRun(
-  priorityLawId?: string
+  priorityLawId?: string,
+  difficultyProfile?: AdaptiveDifficultyProfile
 ): InjectedMicroexpressionQuestion[] {
   const pool = [...MICROEXPRESSION_QUIZ_SCENARIOS];
+  const complexity = difficultyProfile?.scenarioComplexity || 'intermediate';
+
+  const sortByAdaptiveComplexity = (items: MicroexpressionQuizItem[]): MicroexpressionQuizItem[] => {
+    const shuffled = cryptoShuffle(items);
+    if (complexity === 'basic') {
+      const easy = shuffled.filter((i) => i.difficulty === 'Easy');
+      const rest = shuffled.filter((i) => i.difficulty !== 'Easy');
+      return [...easy, ...rest];
+    }
+    if (complexity === 'advanced') {
+      const hardAndMedium = shuffled.filter((i) => i.difficulty !== 'Easy');
+      const easy = shuffled.filter((i) => i.difficulty === 'Easy');
+      return [...hardAndMedium, ...easy];
+    }
+    return shuffled;
+  };
+
   let ordered: MicroexpressionQuizItem[];
 
   if (priorityLawId) {
     const first = pool.find((item) => item.lawId === priorityLawId);
-    const rest = cryptoShuffle(pool.filter((item) => item.lawId !== priorityLawId));
-    ordered = first ? [first, ...rest] : cryptoShuffle(pool);
+    const rest = sortByAdaptiveComplexity(pool.filter((item) => item.lawId !== priorityLawId));
+    ordered = first ? [first, ...rest] : sortByAdaptiveComplexity(pool);
   } else {
-    ordered = cryptoShuffle(pool);
+    ordered = sortByAdaptiveComplexity(pool);
   }
 
   return ordered.map((item, idx) =>
@@ -502,19 +651,35 @@ export function generateMicroexpressionChallengeRun(
       qIdx: idx,
       chapterTheme: `微表情社会互动实案 #${idx + 1}/10 (${item.codeId} · ${item.category} #${item.categoryRank})`,
       rng: cryptoRandom,
+      difficultyProfile,
     })
   );
 }
 
 /**
- * Randomly selects one of ML001-ML010 using CSPRNG while avoiding back-to-back repeats.
+ * Randomly selects one of ML001-ML010 using CSPRNG while avoiding back-to-back repeats
+ * and lightly biasing selection toward the user's adaptive complexity tier.
  */
 export function pickRandomMicroexpressionScenarioItem(
-  excludeLawIds: string[] = []
+  excludeLawIds: string[] = [],
+  difficultyProfile?: AdaptiveDifficultyProfile
 ): MicroexpressionQuizItem {
   const excluded = new Set(excludeLawIds);
   const candidates = MICROEXPRESSION_QUIZ_SCENARIOS.filter((item) => !excluded.has(item.lawId));
-  const pool = candidates.length > 0 ? candidates : MICROEXPRESSION_QUIZ_SCENARIOS;
+  let pool = candidates.length > 0 ? candidates : MICROEXPRESSION_QUIZ_SCENARIOS;
+
+  if (difficultyProfile?.scenarioComplexity === 'basic') {
+    const easyMatches = pool.filter((item) => item.difficulty === 'Easy');
+    if (easyMatches.length > 0 && cryptoRandom() < 0.7) {
+      pool = easyMatches;
+    }
+  } else if (difficultyProfile?.scenarioComplexity === 'advanced') {
+    const complexMatches = pool.filter((item) => item.difficulty !== 'Easy');
+    if (complexMatches.length > 0 && cryptoRandom() < 0.7) {
+      pool = complexMatches;
+    }
+  }
+
   const idx = Math.floor(cryptoRandom() * pool.length);
   return pool[idx] || MICROEXPRESSION_QUIZ_SCENARIOS[0];
 }

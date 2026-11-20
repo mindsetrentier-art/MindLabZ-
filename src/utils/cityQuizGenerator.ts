@@ -16,6 +16,7 @@ import {
   MicroexpressionScenarioMeta,
   buildMicroexpressionChapterQuestion,
 } from '../data/microexpressionQuizScenarios';
+import type { AdaptiveDifficultyProfile } from './adaptiveDifficulty';
 
 export interface CityChapterQuestion extends QuizQuestion {
   chapterTheme: string;
@@ -476,7 +477,8 @@ function sequenceQuestionsNonRepeating(
 export function generateChapterQuestions(
   cityIndex: number,
   pointIndex: number,
-  chapterIndex: number
+  chapterIndex: number,
+  difficultyProfile?: AdaptiveDifficultyProfile
 ): CityChapterQuestion[] {
   const safeCityIdx = Math.max(0, Math.min(WORLD_CAPITALS.length - 1, cityIndex));
   const safePointIdx = Math.max(0, Math.min(POINTS_PER_CITY - 1, pointIndex));
@@ -503,14 +505,30 @@ export function generateChapterQuestions(
   ).slice(0, 3);
 
   // 2. Inject 2 Non-Repeating Microexpression & Facial Action Narrative Challenges (ML001-ML010)
+  // Dynamically scaled in scenario complexity & AU distractor count via difficultyProfile
   const microQuestions: CityChapterQuestion[] = [];
   const usedLawsInBatch = new Set<string>();
+  const targetComplexity = difficultyProfile?.scenarioComplexity || 'intermediate';
   const shuffledMicro = cryptoShuffle([...MICROEXPRESSION_QUIZ_SCENARIOS]);
+  const matchesComplexityBucket = (diff: DifficultyLevel) =>
+    targetComplexity === 'basic'
+      ? diff === 'Easy'
+      : targetComplexity === 'advanced'
+      ? diff !== 'Easy'
+      : true;
+
+  const isMicroSeen = (lawId: string) =>
+    seenSet.has(`${lawId}::narrative::${targetComplexity}`) ||
+    seenSet.has(`${lawId}::narrative`);
+
   const rankedMicro = [
-    ...shuffledMicro.filter((m) => !seenSet.has(`${m.lawId}::narrative`) && !recentSet.has(m.lawId)),
-    ...shuffledMicro.filter((m) => !seenSet.has(`${m.lawId}::narrative`) && recentSet.has(m.lawId)),
-    ...shuffledMicro.filter((m) => seenSet.has(`${m.lawId}::narrative`) && !recentSet.has(m.lawId)),
-    ...shuffledMicro.filter((m) => seenSet.has(`${m.lawId}::narrative`) && recentSet.has(m.lawId)),
+    ...shuffledMicro.filter(
+      (m) => !isMicroSeen(m.lawId) && !recentSet.has(m.lawId) && matchesComplexityBucket(m.difficulty)
+    ),
+    ...shuffledMicro.filter((m) => !isMicroSeen(m.lawId) && !recentSet.has(m.lawId)),
+    ...shuffledMicro.filter((m) => !isMicroSeen(m.lawId) && recentSet.has(m.lawId)),
+    ...shuffledMicro.filter((m) => isMicroSeen(m.lawId) && !recentSet.has(m.lawId)),
+    ...shuffledMicro.filter((m) => isMicroSeen(m.lawId) && recentSet.has(m.lawId)),
   ];
   const targetMicroCount = 2;
   for (const item of rankedMicro) {
@@ -525,6 +543,7 @@ export function generateChapterQuestions(
         qIdx: microQuestions.length,
         chapterTheme,
         rng,
+        difficultyProfile,
       })
     );
   }

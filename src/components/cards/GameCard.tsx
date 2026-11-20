@@ -28,6 +28,7 @@ const GAME_ICONS: Record<string, React.ElementType> = {
   'bystander-breaker': LifeBuoy,
   'falsification-challenge': SearchCheck,
   'love-aleatoric-arena': Heart,
+  'reverse-aleatoric-arena': Shuffle,
   'memory-lab': Brain,
   'mind-trap': Zap,
   'brain-rush': Sparkles,

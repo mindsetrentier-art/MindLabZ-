@@ -20,6 +20,7 @@ import {
 import { useApp } from '../context/AppContext';
 import { RadarSkeleton, Skeleton } from '../components/ui/Skeleton';
 import { DailyAiInsightWidget } from '../components/analytics/DailyAiInsightWidget';
+import { MasteryTrackerCard } from '../components/analytics/MasteryTrackerCard';
 import { ProgressPdfExportModal } from '../components/analytics/ProgressPdfExportModal';
 import { gameAudio } from '../utils/gameAudio';
 
@@ -116,19 +117,22 @@ export const ProgressPage: React.FC = () => {
         </div>
       </section>
 
-      {/* 2. Daily AI Deep Emotional Analysis & Mind Insight Summary */}
+      {/* 2. 500-Law Mastery Tracker (Circular Progress Ring & Milestone Rewards) */}
+      <MasteryTrackerCard user={user} laws={laws} />
+
+      {/* 3. Daily AI Deep Emotional Analysis & Mind Insight Summary */}
       <DailyAiInsightWidget
         entries={journals}
         onOpenComposer={openComposerWithPreload}
         onExportPdf={() => setIsPdfModalOpen(true)}
       />
 
-      {/* 3. Five-dimensional Cognitive Radar */}
+      {/* 4. Five-dimensional Cognitive Radar */}
       <section className="editorial-card rounded-2xl p-7 sm:p-9 space-y-6">
         <div className="flex items-center justify-between pb-3 border-b border-stone-200/80">
           <div>
             <span className="editorial-kicker text-[10px] text-stone-500 block mb-0.5">
-              01 · Neural Dimensions
+              02 · Neural Dimensions
             </span>
             <h3 className="font-serif-editorial text-lg sm:text-xl font-bold text-stone-900 flex items-center gap-2">
               <Brain className="w-4 h-4 text-stone-700" />
@@ -239,7 +243,7 @@ export const ProgressPage: React.FC = () => {
         <div className="flex items-center justify-between pb-3 border-b border-stone-200/80">
           <div>
             <span className="editorial-kicker text-[10px] text-stone-500 block mb-0.5">
-              02 · Rhythm & Routine
+              03 · Rhythm & Routine
             </span>
             <h3 className="font-serif-editorial text-lg sm:text-xl font-bold text-stone-900 flex items-center gap-2">
               <Flame className="w-4 h-4 text-amber-600" />
@@ -273,7 +277,7 @@ export const ProgressPage: React.FC = () => {
         <div className="flex items-center justify-between pb-3 border-b border-stone-200/80">
           <div>
             <span className="editorial-kicker text-[10px] text-stone-500 block mb-0.5">
-              03 · Honors & Distinctions
+              04 · Honors & Distinctions
             </span>
             <h3 className="font-serif-editorial text-lg sm:text-xl font-bold text-stone-900 flex items-center gap-2">
               <Award className="w-4 h-4 text-stone-700" />

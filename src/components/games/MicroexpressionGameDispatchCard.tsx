@@ -5,6 +5,7 @@ import { GameType, PsychologyLaw } from '../../types';
 import { getMicroexpressionsForGame } from '../../data/microexpressionLaws';
 import { useApp } from '../../context/AppContext';
 import { gameAudio } from '../../utils/gameAudio';
+import { ReversePsychologyGameDispatchCard } from './ReversePsychologyGameDispatchCard';
 
 interface MicroexpressionGameDispatchCardProps {
   gameId: GameType;
@@ -24,9 +25,13 @@ export const MicroexpressionGameDispatchCard: React.FC<MicroexpressionGameDispat
   const [expandedLawId, setExpandedLawId] = useState<string | null>(null);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<string, number>>({});
 
-  if (dispatchedLaws.length === 0) return null;
-
   const isDark = theme === 'dark';
+
+  if (dispatchedLaws.length === 0) {
+    return (
+      <ReversePsychologyGameDispatchCard gameId={gameId} theme={theme} compact={compact} />
+    );
+  }
 
   const handleToggleLaw = (id: string) => {
     gameAudio.playTap();
@@ -243,6 +248,8 @@ export const MicroexpressionGameDispatchCard: React.FC<MicroexpressionGameDispat
           );
         })}
       </div>
+
+      <ReversePsychologyGameDispatchCard gameId={gameId} theme={theme} compact={compact} />
     </div>
   );
 };

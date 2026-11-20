@@ -20,6 +20,7 @@ import {
   RefreshCw,
   Gamepad2,
   PenLine,
+  Network,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useFontScale } from '../context/FontScaleContext';
@@ -360,6 +361,16 @@ export const LawDetailPage: React.FC = () => {
               title="收藏本定律"
             >
               <Bookmark className={`w-3.5 h-3.5 ${bookmarked ? 'fill-stone-900 text-stone-900' : ''}`} />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => navigate(`/knowledge-graph?focus=${encodeURIComponent(law.id)}`)}
+              className="px-2.5 h-8 rounded-lg flex items-center gap-1.5 bg-white hover:bg-stone-100 text-stone-800 border border-stone-200 text-xs font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0"
+              title="在 500 律 D3 知识图谱中定位本定律"
+            >
+              <Network className="w-3.5 h-3.5 text-amber-800" />
+              <span className="hidden sm:inline">图谱关联</span>
             </button>
 
             {/* Cognitive Journal quick action */}

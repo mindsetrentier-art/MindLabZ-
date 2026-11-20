@@ -79,12 +79,24 @@ export const DIFFICULTY_LIST: GameDifficulty[] = ['低', '中', '高', '高级']
 export const DEFAULT_DIFFICULTY: GameDifficulty = '中';
 
 /**
- * Utility to shuffle an array immutably using Fisher-Yates algorithm
+ * Cryptographic-grade uniform random float in [0, 1).
+ */
+function csprngFloat(): number {
+  if (typeof window !== 'undefined' && window.crypto?.getRandomValues) {
+    const buf = new Uint32Array(1);
+    window.crypto.getRandomValues(buf);
+    return buf[0] / 4294967296;
+  }
+  return Math.random();
+}
+
+/**
+ * Utility to shuffle an array immutably using CSPRNG Fisher-Yates algorithm
  */
 export function shuffleArray<T>(items: readonly T[] | T[]): T[] {
   const result = [...items];
   for (let i = result.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(csprngFloat() * (i + 1));
     [result[i], result[j]] = [result[j], result[i]];
   }
   return result;

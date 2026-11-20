@@ -8,6 +8,8 @@ import { Sparkles } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 
 import { TopSummaryPullDrawer } from './TopSummaryPullDrawer';
+import { DailyLawPushNotification } from './DailyLawPushNotification';
+import { CognitiveWarmupModal } from './CognitiveWarmupModal';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -18,10 +20,15 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
   const { setAiTutorOpen } = useApp();
   const [geoBarVisible, setGeoBarVisible] = useState<boolean>(true);
   const [geoBarExpanded, setGeoBarExpanded] = useState<boolean>(false);
+  const [warmupDone, setWarmupDone] = useState<boolean>(false);
 
   const handleGeoVisibilityChange = useCallback((visible: boolean, expanded: boolean) => {
     setGeoBarVisible((prev) => (prev === visible ? prev : visible));
     setGeoBarExpanded((prev) => (prev === expanded ? prev : expanded));
+  }, []);
+
+  const handleWarmupComplete = useCallback(() => {
+    setWarmupDone(true);
   }, []);
 
   // Determine if we should show back button or special title in header
@@ -29,6 +36,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
     const path = location.pathname;
     if (path === '/' || path === '') return { showBack: false };
     if (path === '/learn' || path === '/search') return { title: '心智定律库 · 艺术典藏', showBack: false };
+    if (path === '/knowledge-graph') return { title: '心理定律知识图谱', showBack: true };
     if (path === '/games') return { title: '认知训练游戏', showBack: false };
     if (path === '/quiz') return { title: '心理快问快答', showBack: false };
     if (path === '/progress') return { title: '认知能力图谱', showBack: true };
@@ -60,6 +68,19 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
           title={headerConfig.title}
           showBack={headerConfig.showBack}
           hasTopBar={geoBarVisible}
+        />
+
+        {/* Launch Cognitive Warmup (30-second Logic/Pattern Task right before Daily Law Notification) */}
+        <CognitiveWarmupModal
+          isPlayingGame={isPlayingGame}
+          onComplete={handleWarmupComplete}
+        />
+
+        {/* Simulated Daily Push Notification ("Law of the Day") revealed right after Warmup */}
+        <DailyLawPushNotification
+          isPlayingGame={isPlayingGame}
+          hasTopBar={geoBarVisible}
+          canReveal={warmupDone}
         />
 
         {/* Dynamic Route Content with Generous Responsive Spacing */}

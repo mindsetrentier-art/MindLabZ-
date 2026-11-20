@@ -7,6 +7,7 @@ import { BiometricLockProvider, useBiometricLock } from './context/BiometricLock
 import { AppShell } from './components/layout/AppShell';
 import { HomePage } from './pages/HomePage';
 import { LearnPage } from './pages/LearnPage';
+import { KnowledgeGraphPage } from './pages/KnowledgeGraphPage';
 import { EmotionalLawsPage } from './pages/EmotionalLawsPage';
 import { EmotionalLawsLibraryPage } from './pages/EmotionalLawsLibraryPage';
 import { LawDetailPage } from './pages/LawDetailPage';
@@ -73,6 +74,7 @@ const AppRoutes: React.FC = () => {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/learn" element={<LearnPage />} />
+            <Route path="/knowledge-graph" element={<KnowledgeGraphPage />} />
             <Route path="/search" element={<LearnPage />} />
             <Route path="/emotional-laws" element={<EmotionalLawsPage />} />
             <Route path="/emotional-library" element={<EmotionalLawsLibraryPage />} />

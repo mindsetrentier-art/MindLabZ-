@@ -33,6 +33,7 @@ import { RapidQuizProgressBar } from '../components/quiz/RapidQuizProgressBar';
 import { CapitalLevelCelebrationCard } from '../components/quiz/CapitalLevelCelebrationCard';
 import { GlobalCognitiveRankCard } from '../components/quiz/GlobalCognitiveRankCard';
 import { CognitiveStreakBadge } from '../components/quiz/CognitiveStreakBadge';
+import { MicroexpressionDiagnosticPanel } from '../components/quiz/MicroexpressionDiagnosticPanel';
 import {
   useCityQuizProgress,
   checkChapterUnlocked,
@@ -75,7 +76,16 @@ import {
   generateMicroexpressionChallengeRun,
   pickRandomMicroexpressionScenarioItem,
 } from '../data/microexpressionQuizScenarios';
-import { generateAiMicroexpressionQuestion } from '../services/microexpressionAiService';
+import {
+  generateAiMicroexpressionQuestion,
+  generateMicroexpressionDiagnosticSummary,
+  QuestionAttemptRecord,
+  MicroexpressionDiagnosticResponse,
+} from '../services/microexpressionAiService';
+import {
+  computeAdaptiveDifficultyProfile,
+  recordRecentQuizQuestionOutcome,
+} from '../utils/adaptiveDifficulty';
 import { gameAudio } from '../utils/gameAudio';
 
 interface ActiveQuizSession {
@@ -152,10 +162,19 @@ export const RapidQuizPage: React.FC = () => {
   const [aiGenerating, setAiGenerating] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
   const [aiRecentLawIds, setAiRecentLawIds] = useState<string[]>([]);
+  const [attemptRecords, setAttemptRecords] = useState<QuestionAttemptRecord[]>([]);
+  const [diagnosticResult, setDiagnosticResult] =
+    useState<MicroexpressionDiagnosticResponse | null>(null);
+  const [diagnosticLoading, setDiagnosticLoading] = useState(false);
+  const [diagnosticError, setDiagnosticError] = useState<string | null>(null);
+  const [adaptiveDifficulty, setAdaptiveDifficulty] = useState(() =>
+    computeAdaptiveDifficultyProfile()
+  );
   const [gameState, setGameState] = useState<'intro' | 'playing' | 'completed'>('intro');
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const energyDeltaTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const attemptRecordsRef = useRef<QuestionAttemptRecord[]>([]);
   const progressRef = useRef(progress);
   progressRef.current = progress;
   const handledAutostartRef = useRef<string | null>(null);
@@ -178,19 +197,67 @@ export const RapidQuizPage: React.FC = () => {
     };
   }, []);
 
+  const runDiagnosticSummary = useCallback(
+    async (
+      recordsSnapshot: QuestionAttemptRecord[],
+      runMetrics: {
+        quizMode: string;
+        totalQuestions: number;
+        firstTryCorrectCount: number;
+        totalWrongClicks: number;
+        accuracyPercent: number;
+        elapsedSeconds: number;
+        score: number;
+        maxCombo: number;
+      }
+    ) => {
+      const mlOnly = recordsSnapshot.filter(
+        (item) => item.isMicroexpression || item.lawId.startsWith('ml-')
+      );
+      if (mlOnly.length === 0) {
+        return;
+      }
+      setDiagnosticLoading(true);
+      setDiagnosticError(null);
+      try {
+        const result = await generateMicroexpressionDiagnosticSummary({
+          attempts: mlOnly,
+          metrics: runMetrics,
+          userMasteryMap: user?.lawMasteryMap,
+        });
+        setDiagnosticResult(result);
+      } catch (err: any) {
+        setDiagnosticError(
+          err?.message || 'AI 诊断总结生成失败，请检查网络连接或 API 密钥配置后重试。'
+        );
+      } finally {
+        setDiagnosticLoading(false);
+      }
+    },
+    [user?.lawMasteryMap]
+  );
+
   const startChapterQuiz = useCallback(
     (cityIndex: number, pointIndex: number, chapterIndex: number) => {
       if (!checkChapterUnlocked(progressRef.current, cityIndex, pointIndex, chapterIndex)) {
         return;
       }
       setActiveCoordinates(cityIndex, pointIndex, chapterIndex);
+      const latestDifficulty = computeAdaptiveDifficultyProfile();
+      setAdaptiveDifficulty(latestDifficulty);
       const chapterQuestions = generateChapterQuestions(
         cityIndex,
         pointIndex,
-        chapterIndex
+        chapterIndex,
+        latestDifficulty
       );
       setQuizMode('capital');
       setAiError(null);
+      attemptRecordsRef.current = [];
+      setAttemptRecords([]);
+      setDiagnosticResult(null);
+      setDiagnosticLoading(false);
+      setDiagnosticError(null);
       setSession({ cityIndex, pointIndex, chapterIndex });
       setQuestions(chapterQuestions);
       setSequenceStats(getRapidQuizSequenceStats());
@@ -219,9 +286,19 @@ export const RapidQuizPage: React.FC = () => {
 
   const startMicroexpressionQuiz = useCallback(
     (priorityLawId?: string) => {
-      const microQuestions = generateMicroexpressionChallengeRun(priorityLawId);
+      const latestDifficulty = computeAdaptiveDifficultyProfile();
+      setAdaptiveDifficulty(latestDifficulty);
+      const microQuestions = generateMicroexpressionChallengeRun(
+        priorityLawId,
+        latestDifficulty
+      );
       setQuizMode('microexpressions');
       setAiError(null);
+      attemptRecordsRef.current = [];
+      setAttemptRecords([]);
+      setDiagnosticResult(null);
+      setDiagnosticLoading(false);
+      setDiagnosticError(null);
       setQuestions(microQuestions);
       setSequenceStats(getRapidQuizSequenceStats());
       setCurrentIndex(0);
@@ -253,11 +330,18 @@ export const RapidQuizPage: React.FC = () => {
       setAiGenerating(true);
       setAiError(null);
       try {
+        const latestDifficulty = computeAdaptiveDifficultyProfile();
+        setAdaptiveDifficulty(latestDifficulty);
         const chosenLawId =
-          specificLawId || pickRandomMicroexpressionScenarioItem(aiRecentLawIds).lawId;
+          specificLawId ||
+          pickRandomMicroexpressionScenarioItem(aiRecentLawIds, latestDifficulty).lawId;
         const aiQuestion = await generateAiMicroexpressionQuestion({
           lawId: chosenLawId,
           excludeLawIds: aiRecentLawIds,
+          difficultyCoefficient: latestDifficulty.difficultyCoefficient,
+          recentAccuracy: latestDifficulty.recentAccuracy,
+          scenarioComplexity: latestDifficulty.scenarioComplexity,
+          distractorCount: latestDifficulty.distractorCount,
         });
         setAiRecentLawIds((prev) =>
           [...prev.filter((id) => id !== aiQuestion.relatedLawId), aiQuestion.relatedLawId || chosenLawId].slice(
@@ -265,6 +349,11 @@ export const RapidQuizPage: React.FC = () => {
           )
         );
         setQuizMode('ai-microexpression');
+        attemptRecordsRef.current = [];
+        setAttemptRecords([]);
+        setDiagnosticResult(null);
+        setDiagnosticLoading(false);
+        setDiagnosticError(null);
         setQuestions([aiQuestion]);
         setSequenceStats(getRapidQuizSequenceStats());
         setCurrentIndex(0);
@@ -300,10 +389,16 @@ export const RapidQuizPage: React.FC = () => {
     setAiGenerating(true);
     setAiError(null);
     try {
-      const nextLaw = pickRandomMicroexpressionScenarioItem(aiRecentLawIds);
+      const latestDifficulty = computeAdaptiveDifficultyProfile();
+      setAdaptiveDifficulty(latestDifficulty);
+      const nextLaw = pickRandomMicroexpressionScenarioItem(aiRecentLawIds, latestDifficulty);
       const aiQuestion = await generateAiMicroexpressionQuestion({
         lawId: nextLaw.lawId,
         excludeLawIds: aiRecentLawIds,
+        difficultyCoefficient: latestDifficulty.difficultyCoefficient,
+        recentAccuracy: latestDifficulty.recentAccuracy,
+        scenarioComplexity: latestDifficulty.scenarioComplexity,
+        distractorCount: latestDifficulty.distractorCount,
       });
       setAiRecentLawIds((prev) =>
         [...prev.filter((id) => id !== aiQuestion.relatedLawId), aiQuestion.relatedLawId || nextLaw.lawId].slice(
@@ -326,7 +421,9 @@ export const RapidQuizPage: React.FC = () => {
     setAiGenerating(true);
     setAiError(null);
     try {
-      const nextLaw = pickRandomMicroexpressionScenarioItem(aiRecentLawIds);
+      const latestDifficulty = computeAdaptiveDifficultyProfile();
+      setAdaptiveDifficulty(latestDifficulty);
+      const nextLaw = pickRandomMicroexpressionScenarioItem(aiRecentLawIds, latestDifficulty);
       const activeCityName =
         quizMode === 'capital'
           ? (WORLD_CAPITALS[session.cityIndex] || WORLD_CAPITALS[0]).cityZh
@@ -335,6 +432,10 @@ export const RapidQuizPage: React.FC = () => {
         lawId: nextLaw.lawId,
         excludeLawIds: aiRecentLawIds,
         cityContext: activeCityName,
+        difficultyCoefficient: latestDifficulty.difficultyCoefficient,
+        recentAccuracy: latestDifficulty.recentAccuracy,
+        scenarioComplexity: latestDifficulty.scenarioComplexity,
+        distractorCount: latestDifficulty.distractorCount,
       });
       setAiRecentLawIds((prev) =>
         [...prev.filter((id) => id !== aiQuestion.relatedLawId), aiQuestion.relatedLawId || nextLaw.lawId].slice(
@@ -430,6 +531,53 @@ export const RapidQuizPage: React.FC = () => {
     if (isCorrect) {
       setHasFoundCorrect(true);
       const isFirstTry = wrongAttempts.length === 0;
+      const linkedLaw = currentQ.relatedLawId
+        ? laws.find((item) => item.id === currentQ.relatedLawId)
+        : undefined;
+      const isMlQuestion = Boolean(
+        currentQ.microScenario || currentQ.relatedLawId?.startsWith('ml-')
+      );
+      const attemptRecord: QuestionAttemptRecord = {
+        questionId: currentQ.id,
+        lawId: currentQ.relatedLawId || currentQ.id,
+        codeId:
+          currentQ.microScenario?.codeId ||
+          linkedLaw?.codeId ||
+          (currentQ.relatedLawId?.startsWith('ml-')
+            ? currentQ.relatedLawId.replace('ml-', 'ML').toUpperCase()
+            : currentQ.subTag || currentQ.category),
+        actionUnitCode:
+          currentQ.microScenario?.actionUnitCode || linkedLaw?.actionUnitCode || '',
+        category: currentQ.microScenario?.categoryZh || currentQ.category,
+        titleZh:
+          linkedLaw?.nameZh ||
+          currentQ.microScenario?.narrativeTitle ||
+          currentQ.question.slice(0, 32),
+        isMicroexpression: isMlQuestion,
+        wrongAttemptsCount: wrongAttempts.length,
+        wrongOptionTexts: wrongAttempts
+          .map((wrongIdx) => currentQ.options[wrongIdx])
+          .filter(Boolean),
+        correctOptionText: currentQ.options[currentQ.correctAnswer] || '',
+        firstTryCorrect: isFirstTry,
+        usedCognitiveHint: Boolean(revealedHintsByIndex[currentIndex]),
+      };
+      const updatedRecords = [
+        ...attemptRecordsRef.current.filter((item) => item.questionId !== attemptRecord.questionId),
+        attemptRecord,
+      ];
+      attemptRecordsRef.current = updatedRecords;
+      setAttemptRecords(updatedRecords);
+
+      const refreshedRecent = recordRecentQuizQuestionOutcome(isFirstTry);
+      setAdaptiveDifficulty(
+        computeAdaptiveDifficultyProfile(
+          refreshedRecent.recentAccuracy,
+          refreshedRecent.sampleSize,
+          refreshedRecent.source
+        )
+      );
+
       if (currentQ.relatedLawId?.startsWith('ml-')) {
         updateLawMastery(currentQ.relatedLawId, isFirstTry ? 95 : 82);
       }
@@ -496,6 +644,9 @@ export const RapidQuizPage: React.FC = () => {
     } else {
       if (timerRef.current) clearInterval(timerRef.current);
 
+      const runAccuracy =
+        questions.length > 0 ? Math.round((firstTryCorrectCount / questions.length) * 100) : 100;
+
       if (quizMode === 'microexpressions' || quizMode === 'ai-microexpression') {
         const earnedXp =
           quizMode === 'ai-microexpression'
@@ -509,12 +660,21 @@ export const RapidQuizPage: React.FC = () => {
           questions.length
         );
         setAccuracyStats(updatedAccuracyStats);
+        setAdaptiveDifficulty(computeAdaptiveDifficultyProfile());
         setCognitiveStreak(recordDailyQuizLevelForStreak());
-        setLastRunAccuracy(
-          questions.length > 0 ? Math.round((firstTryCorrectCount / questions.length) * 100) : 100
-        );
+        setLastRunAccuracy(runAccuracy);
         recordQuizCompletion(firstTryCorrectCount, questions.length, earnedXp);
         setGameState('completed');
+        void runDiagnosticSummary(attemptRecordsRef.current, {
+          quizMode,
+          totalQuestions: questions.length,
+          firstTryCorrectCount,
+          totalWrongClicks,
+          accuracyPercent: runAccuracy,
+          elapsedSeconds,
+          score,
+          maxCombo,
+        });
         return;
       }
 
@@ -531,10 +691,9 @@ export const RapidQuizPage: React.FC = () => {
         questions.length
       );
       setAccuracyStats(updatedAccuracyStats);
+      setAdaptiveDifficulty(computeAdaptiveDifficultyProfile());
       setCognitiveStreak(recordDailyQuizLevelForStreak());
-      setLastRunAccuracy(
-        questions.length > 0 ? Math.round((firstTryCorrectCount / questions.length) * 100) : 100
-      );
+      setLastRunAccuracy(runAccuracy);
 
       recordQuizCompletion(firstTryCorrectCount, questions.length, earnedXp);
       const wasChapterDoneBefore = checkChapterCompleted(
@@ -576,6 +735,16 @@ export const RapidQuizPage: React.FC = () => {
 
       setUnlockOutcome(outcome);
       setGameState('completed');
+      void runDiagnosticSummary(attemptRecordsRef.current, {
+        quizMode,
+        totalQuestions: questions.length,
+        firstTryCorrectCount,
+        totalWrongClicks,
+        accuracyPercent: runAccuracy,
+        elapsedSeconds,
+        score,
+        maxCombo,
+      });
     }
   };
 
@@ -738,6 +907,19 @@ export const RapidQuizPage: React.FC = () => {
                   <p className="text-xs sm:text-sm text-stone-600 leading-relaxed">
                     逐一进入医院急诊、咨询室、发布会、评审会与职场沟通等真实叙事场景，在语境中识别对应的 FACS 动作单元（AU1 / AU2 / AU4 / AU5 / AU6 / AU12 / AU15）及现代情绪科学边界原则（Coles et al., 2019；Barrett et al., 2019）。
                   </p>
+                  <div className="pt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-stone-700 font-numeric tabular-nums">
+                    <span className="font-semibold text-stone-900">
+                      动态难度系数 {adaptiveDifficulty.difficultyCoefficient.toFixed(2)}（{adaptiveDifficulty.tierLabelZh}）
+                    </span>
+                    <span className="text-stone-400" aria-hidden="true">·</span>
+                    <span>
+                      最近正确率 {adaptiveDifficulty.recentAccuracy}%
+                    </span>
+                    <span className="text-stone-400" aria-hidden="true">·</span>
+                    <span>
+                      AU 干扰项 {adaptiveDifficulty.distractorCount} 项（{1 + adaptiveDifficulty.distractorCount} 选 1）
+                    </span>
+                  </div>
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 shrink-0">
@@ -1055,6 +1237,50 @@ export const RapidQuizPage: React.FC = () => {
             />
           )}
 
+          {aiError && (
+            <div className="w-full flex flex-col sm:flex-row sm:items-center justify-between gap-2 px-4 py-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 text-xs sm:text-sm">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" aria-hidden="true" />
+                <span>{aiError}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAiError(null)}
+                className="self-end sm:self-auto px-2.5 py-1 rounded-md bg-white border border-rose-200 text-xs font-medium text-rose-800 hover:border-rose-400 cursor-pointer shrink-0"
+              >
+                关闭提示
+              </button>
+            </div>
+          )}
+
+          {/* AI Diagnostic Summary Panel for ML001-ML010 Error Distribution & Law Recommendations */}
+          <MicroexpressionDiagnosticPanel
+            mlAttempts={attemptRecords.filter(
+              (item) => item.isMicroexpression || item.lawId.startsWith('ml-')
+            )}
+            diagnosticResult={diagnosticResult}
+            loading={diagnosticLoading}
+            error={diagnosticError}
+            fontScale={fontScale}
+            onRegenerate={() =>
+              void runDiagnosticSummary(attemptRecordsRef.current, {
+                quizMode,
+                totalQuestions: questions.length,
+                firstTryCorrectCount,
+                totalWrongClicks,
+                accuracyPercent:
+                  questions.length > 0
+                    ? Math.round((firstTryCorrectCount / questions.length) * 100)
+                    : 100,
+                elapsedSeconds,
+                score,
+                maxCombo,
+              })
+            }
+            onInspectLaw={(lawId) => navigate(`/law/${lawId}`)}
+            onPracticeLaw={(lawId) => void startAiMicroexpressionQuiz(lawId)}
+          />
+
           {/* Global Cognitive Rank Comparison Card */}
           <GlobalCognitiveRankCard
             progress={progress}
@@ -1140,8 +1366,8 @@ export const RapidQuizPage: React.FC = () => {
                   <Wand2 className="w-4 h-4 text-amber-700 shrink-0" aria-hidden="true" />
                   <span>AI 互动微表情情感冲突诊断（随机 ML001–ML010）</span>
                   <span className="text-stone-400" aria-hidden="true">·</span>
-                  <span className="text-stone-600 font-normal">
-                    识别特定面部动作单元（AU）或背后心理原则
+                  <span className="text-stone-600 font-normal font-numeric tabular-nums">
+                    当前难度系数 {adaptiveDifficulty.difficultyCoefficient.toFixed(2)}（{adaptiveDifficulty.tierLabelZh} · {adaptiveDifficulty.distractorCount} 项 AU 干扰）
                   </span>
                 </div>
               ) : quizMode === 'microexpressions' ? (
@@ -1149,8 +1375,8 @@ export const RapidQuizPage: React.FC = () => {
                   <Eye className="w-4 h-4 text-amber-700 shrink-0" aria-hidden="true" />
                   <span>微表情与面部动作专场（ML001–ML010）</span>
                   <span className="text-stone-400" aria-hidden="true">·</span>
-                  <span className="text-stone-600 font-normal">
-                    FACS 肌肉解码与现代情绪边界
+                  <span className="text-stone-600 font-normal font-numeric tabular-nums">
+                    难度系数 {adaptiveDifficulty.difficultyCoefficient.toFixed(2)}（{adaptiveDifficulty.tierLabelZh} · {adaptiveDifficulty.distractorCount} 项 AU 干扰）
                   </span>
                 </div>
               ) : (
@@ -1309,6 +1535,14 @@ export const RapidQuizPage: React.FC = () => {
                         <span>
                           {currentQ.microScenario.categoryZh}排行 #{currentQ.microScenario.categoryRank}
                         </span>
+                        {typeof currentQ.microScenario.difficultyCoefficient === 'number' && (
+                          <>
+                            <span aria-hidden="true">·</span>
+                            <span className="text-stone-700 font-medium">
+                              难度系数 {currentQ.microScenario.difficultyCoefficient.toFixed(2)}（{Math.max(2, currentQ.options.length - 1)} 项 AU 干扰）
+                            </span>
+                          </>
+                        )}
                         <span aria-hidden="true">·</span>
                         <span>{currentQ.microScenario.setting}</span>
                       </div>
@@ -1332,7 +1566,14 @@ export const RapidQuizPage: React.FC = () => {
                         <div className="text-xs font-semibold text-stone-600">
                           可观察面部动作位移与现场情境线索
                         </div>
-                        <ul className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs sm:text-sm text-stone-800">
+                        <ul
+                          className={`grid grid-cols-1 ${
+                            currentQ.microScenario.observableFacialCues.length === 2 ||
+                            currentQ.microScenario.observableFacialCues.length === 4
+                              ? 'sm:grid-cols-2'
+                              : 'sm:grid-cols-3'
+                          } gap-2 text-xs sm:text-sm text-stone-800`}
+                        >
                           {currentQ.microScenario.observableFacialCues.map((cue, cueIdx) => (
                             <li
                               key={cueIdx}

@@ -622,6 +622,113 @@
   animation: soundWave4 0.85s ease-in-out infinite 0.2s;
 }
 
+/* Daily Law Push Notification — Compositor-Only Motion */
+@keyframes dailyPushEnter {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -18px, 0) scale(0.965);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes dailyPushExit {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, -14px, 0) scale(0.97);
+  }
+}
+
+@keyframes dailyPushCountdown {
+  0% {
+    transform: scaleX(1);
+  }
+  100% {
+    transform: scaleX(0);
+  }
+}
+
+.animate-daily-push-enter {
+  animation: dailyPushEnter 520ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.animate-daily-push-exit {
+  animation: dailyPushExit 240ms cubic-bezier(0.4, 0, 1, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.animate-daily-push-countdown {
+  transform-origin: left center;
+  animation: dailyPushCountdown 16000ms linear forwards;
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-daily-push-enter,
+  .animate-daily-push-exit,
+  .animate-warmup-enter,
+  .animate-warmup-exit {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Cognitive Warmup Modal — Compositor-Only Motion */
+@keyframes warmupModalEnter {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+@keyframes warmupModalExit {
+  0% {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate3d(0, -10px, 0) scale(0.97);
+  }
+}
+
+@keyframes warmupCountdown {
+  0% {
+    transform: scaleX(1);
+  }
+  100% {
+    transform: scaleX(0);
+  }
+}
+
+.animate-warmup-enter {
+  animation: warmupModalEnter 360ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.animate-warmup-exit {
+  animation: warmupModalExit 220ms cubic-bezier(0.4, 0, 1, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.animate-warmup-countdown {
+  transform-origin: left center;
+  animation: warmupCountdown 30000ms linear forwards;
+  will-change: transform;
+}
+
 /* Print Styles for PDF Report Export */
 @media print {
   @page {

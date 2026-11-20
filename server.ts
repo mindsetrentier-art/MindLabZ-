@@ -686,7 +686,7 @@ ${combinedText}
       observableFacialCues: {
         type: Type.ARRAY,
         items: { type: Type.STRING },
-        description: "恰好3条客观可见的面部动作位移与现场冲突情境线索（不泄露AU编号或定律名）。",
+        description: "2到4条客观可见的面部动作位移与现场冲突情境线索（按难度指令要求数量输出，不泄露AU编号或定律名）。",
       },
       questionPrompt: {
         type: Type.STRING,
@@ -696,13 +696,13 @@ ${combinedText}
       correctOption: {
         type: Type.STRING,
         description:
-          "唯一正确答案：必须明确点出该定律对应的 AU 编号（或心理原则名称），同时清晰交代其在当前情感冲突场景中的科学解释与限制边界（45到80字）。",
+          "唯一正确答案：必须明确点出该定律对应的 AU 编号（或心理原则名称），同时清晰交代其在当前情感冲突场景中的科学解释与限制边界（45到85字）。",
       },
       distractors: {
         type: Type.ARRAY,
         items: { type: Type.STRING },
         description:
-          "恰好3个具有高度迷惑性的错误干扰选项，例如张冠李戴了其他AU编号、把皱眉/微笑直接等价于绝对欺骗/怒火/快乐，或违背科学循证边界（每个45到80字）。",
+          "按提示词要求的干扰项数量（2到5个），生成具有高度迷惑性的错误干扰选项，例如张冠李戴相邻 AU 编号、把皱眉/微笑直接等价于绝对欺骗/怒火/快乐，或违背科学循证边界（每个45到85字，彼此互不重复）。",
       },
       explanation: {
         type: Type.STRING,
@@ -744,7 +744,50 @@ ${combinedText}
         codeId,
         excludeLawIds = [],
         cityContext = "",
+        difficultyCoefficient: rawDifficultyCoeff,
+        recentAccuracy: rawRecentAccuracy,
+        scenarioComplexity: rawScenarioComplexity,
+        distractorCount: rawDistractorCount,
       } = req.body || {};
+
+      const recentAccuracy = Number.isFinite(Number(rawRecentAccuracy))
+        ? Math.max(0, Math.min(100, Math.round(Number(rawRecentAccuracy))))
+        : 72;
+
+      const difficultyCoefficient = Number.isFinite(Number(rawDifficultyCoeff))
+        ? Math.max(0.4, Math.min(1.0, Number(Number(rawDifficultyCoeff).toFixed(2))))
+        : Number(
+            (recentAccuracy < 60
+              ? 0.4 + (recentAccuracy / 60) * 0.18
+              : recentAccuracy < 82
+              ? 0.6 + ((recentAccuracy - 60) / 22) * 0.19
+              : 0.8 + ((recentAccuracy - 82) / 18) * 0.2
+            ).toFixed(2)
+          );
+
+      const scenarioComplexity: "basic" | "intermediate" | "advanced" =
+        rawScenarioComplexity === "basic" ||
+        rawScenarioComplexity === "intermediate" ||
+        rawScenarioComplexity === "advanced"
+          ? rawScenarioComplexity
+          : difficultyCoefficient < 0.6
+          ? "basic"
+          : difficultyCoefficient < 0.8
+          ? "intermediate"
+          : "advanced";
+
+      const targetDistractorCount = Number.isFinite(Number(rawDistractorCount))
+        ? Math.max(2, Math.min(5, Math.round(Number(rawDistractorCount))))
+        : difficultyCoefficient < 0.6
+        ? 2
+        : difficultyCoefficient < 0.8
+        ? 3
+        : difficultyCoefficient < 0.92
+        ? 4
+        : 5;
+
+      const targetCueCount =
+        scenarioComplexity === "basic" ? 2 : scenarioComplexity === "advanced" ? 4 : 3;
 
       const ai = getAI();
       if (!ai) {
@@ -771,13 +814,23 @@ ${combinedText}
             ? excludeLawIds.map((item: unknown) => String(item).toLowerCase())
             : []
         );
-        const filtered = MICROEXPRESSION_CATALOG.filter(
+        let filtered = MICROEXPRESSION_CATALOG.filter(
           (entry) =>
             !excludeSet.has(entry.lawId.toLowerCase()) &&
             !excludeSet.has(entry.codeId.toLowerCase())
         );
-        const pool = filtered.length > 0 ? filtered : MICROEXPRESSION_CATALOG;
-        selectedLaw = pool[randomInt(0, pool.length)];
+        if (filtered.length === 0) {
+          filtered = MICROEXPRESSION_CATALOG;
+        }
+        // Bias pool gently toward the user's adaptive complexity tier when no specific law is requested
+        if (scenarioComplexity === "basic") {
+          const easyPool = filtered.filter((e) => e.difficulty === "Easy");
+          if (easyPool.length > 0) filtered = easyPool;
+        } else if (scenarioComplexity === "advanced") {
+          const complexPool = filtered.filter((e) => e.difficulty !== "Easy");
+          if (complexPool.length > 0) filtered = complexPool;
+        }
+        selectedLaw = filtered[randomInt(0, filtered.length)];
       }
 
       const conflictThemes = [
@@ -790,6 +843,22 @@ ${combinedText}
       ];
       const chosenConflictTheme =
         conflictThemes[randomInt(0, conflictThemes.length)];
+
+      const complexityGuideline =
+        scenarioComplexity === "basic"
+          ? `【自适应难度系数 ${difficultyCoefficient.toFixed(2)} · 基础单线索模式（用户近况正确率 ${recentAccuracy}%）】
+- 场景复杂度：保持结构清晰聚焦，刻画 1 处核心情绪误解冲突与 1 个直白可见的物理/生理外因（如强光、看字、咬牙痛），避免堆砌多重伪装诱饵。
+- 线索数量：observableFacialCues 恰好输出 ${targetCueCount} 条清晰动作描述。
+- AU 干扰项数量：distractors 必须恰好输出 **${targetDistractorCount} 个** 互相独立且明确的错误干扰项（与 correctOption 构成 3 选 1），重点对比正确 AU 与明显错配 AU 或“绝对读心”误区。`
+          : scenarioComplexity === "intermediate"
+          ? `【自适应难度系数 ${difficultyCoefficient.toFixed(2)} · 标准双线索模式（用户近况正确率 ${recentAccuracy}%）】
+- 场景复杂度：刻画张力饱满的双角色情感冲突，融入 1–2 个现实情境/生理混淆因子，使观察者在共情与归因间权衡。
+- 线索数量：observableFacialCues 恰好输出 ${targetCueCount} 条客观动作与情境线索。
+- AU 干扰项数量：distractors 必须恰好输出 **${targetDistractorCount} 个** 高辨析度错误干扰项（与 correctOption 构成 4 选 1），涵盖错配 AU 编号与过度情绪化推论。`
+          : `【自适应难度系数 ${difficultyCoefficient.toFixed(2)} · 高阶复合伪装模式（用户近况正确率 ${recentAccuracy}%）】
+- 场景复杂度：构建高难度、多层次情感冲突与表情伪装场景——关键角色表面维持职业礼貌或克制姿态，同时叠加次级混淆动作线索（如社交微笑掩饰眼周/眉心张力、强光/疲惫/口型、旁人从众暗示等多重归因诱饵），极大考验观察者剥离伪装与守住科学边界的能力！
+- 线索数量：observableFacialCues 恰好输出 ${targetCueCount} 条细腻而易混的客观线索（含次级混淆诱饵线索）。
+- AU 干扰项数量：distractors 必须恰好输出 **${targetDistractorCount} 个** 彼此完全不重复的高相似深度干扰项（与 correctOption 构成 ${1 + targetDistractorCount} 选 1）：必须混合相邻或易混淆 AU 编号（例如 AU1 vs AU2 vs AU4 vs AU5 vs AU6 vs AU12 vs AU15）、半真半假但夸大因果推断的选项，以及符合直觉却违背循证边界的陷阱！`;
 
       const prompt = `请你作为认知神经科学与微表情观察专家，针对以下随机抽中的微表情心理学定律，全新创作一道高质量「互动微表情诊断场景选择题」。
 
@@ -806,13 +875,17 @@ ${combinedText}
         cityContext ? `；可自然融入「${String(cityContext)}」的人文交流氛围` : ""
       }
 
+${complexityGuideline}
+
 【严格命题规范】
 1. **必须体现角色情感冲突**：在 actorAction 中刻画两位角色之间有温度、有张力的情感冲突或信任误解（如委屈、防备、克制、失望、强颜体面或压力争执），并让一方产生过度臆测情绪标签的冲动。
 2. **禁止题干/剧情提前剧透答案**：在 narrativeTitle、actorAction、observableFacialCues、socraticQuestion、socraticClue 中，**绝对不要**直接出现「${selectedLaw.actionUnitCode}」或「${selectedLaw.codeId}」或完整定律标题，也不要写“这触发了 AU4”——请只描写眼睛可见的解剖学肌肉部位变化（如眉内侧靠鼻梁端上移、外侧眉梢上挑、两眉向中线下压聚拢挤出竖纹、上眼睑骤升、脸颊上提并收紧眼外角、嘴角向耳后上方拉起、嘴角向下垂拉等）及环境/生理干扰因素！
-3. **精准考察识别 AU 或心理原则**：questionPrompt 须引导作答者识别关键角色的特定面部动作单元（AU）或背后核心心理原则，且唯一正确答案 correctOption 必须明确标出「${selectedLaw.actionUnitCode}」及「${selectedLaw.titleZh}」并坚守科学限定边界；3 个 distractors 必须极具思考辨析度（含错配 AU 编号与“绝对读心/测谎”误区）。
+3. **精准考察识别 AU 或心理原则**：questionPrompt 须引导作答者识别关键角色的特定面部动作单元（AU）或背后核心心理原则，且唯一正确答案 correctOption 必须明确标出「${selectedLaw.actionUnitCode}」及「${selectedLaw.titleZh}」并坚守科学限定边界；distractors 数量务必不少于 ${targetDistractorCount} 个。
 4. **严格遵守循证心理学**：始终坚持“动作单元描述 ≠ 直接读心或绝对测谎”，引用或呼应 ${selectedLaw.researcher} (${selectedLaw.year}) 的严谨边界。`;
 
       let responseText = "";
+      let generated: any = null;
+      let distractors: string[] = [];
       let lastErr: any = null;
       const maxAttempts = 3;
 
@@ -823,13 +896,51 @@ ${combinedText}
             contents: prompt,
             config: {
               systemInstruction:
-                "你是智心堂（MindLabZ）微表情与情绪科学出题专家。严格按 JSON Schema 输出高质量教学诊断题，既富有文学化的情感冲突张力，又严守 Paul Ekman FACS 解剖编码及 Barrett (2019)、Coles (2019) 等现代心理学科学边界。",
+                `你是智心堂（MindLabZ）微表情与情绪科学出题专家。严格按 JSON Schema 与难度系数（${difficultyCoefficient.toFixed(
+                  2
+                )}，需 ${targetDistractorCount} 个独立干扰项）输出高质量教学诊断题，既富有文学化的情感冲突张力，又严守 Paul Ekman FACS 解剖编码及 Barrett (2019)、Coles (2019) 等现代心理学科学边界。`,
               responseMimeType: "application/json",
               responseSchema: microexpressionScenarioSchema,
             },
           });
           responseText = (response.text || "").trim();
-          if (responseText) break;
+          if (!responseText) continue;
+
+          let cleanText = responseText;
+          if (cleanText.startsWith("```json")) {
+            cleanText = cleanText.replace(/^```json\s*/i, "").replace(/\s*```$/, "");
+          } else if (cleanText.startsWith("```")) {
+            cleanText = cleanText.replace(/^```\s*/i, "").replace(/\s*```$/, "");
+          }
+
+          const parsed = JSON.parse(cleanText);
+          const cleanCorrect = String(parsed.correctOption || "").trim();
+          const parsedDistractors = Array.isArray(parsed.distractors)
+            ? Array.from(
+                new Set<string>(
+                  parsed.distractors
+                    .map((d: unknown) => String(d).trim())
+                    .filter((d: string) => d.length > 0 && d !== cleanCorrect)
+                )
+              )
+            : [];
+
+          generated = parsed;
+          distractors = parsedDistractors.slice(0, targetDistractorCount);
+
+          if (
+            generated.narrativeTitle &&
+            generated.actorAction &&
+            generated.questionPrompt &&
+            cleanCorrect &&
+            distractors.length >= targetDistractorCount
+          ) {
+            break;
+          }
+          // Retry if AI returned fewer distractors than targetDistractorCount
+          if (attempt < maxAttempts - 1) {
+            continue;
+          }
         } catch (err: any) {
           lastErr = err;
           const status = err?.status || err?.code;
@@ -844,37 +955,20 @@ ${combinedText}
         }
       }
 
-      if (!responseText) {
+      if (!generated) {
         throw lastErr || new Error("Gemini returned an empty scenario payload");
       }
-
-      let cleanText = responseText;
-      if (cleanText.startsWith("```json")) {
-        cleanText = cleanText.replace(/^```json\s*/i, "").replace(/\s*```$/, "");
-      } else if (cleanText.startsWith("```")) {
-        cleanText = cleanText.replace(/^```\s*/i, "").replace(/\s*```$/, "");
-      }
-
-      const generated = JSON.parse(cleanText);
-      const distractors = Array.isArray(generated.distractors)
-        ? generated.distractors
-            .map((d: unknown) => String(d).trim())
-            .filter(
-              (d: string) => d.length > 0 && d !== String(generated.correctOption || "").trim()
-            )
-            .slice(0, 3)
-        : [];
 
       if (
         !generated.narrativeTitle ||
         !generated.actorAction ||
         !generated.questionPrompt ||
         !generated.correctOption ||
-        distractors.length < 3
+        distractors.length < Math.min(2, targetDistractorCount)
       ) {
         return res.status(502).json({
           error: "INVALID_AI_PAYLOAD",
-          message: "AI 返回的诊断场景结构不完整，请点击重试重新生成。",
+          message: "AI 返回的诊断场景结构或干扰项数量不完整，请点击重试重新生成。",
         });
       }
 
@@ -897,6 +991,13 @@ ${combinedText}
       return res.json({
         law: selectedLaw,
         model: "gemini-4-hydrogen",
+        adaptiveDifficulty: {
+          difficultyCoefficient,
+          recentAccuracy,
+          scenarioComplexity,
+          distractorCount: distractors.length,
+          cueCount: targetCueCount,
+        },
         scenario: {
           narrativeTitle: String(generated.narrativeTitle).trim(),
           setting: String(generated.setting || "社会互动现场").trim(),
@@ -906,8 +1007,8 @@ ${combinedText}
             ? generated.observableFacialCues
                 .map((c: unknown) => String(c).trim())
                 .filter(Boolean)
-                .slice(0, 3)
-            : selectedLaw.observableSigns,
+                .slice(0, targetCueCount)
+            : selectedLaw.observableSigns.slice(0, targetCueCount),
           questionPrompt: String(generated.questionPrompt).trim(),
           options: tagged.map((item) => item.text),
           correctAnswer,
@@ -940,6 +1041,410 @@ ${combinedText}
       return res.status(500).json({
         error: "AI_GENERATION_FAILED",
         message: `AI 生成互动微表情诊断场景失败：${rawMessage}`,
+      });
+    }
+  });
+
+  // 4.4 AI Diagnostic Summary & Mistake-Distribution Law Recommendations (ML001-ML010)
+  const COMPLEMENTARY_CLASSIC_LAWS: Array<{
+    lawId: string;
+    codeId: string;
+    titleZh: string;
+    category: string;
+    whyRelevant: string;
+  }> = [
+    {
+      lawId: "confirmation-bias",
+      codeId: "LAW002",
+      titleZh: "确认偏误",
+      category: "认知",
+      whyRelevant: "看到他人皱眉或微笑时，只搜寻印证自己预设立场的面部细节而忽视客观外因。",
+    },
+    {
+      lawId: "halo-effect",
+      codeId: "LAW008",
+      titleZh: "光环效应",
+      category: "社会",
+      whyRelevant: "被对方得体的微笑（AU12）或良好第一印象光环影响，高估其真诚度或专业度。",
+    },
+    {
+      lawId: "primacy-effect",
+      codeId: "LAW012",
+      titleZh: "首因效应",
+      category: "认知",
+      whyRelevant: "最初半秒观察到的挑眉或抿唇瞬间主导整场互动判断，难以在后续更新认知。",
+    },
+    {
+      lawId: "anchoring-effect",
+      codeId: "LAW003",
+      titleZh: "锚定效应",
+      category: "决策",
+      whyRelevant: "将静态基线嘴型或单次微动作锚定为整场谈判或沟通的情绪基调。",
+    },
+    {
+      lawId: "bandwagon-effect",
+      codeId: "LAW009",
+      titleZh: "从众效应",
+      category: "社会",
+      whyRelevant: "跟随团队多数人“看脸定性”的草率共识，忽视 Barrett (2019) 多对多映射科学边界。",
+    },
+    {
+      lawId: "availability-heuristic",
+      codeId: "LAW010",
+      titleZh: "可得性启发式",
+      category: "认知",
+      whyRelevant: "受影视剧“微表情读心术”鲜活案例影响，高估单一动作单元直接测谎的可靠性。",
+    },
+    {
+      lawId: "bystander-effect",
+      codeId: "LAW014",
+      titleZh: "旁观者效应",
+      category: "社会",
+      whyRelevant: "在公共场合捕捉到警觉睁眼（AU5）或求助表情线索后，易因周围人沉默而延迟行动。",
+    },
+    {
+      lawId: "peak-end-rule",
+      codeId: "LAW006",
+      titleZh: "峰终定律",
+      category: "决策",
+      whyRelevant: "结尾瞬间的杜乡微笑（AU6+AU12）常左右整段服务或沟通记忆评价。",
+    },
+  ];
+
+  const diagnosticSummarySchema = {
+    type: Type.OBJECT,
+    properties: {
+      overallLevelLabel: {
+        type: Type.STRING,
+        description: "简短诊断评级（8到18字，如：解剖观察稳健 · 边界区分待巩固）。",
+      },
+      performanceHeadline: {
+        type: Type.STRING,
+        description: "一句精准概括本轮作答表现与错题特征的标题总结（18到38字）。",
+      },
+      diagnosticAnalysis: {
+        type: Type.STRING,
+        description:
+          "120到210字深度 AI 诊断分析，结合用户在 ML001-ML010 上的实际错题分布、误选干扰项倾向（如混淆眉部内侧/外侧、或将肌肉位移直接等同于读心/愤怒/悲伤）与正确率进行客观剖析。",
+      },
+      categoryStrengths: {
+        type: Type.ARRAY,
+        items: { type: Type.STRING },
+        description: "2到3条用户在本轮中展现出的观察与认知优势。",
+      },
+      errorPatternInsights: {
+        type: Type.ARRAY,
+        items: { type: Type.STRING },
+        description:
+          "2到3条基于错题分布提炼的错误归因或动作混淆规律（若本轮零错误，则指出最易在高压力社交中复发的潜在边界盲区）。",
+      },
+      recommendedLaws: {
+        type: Type.ARRAY,
+        items: {
+          type: Type.OBJECT,
+          properties: {
+            lawId: {
+              type: Type.STRING,
+              description: "必须严格选用给定清单中的 lawId（如 ml-004、ml-010、confirmation-bias）。",
+            },
+            codeId: {
+              type: Type.STRING,
+              description: "对应编号（如 ML004、ML010、LAW002）。",
+            },
+            titleZh: {
+              type: Type.STRING,
+              description: "定律中文名称。",
+            },
+            priority: {
+              type: Type.STRING,
+              description: "必须为 'high'、'medium' 或 'consolidation' 之一。",
+            },
+            reason: {
+              type: Type.STRING,
+              description: "40到85字：结合本次错题分布或提示使用情况，解释为何重点推荐复习该定律。",
+            },
+            reviewAction: {
+              type: Type.STRING,
+              description: "20到45字：给出1条可立即执行的复习或对比辨析微动作。",
+            },
+          },
+          required: ["lawId", "codeId", "titleZh", "priority", "reason", "reviewAction"],
+        },
+        description: "恰好2到4条根据错题分布自动推荐的重点复习心理学定律。",
+      },
+      nextStepAdvice: {
+        type: Type.STRING,
+        description: "45到85字下一轮针对性练习建议。",
+      },
+    },
+    required: [
+      "overallLevelLabel",
+      "performanceHeadline",
+      "diagnosticAnalysis",
+      "categoryStrengths",
+      "errorPatternInsights",
+      "recommendedLaws",
+      "nextStepAdvice",
+    ],
+  };
+
+  app.post("/api/microexpressions/diagnostic-summary", async (req, res) => {
+    try {
+      const { attempts = [], metrics = {}, userMasteryMap = {} } = req.body || {};
+
+      const ai = getAI();
+      if (!ai) {
+        return res.status(503).json({
+          error: "GEMINI_API_KEY_MISSING",
+          message:
+            "未检测到 Gemini API 密钥。请在 AI Studio 的 Settings > Secrets 面板配置 GEMINI_API_KEY 后，再生成 AI 诊断总结。",
+        });
+      }
+
+      const rawAttempts = Array.isArray(attempts) ? attempts : [];
+      if (rawAttempts.length === 0) {
+        return res.status(400).json({
+          error: "NO_ATTEMPTS_PROVIDED",
+          message: "缺少可分析的作答记录，请先完成至少一道 ML001–ML010 题目。",
+        });
+      }
+
+      // Compute deterministic per-law error distribution across tested ML001-ML010 laws
+      const distMap = new Map<
+        string,
+        {
+          lawId: string;
+          codeId: string;
+          actionUnitCode: string;
+          category: string;
+          titleZh: string;
+          attemptsCount: number;
+          firstTryCorrectCount: number;
+          totalWrongAttempts: number;
+          usedHintCount: number;
+          wrongOptionsSample: string[];
+        }
+      >();
+
+      for (const item of rawAttempts) {
+        const lawId = String(item?.lawId || "").trim();
+        const catalogMatch = MICROEXPRESSION_CATALOG.find(
+          (c) =>
+            c.lawId.toLowerCase() === lawId.toLowerCase() ||
+            c.codeId.toLowerCase() === String(item?.codeId || "").trim().toLowerCase()
+        );
+        if (!catalogMatch && !lawId.startsWith("ml-")) continue;
+
+        const resolvedId = catalogMatch?.lawId || lawId;
+        const prev = distMap.get(resolvedId) || {
+          lawId: resolvedId,
+          codeId: catalogMatch?.codeId || String(item?.codeId || resolvedId.toUpperCase()),
+          actionUnitCode: catalogMatch?.actionUnitCode || String(item?.actionUnitCode || ""),
+          category: catalogMatch?.category || String(item?.category || "认知"),
+          titleZh: catalogMatch?.titleZh || String(item?.titleZh || resolvedId),
+          attemptsCount: 0,
+          firstTryCorrectCount: 0,
+          totalWrongAttempts: 0,
+          usedHintCount: 0,
+          wrongOptionsSample: [],
+        };
+
+        prev.attemptsCount += 1;
+        if (item?.firstTryCorrect) prev.firstTryCorrectCount += 1;
+        prev.totalWrongAttempts += Math.max(0, Number(item?.wrongAttemptsCount) || 0);
+        if (item?.usedCognitiveHint) prev.usedHintCount += 1;
+        if (Array.isArray(item?.wrongOptionTexts)) {
+          for (const w of item.wrongOptionTexts) {
+            const text = String(w || "").trim();
+            if (text && !prev.wrongOptionsSample.includes(text)) {
+              prev.wrongOptionsSample.push(text);
+            }
+          }
+        }
+        distMap.set(resolvedId, prev);
+      }
+
+      const errorDistribution = Array.from(distMap.values()).sort((a, b) => {
+        if (b.totalWrongAttempts !== a.totalWrongAttempts) {
+          return b.totalWrongAttempts - a.totalWrongAttempts;
+        }
+        if (b.usedHintCount !== a.usedHintCount) {
+          return b.usedHintCount - a.usedHintCount;
+        }
+        return a.codeId.localeCompare(b.codeId);
+      });
+
+      const testedSummaryLines = errorDistribution.map(
+        (d) =>
+          `- ${d.codeId} (${d.lawId}) | ${d.titleZh} [${d.actionUnitCode} · ${d.category}分类]: 作答 ${d.attemptsCount} 题, 首答命中 ${d.firstTryCorrectCount} 次, 误选干扰项 ${d.totalWrongAttempts} 次, 使用提示 ${d.usedHintCount} 次${
+            d.wrongOptionsSample.length > 0
+              ? ` | 曾误选内容：「${d.wrongOptionsSample.slice(0, 2).join("」；「")}」`
+              : ""
+          }`
+      );
+
+      const mlCatalogText = MICROEXPRESSION_CATALOG.map(
+        (c) =>
+          `${c.lawId} (${c.codeId}): ${c.titleZh} [${c.actionUnitCode}, ${c.category}分类 #${c.categoryRank}] — ${c.limitations}`
+      ).join("\n");
+
+      const classicCatalogText = COMPLEMENTARY_CLASSIC_LAWS.map(
+        (c) => `${c.lawId} (${c.codeId}): ${c.titleZh} [${c.category}] — ${c.whyRelevant}`
+      ).join("\n");
+
+      const prompt = `请你作为认知神经科学与微表情教学督导专家，分析以下用户在 ML001–ML010 微表情测验中的真实作答与错题分布，生成一份精准、有温度且具科学循证价值的「诊断总结」。
+
+【本轮测验总体数据】
+- 测验模式：${String(metrics?.quizMode || "microexpressions")}
+- 测验总题数：${Number(metrics?.totalQuestions || rawAttempts.length)} 题（其中 ML001–ML010 共覆盖 ${errorDistribution.length} 条定律）
+- 首答准确率：${Number(metrics?.accuracyPercent ?? 100)}%（首答命中 ${Number(metrics?.firstTryCorrectCount ?? 0)} 题，累计误点 ${Number(metrics?.totalWrongClicks ?? 0)} 次）
+- 最高连击：x${Number(metrics?.maxCombo ?? 0)}，用时：${Number(metrics?.elapsedSeconds ?? 0)} 秒
+
+【ML001–ML010 逐定律错题分布（已按错题数降序排列）】
+${testedSummaryLines.length > 0 ? testedSummaryLines.join("\n") : "暂未包含逐题明细，请结合整体指标给出巩固建议。"}
+
+【用户历史掌握度快照（参考）】
+${JSON.stringify(userMasteryMap)}
+
+【允许推荐的定律清单（recommendedLaws 中的 lawId 必须严格从此清单选取）】
+1) 微表情与面部动作十定律：
+${mlCatalogText}
+
+2) 关联认知与社会偏误延伸定律（如发现用户易在情感冲突中落入偏误可搭配推荐 1 条）：
+${classicCatalogText}
+
+【诊断总结严格要求】
+1. **基于真实错题分布**：若某定律误选次数 > 0 或使用了提示，必须点名分析其具体混淆点（特别是如果给出了“曾误选内容”，请精准指出他为何被该干扰项吸引，例如混淆了 AU1 眉内侧与 AU2 眉外侧/AU4 下压，或误信了绝对测谎/杜乡微笑不可伪装等）。
+2. **若全部首答命中（零错题）**：肯定其敏锐度，同时检查是否依赖了提示，并重点分析哪几条高阶边界定律（如 ML009 138 项元分析效应量边界、ML010 Barrett 2019 非一一对应原则）及延伸防偏误定律值得定期巩固防遗忘。
+3. **recommendedLaws 数量为 2 到 4 条**：优先排序错题最多的 ML 定律（priority 标为 'high'），其次为使用过提示或易混淆相邻动作单元的定律（'medium'），最后可配 1 条巩固或关联认知偏误定律（'consolidation'）。`;
+
+      let responseText = "";
+      let lastErr: any = null;
+      const maxAttempts = 3;
+
+      for (let attempt = 0; attempt < maxAttempts; attempt++) {
+        try {
+          const response = await ai.models.generateContent({
+            model: "gemini-4-hydrogen",
+            contents: prompt,
+            config: {
+              systemInstruction:
+                "你是智心堂（MindLabZ）微表情与认知科学学习督导 AI。请严格基于传入的错题分布输出合法 JSON 诊断总结，严禁编造清单之外的 lawId。",
+              responseMimeType: "application/json",
+              responseSchema: diagnosticSummarySchema,
+            },
+          });
+          responseText = (response.text || "").trim();
+          if (responseText) break;
+        } catch (err: any) {
+          lastErr = err;
+          const status = err?.status || err?.code;
+          const isRetryable = status === 429 || status === 503 || status === 500;
+          if (isRetryable && attempt < maxAttempts - 1) {
+            await new Promise((resolve) =>
+              setTimeout(resolve, 600 * Math.pow(2, attempt))
+            );
+            continue;
+          }
+          throw err;
+        }
+      }
+
+      if (!responseText) {
+        throw lastErr || new Error("Gemini returned an empty diagnostic summary");
+      }
+
+      let cleanText = responseText;
+      if (cleanText.startsWith("```json")) {
+        cleanText = cleanText.replace(/^```json\s*/i, "").replace(/\s*```$/, "");
+      } else if (cleanText.startsWith("```")) {
+        cleanText = cleanText.replace(/^```\s*/i, "").replace(/\s*```$/, "");
+      }
+
+      const parsed = JSON.parse(cleanText);
+
+      // Normalize recommended law IDs against known ML + complementary catalog so links never 404
+      const allKnownEntries = [
+        ...MICROEXPRESSION_CATALOG.map((c) => ({
+          lawId: c.lawId,
+          codeId: c.codeId,
+          titleZh: c.titleZh,
+        })),
+        ...COMPLEMENTARY_CLASSIC_LAWS.map((c) => ({
+          lawId: c.lawId,
+          codeId: c.codeId,
+          titleZh: c.titleZh,
+        })),
+      ];
+
+      const normalizedRecs = (Array.isArray(parsed.recommendedLaws) ? parsed.recommendedLaws : [])
+        .map((rec: any) => {
+          const rawId = String(rec?.lawId || "").trim().toLowerCase();
+          const rawCode = String(rec?.codeId || "").trim().toLowerCase();
+          const matched =
+            allKnownEntries.find(
+              (k) =>
+                k.lawId.toLowerCase() === rawId ||
+                k.codeId.toLowerCase() === rawId ||
+                k.codeId.toLowerCase() === rawCode ||
+                k.titleZh === String(rec?.titleZh || "").trim()
+            ) || MICROEXPRESSION_CATALOG[0];
+          const rawPriority = String(rec?.priority || "medium").toLowerCase();
+          const priority =
+            rawPriority === "high" || rawPriority === "consolidation"
+              ? rawPriority
+              : "medium";
+          return {
+            lawId: matched.lawId,
+            codeId: matched.codeId,
+            titleZh: matched.titleZh,
+            priority,
+            reason: String(rec?.reason || "").trim(),
+            reviewAction: String(rec?.reviewAction || "").trim(),
+          };
+        })
+        .filter((r: any) => r.reason)
+        .slice(0, 4);
+
+      return res.json({
+        model: "gemini-4-hydrogen",
+        generatedAt: new Date().toISOString(),
+        errorDistribution,
+        summary: {
+          overallLevelLabel: String(parsed.overallLevelLabel || "微表情解码表现分析").trim(),
+          performanceHeadline: String(parsed.performanceHeadline || "").trim(),
+          diagnosticAnalysis: String(parsed.diagnosticAnalysis || "").trim(),
+          categoryStrengths: Array.isArray(parsed.categoryStrengths)
+            ? parsed.categoryStrengths.map((s: unknown) => String(s).trim()).filter(Boolean)
+            : [],
+          errorPatternInsights: Array.isArray(parsed.errorPatternInsights)
+            ? parsed.errorPatternInsights.map((s: unknown) => String(s).trim()).filter(Boolean)
+            : [],
+          recommendedLaws: normalizedRecs,
+          nextStepAdvice: String(parsed.nextStepAdvice || "").trim(),
+        },
+      });
+    } catch (err: any) {
+      console.error("Microexpression diagnostic summary error:", err);
+      const status = Number(err?.status || err?.httpStatusCode) || 500;
+      const rawMessage = String(err?.message || err);
+
+      if (status === 400 || status === 403 || rawMessage.includes("API_KEY")) {
+        return res.status(status === 403 ? 403 : 400).json({
+          error: "GEMINI_AUTH_ERROR",
+          message:
+            "Gemini API 密钥无效或无权限，请在 Settings > Secrets 面板核查密钥配置后重试。",
+        });
+      }
+      if (status === 429) {
+        return res.status(429).json({
+          error: "GEMINI_RATE_LIMITED",
+          message: "Gemini API 请求配额暂时达到上限，请稍等几秒后重试。",
+        });
+      }
+      return res.status(500).json({
+        error: "AI_DIAGNOSTIC_FAILED",
+        message: `AI 生成诊断总结失败：${rawMessage}`,
       });
     }
   });

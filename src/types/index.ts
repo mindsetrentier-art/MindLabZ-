@@ -112,6 +112,11 @@ export interface PsychologyLaw {
   sourceCitation?: string;
   dispatchedGames?: GameType[];
   storyScenario?: MicroexpressionStoryScenario;
+  isReversePsychology?: boolean;
+  reverseCategory?: string;
+  reverseScenario?: string;
+  reversePrinciple?: string;
+  reverseApplication?: string;
   experimentSetup?: {
     scenario: string;
     optionA: { label: string; biasDescription?: string; rationalDescription?: string; description?: string };
@@ -123,6 +128,7 @@ export interface PsychologyLaw {
 
 export type GameType = 
   | 'love-aleatoric-arena'
+  | 'reverse-aleatoric-arena'
   | 'memory-lab' 
   | 'mind-trap' 
   | 'brain-rush' 

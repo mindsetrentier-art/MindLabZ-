@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bookmark, ChevronRight, CheckCircle2, Sparkles, Heart, Eye, Gamepad2, BookOpen } from 'lucide-react';
+import { Bookmark, ChevronRight, CheckCircle2, Sparkles, Heart, Eye, Gamepad2, BookOpen, Volume2, ShieldCheck, Shuffle } from 'lucide-react';
 import { PsychologyLaw, CategoryZh } from '../../types';
 import { useApp } from '../../context/AppContext';
 import { gameAudio } from '../../utils/gameAudio';
@@ -30,8 +30,29 @@ export const PsychologyLawCard: React.FC<PsychologyLawCardProps> = ({ law, compa
   const isMastered = mastery >= 80;
 
   const [expanded, setExpanded] = React.useState(false);
+  const [isSpeaking, setIsSpeaking] = React.useState(false);
 
   const emotionalMeta = getLawEmotionalMapping(law);
+
+  const handleToggleSpeech = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    gameAudio.playTap();
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+      setIsSpeaking(false);
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const script = `${law.codeId || ''}，${law.nameZh}。${law.shortExplanation}。现实启示：${law.keyTakeaway}`;
+    const utter = new SpeechSynthesisUtterance(script);
+    utter.lang = 'zh-CN';
+    utter.rate = 1.02;
+    utter.onend = () => setIsSpeaking(false);
+    utter.onerror = () => setIsSpeaking(false);
+    setIsSpeaking(true);
+    window.speechSynthesis.speak(utter);
+  };
 
   const palette = CATEGORY_ART_PALETTE[law.categoryZh] || {
     color: '#6366F1',
@@ -115,6 +136,18 @@ export const PsychologyLawCard: React.FC<PsychologyLawCardProps> = ({ law, compa
             </span>
           )}
 
+          {law.isReversePsychology && (
+            <span
+              className="inline-flex items-center gap-1 font-mono text-[10px] font-bold px-2 py-0.5 rounded-md border bg-teal-50 text-teal-800 border-teal-200 shadow-2xs"
+              title={`逆向心理学 · ${law.reverseCategory || ''} · ${law.reverseScenario || ''}`}
+            >
+              <Shuffle className="w-2.5 h-2.5" />
+              <span>
+                {law.reverseCategory} · {law.reverseScenario}
+              </span>
+            </span>
+          )}
+
           <span className="text-stone-300" aria-hidden="true">/</span>
           <span
             className="font-bold text-xs flex items-center gap-1.5"
@@ -168,22 +201,38 @@ export const PsychologyLawCard: React.FC<PsychologyLawCardProps> = ({ law, compa
           )}
         </div>
 
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            gameAudio.playTap();
-            toggleBookmark(law.id);
-          }}
-          className="w-8 h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-900 hover:bg-stone-100 transition-colors btn-tactile -mr-1 cursor-pointer"
-          aria-label="收藏定律"
-          title={bookmarked ? "已收藏至心智藏品" : "收藏本定律"}
-        >
-          <Bookmark
-            className={`w-4 h-4 transition-transform duration-150 ${
-              bookmarked ? 'fill-amber-500 text-amber-500 scale-110' : 'stroke-[1.6px]'
+        <div className="flex items-center gap-1 shrink-0 -mr-1">
+          <button
+            type="button"
+            onClick={handleToggleSpeech}
+            className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer ${
+              isSpeaking
+                ? 'bg-teal-600 text-white shadow-xs'
+                : 'text-stone-400 hover:text-stone-900 hover:bg-stone-100'
             }`}
-          />
-        </button>
+            aria-label="语音朗读定律"
+            title={isSpeaking ? '停止语音朗读' : '点击语音随听该定律'}
+          >
+            <Volume2 className="w-4 h-4" />
+          </button>
+
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              gameAudio.playTap();
+              toggleBookmark(law.id);
+            }}
+            className="w-8 h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-900 hover:bg-stone-100 transition-colors btn-tactile cursor-pointer"
+            aria-label="收藏定律"
+            title={bookmarked ? "已收藏至心智藏品" : "收藏本定律"}
+          >
+            <Bookmark
+              className={`w-4 h-4 transition-transform duration-150 ${
+                bookmarked ? 'fill-amber-500 text-amber-500 scale-110' : 'stroke-[1.6px]'
+              }`}
+            />
+          </button>
+        </div>
       </div>
 
       {/* Main Headline & Subtitle */}
@@ -265,6 +314,19 @@ export const PsychologyLawCard: React.FC<PsychologyLawCardProps> = ({ law, compa
                     {law.limitations}
                   </p>
                 )}
+              </div>
+            )}
+
+            {/* Reverse Psychology Ethical Boundary & Communication Contrast */}
+            {law.isReversePsychology && law.healthyBoundary && (
+              <div className="p-3.5 rounded-xl bg-teal-50/70 border border-teal-200/80 space-y-1">
+                <div className="flex items-center gap-1.5 text-[11px] font-bold text-teal-900">
+                  <ShieldCheck className="w-3.5 h-3.5 text-teal-700" />
+                  <span>逆向心理 · 诚实沟通与自主权边界（{law.reverseScenario}）</span>
+                </div>
+                <p className="text-[11px] text-stone-700 leading-relaxed">
+                  {law.healthyBoundary}
+                </p>
               </div>
             )}
 

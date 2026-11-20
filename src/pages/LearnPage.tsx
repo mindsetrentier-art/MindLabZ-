@@ -24,6 +24,11 @@ import {
   Sparkle,
   Layers,
   Eye,
+  Network,
+  Play,
+  Pause,
+  SkipForward,
+  ShieldCheck,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useFontScale } from '../context/FontScaleContext';
@@ -35,6 +40,10 @@ import { CategoryZh, DifficultyLevel, LoveDomainId, PsychologyLaw } from '../typ
 import { MINDLABZ_CHAPTERS } from '../data/laws';
 import { gameAudio } from '../utils/gameAudio';
 import { OverlappingCardStack } from '../components/ui/OverlappingCardStack';
+import {
+  drawNonRepeatingLawOrder,
+  resetLibraryAleatoricScope,
+} from '../utils/aleatoricEngine';
 import {
   EMOTIONAL_SECTIONS,
   getLawEmotionalMapping,
@@ -48,6 +57,13 @@ import {
   MICROEXPRESSION_DOMAINS,
   MICROEXPRESSION_LAWS,
 } from '../data/microexpressionLaws';
+import {
+  REVERSE_PSYCHOLOGY_LAWS,
+  REVERSE_CATEGORIES,
+  REVERSE_SCENARIOS,
+  REVERSE_CHAPTERS,
+  REVERSE_PSYCHOLOGY_NOTE,
+} from '../data/reversePsychologyLaws';
 
 interface CategoryOption {
   key: 'all' | CategoryZh;
@@ -150,29 +166,44 @@ const POPULAR_SEARCH_TAGS: PopularSearchTag[] = [
   { text: '旁观者效应', category: '社会', color: '#7C3AED' },
 ];
 
+export type LibraryCurationMode =
+  | 'all_corpus'
+  | 'reverse_psychology'
+  | 'love_codex'
+  | 'emotional_sections'
+  | 'microexpressions'
+  | 'classic_domains';
+
 export const LearnPage: React.FC = () => {
   const { laws, user } = useApp();
   const { fontScale } = useFontScale();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
 
   const initialQuery = searchParams.get('q') || '';
   const initialCategory = (searchParams.get('category') as CategoryZh) || 'all';
   const modeParam = searchParams.get('mode');
-  const initialMode: 'love_codex' | 'emotional_sections' | 'microexpressions' | 'classic_domains' =
-    modeParam === 'classic'
+  const initialMode: LibraryCurationMode =
+    modeParam === 'all'
+      ? 'all_corpus'
+      : modeParam === 'reverse' || modeParam === 'reverse_psychology'
+      ? 'reverse_psychology'
+      : modeParam === 'classic'
       ? 'classic_domains'
       : modeParam === 'emotional'
       ? 'emotional_sections'
       : modeParam === 'microexpressions'
       ? 'microexpressions'
-      : 'love_codex';
+      : 'reverse_psychology';
   const initialSectionParam = searchParams.get('section');
   const initialSection = initialSectionParam ? (Number(initialSectionParam) as number) || 'all' : 'all';
 
-  const [curationMode, setCurationMode] = useState<
-    'love_codex' | 'emotional_sections' | 'microexpressions' | 'classic_domains'
-  >(initialMode);
+  const [curationMode, setCurationMode] = useState<LibraryCurationMode>(initialMode);
+  const [sortMode, setSortMode] = useState<'aleatoric' | 'sequential'>('aleatoric');
+  const [shuffleNonce, setShuffleNonce] = useState<number>(1);
+  const [selectedReverseScenario, setSelectedReverseScenario] = useState<string>('all');
+  const [selectedReverseCategory, setSelectedReverseCategory] = useState<string>('all');
+  const [selectedReverseChapter, setSelectedReverseChapter] = useState<string>('all');
   const [selectedMicroCategory, setSelectedMicroCategory] = useState<'all' | '认知' | '情绪' | '社会' | '行为'>('all');
   const [selectedLoveDomain, setSelectedLoveDomain] = useState<'all' | LoveDomainId>('all');
   const [selectedLoveSubTag, setSelectedLoveSubTag] = useState<string>('all');
@@ -186,6 +217,10 @@ export const LearnPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'dossier'>('grid');
 
+  // Audio Listening Mode (随听朗读连播状态)
+  const [audioPlayingIdx, setAudioPlayingIdx] = useState<number | null>(null);
+  const [audioRate, setAudioRate] = useState<number>(1.0);
+
   // Epiphany random generator modal
   const [epiphanyLaw, setEpiphanyLaw] = useState<PsychologyLaw | null>(null);
 
@@ -196,7 +231,13 @@ export const LearnPage: React.FC = () => {
       setSearchQuery(urlQ);
     }
     const urlMode = searchParams.get('mode');
-    if (urlMode === 'microexpressions') {
+    if (urlMode === 'all') {
+      setCurationMode('all_corpus');
+    } else if (urlMode === 'reverse' || urlMode === 'reverse_psychology') {
+      setCurationMode('reverse_psychology');
+    } else if (urlMode === 'love') {
+      setCurationMode('love_codex');
+    } else if (urlMode === 'microexpressions') {
       setCurationMode('microexpressions');
     } else if (urlMode === 'classic') {
       setCurationMode('classic_domains');
@@ -205,17 +246,38 @@ export const LearnPage: React.FC = () => {
     }
   }, [searchParams]);
 
-  const handleCurationModeChange = (
-    mode: 'love_codex' | 'emotional_sections' | 'microexpressions' | 'classic_domains'
-  ) => {
+  // Cleanup Web Speech API on unmount
+  useEffect(() => {
+    return () => {
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  const handleCurationModeChange = (mode: LibraryCurationMode) => {
     if (curationMode === mode) return;
     gameAudio.playTap();
     setIsLoading(true);
     setCurationMode(mode);
     setVisibleLimit(24);
+    setAudioPlayingIdx(null);
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
     setTimeout(() => {
       setIsLoading(false);
     }, 140);
+  };
+
+  const handleReshuffle = () => {
+    gameAudio.playSuccess();
+    setShuffleNonce((n) => n + 1);
+    setSortMode('aleatoric');
+    setAudioPlayingIdx(null);
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+    }
   };
 
   const handleLoveDomainChange = (domain: 'all' | LoveDomainId) => {
@@ -268,98 +330,119 @@ export const LearnPage: React.FC = () => {
     setSearchQuery(tag);
   };
 
-  // Trigger random inspiring law discovery
+  // Trigger CSPRNG non-repeating random inspiring law discovery
   const handleRandomEpiphany = () => {
-    const pool = curationMode === 'love_codex' ? LOVE_PSYCHOLOGY_LAWS : laws;
+    const pool =
+      curationMode === 'reverse_psychology'
+        ? REVERSE_PSYCHOLOGY_LAWS
+        : curationMode === 'love_codex'
+        ? LOVE_PSYCHOLOGY_LAWS
+        : laws;
     if (!pool || pool.length === 0) return;
     gameAudio.playSuccess();
-    const randomIndex = Math.floor(Math.random() * pool.length);
-    const chosen = pool[randomIndex];
-    setEpiphanyLaw(chosen);
+    const drawn = drawNonRepeatingLawOrder(pool, `epiphany::${curationMode}`, {
+      markHeadCount: 1,
+    });
+    setEpiphanyLaw(drawn[0]);
   };
 
-  const filteredLaws = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
+  const baseModeLaws = useMemo(() => {
+    const subset = laws.filter((law) => {
+      if (onlyBookmarked && !user.bookmarks.includes(law.id)) return false;
 
-    return laws
-      .filter((law) => {
-        const matchesSearch =
-          !q ||
-          (law.codeId && law.codeId.toLowerCase().includes(q)) ||
-          law.nameZh.toLowerCase().includes(q) ||
-          law.nameEn.toLowerCase().includes(q) ||
-          law.shortExplanation.toLowerCase().includes(q) ||
-          law.detailedExplanation.toLowerCase().includes(q) ||
-          (law.actionUnitCode && law.actionUnitCode.toLowerCase().includes(q)) ||
-          (law.researcher && law.researcher.toLowerCase().includes(q)) ||
-          (law.storyScenario?.title && law.storyScenario.title.toLowerCase().includes(q)) ||
-          (law.observableSigns && law.observableSigns.join(' ').toLowerCase().includes(q)) ||
-          (law.subTag && law.subTag.toLowerCase().includes(q)) ||
-          (law.assignedCityZh && law.assignedCityZh.toLowerCase().includes(q)) ||
-          (law.chapter && law.chapter.toLowerCase().includes(q));
-
-        const matchesBookmark = !onlyBookmarked || user.bookmarks.includes(law.id);
-        if (!matchesSearch || !matchesBookmark) return false;
-
-        if (curationMode === 'microexpressions') {
-          if (!law.isMicroexpression) return false;
-          if (selectedMicroCategory !== 'all' && law.categoryZh !== selectedMicroCategory) {
-            return false;
-          }
-          return true;
-        }
-
-        if (curationMode === 'love_codex') {
-          if (!law.isLoveCodex) return false;
-          if (selectedLoveDomain !== 'all' && law.loveDomainId !== selectedLoveDomain) {
-            return false;
-          }
-          if (selectedLoveSubTag !== 'all' && law.subTag !== selectedLoveSubTag) {
-            return false;
-          }
-          if (selectedDifficulty !== 'all' && law.difficulty !== selectedDifficulty) {
-            return false;
-          }
-          return true;
-        }
-
-        if (curationMode === 'emotional_sections') {
-          const emoMeta = getLawEmotionalMapping(law);
-          if (!emoMeta) return false;
-          if (
-            selectedEmotionalSection !== 'all' &&
-            emoMeta.sectionIndex !== selectedEmotionalSection
-          ) {
-            return false;
-          }
-          return true;
-        }
-
-        if (law.isLoveCodex) return false;
+      if (curationMode === 'all_corpus') {
         const matchesCategory = selectedCategory === 'all' || law.categoryZh === selectedCategory;
-        const matchesChapter = selectedChapter === 'all' || law.chapter === selectedChapter;
-        return matchesCategory && matchesChapter;
-      })
-      .sort((a, b) => {
-        if (curationMode === 'microexpressions') {
-          if (selectedMicroCategory !== 'all') {
-            return (a.categoryRank || 99) - (b.categoryRank || 99);
-          }
-          return (a.microGlobalRank || 99) - (b.microGlobalRank || 99);
+        const matchesDiff = selectedDifficulty === 'all' || law.difficulty === selectedDifficulty;
+        return matchesCategory && matchesDiff;
+      }
+
+      if (curationMode === 'reverse_psychology') {
+        if (!law.isReversePsychology) return false;
+        if (selectedReverseScenario !== 'all' && law.reverseScenario !== selectedReverseScenario) {
+          return false;
         }
-        if (curationMode === 'emotional_sections') {
-          const metaA = getLawEmotionalMapping(a);
-          const metaB = getLawEmotionalMapping(b);
-          const orderA = metaA ? metaA.order : 999;
-          const orderB = metaB ? metaB.order : 999;
-          return orderA - orderB;
+        if (selectedReverseCategory !== 'all' && law.reverseCategory !== selectedReverseCategory) {
+          return false;
         }
-        return (a.codeId || '').localeCompare(b.codeId || '');
-      });
+        if (selectedReverseChapter !== 'all' && law.chapter !== selectedReverseChapter) {
+          return false;
+        }
+        return true;
+      }
+
+      if (curationMode === 'microexpressions') {
+        if (!law.isMicroexpression) return false;
+        if (selectedMicroCategory !== 'all' && law.categoryZh !== selectedMicroCategory) {
+          return false;
+        }
+        return true;
+      }
+
+      if (curationMode === 'love_codex') {
+        if (!law.isLoveCodex) return false;
+        if (selectedLoveDomain !== 'all' && law.loveDomainId !== selectedLoveDomain) {
+          return false;
+        }
+        if (selectedLoveSubTag !== 'all' && law.subTag !== selectedLoveSubTag) {
+          return false;
+        }
+        if (selectedDifficulty !== 'all' && law.difficulty !== selectedDifficulty) {
+          return false;
+        }
+        return true;
+      }
+
+      if (curationMode === 'emotional_sections') {
+        const emoMeta = getLawEmotionalMapping(law);
+        if (!emoMeta) return false;
+        if (
+          selectedEmotionalSection !== 'all' &&
+          emoMeta.sectionIndex !== selectedEmotionalSection
+        ) {
+          return false;
+        }
+        return true;
+      }
+
+      if (law.isLoveCodex || law.isReversePsychology) return false;
+      const matchesCategory = selectedCategory === 'all' || law.categoryZh === selectedCategory;
+      const matchesChapter = selectedChapter === 'all' || law.chapter === selectedChapter;
+      return matchesCategory && matchesChapter;
+    });
+
+    if (sortMode === 'aleatoric') {
+      return drawNonRepeatingLawOrder(
+        subset,
+        `library::${curationMode}::${selectedReverseScenario}::${selectedReverseCategory}::${selectedCategory}`,
+        { markHeadCount: Math.min(24, Math.max(4, Math.ceil(subset.length * 0.25))) }
+      );
+    }
+
+    return [...subset].sort((a, b) => {
+      if (curationMode === 'microexpressions') {
+        if (selectedMicroCategory !== 'all') {
+          return (a.categoryRank || 99) - (b.categoryRank || 99);
+        }
+        return (a.microGlobalRank || 99) - (b.microGlobalRank || 99);
+      }
+      if (curationMode === 'emotional_sections') {
+        const metaA = getLawEmotionalMapping(a);
+        const metaB = getLawEmotionalMapping(b);
+        const orderA = metaA ? metaA.order : 999;
+        const orderB = metaB ? metaB.order : 999;
+        return orderA - orderB;
+      }
+      return (a.codeId || '').localeCompare(b.codeId || '');
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     laws,
-    searchQuery,
     curationMode,
+    sortMode,
+    shuffleNonce,
+    selectedReverseScenario,
+    selectedReverseCategory,
+    selectedReverseChapter,
     selectedMicroCategory,
     selectedLoveDomain,
     selectedLoveSubTag,
@@ -370,6 +453,70 @@ export const LearnPage: React.FC = () => {
     onlyBookmarked,
     user.bookmarks,
   ]);
+
+  const filteredLaws = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return baseModeLaws;
+    return baseModeLaws.filter((law) => {
+      return (
+        (law.codeId && law.codeId.toLowerCase().includes(q)) ||
+        law.nameZh.toLowerCase().includes(q) ||
+        law.nameEn.toLowerCase().includes(q) ||
+        law.shortExplanation.toLowerCase().includes(q) ||
+        law.detailedExplanation.toLowerCase().includes(q) ||
+        (law.reverseCategory && law.reverseCategory.toLowerCase().includes(q)) ||
+        (law.reverseScenario && law.reverseScenario.toLowerCase().includes(q)) ||
+        (law.actionUnitCode && law.actionUnitCode.toLowerCase().includes(q)) ||
+        (law.researcher && law.researcher.toLowerCase().includes(q)) ||
+        (law.storyScenario?.title && law.storyScenario.title.toLowerCase().includes(q)) ||
+        (law.observableSigns && law.observableSigns.join(' ').toLowerCase().includes(q)) ||
+        (law.subTag && law.subTag.toLowerCase().includes(q)) ||
+        (law.assignedCityZh && law.assignedCityZh.toLowerCase().includes(q)) ||
+        (law.chapter && law.chapter.toLowerCase().includes(q))
+      );
+    });
+  }, [baseModeLaws, searchQuery]);
+
+  // Continuous Web Speech Audio Queue Handler (听力库随听连播)
+  const speakLawAt = (idx: number, rateOverride: number = audioRate) => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    if (idx < 0 || idx >= filteredLaws.length) {
+      window.speechSynthesis.cancel();
+      setAudioPlayingIdx(null);
+      return;
+    }
+    const targetLaw = filteredLaws[idx];
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(
+      `第 ${idx + 1} 条，${targetLaw.codeId || ''}，${targetLaw.nameZh}。${targetLaw.shortExplanation}。实用边界：${targetLaw.keyTakeaway}`
+    );
+    utter.lang = 'zh-CN';
+    utter.rate = rateOverride;
+    utter.onend = () => {
+      if (idx + 1 < filteredLaws.length) {
+        setAudioPlayingIdx(idx + 1);
+        speakLawAt(idx + 1, rateOverride);
+      } else {
+        setAudioPlayingIdx(null);
+      }
+    };
+    utter.onerror = () => {
+      setAudioPlayingIdx(null);
+    };
+    setAudioPlayingIdx(idx);
+    window.speechSynthesis.speak(utter);
+  };
+
+  const handleToggleGlobalListen = () => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    gameAudio.playTap();
+    if (audioPlayingIdx !== null) {
+      window.speechSynthesis.cancel();
+      setAudioPlayingIdx(null);
+    } else if (filteredLaws.length > 0) {
+      speakLawAt(0, audioRate);
+    }
+  };
 
   const visibleLaws = useMemo(
     () => filteredLaws.slice(0, visibleLimit),
@@ -418,18 +565,18 @@ export const LearnPage: React.FC = () => {
               </span>
               <span className="text-stone-500" aria-hidden="true">/</span>
               <span className="text-stone-300 font-serif-editorial italic font-sans">
-                ML001 – ML010 · LAW001 – LAW142 · LOVE001 – LOVE{LOVE_PSYCHOLOGY_LAWS.length}
+                ML001–ML010 · REV0101–REV2005 · LAW001–LAW142 · LOVE001–LOVE{LOVE_PSYCHOLOGY_LAWS.length}
               </span>
             </div>
 
             {/* High-Contrast Literary Headline */}
             <h1 className="font-serif-editorial text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight leading-tight text-white drop-shadow-sm">
-              MindLabZ 全景心理学定律典藏馆
+              MindLabZ 全景心理学定律与随听典藏馆
             </h1>
 
             {/* Editorial Dek */}
             <p className="text-xs sm:text-sm text-stone-300/90 font-normal leading-relaxed">
-              系统收录 10 条微表情与面部动作实证定律（附沉浸式故事场景及全竞技场分派）、142 条经典心智规律与 {LOVE_PSYCHOLOGY_LAWS.length} 条爱情心理学科学词条。
+              全量收录 {REVERSE_PSYCHOLOGY_LAWS.length} 条逆向心理学与心理抗拒词条（REV）、{MICROEXPRESSION_LAWS.length} 条微表情实证定律（ML）、142 条经典心智规律及 {LOVE_PSYCHOLOGY_LAWS.length} 条爱情心理学词条，配备 CSPRNG 零重复洗牌与语音随听连播。
             </p>
 
             {/* Curatorial Index Stats */}
@@ -469,6 +616,19 @@ export const LearnPage: React.FC = () => {
                 <span>随机启迪</span>
                 <Sparkles className="w-3.5 h-3.5 text-amber-300" />
               </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                gameAudio.playTap();
+                navigate('/knowledge-graph');
+              }}
+              className="px-4 py-2.5 rounded-2xl bg-amber-400/15 hover:bg-amber-400/25 text-amber-100 border border-amber-300/35 text-xs font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer whitespace-nowrap shrink-0 w-full sm:w-auto"
+              title="以 D3 交互式力导向知识图谱探索 500 条心理学定律关联"
+            >
+              <Network className="w-4 h-4 text-amber-300" />
+              <span>500 律知识图谱 (D3)</span>
             </button>
           </div>
         </div>
@@ -546,35 +706,50 @@ export const LearnPage: React.FC = () => {
             className="h-14 px-5 bg-white border-2 border-stone-200 hover:border-amber-400 text-stone-700 hover:text-amber-700 hover:bg-amber-50/50 rounded-2xl shadow-sm transition-all flex items-center gap-2 cursor-pointer font-bold text-xs"
           />
 
-          {/* View Mode Toggle: Grid vs Dossier */}
-          <div className="hidden sm:flex items-center p-1 bg-white border-2 border-stone-200 rounded-2xl shadow-xs h-14">
+          {/* View Mode Toggle: Grid vs Dossier + Knowledge Graph Portal */}
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="hidden sm:flex items-center p-1 bg-white border-2 border-stone-200 rounded-2xl shadow-xs h-14">
+              <button
+                onClick={() => {
+                  gameAudio.playTap();
+                  setViewMode('grid');
+                }}
+                className={`p-2.5 rounded-xl transition-all cursor-pointer ${
+                  viewMode === 'grid'
+                    ? 'bg-stone-900 text-white shadow-xs'
+                    : 'text-stone-400 hover:text-stone-700'
+                }`}
+                title="艺术画廊展卡视图"
+              >
+                <Grid3X3 className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => {
+                  gameAudio.playTap();
+                  setViewMode('dossier');
+                }}
+                className={`p-2.5 rounded-xl transition-all cursor-pointer ${
+                  viewMode === 'dossier'
+                    ? 'bg-stone-900 text-white shadow-xs'
+                    : 'text-stone-400 hover:text-stone-700'
+                }`}
+                title="策展卷宗速览列表"
+              >
+                <List className="w-4 h-4" />
+              </button>
+            </div>
+
             <button
+              type="button"
               onClick={() => {
                 gameAudio.playTap();
-                setViewMode('grid');
+                navigate('/knowledge-graph');
               }}
-              className={`p-2.5 rounded-xl transition-all cursor-pointer ${
-                viewMode === 'grid'
-                  ? 'bg-stone-900 text-white shadow-xs'
-                  : 'text-stone-400 hover:text-stone-700'
-              }`}
-              title="艺术画廊展卡视图"
+              className="h-14 px-4 bg-stone-900 hover:bg-stone-800 text-amber-100 border-2 border-stone-900 rounded-2xl shadow-sm transition-colors flex items-center gap-2 cursor-pointer font-semibold text-xs whitespace-nowrap shrink-0"
+              title="打开 D3.js 交互式心理定律知识图谱"
             >
-              <Grid3X3 className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => {
-                gameAudio.playTap();
-                setViewMode('dossier');
-              }}
-              className={`p-2.5 rounded-xl transition-all cursor-pointer ${
-                viewMode === 'dossier'
-                  ? 'bg-stone-900 text-white shadow-xs'
-                  : 'text-stone-400 hover:text-stone-700'
-              }`}
-              title="策展卷宗速览列表"
-            >
-              <List className="w-4 h-4" />
+              <Network className="w-4 h-4 text-amber-300" />
+              <span className="hidden md:inline">知识图谱</span>
             </button>
           </div>
         </div>
@@ -600,78 +775,348 @@ export const LearnPage: React.FC = () => {
           ))}
         </div>
 
-        {/* Curatorial Taxonomy Switcher: Love Psychology Codex vs Emotional Sections vs Classic Salons */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+        {/* Curatorial Taxonomy Switcher + CSPRNG True Shuffle & Audio Listening Bar */}
+        <div className="space-y-3 pt-1">
           <div className="flex items-center p-1 bg-stone-100/90 border border-stone-200/90 rounded-2xl shadow-inner max-w-full overflow-x-auto no-scrollbar gap-1">
             <button
+              onClick={() => handleCurationModeChange('all_corpus')}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer active:scale-95 ${
+                curationMode === 'all_corpus'
+                  ? 'bg-stone-900 text-amber-200 shadow-md'
+                  : 'text-stone-600 hover:text-stone-900'
+              }`}
+            >
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>全库真随机总览</span>
+              <span className="font-mono text-[10px] tabular-nums opacity-80">({laws.length})</span>
+            </button>
+
+            <button
+              onClick={() => handleCurationModeChange('reverse_psychology')}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer active:scale-95 ${
+                curationMode === 'reverse_psychology'
+                  ? 'bg-teal-800 text-teal-100 shadow-md border border-teal-400/35'
+                  : 'text-stone-600 hover:text-stone-900'
+              }`}
+            >
+              <Shuffle className={`w-3.5 h-3.5 ${curationMode === 'reverse_psychology' ? 'text-teal-300' : 'text-teal-700'}`} />
+              <span>逆向心理学与抗拒</span>
+              <span className="font-mono text-[10px] tabular-nums opacity-80">({REVERSE_PSYCHOLOGY_LAWS.length})</span>
+            </button>
+
+            <button
               onClick={() => handleCurationModeChange('love_codex')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer active:scale-95 ${
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer active:scale-95 ${
                 curationMode === 'love_codex'
                   ? 'bg-gradient-to-r from-rose-900 via-stone-900 to-amber-950 text-rose-200 shadow-md border border-rose-400/35'
                   : 'text-stone-600 hover:text-stone-900'
               }`}
             >
               <Heart className={`w-3.5 h-3.5 ${curationMode === 'love_codex' ? 'fill-rose-400 text-rose-400' : 'text-rose-500'}`} />
-              <span>♥ 爱情心理学全书 · 7大分类</span>
-              <span className="font-mono text-[10px] px-1.5 py-0.5 rounded-full bg-rose-400/20 text-rose-200 font-normal">
-                {LOVE_PSYCHOLOGY_LAWS.length} 律
-              </span>
+              <span>爱情心理学全书</span>
+              <span className="font-mono text-[10px] tabular-nums opacity-80">({LOVE_PSYCHOLOGY_LAWS.length})</span>
             </button>
 
             <button
               onClick={() => handleCurationModeChange('emotional_sections')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer active:scale-95 ${
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer active:scale-95 ${
                 curationMode === 'emotional_sections'
-                  ? 'bg-gradient-to-r from-stone-900 via-stone-850 to-stone-900 text-amber-300 shadow-md border border-amber-500/30'
+                  ? 'bg-stone-900 text-amber-300 shadow-md border border-amber-500/30'
                   : 'text-stone-600 hover:text-stone-900'
               }`}
             >
               <Crown className={`w-3.5 h-3.5 ${curationMode === 'emotional_sections' ? 'fill-amber-400 text-amber-400' : 'text-stone-500'}`} />
-              <span>✦ 情感心理学五大板块</span>
-              <span className="font-mono text-[10px] px-1.5 py-0.5 rounded-full bg-amber-400/20 text-amber-300 font-normal">
-                50 律
-              </span>
+              <span>情感五大板块</span>
+              <span className="font-mono text-[10px] tabular-nums opacity-80">(50)</span>
             </button>
 
             <button
               onClick={() => handleCurationModeChange('microexpressions')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer active:scale-95 ${
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer active:scale-95 ${
                 curationMode === 'microexpressions'
                   ? 'bg-indigo-900 text-indigo-100 shadow-md border border-indigo-400/35'
                   : 'text-stone-600 hover:text-stone-900'
               }`}
             >
               <Eye className={`w-3.5 h-3.5 ${curationMode === 'microexpressions' ? 'text-amber-300' : 'text-indigo-600'}`} />
-              <span>微表情与面部动作 · 分类排行</span>
-              <span className="font-mono text-[10px] px-1.5 py-0.5 rounded-full bg-indigo-400/20 text-indigo-200 font-normal">
-                {MICROEXPRESSION_LAWS.length} 律
-              </span>
+              <span>微表情与动作</span>
+              <span className="font-mono text-[10px] tabular-nums opacity-80">({MICROEXPRESSION_LAWS.length})</span>
             </button>
 
             <button
               onClick={() => handleCurationModeChange('classic_domains')}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 whitespace-nowrap cursor-pointer active:scale-95 ${
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer active:scale-95 ${
                 curationMode === 'classic_domains'
                   ? 'bg-stone-900 text-white shadow-md'
                   : 'text-stone-600 hover:text-stone-900'
               }`}
             >
               <Layers className="w-3.5 h-3.5" />
-              <span>❖ 六大经典心智展厅</span>
-              <span className="font-mono text-[10px] px-1.5 py-0.5 rounded-full bg-white/20 text-stone-300 font-normal">
-                152 律
-              </span>
+              <span>经典六大展厅</span>
+              <span className="font-mono text-[10px] tabular-nums opacity-80">(142)</span>
             </button>
           </div>
 
-          <div className="text-[11px] text-stone-500 font-mono hidden md:flex items-center gap-1.5">
-            <Sparkle className="w-3 h-3 text-amber-600" />
-            <span>点击任意定律面板，内容平滑展开淡入</span>
+          {/* CSPRNG Shuffle & Audio Listening Bar (随听图书馆控制台) */}
+          <div className="bg-white rounded-2xl p-3.5 sm:p-4 border border-stone-200/90 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={handleReshuffle}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all whitespace-nowrap shrink-0 border ${
+                  sortMode === 'aleatoric'
+                    ? 'bg-teal-700 hover:bg-teal-800 text-white border-teal-700 shadow-xs'
+                    : 'bg-stone-50 hover:bg-stone-100 text-stone-800 border-stone-200'
+                }`}
+              >
+                <Shuffle className="w-3.5 h-3.5" />
+                <span>CSPRNG 真随机洗牌换一批</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  gameAudio.playTap();
+                  setSortMode((prev) => (prev === 'aleatoric' ? 'sequential' : 'aleatoric'));
+                }}
+                className="px-3 py-2 rounded-xl text-xs font-semibold bg-stone-50 hover:bg-stone-100 text-stone-700 border border-stone-200 cursor-pointer whitespace-nowrap shrink-0"
+              >
+                当前排序：{sortMode === 'aleatoric' ? '零重复真随机序' : '按编号顺序'}（点此切换）
+              </button>
+
+              {sortMode === 'aleatoric' && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    gameAudio.playTap();
+                    resetLibraryAleatoricScope();
+                    setShuffleNonce((n) => n + 1);
+                  }}
+                  className="px-2.5 py-2 rounded-xl text-[11px] font-medium text-stone-500 hover:text-stone-800 hover:bg-stone-100 cursor-pointer whitespace-nowrap shrink-0 flex items-center gap-1"
+                  title="清空跨会话已浏览顺序记录并彻底重洗全库"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  <span>重置全库洗牌盒</span>
+                </button>
+              )}
+            </div>
+
+            {/* Web Speech Continuous Audio Listening Bar */}
+            <div className="flex flex-wrap items-center gap-2 pt-2 lg:pt-0 border-t lg:border-t-0 border-stone-100">
+              <button
+                type="button"
+                onClick={handleToggleGlobalListen}
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all whitespace-nowrap shrink-0 ${
+                  audioPlayingIdx !== null
+                    ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-xs'
+                    : 'bg-stone-900 hover:bg-stone-800 text-white shadow-xs'
+                }`}
+              >
+                {audioPlayingIdx !== null ? (
+                  <>
+                    <Pause className="w-3.5 h-3.5" />
+                    <span>暂停随听 ({audioPlayingIdx + 1}/{filteredLaws.length})</span>
+                  </>
+                ) : (
+                  <>
+                    <Volume2 className="w-3.5 h-3.5 text-amber-300" />
+                    <span>听力随听连播（当前随机队列）</span>
+                    <Play className="w-3 h-3 fill-current" />
+                  </>
+                )}
+              </button>
+
+              {audioPlayingIdx !== null && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    gameAudio.playTap();
+                    const nextIdx = (audioPlayingIdx + 1) % Math.max(1, filteredLaws.length);
+                    speakLawAt(nextIdx, audioRate);
+                  }}
+                  className="px-2.5 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-bold flex items-center gap-1 cursor-pointer whitespace-nowrap shrink-0"
+                  title="跳听下一条随机定律"
+                >
+                  <SkipForward className="w-3.5 h-3.5" />
+                  <span>下一条</span>
+                </button>
+              )}
+
+              <select
+                value={audioRate}
+                onChange={(e) => {
+                  const nextRate = Number(e.target.value);
+                  setAudioRate(nextRate);
+                  if (audioPlayingIdx !== null) {
+                    speakLawAt(audioPlayingIdx, nextRate);
+                  }
+                }}
+                aria-label="随听朗读语速"
+                className="px-2.5 py-2 rounded-xl bg-stone-50 border border-stone-200 text-xs font-mono font-bold text-stone-700 cursor-pointer shrink-0"
+              >
+                <option value={0.9}>0.9× 慢听</option>
+                <option value={1.0}>1.0× 常速</option>
+                <option value={1.25}>1.25× 快听</option>
+              </select>
+            </div>
           </div>
+
+          {audioPlayingIdx !== null && filteredLaws[audioPlayingIdx] && (
+            <div className="rounded-xl px-3.5 py-2.5 bg-amber-50/90 border border-amber-200 flex items-center justify-between gap-3 text-xs">
+              <div className="min-w-0 flex items-center gap-2">
+                <Volume2 className="w-4 h-4 text-amber-700 shrink-0" />
+                <span className="font-mono font-bold text-amber-900 shrink-0">
+                  {filteredLaws[audioPlayingIdx].codeId}
+                </span>
+                <span className="font-bold text-stone-900 truncate">
+                  正在随听：{filteredLaws[audioPlayingIdx].nameZh}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate(`/law/${filteredLaws[audioPlayingIdx].id}`)}
+                className="text-xs font-bold text-amber-900 hover:underline whitespace-nowrap shrink-0 cursor-pointer"
+              >
+                进入图文解析 →
+              </button>
+            </div>
+          )}
         </div>
 
         {/* 3. Category Controls depending on active Taxonomy Mode */}
-        {curationMode === 'microexpressions' ? (
+        {curationMode === 'reverse_psychology' ? (
+          <div className="space-y-4">
+            {/* Scientific Disclaimer Banner */}
+            <div className="rounded-2xl p-4 bg-teal-50/80 border border-teal-200/90 text-xs text-teal-950 flex items-start gap-2.5 leading-relaxed">
+              <ShieldCheck className="w-4 h-4 text-teal-700 shrink-0 mt-0.5" />
+              <div>
+                <strong className="font-bold">逆向心理学与心理抗拒 100 律分类导航 · </strong>
+                <span>{REVERSE_PSYCHOLOGY_NOTE}</span>
+              </div>
+            </div>
+
+            {/* Axis 1: 5 High-Frequency Scenarios */}
+            <div className="space-y-1.5">
+              <div className="text-[11px] font-mono font-bold text-stone-500">
+                ① 按 5 大沟通实战场景快速定位：
+              </div>
+              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+                <button
+                  onClick={() => {
+                    gameAudio.playSelect();
+                    setSelectedReverseScenario('all');
+                  }}
+                  className={`text-xs font-bold px-4 py-2 rounded-xl transition-all shrink-0 whitespace-nowrap cursor-pointer ${
+                    selectedReverseScenario === 'all'
+                      ? 'bg-stone-900 text-white shadow-sm'
+                      : 'bg-white text-stone-700 border border-stone-200 hover:border-stone-400'
+                  }`}
+                >
+                  全部场景 ({REVERSE_PSYCHOLOGY_LAWS.length})
+                </button>
+                {REVERSE_SCENARIOS.map((sc) => {
+                  const isSelected = selectedReverseScenario === sc.id;
+                  return (
+                    <button
+                      key={sc.id}
+                      onClick={() => {
+                        gameAudio.playSelect();
+                        setSelectedReverseScenario(sc.id);
+                      }}
+                      className={`text-xs font-bold px-3.5 py-2 rounded-xl transition-all shrink-0 whitespace-nowrap cursor-pointer ${
+                        isSelected
+                          ? 'text-white shadow-sm'
+                          : 'bg-white text-stone-700 border border-stone-200 hover:border-stone-400'
+                      }`}
+                      style={isSelected ? { backgroundColor: sc.color } : undefined}
+                    >
+                      {sc.label} ({sc.count})
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Axis 2: 12 Psychological Mechanism Categories */}
+            <div className="space-y-1.5">
+              <div className="text-[11px] font-mono font-bold text-stone-500">
+                ② 按 12 大核心机制分类精准过滤：
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  onClick={() => {
+                    gameAudio.playTap();
+                    setSelectedReverseCategory('all');
+                  }}
+                  className={`text-[11px] font-bold px-3 py-1.5 rounded-lg border cursor-pointer whitespace-nowrap shrink-0 ${
+                    selectedReverseCategory === 'all'
+                      ? 'bg-teal-800 text-white border-teal-800'
+                      : 'bg-white text-stone-700 border-stone-200 hover:border-stone-400'
+                  }`}
+                >
+                  全部分类 (12)
+                </button>
+                {REVERSE_CATEGORIES.map((cat) => {
+                  const isSelected = selectedReverseCategory === cat.id;
+                  return (
+                    <button
+                      key={cat.id}
+                      onClick={() => {
+                        gameAudio.playTap();
+                        setSelectedReverseCategory(cat.id);
+                      }}
+                      className={`text-[11px] font-bold px-3 py-1.5 rounded-lg border cursor-pointer whitespace-nowrap shrink-0 transition-colors ${
+                        isSelected
+                          ? 'text-white'
+                          : 'bg-white text-stone-700 border-stone-200 hover:border-stone-400'
+                      }`}
+                      style={
+                        isSelected
+                          ? { backgroundColor: cat.color, borderColor: cat.color }
+                          : undefined
+                      }
+                    >
+                      {cat.label} ({cat.count})
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Axis 3: 20 Chapters Quick Selector */}
+            <div className="bg-stone-50/90 p-2.5 rounded-2xl border border-stone-200/80 flex items-center gap-1.5 overflow-x-auto no-scrollbar text-xs">
+              <button
+                onClick={() => {
+                  gameAudio.playTap();
+                  setSelectedReverseChapter('all');
+                }}
+                className={`text-[11px] font-bold px-3 py-1.5 rounded-xl shrink-0 cursor-pointer whitespace-nowrap ${
+                  selectedReverseChapter === 'all'
+                    ? 'bg-stone-900 text-white'
+                    : 'text-stone-600 hover:bg-stone-200/70'
+                }`}
+              >
+                全部 20 章目录
+              </button>
+              {REVERSE_CHAPTERS.map((ch) => (
+                <button
+                  key={ch.chapter}
+                  onClick={() => {
+                    gameAudio.playTap();
+                    setSelectedReverseChapter(ch.chapter);
+                  }}
+                  className={`text-[11px] font-medium px-3 py-1.5 rounded-xl shrink-0 cursor-pointer whitespace-nowrap ${
+                    selectedReverseChapter === ch.chapter
+                      ? 'bg-teal-800 text-white font-bold'
+                      : 'text-stone-600 hover:bg-stone-200/70'
+                  }`}
+                >
+                  {ch.chapter}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : curationMode === 'microexpressions' ? (
           <div className="space-y-4">
             {/* Microexpression Category Tabs */}
             <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
@@ -1121,36 +1566,38 @@ export const LearnPage: React.FC = () => {
               </button>
             </div>
 
-            {/* Architectural Chapter Corridor Row */}
-            <div className="bg-stone-50/90 p-2.5 rounded-2xl border border-stone-200/80 flex items-center gap-1.5 overflow-x-auto no-scrollbar text-xs">
-              <button
-                onClick={() => handleChapterChange('all')}
-                className={`text-[11px] font-bold px-3.5 py-2 rounded-xl transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
-                  selectedChapter === 'all'
-                    ? 'bg-stone-900 text-white shadow-xs'
-                    : 'text-stone-600 hover:bg-stone-200/70 hover:text-stone-900'
-                }`}
-              >
-                <Compass className="w-3.5 h-3.5" />
-                <span>全部卷册 ({laws.length})</span>
-              </button>
-              {MINDLABZ_CHAPTERS.map((chap, idx) => (
+            {/* Architectural Chapter Corridor Row (Classical Pavilions) */}
+            {curationMode === 'classic_domains' && (
+              <div className="bg-stone-50/90 p-2.5 rounded-2xl border border-stone-200/80 flex items-center gap-1.5 overflow-x-auto no-scrollbar text-xs">
                 <button
-                  key={chap}
-                  onClick={() => handleChapterChange(chap)}
-                  className={`text-[11px] font-medium px-3 py-2 rounded-xl transition-all shrink-0 cursor-pointer ${
-                    selectedChapter === chap
-                      ? 'bg-stone-900 text-white font-bold shadow-xs'
+                  onClick={() => handleChapterChange('all')}
+                  className={`text-[11px] font-bold px-3.5 py-2 rounded-xl transition-all shrink-0 flex items-center gap-1.5 cursor-pointer ${
+                    selectedChapter === 'all'
+                      ? 'bg-stone-900 text-white shadow-xs'
                       : 'text-stone-600 hover:bg-stone-200/70 hover:text-stone-900'
                   }`}
                 >
-                  <span className="font-numeric text-[10px] text-amber-600 mr-1 font-bold">
-                    VOL.0{idx + 1}
-                  </span>
-                  <span>{chap}</span>
+                  <Compass className="w-3.5 h-3.5" />
+                  <span>全部卷册 (142)</span>
                 </button>
-              ))}
-            </div>
+                {MINDLABZ_CHAPTERS.map((chap, idx) => (
+                  <button
+                    key={chap}
+                    onClick={() => handleChapterChange(chap)}
+                    className={`text-[11px] font-medium px-3 py-2 rounded-xl transition-all shrink-0 cursor-pointer ${
+                      selectedChapter === chap
+                        ? 'bg-stone-900 text-white font-bold shadow-xs'
+                        : 'text-stone-600 hover:bg-stone-200/70 hover:text-stone-900'
+                    }`}
+                  >
+                    <span className="font-numeric text-[10px] text-amber-600 mr-1 font-bold">
+                      VOL.0{idx + 1}
+                    </span>
+                    <span>{chap}</span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         )}
       </section>
@@ -1171,7 +1618,7 @@ export const LearnPage: React.FC = () => {
       <div className="flex flex-wrap items-center justify-between gap-3 px-1 text-xs text-stone-500 font-medium">
         <div className="flex items-center gap-2 flex-wrap">
           <span className="flex items-center gap-1.5 font-serif-editorial">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse" />
+            <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block" />
             <span className="text-stone-600">策展收录结果:</span>
             <strong className="text-stone-900 font-numeric font-bold text-sm">
               {filteredLaws.length}
@@ -1223,7 +1670,9 @@ export const LearnPage: React.FC = () => {
           )}
         </div>
 
-        {((curationMode === 'love_codex'
+        {((curationMode === 'reverse_psychology'
+          ? selectedReverseScenario !== 'all' || selectedReverseCategory !== 'all' || selectedReverseChapter !== 'all'
+          : curationMode === 'love_codex'
           ? selectedLoveDomain !== 'all' || selectedLoveSubTag !== 'all' || selectedDifficulty !== 'all'
           : curationMode === 'emotional_sections'
           ? selectedEmotionalSection !== 'all'
@@ -1236,6 +1685,9 @@ export const LearnPage: React.FC = () => {
             onClick={() => {
               gameAudio.playTap();
               setSearchQuery('');
+              setSelectedReverseScenario('all');
+              setSelectedReverseCategory('all');
+              setSelectedReverseChapter('all');
               setSelectedMicroCategory('all');
               setSelectedLoveDomain('all');
               setSelectedLoveSubTag('all');

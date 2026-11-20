@@ -44,6 +44,7 @@ export const BottomNavigation: React.FC = () => {
     if (pathname === '/') return 0;
     if (
       pathname.startsWith('/learn') ||
+      pathname.startsWith('/knowledge-graph') ||
       pathname.startsWith('/law/') ||
       pathname.startsWith('/laws') ||
       pathname.startsWith('/search') ||

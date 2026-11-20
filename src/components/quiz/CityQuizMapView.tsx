@@ -25,6 +25,7 @@ import {
   Search,
   BookOpen,
   X,
+  Sparkles,
 } from 'lucide-react';
 import { gameAudio } from '../../utils/gameAudio';
 import {
@@ -87,7 +88,7 @@ const BASE_STAGE_TEMPLATES: Omit<CityQuizStage, 'districtFr' | 'districtZh'>[] =
     category: '认知',
     subtitle: '感知过滤与第一眼认知偏差 · 10 章 × 20 题',
     xpReward: 120,
-    accentColor: '#D97706',
+    accentColor: '#B45309',
     xOffsetPercent: 13,
     mapX: 145,
     mapY: 560,
@@ -103,7 +104,7 @@ const BASE_STAGE_TEMPLATES: Omit<CityQuizStage, 'districtFr' | 'districtZh'>[] =
     category: '记忆',
     subtitle: '蔡格尼克效应与工作记忆宫殿 · 10 章 × 20 题',
     xpReward: 150,
-    accentColor: '#4F46E5',
+    accentColor: '#3730A3',
     xOffsetPercent: 35,
     mapX: 395,
     mapY: 515,
@@ -119,7 +120,7 @@ const BASE_STAGE_TEMPLATES: Omit<CityQuizStage, 'districtFr' | 'districtZh'>[] =
     category: '决策',
     subtitle: '锚定效应与心理账户决策辨析 · 10 章 × 20 题',
     xpReward: 180,
-    accentColor: '#059669',
+    accentColor: '#047857',
     xOffsetPercent: 59,
     mapX: 660,
     mapY: 575,
@@ -135,7 +136,7 @@ const BASE_STAGE_TEMPLATES: Omit<CityQuizStage, 'districtFr' | 'districtZh'>[] =
     category: '决策',
     subtitle: '沉没成本谬误与框架效应逆转 · 10 章 × 20 题',
     xpReward: 200,
-    accentColor: '#E11D48',
+    accentColor: '#9F1239',
     xOffsetPercent: 83,
     mapX: 935,
     mapY: 520,
@@ -151,7 +152,7 @@ const BASE_STAGE_TEMPLATES: Omit<CityQuizStage, 'districtFr' | 'districtZh'>[] =
     category: '社会',
     subtitle: '旁观者效应破局与群体共振 · 10 章 × 20 题',
     xpReward: 220,
-    accentColor: '#0D9488',
+    accentColor: '#0F766E',
     xOffsetPercent: 76,
     mapX: 855,
     mapY: 365,
@@ -167,7 +168,7 @@ const BASE_STAGE_TEMPLATES: Omit<CityQuizStage, 'districtFr' | 'districtZh'>[] =
     category: '情绪',
     subtitle: '峰终定律与情绪启发式冷静解离 · 10 章 × 20 题',
     xpReward: 250,
-    accentColor: '#9333EA',
+    accentColor: '#6B21A8',
     xOffsetPercent: 62,
     mapX: 690,
     mapY: 215,
@@ -183,7 +184,7 @@ const BASE_STAGE_TEMPLATES: Omit<CityQuizStage, 'districtFr' | 'districtZh'>[] =
     category: '认知',
     subtitle: '达克效应突破与反证思维试炼 · 10 章 × 20 题',
     xpReward: 280,
-    accentColor: '#2563EB',
+    accentColor: '#1E40AF',
     xOffsetPercent: 39,
     mapX: 435,
     mapY: 190,
@@ -199,7 +200,7 @@ const BASE_STAGE_TEMPLATES: Omit<CityQuizStage, 'districtFr' | 'districtZh'>[] =
     category: '决策',
     subtitle: '全景心理定律融会贯通终极通关 · 10 章 × 20 题',
     xpReward: 350,
-    accentColor: '#B45309',
+    accentColor: '#92400E',
     xOffsetPercent: 16,
     mapX: 185,
     mapY: 165,
@@ -303,7 +304,6 @@ export const CityQuizMapView: React.FC<CityQuizMapViewProps> = ({
     [progress, activeCity.index]
   );
 
-  // Highest unlocked point index inside the currently viewed capital
   const unlockedPointIdxInCity = useMemo(() => {
     let maxUnlocked = 0;
     for (let p = 0; p < POINTS_PER_CITY; p++) {
@@ -319,7 +319,6 @@ export const CityQuizMapView: React.FC<CityQuizMapViewProps> = ({
   const unlockedCitiesCount = useMemo(() => getUnlockedCityCount(progress), [progress]);
   const totalCompletedChapters = useMemo(() => getTotalCompletedChapters(progress), [progress]);
 
-  // Fit initial zoom proportionally
   useEffect(() => {
     const vp = viewportRef.current;
     if (!vp) return;
@@ -331,7 +330,6 @@ export const CityQuizMapView: React.FC<CityQuizMapViewProps> = ({
     }
   }, []);
 
-  // Build route curve through all 8 points
   const buildRoutePathD = useCallback(() => {
     const pts = cityStages;
     if (pts.length === 0) return '';
@@ -374,7 +372,6 @@ export const CityQuizMapView: React.FC<CityQuizMapViewProps> = ({
   const riverPathD =
     'M -30 392 C 210 330, 470 438, 720 385 C 860 355, 990 364, 1155 338';
 
-  // Smooth 2D camera pan centering the target point
   const panToPoint = useCallback(
     (pointIndex: number, delayMs = 150, overrideZoom?: number) => {
       const timer = window.setTimeout(() => {
@@ -414,7 +411,6 @@ export const CityQuizMapView: React.FC<CityQuizMapViewProps> = ({
     [cityStages, zoomLevel]
   );
 
-  // Auto-pan on active city change or point change
   useEffect(() => {
     const cityChanged = progress.activeCityIndex !== prevCityRef.current;
     const pointChanged = progress.activePointIndex !== prevPointRef.current;
@@ -432,7 +428,6 @@ export const CityQuizMapView: React.FC<CityQuizMapViewProps> = ({
     return () => window.clearTimeout(timer);
   }, []);
 
-  // Drag-to-pan handlers
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
     if (target.closest('button')) return;
@@ -518,7 +513,6 @@ export const CityQuizMapView: React.FC<CityQuizMapViewProps> = ({
     activePointIdx
   );
 
-  // Filtered 50-Capital Atlas list for browser drawer
   const filteredCapitals = useMemo(() => {
     const q = citySearchQuery.trim().toLowerCase();
     return WORLD_CAPITALS.filter((c) => {
@@ -534,27 +528,27 @@ export const CityQuizMapView: React.FC<CityQuizMapViewProps> = ({
     });
   }, [continentFilter, citySearchQuery]);
 
-  // Curated Haussmannian blocks & parks
+  // Curated Haussmannian urban blocks with classical courtyards
   const cityBlocks = [
-    { x: 42, y: 445, w: 68, h: 48, courtyard: true },
-    { x: 42, y: 505, w: 54, h: 52, courtyard: true },
-    { x: 44, y: 618, w: 86, h: 42, courtyard: true },
+    { x: 48, y: 448, w: 68, h: 48, courtyard: true },
+    { x: 48, y: 508, w: 54, h: 52, courtyard: true },
+    { x: 50, y: 616, w: 86, h: 40, courtyard: true },
     { x: 185, y: 432, w: 72, h: 44, courtyard: true },
-    { x: 215, y: 612, w: 88, h: 46, courtyard: true },
+    { x: 215, y: 612, w: 88, h: 44, courtyard: true },
     { x: 300, y: 425, w: 62, h: 48, courtyard: true },
     { x: 325, y: 590, w: 82, h: 52, courtyard: true },
     { x: 468, y: 438, w: 74, h: 46, courtyard: true },
     { x: 488, y: 520, w: 78, h: 54, courtyard: true },
-    { x: 560, y: 625, w: 94, h: 38, courtyard: false },
+    { x: 560, y: 620, w: 94, h: 36, courtyard: false },
     { x: 735, y: 442, w: 68, h: 44, courtyard: true },
     { x: 750, y: 585, w: 86, h: 52, courtyard: true },
-    { x: 878, y: 608, w: 92, h: 46, courtyard: true },
-    { x: 998, y: 426, w: 74, h: 58, courtyard: true },
-    { x: 1005, y: 556, w: 70, h: 68, courtyard: true },
-    { x: 48, y: 66, w: 76, h: 52, courtyard: true },
-    { x: 46, y: 228, w: 84, h: 54, courtyard: true },
+    { x: 878, y: 608, w: 92, h: 44, courtyard: true },
+    { x: 998, y: 426, w: 70, h: 58, courtyard: true },
+    { x: 1002, y: 556, w: 68, h: 66, courtyard: true },
+    { x: 52, y: 68, w: 76, h: 52, courtyard: true },
+    { x: 52, y: 228, w: 84, h: 54, courtyard: true },
     { x: 155, y: 274, w: 96, h: 46, courtyard: true },
-    { x: 288, y: 64, w: 78, h: 48, courtyard: true },
+    { x: 288, y: 66, w: 78, h: 48, courtyard: true },
     { x: 342, y: 268, w: 66, h: 50, courtyard: true },
     { x: 522, y: 68, w: 84, h: 46, courtyard: true },
     { x: 528, y: 278, w: 78, h: 48, courtyard: true },
@@ -624,18 +618,18 @@ export const CityQuizMapView: React.FC<CityQuizMapViewProps> = ({
   ];
 
   const secondaryStreets = [
-    'M 0 475 L 365 445 L 620 480 L 1120 420',
-    'M 0 605 L 395 628 L 780 610 L 1120 635',
-    'M 118 355 L 145 560 L 165 700',
-    'M 395 360 L 395 515 L 430 700',
-    'M 660 385 L 660 575 L 675 700',
-    'M 935 352 L 935 520 L 965 700',
-    'M 0 132 L 435 124 L 840 136 L 1120 118',
-    'M 0 258 L 540 264 L 1120 252',
-    'M 185 0 L 185 165 L 222 365',
-    'M 435 0 L 435 190 L 465 385',
-    'M 690 0 L 690 215 L 705 382',
-    'M 935 0 L 910 210 L 855 365',
+    'M 24 475 L 365 445 L 620 480 L 1096 420',
+    'M 24 605 L 395 628 L 780 610 L 1096 635',
+    'M 118 355 L 145 560 L 165 676',
+    'M 395 360 L 395 515 L 430 676',
+    'M 660 385 L 660 575 L 675 676',
+    'M 935 352 L 935 520 L 965 676',
+    'M 24 132 L 435 124 L 840 136 L 1096 118',
+    'M 24 258 L 540 264 L 1096 252',
+    'M 185 24 L 185 165 L 222 365',
+    'M 435 24 L 435 190 L 465 385',
+    'M 690 24 L 690 215 L 705 382',
+    'M 935 24 L 910 210 L 855 365',
   ];
 
   const canGoPrevCity =
@@ -645,516 +639,566 @@ export const CityQuizMapView: React.FC<CityQuizMapViewProps> = ({
     checkCityUnlocked(progress, activeCity.index + 1);
 
   return (
-    <div className="w-full space-y-4 sm:space-y-5">
-      {/* 1. World Capital Atlas Header & Active Point + 10-Chapter Curriculum Panel */}
-      <div className="editorial-card rounded-2xl p-5 sm:p-6 space-y-4">
-        {/* Top Row: Current Capital Identity + 50-Capital Atlas Switcher */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3.5 pb-4 border-b border-stone-200/80">
-          <div className="space-y-1">
-            <div className="flex flex-wrap items-center gap-2 text-[11px] font-sans uppercase tracking-wider text-amber-800 font-bold">
-              <span>World Capitals Atlas</span>
-              <span aria-hidden="true">·</span>
-              <span className="font-numeric tabular-nums">
-                Carte {String(activeCity.index + 1).padStart(2, '0')} / {WORLD_CAPITALS.length}
-              </span>
-              <span aria-hidden="true">·</span>
-              <span>{activeCity.continent}</span>
-              <span
-                className={`px-2 py-0.5 rounded-md border text-[10px] font-bold normal-case tracking-normal ${activeCityLoveTier.badgeColor}`}
-              >
-                {activeCityLoveTier.labelZh} · 驻守 {activeCityLoveLaws.length} 条爱情心理定律
-              </span>
-              <span aria-hidden="true">·</span>
-              <span className="text-stone-500 font-normal normal-case">
-                已解锁 {unlockedCitiesCount} / {WORLD_CAPITALS.length} 座首都 · 累计通关 {totalCompletedChapters} 章
-              </span>
-            </div>
+    <div className="w-full space-y-5 sm:space-y-6">
+      {/* 1. Museum Exhibition Folio & Architectural Progression Panel */}
+      <section className="relative bg-[#FBF9F4] rounded-2xl border border-[#D7CEBE] shadow-[0_14px_40px_-24px_rgba(28,25,23,0.28)] overflow-hidden">
+        {/* Subtle engraved top brass rule */}
+        <div
+          className="h-1 w-full"
+          style={{
+            background: `linear-gradient(90deg, ${activeCity.palette.accent} 0%, #B45309 50%, ${activeCity.palette.waterOuter} 100%)`,
+          }}
+        />
 
-            <h2 className="font-serif-editorial text-xl sm:text-2xl font-bold text-stone-900 flex flex-wrap items-center gap-2">
-              <Globe className="w-5 h-5 text-amber-700 shrink-0" />
-              <span>
-                {activeCity.cityZh} · {activeCity.cityFr}
-              </span>
-              <span className="text-sm font-sans font-medium text-stone-500">
-                ({activeCity.countryZh} · {completedPointsInCity.length}/{POINTS_PER_CITY} 站点)
-              </span>
-            </h2>
-
-            <p className="text-xs text-stone-600 leading-relaxed">
-              {activeCity.culturalFact}
-            </p>
-            {activeCityLoveLaws.length > 0 && (
-              <div className="flex flex-wrap items-center gap-1.5 pt-1 text-[11px] text-stone-600">
-                <span className="font-semibold text-rose-700 flex items-center gap-1">
-                  <Heart className="w-3 h-3 fill-rose-500 text-rose-500" />
-                  本城主修爱情心理：
+        <div className="p-5 sm:p-7 space-y-5">
+          {/* Curatorial Accession Header */}
+          <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4 pb-5 border-b border-stone-300/75">
+            <div className="space-y-2 max-w-3xl">
+              {/* Unboxed Museum Catalog Kicker */}
+              <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] font-sans tracking-[0.16em] uppercase text-stone-500 font-semibold">
+                <span className="text-amber-800">Grand Atlas des Capitales</span>
+                <span aria-hidden="true" className="text-stone-300">·</span>
+                <span className="font-numeric tabular-nums text-stone-700">
+                  Folio {String(activeCity.index + 1).padStart(2, '0')} / {WORLD_CAPITALS.length}
                 </span>
-                {activeCityLoveLaws.slice(0, 5).map((law) => (
-                  <span
-                    key={law.id}
-                    className="px-2 py-0.5 rounded-md bg-rose-50/90 text-rose-800 border border-rose-200/80 text-[10.5px]"
-                  >
-                    {law.nameZh}
-                  </span>
-                ))}
-                {activeCityLoveLaws.length > 5 && (
-                  <span className="text-[10.5px] text-stone-500">
-                    等 {activeCityLoveLaws.length} 项（第 1–50 城难度由浅入深）
-                  </span>
-                )}
+                <span aria-hidden="true" className="text-stone-300">·</span>
+                <span>{activeCity.continent}</span>
+                <span aria-hidden="true" className="text-stone-300">·</span>
+                <span className="normal-case tracking-normal text-stone-700 font-medium">
+                  {activeCityLoveTier.labelZh}（主修 {activeCityLoveLaws.length} 律）
+                </span>
+                <span aria-hidden="true" className="text-stone-300">·</span>
+                <span className="normal-case tracking-normal text-stone-500 font-numeric tabular-nums">
+                  已启封 {unlockedCitiesCount}/{WORLD_CAPITALS.length} 城 · 累计 {totalCompletedChapters} 章
+                </span>
               </div>
-            )}
-          </div>
 
-          {/* Fluid Capital Navigation Controls */}
-          <div className="flex flex-wrap items-center gap-2 shrink-0">
-            <div className="flex items-center rounded-xl border border-stone-200 bg-[#FAF8F5] p-0.5">
-              <button
-                type="button"
-                disabled={!canGoPrevCity}
-                onClick={() => {
-                  if (!canGoPrevCity) return;
-                  gameAudio.playTap();
-                  onSelectCity(activeCity.index - 1);
-                }}
-                className={`min-h-[38px] min-w-[38px] rounded-lg flex items-center justify-center transition-colors ${
-                  canGoPrevCity
-                    ? 'text-stone-800 hover:bg-white cursor-pointer'
-                    : 'text-stone-300 cursor-not-allowed'
-                }`}
-                title="切换至上一座已解锁首都"
-                aria-label="上一座首都"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
+              {/* Monumental Bilingual City Headline */}
+              <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                <h2 className="font-serif-editorial text-2xl sm:text-3xl font-bold tracking-tight text-stone-900">
+                  {activeCity.cityZh}
+                </h2>
+                <span className="font-['Cormorant_Garamond','Playfair_Display',Georgia,serif] italic text-lg sm:text-xl text-stone-500">
+                  {activeCity.cityFr}
+                </span>
+                <span className="text-xs sm:text-sm font-sans text-stone-500 font-numeric tabular-nums">
+                  — {activeCity.countryZh} · {activeCity.coordinates} · {completedPointsInCity.length}/{POINTS_PER_CITY} 坐标
+                </span>
+              </div>
 
-              <button
-                type="button"
-                onClick={() => {
-                  gameAudio.playTap();
-                  setShowAtlasModal((v) => !v);
-                }}
-                className="min-h-[38px] px-3 py-1.5 rounded-lg hover:bg-white text-xs font-bold text-stone-900 flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap"
-              >
-                <Globe className="w-3.5 h-3.5 text-amber-700" />
-                <span>50 国首都地图册</span>
-              </button>
+              {/* Archival Cultural Annotation */}
+              <p className="text-xs sm:text-[13px] text-stone-600 leading-relaxed max-w-2xl">
+                {activeCity.culturalFact}
+              </p>
 
-              <button
-                type="button"
-                disabled={!canGoNextCity}
-                onClick={() => {
-                  if (!canGoNextCity) return;
-                  gameAudio.playTap();
-                  onSelectCity(activeCity.index + 1);
-                }}
-                className={`min-h-[38px] min-w-[38px] rounded-lg flex items-center justify-center transition-colors ${
-                  canGoNextCity
-                    ? 'text-stone-800 hover:bg-white cursor-pointer'
-                    : 'text-stone-300 cursor-not-allowed'
-                }`}
-                title={
-                  canGoNextCity
-                    ? '切换至下一座已解锁首都'
-                    : `通关「${activeCity.cityZh}」全部 8 站点后解锁下一首都`
-                }
-                aria-label="下一座首都"
-              >
-                <ChevronRight className="w-4 h-4" />
-              </button>
+              {/* Unboxed Curated Psychological Corpus Line */}
+              {activeCityLoveLaws.length > 0 && (
+                <div className="pt-1 flex flex-wrap items-baseline gap-x-2 gap-y-1 text-[11.5px] text-stone-600">
+                  <span className="font-semibold text-rose-800 inline-flex items-center gap-1 shrink-0">
+                    <Heart className="w-3 h-3 fill-rose-700/20 text-rose-700" />
+                    <span>馆藏恋爱心理学定律：</span>
+                  </span>
+                  <span className="text-stone-700 leading-relaxed">
+                    {activeCityLoveLaws.slice(0, 5).map((law, i) => (
+                      <React.Fragment key={law.id}>
+                        {i > 0 && <span className="mx-1.5 text-stone-300">·</span>}
+                        <span className="font-medium text-stone-800">{law.nameZh}</span>
+                      </React.Fragment>
+                    ))}
+                    {activeCityLoveLaws.length > 5 && (
+                      <span className="text-stone-500 ml-1.5 font-numeric tabular-nums">
+                        等共 {activeCityLoveLaws.length} 项
+                      </span>
+                    )}
+                  </span>
+                </div>
+              )}
             </div>
 
-            {onResetAllProgress && totalCompletedChapters > 0 && (
-              <button
-                type="button"
-                onClick={() => {
-                  gameAudio.playTap();
-                  onResetAllProgress();
-                }}
-                className="min-h-[40px] px-3 py-2 rounded-xl bg-[#FAF8F5] hover:bg-stone-200/70 text-stone-700 border border-stone-200 text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap"
-                title="重置所有首都、站点与章节进度"
-              >
-                <RotateCcw className="w-3.5 h-3.5" />
-                <span>重置</span>
-              </button>
-            )}
-          </div>
-        </div>
+            {/* Museum Folio Navigation Controls */}
+            <div className="flex flex-wrap items-center gap-2 shrink-0 self-start">
+              <div className="inline-flex items-center rounded-lg border border-[#D4CBB8] bg-[#F5F0E6] p-0.5 shadow-2xs">
+                <button
+                  type="button"
+                  disabled={!canGoPrevCity}
+                  onClick={() => {
+                    if (!canGoPrevCity) return;
+                    gameAudio.playTap();
+                    onSelectCity(activeCity.index - 1);
+                  }}
+                  className={`min-h-[36px] min-w-[36px] rounded-md flex items-center justify-center transition-colors ${
+                    canGoPrevCity
+                      ? 'text-stone-800 hover:bg-white cursor-pointer'
+                      : 'text-stone-300 cursor-not-allowed'
+                  }`}
+                  title="切换至上一座已解锁首都"
+                  aria-label="上一座首都"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
 
-        {/* Collapsible 50-Capital World Atlas Selector Drawer */}
-        <AnimatePresence>
-          {showAtlasModal && (
-            <motion.div
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.2 }}
-              className="rounded-2xl bg-[#FAF8F5] border border-stone-200 p-4 space-y-3.5"
-            >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
-                  {CONTINENTS.map((c) => (
-                    <button
-                      key={c.id}
-                      type="button"
-                      onClick={() => {
-                        gameAudio.playTap();
-                        setContinentFilter(c.id);
-                      }}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-                        continentFilter === c.id
-                          ? 'bg-stone-900 text-white'
-                          : 'bg-white text-stone-600 hover:text-stone-900 border border-stone-200'
-                      }`}
-                    >
-                      {c.label}
-                    </button>
-                  ))}
-                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    gameAudio.playTap();
+                    setShowAtlasModal((v) => !v);
+                  }}
+                  className="min-h-[36px] px-3 py-1.5 rounded-md hover:bg-white text-xs font-semibold text-stone-900 flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                >
+                  <Globe className="w-3.5 h-3.5 text-amber-800" />
+                  <span>50 国典藏地图册</span>
+                </button>
 
-                <div className="flex items-center gap-2">
-                  <div className="relative flex-1 sm:w-48">
-                    <Search className="w-3.5 h-3.5 text-stone-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
-                    <input
-                      type="text"
-                      value={citySearchQuery}
-                      onChange={(e) => setCitySearchQuery(e.target.value)}
-                      placeholder="搜索首都或国家..."
-                      className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-white border border-stone-200 text-xs text-stone-900 placeholder-stone-400 focus:outline-none focus:border-stone-500"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setShowAtlasModal(false)}
-                    aria-label="收起地图册"
-                    className="w-8 h-8 rounded-lg bg-white border border-stone-200 flex items-center justify-center text-stone-500 hover:text-stone-900 cursor-pointer shrink-0"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  disabled={!canGoNextCity}
+                  onClick={() => {
+                    if (!canGoNextCity) return;
+                    gameAudio.playTap();
+                    onSelectCity(activeCity.index + 1);
+                  }}
+                  className={`min-h-[36px] min-w-[36px] rounded-md flex items-center justify-center transition-colors ${
+                    canGoNextCity
+                      ? 'text-stone-800 hover:bg-white cursor-pointer'
+                      : 'text-stone-300 cursor-not-allowed'
+                  }`}
+                  title={
+                    canGoNextCity
+                      ? '切换至下一座已解锁首都'
+                      : `通关「${activeCity.cityZh}」全部 8 站点后解锁下一首都`
+                  }
+                  aria-label="下一座首都"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
               </div>
 
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 max-h-64 overflow-y-auto pr-1">
-                {filteredCapitals.map((city) => {
-                  const isUnlocked = checkCityUnlocked(progress, city.index);
-                  const isCompleted = checkCityCompleted(progress, city.index);
-                  const isCurrent = city.index === activeCity.index;
-                  const ptsDone = getCompletedPointsForCity(progress, city.index).length;
-                  const prevCity = city.index > 0 ? WORLD_CAPITALS[city.index - 1] : null;
+              {onResetAllProgress && totalCompletedChapters > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    gameAudio.playTap();
+                    onResetAllProgress();
+                  }}
+                  className="min-h-[38px] px-3 py-1.5 rounded-lg bg-[#F5F0E6] hover:bg-[#EBE3D3] text-stone-700 border border-[#D4CBB8] text-xs font-medium flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap shrink-0"
+                  title="重置所有首都、站点与章节进度"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  <span>重置进度</span>
+                </button>
+              )}
+            </div>
+          </div>
 
-                  return (
-                    <button
-                      key={city.id}
-                      type="button"
-                      disabled={!isUnlocked}
-                      onClick={() => {
-                        if (!isUnlocked) return;
-                        gameAudio.playTap();
-                        onSelectCity(city.index);
-                        setShowAtlasModal(false);
-                      }}
-                      title={
-                        isUnlocked
-                          ? `${city.cityZh} · ${city.countryZh} (${ptsDone}/${POINTS_PER_CITY} 站点)`
-                          : `完成上一站「${prevCity?.cityZh || ''}」全部 8 个站点（80 章）即可解锁`
-                      }
-                      className={`p-2.5 rounded-xl border text-left transition-all flex flex-col justify-between gap-1 ${
-                        isCurrent
-                          ? 'bg-stone-900 text-white border-stone-900 shadow-sm cursor-pointer'
-                          : isCompleted
-                          ? 'bg-emerald-50 text-emerald-950 border-emerald-300 hover:border-emerald-500 cursor-pointer'
-                          : isUnlocked
-                          ? 'bg-white text-stone-900 border-stone-200 hover:border-stone-500 cursor-pointer'
-                          : 'bg-stone-100/75 text-stone-400 border-stone-200/60 cursor-not-allowed'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between gap-1 text-[10px] font-mono tabular-nums">
-                        <span className="flex items-center gap-1">
-                          <span>#{String(city.index + 1).padStart(2, '0')}</span>
-                          <span
-                            className={`px-1 rounded text-[9px] font-sans font-bold ${
-                              city.index < 17
-                                ? isCurrent
-                                  ? 'bg-emerald-500/30 text-emerald-200'
-                                  : 'bg-emerald-100 text-emerald-800'
-                                : city.index < 34
-                                ? isCurrent
-                                  ? 'bg-amber-500/30 text-amber-200'
-                                  : 'bg-amber-100 text-amber-800'
-                                : isCurrent
-                                ? 'bg-rose-500/30 text-rose-200'
-                                : 'bg-rose-100 text-rose-800'
-                            }`}
-                          >
-                            {city.index < 17 ? '初级' : city.index < 34 ? '中阶' : '高阶'}
-                          </span>
-                        </span>
-                        {isCompleted ? (
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                        ) : !isUnlocked ? (
-                          <Lock className="w-3 h-3 text-stone-400 shrink-0" />
-                        ) : (
-                          <span className={isCurrent ? 'text-amber-300' : 'text-stone-500'}>
-                            {ptsDone}/{POINTS_PER_CITY}
-                          </span>
-                        )}
-                      </div>
-                      <div className="font-serif-editorial text-xs font-bold truncate">
-                        {city.cityZh}
-                      </div>
-                      <div
-                        className={`text-[10px] truncate ${
-                          isCurrent ? 'text-stone-300' : 'text-stone-500'
+          {/* Collapsible 50-Capital Archival Catalog Drawer */}
+          <AnimatePresence>
+            {showAtlasModal && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                transition={{ duration: 0.2 }}
+                className="rounded-xl bg-[#F4EFE4] border border-[#D4CBB8] p-4 space-y-3.5"
+              >
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                  <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 sm:pb-0">
+                    {CONTINENTS.map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => {
+                          gameAudio.playTap();
+                          setContinentFilter(c.id);
+                        }}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                          continentFilter === c.id
+                            ? 'bg-stone-900 text-amber-50'
+                            : 'bg-[#FBF9F4] text-stone-700 hover:text-stone-950 border border-[#D4CBB8]'
                         }`}
                       >
-                        {city.cityFr} · {getLoveLawsForCity(city.index).length}律
-                      </div>
+                        {c.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <div className="relative flex-1 sm:w-52">
+                      <Search className="w-3.5 h-3.5 text-stone-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      <input
+                        type="text"
+                        value={citySearchQuery}
+                        onChange={(e) => setCitySearchQuery(e.target.value)}
+                        placeholder="检索首都、国家或法文名..."
+                        className="w-full pl-8 pr-3 py-1.5 rounded-lg bg-[#FBF9F4] border border-[#D4CBB8] text-xs text-stone-900 placeholder-stone-400 focus:outline-none focus:border-stone-700"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowAtlasModal(false)}
+                      aria-label="收起地图册"
+                      className="w-8 h-8 rounded-lg bg-[#FBF9F4] border border-[#D4CBB8] flex items-center justify-center text-stone-600 hover:text-stone-950 cursor-pointer shrink-0"
+                    >
+                      <X className="w-4 h-4" />
                     </button>
-                  );
-                })}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 max-h-64 overflow-y-auto pr-1">
+                  {filteredCapitals.map((city) => {
+                    const isUnlocked = checkCityUnlocked(progress, city.index);
+                    const isCompleted = checkCityCompleted(progress, city.index);
+                    const isCurrent = city.index === activeCity.index;
+                    const ptsDone = getCompletedPointsForCity(progress, city.index).length;
+                    const prevCity = city.index > 0 ? WORLD_CAPITALS[city.index - 1] : null;
+                    const tierShort =
+                      city.index < 17 ? 'I · 初阶' : city.index < 34 ? 'II · 中阶' : 'III · 高阶';
+
+                    return (
+                      <button
+                        key={city.id}
+                        type="button"
+                        disabled={!isUnlocked}
+                        onClick={() => {
+                          if (!isUnlocked) return;
+                          gameAudio.playTap();
+                          onSelectCity(city.index);
+                          setShowAtlasModal(false);
+                        }}
+                        title={
+                          isUnlocked
+                            ? `${city.cityZh} · ${city.countryZh} (${ptsDone}/${POINTS_PER_CITY} 站点)`
+                            : `完成上一站「${prevCity?.cityZh || ''}」全部 8 个站点（80 章）即可解锁`
+                        }
+                        className={`p-2.5 rounded-lg border text-left transition-all flex flex-col justify-between gap-1 ${
+                          isCurrent
+                            ? 'bg-stone-900 text-amber-50 border-stone-900 shadow-xs cursor-pointer'
+                            : isCompleted
+                            ? 'bg-emerald-50/80 text-emerald-950 border-emerald-300 hover:border-emerald-600 cursor-pointer'
+                            : isUnlocked
+                            ? 'bg-[#FBF9F4] text-stone-900 border-[#D4CBB8] hover:border-stone-600 cursor-pointer'
+                            : 'bg-stone-200/50 text-stone-400 border-stone-300/50 cursor-not-allowed'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between gap-1 text-[10px] font-numeric tabular-nums">
+                          <span className="flex items-center gap-1.5">
+                            <span className="font-mono font-bold">
+                              N°{String(city.index + 1).padStart(2, '0')}
+                            </span>
+                            <span
+                              className={
+                                isCurrent
+                                  ? 'text-amber-300/90'
+                                  : city.index < 17
+                                  ? 'text-emerald-800'
+                                  : city.index < 34
+                                  ? 'text-amber-800'
+                                  : 'text-rose-800'
+                              }
+                            >
+                              {tierShort}
+                            </span>
+                          </span>
+                          {isCompleted ? (
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                          ) : !isUnlocked ? (
+                            <Lock className="w-3 h-3 text-stone-400 shrink-0" />
+                          ) : (
+                            <span className={isCurrent ? 'text-amber-300' : 'text-stone-500'}>
+                              {ptsDone}/{POINTS_PER_CITY}
+                            </span>
+                          )}
+                        </div>
+                        <div className="font-serif-editorial text-xs font-bold truncate">
+                          {city.cityZh}
+                        </div>
+                        <div
+                          className={`text-[10px] truncate ${
+                            isCurrent ? 'text-stone-300' : 'text-stone-500'
+                          }`}
+                        >
+                          {city.cityFr} · {getLoveLawsForCity(city.index).length}律
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Active District & 10-Chapter Exhibition Progression */}
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`${activeCity.id}-${activeStage.id}`}
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -4 }}
+              transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+              className="space-y-4"
+            >
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-start gap-3.5 min-w-0">
+                  {/* Engraved Roman District Crest */}
+                  <div
+                    className="w-12 h-12 rounded-xl border border-[#CBBFA8] bg-[#F3ECE0] flex flex-col items-center justify-center shrink-0 shadow-2xs"
+                    style={{ borderColor: `${activeStage.accentColor}44` }}
+                  >
+                    <span
+                      className="text-lg font-bold leading-none font-['Cinzel','Playfair_Display',serif]"
+                      style={{ color: activeStage.accentColor }}
+                    >
+                      {activeStage.roman}
+                    </span>
+                    <span className="text-[8.5px] font-mono tracking-widest text-stone-500 uppercase mt-0.5">
+                      {activeStage.category}
+                    </span>
+                  </div>
+
+                  <div className="space-y-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] font-numeric tabular-nums text-stone-600">
+                      <span className="font-semibold text-stone-900">
+                        {activeCity.cityFr} · {activeStage.sectorTag}
+                      </span>
+                      <span aria-hidden="true" className="text-stone-300">·</span>
+                      <span>
+                        已修 {completedChaptersInActivePoint.length} / {CHAPTERS_PER_POINT} 章
+                      </span>
+                      <span aria-hidden="true" className="text-stone-300">·</span>
+                      <span className="text-emerald-800 font-bold">
+                        +{activeStage.xpReward} XP / 章
+                      </span>
+                    </div>
+
+                    <h3 className="font-serif-editorial text-lg sm:text-xl font-bold text-stone-900 leading-snug">
+                      {activeStage.districtZh}
+                      <span className="ml-2.5 text-sm sm:text-base font-normal italic text-stone-500 font-['Cormorant_Garamond','Playfair_Display',Georgia,serif]">
+                        {activeStage.districtFr}
+                      </span>
+                    </h3>
+
+                    <p className="text-xs text-stone-600 leading-relaxed">
+                      {activeStage.subtitle}（答对本章全部 {QUESTIONS_PER_CHAPTER} 题即可开启下一章）
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    gameAudio.playTap();
+                    onStartChapterQuiz(activeCity.index, activePointIdx, activeChapterIdx);
+                  }}
+                  className="min-h-[44px] px-6 py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-amber-50 border border-amber-500/35 font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 shrink-0 cursor-pointer shadow-sm transition-colors whitespace-nowrap"
+                >
+                  <Play className="w-3.5 h-3.5 fill-amber-300 text-amber-300" />
+                  <span>
+                    {variant === 'dashboard'
+                      ? `进入第 ${activeChapterIdx + 1} 章 (${QUESTIONS_PER_CHAPTER}题)`
+                      : `启程第 ${activeChapterIdx + 1} 章 · ${QUESTIONS_PER_CHAPTER} 题`}
+                  </span>
+                  <ArrowRight className="w-3.5 h-3.5 text-amber-300" />
+                </button>
+              </div>
+
+              {/* 10-Chapter Brass & Parchment Catalog Plates */}
+              <div className="pt-3.5 border-t border-stone-200/90 space-y-2.5">
+                <div className="flex items-center justify-between text-[11px] text-stone-600">
+                  <span className="font-semibold text-stone-800 flex items-center gap-1.5">
+                    <BookOpen className="w-3.5 h-3.5 text-amber-800" />
+                    <span>街区十章典藏试炼（每章 {QUESTIONS_PER_CHAPTER} 道思辨题）</span>
+                  </span>
+                  <span className="font-numeric tabular-nums text-stone-500">
+                    {completedChaptersInActivePoint.length} / {CHAPTERS_PER_POINT} 完成
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-10 gap-1.5">
+                  {Array.from({ length: CHAPTERS_PER_POINT }, (_, chIdx) => {
+                    const isChUnlocked = checkChapterUnlocked(
+                      progress,
+                      activeCity.index,
+                      activePointIdx,
+                      chIdx
+                    );
+                    const isChCompleted = checkChapterCompleted(
+                      progress,
+                      activeCity.index,
+                      activePointIdx,
+                      chIdx
+                    );
+                    const isChCurrent = chIdx === activeChapterIdx;
+
+                    return (
+                      <button
+                        key={`ch-${chIdx}`}
+                        type="button"
+                        disabled={!isChUnlocked}
+                        onClick={() => {
+                          if (!isChUnlocked) return;
+                          gameAudio.playTap();
+                          onSelectChapter(chIdx);
+                        }}
+                        title={
+                          isChUnlocked
+                            ? `第 ${chIdx + 1} 章 · ${QUESTIONS_PER_CHAPTER} 道问卷（${
+                                isChCompleted ? '已通关' : '已解锁'
+                              }）`
+                            : `答对第 ${chIdx} 章全部 ${QUESTIONS_PER_CHAPTER} 题后解锁`
+                        }
+                        className={`min-h-[44px] px-2 py-1.5 rounded-lg border text-center transition-all flex flex-col items-center justify-center gap-0.5 whitespace-nowrap ${
+                          isChCurrent
+                            ? 'bg-stone-900 text-amber-50 border-amber-500/60 shadow-xs cursor-pointer'
+                            : isChCompleted
+                            ? 'bg-emerald-50/90 text-emerald-950 border-emerald-300 hover:border-emerald-600 cursor-pointer'
+                            : isChUnlocked
+                            ? 'bg-white text-stone-900 border-[#D4CBB8] hover:border-stone-700 cursor-pointer'
+                            : 'bg-[#F3EFE6] text-stone-400 border-stone-200/80 cursor-not-allowed'
+                        }`}
+                      >
+                        <div className="flex items-center gap-1 text-[11px] font-numeric font-bold whitespace-nowrap">
+                          <span>第{chIdx + 1}章</span>
+                          {isChCompleted && (
+                            <CheckCircle2 className="w-3 h-3 text-emerald-700 shrink-0" />
+                          )}
+                          {!isChUnlocked && <Lock className="w-2.5 h-2.5 text-stone-400 shrink-0" />}
+                        </div>
+                        <span
+                          className={`text-[9.5px] font-mono tabular-nums ${
+                            isChCurrent ? 'text-amber-300' : 'text-stone-500'
+                          }`}
+                        >
+                          {isChCompleted ? '20/20' : `${QUESTIONS_PER_CHAPTER}题`}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
             </motion.div>
-          )}
-        </AnimatePresence>
+          </AnimatePresence>
 
-        {/* Active District & 10-Chapter Progression Card */}
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={`${activeCity.id}-${activeStage.id}`}
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="p-4 sm:p-5 rounded-xl bg-gradient-to-br from-[#FAF8F5] to-[#F2ECE1] border border-stone-200/90 space-y-4"
-          >
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="space-y-1 min-w-0">
-                <div className="flex flex-wrap items-center gap-2 text-xs font-numeric text-stone-600">
-                  <span className="font-semibold text-stone-900">
-                    {activeCity.cityFr} · {activeStage.sectorTag}
-                  </span>
-                  <span aria-hidden="true">·</span>
-                  <span>{activeStage.category}领域</span>
-                  <span aria-hidden="true">·</span>
-                  <span>
-                    本站点进度 {completedChaptersInActivePoint.length} / {CHAPTERS_PER_POINT} 章
-                  </span>
-                  <span aria-hidden="true">·</span>
-                  <span className="text-emerald-800 font-bold">
-                    +{activeStage.xpReward} XP / 章
-                  </span>
-                </div>
-                <h3 className="font-serif-editorial text-base sm:text-xl font-bold text-stone-900">
-                  {activeStage.roman}. {activeStage.districtZh}{' '}
-                  <span className="text-xs sm:text-sm font-normal italic text-stone-500">
-                    — {activeStage.districtFr}
-                  </span>
-                </h3>
-                <p className="text-xs text-stone-600 leading-relaxed">
-                  每个站点包含 {CHAPTERS_PER_POINT} 个锁定递进章节，每章 {QUESTIONS_PER_CHAPTER} 道必答思辨题（答对全部 {QUESTIONS_PER_CHAPTER} 题解锁下一章）。
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => {
-                  gameAudio.playTap();
-                  onStartChapterQuiz(activeCity.index, activePointIdx, activeChapterIdx);
-                }}
-                className="min-h-[44px] px-5 py-2.5 rounded-xl chameleon-btn font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shrink-0 cursor-pointer shadow-sm btn-tactile whitespace-nowrap"
-              >
-                <Play className="w-3.5 h-3.5 fill-current" />
-                <span>
-                  {variant === 'dashboard'
-                    ? `进入第 ${activeChapterIdx + 1} 章 (${QUESTIONS_PER_CHAPTER}题)`
-                    : `开启第 ${activeChapterIdx + 1} 章 · ${QUESTIONS_PER_CHAPTER} 题`}
-                </span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            {/* 10-Chapter Sequential Unlock Grid (10 chapitres × 20 questionnaires) */}
-            <div className="pt-3 border-t border-stone-200/70 space-y-2">
-              <div className="flex items-center justify-between text-[11px] text-stone-600">
-                <span className="font-semibold text-stone-800 flex items-center gap-1.5">
-                  <BookOpen className="w-3.5 h-3.5 text-amber-700" />
-                  <span>本站点 10 大进阶章节（每章 {QUESTIONS_PER_CHAPTER} 题）</span>
-                </span>
-                <span className="font-numeric tabular-nums text-stone-500">
-                  已完成 {completedChaptersInActivePoint.length} / {CHAPTERS_PER_POINT} 章
-                </span>
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-5 lg:grid-cols-10 gap-1.5">
-                {Array.from({ length: CHAPTERS_PER_POINT }, (_, chIdx) => {
-                  const isChUnlocked = checkChapterUnlocked(
-                    progress,
-                    activeCity.index,
-                    activePointIdx,
-                    chIdx
-                  );
-                  const isChCompleted = checkChapterCompleted(
-                    progress,
-                    activeCity.index,
-                    activePointIdx,
-                    chIdx
-                  );
-                  const isChCurrent = chIdx === activeChapterIdx;
-
-                  return (
-                    <button
-                      key={`ch-${chIdx}`}
-                      type="button"
-                      disabled={!isChUnlocked}
-                      onClick={() => {
-                        if (!isChUnlocked) return;
-                        gameAudio.playTap();
-                        onSelectChapter(chIdx);
-                      }}
-                      title={
-                        isChUnlocked
-                          ? `第 ${chIdx + 1} 章 · ${QUESTIONS_PER_CHAPTER} 道问卷（${
-                              isChCompleted ? '已通关' : '已解锁'
-                            }）`
-                          : `答对第 ${chIdx} 章全部 ${QUESTIONS_PER_CHAPTER} 题后解锁`
-                      }
-                      className={`min-h-[44px] px-2 py-1.5 rounded-xl border text-center transition-all flex flex-col items-center justify-center gap-0.5 ${
-                        isChCurrent
-                          ? 'bg-stone-900 text-white border-stone-900 shadow-xs cursor-pointer'
-                          : isChCompleted
-                          ? 'bg-emerald-50 text-emerald-900 border-emerald-300 hover:border-emerald-500 cursor-pointer'
-                          : isChUnlocked
-                          ? 'bg-white text-stone-900 border-stone-300 hover:border-stone-600 cursor-pointer'
-                          : 'bg-stone-100/80 text-stone-400 border-stone-200/70 cursor-not-allowed'
-                      }`}
-                    >
-                      <div className="flex items-center gap-1 text-[11px] font-numeric font-bold whitespace-nowrap">
-                        <span>第{chIdx + 1}章</span>
-                        {isChCompleted && (
-                          <CheckCircle2 className="w-3 h-3 text-emerald-600 shrink-0" />
-                        )}
-                        {!isChUnlocked && <Lock className="w-2.5 h-2.5 text-stone-400 shrink-0" />}
-                      </div>
-                      <span
-                        className={`text-[9.5px] font-mono tabular-nums ${
-                          isChCurrent ? 'text-amber-300' : 'text-stone-500'
-                        }`}
-                      >
-                        {isChCompleted ? '20/20' : `${QUESTIONS_PER_CHAPTER}题`}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </motion.div>
-        </AnimatePresence>
-
-        {/* Horizontal District Itinerary Bar (I..VIII within current capital) */}
-        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-1">
-          {cityStages.map((stage, idx) => {
-            const isUnlocked = checkPointUnlocked(progress, activeCity.index, idx);
-            const isCompleted = checkPointCompleted(progress, activeCity.index, idx);
-            const isCurrent = idx === activePointIdx;
-            const chDone = getCompletedChaptersList(progress, activeCity.index, idx).length;
-            return (
-              <button
-                key={`${activeCity.id}-${stage.id}`}
-                type="button"
-                disabled={!isUnlocked}
-                onClick={() => {
-                  if (!isUnlocked) return;
-                  gameAudio.playTap();
-                  onSelectPoint(idx);
-                }}
-                title={
-                  isUnlocked
-                    ? `${stage.roman}. ${stage.districtZh} (${chDone}/${CHAPTERS_PER_POINT} 章)`
-                    : `完成上一站点全部 ${CHAPTERS_PER_POINT} 章即可解锁`
-                }
-                className={`min-h-[38px] px-3 py-1.5 rounded-xl text-xs font-medium flex items-center gap-1.5 transition-all shrink-0 whitespace-nowrap border ${
-                  isCurrent
-                    ? 'bg-stone-900 text-white border-stone-900 font-bold shadow-xs cursor-pointer'
-                    : isCompleted
-                    ? 'bg-emerald-50/90 text-emerald-900 border-emerald-200 hover:border-emerald-400 cursor-pointer'
-                    : isUnlocked
-                    ? 'bg-white text-stone-800 border-stone-200 hover:border-stone-500 cursor-pointer'
-                    : 'bg-stone-100/80 text-stone-400 border-stone-200/60 cursor-not-allowed'
-                }`}
-              >
-                <span className="font-serif-editorial font-bold">{stage.roman}.</span>
-                <span>{stage.districtZh}</span>
-                <span
-                  className={`text-[10px] font-mono tabular-nums ${
-                    isCurrent ? 'text-amber-300' : 'text-stone-400'
+          {/* Horizontal District Itinerary Timeline Rail (I..VIII) */}
+          <div className="pt-2 border-t border-stone-200/80 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+            {cityStages.map((stage, idx) => {
+              const isUnlocked = checkPointUnlocked(progress, activeCity.index, idx);
+              const isCompleted = checkPointCompleted(progress, activeCity.index, idx);
+              const isCurrent = idx === activePointIdx;
+              const chDone = getCompletedChaptersList(progress, activeCity.index, idx).length;
+              return (
+                <button
+                  key={`${activeCity.id}-${stage.id}`}
+                  type="button"
+                  disabled={!isUnlocked}
+                  onClick={() => {
+                    if (!isUnlocked) return;
+                    gameAudio.playTap();
+                    onSelectPoint(idx);
+                  }}
+                  title={
+                    isUnlocked
+                      ? `${stage.roman}. ${stage.districtZh} (${chDone}/${CHAPTERS_PER_POINT} 章)`
+                      : `完成上一站点全部 ${CHAPTERS_PER_POINT} 章即可解锁`
+                  }
+                  className={`min-h-[36px] px-3 py-1.5 rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all shrink-0 whitespace-nowrap border ${
+                    isCurrent
+                      ? 'bg-stone-900 text-amber-50 border-stone-900 font-semibold shadow-2xs cursor-pointer'
+                      : isCompleted
+                      ? 'bg-emerald-50/80 text-emerald-950 border-emerald-200 hover:border-emerald-500 cursor-pointer'
+                      : isUnlocked
+                      ? 'bg-white text-stone-800 border-[#D8D0C0] hover:border-stone-600 cursor-pointer'
+                      : 'bg-[#F3EFE6] text-stone-400 border-stone-200/60 cursor-not-allowed'
                   }`}
                 >
-                  {chDone}/{CHAPTERS_PER_POINT}
-                </span>
-                {isCompleted && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0" />}
-                {!isUnlocked && <Lock className="w-3 h-3 text-stone-400 shrink-0" />}
-              </button>
-            );
-          })}
+                  <span
+                    className={`font-bold font-['Cinzel','Playfair_Display',serif] ${
+                      isCurrent ? 'text-amber-300' : 'text-stone-700'
+                    }`}
+                  >
+                    {stage.roman}.
+                  </span>
+                  <span>{stage.districtZh}</span>
+                  <span
+                    className={`text-[10px] font-mono tabular-nums ${
+                      isCurrent ? 'text-amber-200/90' : 'text-stone-400'
+                    }`}
+                  >
+                    {chDone}/{CHAPTERS_PER_POINT}
+                  </span>
+                  {isCompleted && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700 shrink-0" />}
+                  {!isUnlocked && <Lock className="w-3 h-3 text-stone-400 shrink-0" />}
+                </button>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      </section>
 
-      {/* 2. Authentic Archival 2D Architectural City Map Frame */}
+      {/* 2. Illuminated Beaux-Arts Copperplate & Watercolor Architectural Map */}
       <div
-        className="editorial-card rounded-2xl overflow-hidden border border-stone-300/90 shadow-md relative"
+        className="relative rounded-2xl overflow-hidden border border-[#B9AE9A] shadow-[0_24px_60px_-28px_rgba(28,25,23,0.45)]"
         style={{ backgroundColor: activeCity.palette.paperMid }}
       >
-        <div className="absolute inset-2 rounded-xl border border-stone-900/15 pointer-events-none z-20" />
+        {/* Outer Architectural Double-Matte Frame */}
+        <div className="absolute inset-1.5 rounded-xl border border-stone-900/20 pointer-events-none z-20" />
+        <div className="absolute inset-3 rounded-lg border border-amber-900/15 pointer-events-none z-20" />
 
-        {/* Top-Left Cartographic Title Cartouche */}
-        <div className="absolute top-4 left-4 z-30 flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-[#FAF8F5]/92 backdrop-blur-md border border-stone-900/15 shadow-xs pointer-events-none">
-          <Compass className="w-4 h-4 text-amber-800 shrink-0" />
+        {/* Top-Left Engraved Exhibition Cartouche */}
+        <div className="absolute top-5 left-5 z-30 flex items-center gap-3 px-4 py-2.5 rounded-xl bg-[#FCF9F2]/94 backdrop-blur-md border border-[#C6B9A0] shadow-[0_8px_24px_-8px_rgba(28,25,23,0.2)] pointer-events-none">
+          <div className="w-8 h-8 rounded-full border border-amber-700/40 bg-[#F4ECE0] flex items-center justify-center shrink-0">
+            <Compass className="w-4 h-4 text-amber-800" />
+          </div>
           <div className="leading-tight">
-            <div className="font-serif-editorial text-xs font-bold text-stone-900 tracking-wide">
-              {activeCity.cityFr} · {activeCity.cityZh}
+            <div className="text-[9px] font-sans uppercase tracking-[0.2em] text-amber-800/90 font-bold">
+              Plan Architectural · N°{String(activeCity.index + 1).padStart(2, '0')}
             </div>
-            <div className="text-[10px] font-mono text-stone-500 tabular-nums">
+            <div className="font-serif-editorial text-sm font-bold text-stone-900 tracking-wide">
+              {activeCity.cityZh} ·{' '}
+              <span className="italic font-semibold text-stone-700 font-['Cormorant_Garamond','Playfair_Display',serif]">
+                {activeCity.cityFr}
+              </span>
+            </div>
+            <div className="text-[10px] font-mono text-stone-500 tabular-nums mt-0.5">
               {activeCity.coordinates} · {activeCity.countryFr}
             </div>
           </div>
         </div>
 
-        {/* Unlock Toast (Auto-Pan or New Capital Unlocked) */}
+        {/* Auto-Pan / Capital Unlock Toast */}
         <AnimatePresence>
           {(isAutoScrolling || newlyUnlockedCityIndex !== null) && (
             <motion.div
-              initial={{ opacity: 0, y: -12, scale: 0.95 }}
+              initial={{ opacity: 0, y: -12, scale: 0.96 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: -12, scale: 0.95 }}
+              exit={{ opacity: 0, y: -12, scale: 0.96 }}
               transition={{ duration: 0.18 }}
-              className="absolute top-4 left-1/2 -translate-x-1/2 z-40 px-3.5 py-1.5 rounded-xl bg-stone-900/92 text-amber-200 text-xs font-semibold backdrop-blur-md shadow-lg flex items-center gap-1.5 pointer-events-none border border-amber-400/25 whitespace-nowrap"
+              className="absolute top-5 left-1/2 -translate-x-1/2 z-40 px-4 py-2 rounded-xl bg-stone-900/95 text-amber-100 text-xs font-semibold backdrop-blur-md shadow-xl flex items-center gap-2 pointer-events-none border border-amber-400/35 whitespace-nowrap"
             >
-              <Compass className="w-3.5 h-3.5 text-amber-300" />
+              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
               <span>
                 {newlyUnlockedCityIndex !== null
-                  ? `新世界首都地图已解锁：${WORLD_CAPITALS[newlyUnlockedCityIndex]?.cityZh}`
-                  : `正在定位至街区：${activeStage.districtZh}`}
+                  ? `新世界首都典藏图谱已启封：${WORLD_CAPITALS[newlyUnlockedCityIndex]?.cityZh}`
+                  : `相机正巡航至：${activeStage.districtZh}`}
               </span>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Top-Right Map Navigation Toolbar */}
-        <div className="absolute top-4 right-4 z-30 flex items-center gap-1.5 bg-[#FAF8F5]/92 backdrop-blur-md p-1 rounded-xl border border-stone-900/15 shadow-xs">
+        {/* Top-Right Architectural Navigation HUD */}
+        <div className="absolute top-5 right-5 z-30 flex items-center gap-1 bg-[#FCF9F2]/94 backdrop-blur-md p-1 rounded-xl border border-[#C6B9A0] shadow-[0_8px_24px_-8px_rgba(28,25,23,0.18)]">
           <button
             type="button"
             onClick={() => {
               gameAudio.playTap();
               panToPoint(activePointIdx, 20);
             }}
-            className="min-h-[34px] px-2.5 py-1 rounded-lg hover:bg-white text-xs font-semibold text-stone-800 flex items-center gap-1 transition-colors cursor-pointer whitespace-nowrap"
+            className="min-h-[34px] px-2.5 py-1 rounded-lg hover:bg-white text-xs font-semibold text-stone-800 flex items-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap shrink-0"
             title="居中定位到当前坐标"
           >
-            <Crosshair className="w-3.5 h-3.5 text-amber-700" />
-            <span className="hidden sm:inline">定位</span>
+            <Crosshair className="w-3.5 h-3.5 text-amber-800" />
+            <span className="hidden sm:inline">归中定位</span>
           </button>
 
-          <span className="w-px h-4 bg-stone-300/80" aria-hidden="true" />
+          <span className="w-px h-4 bg-stone-300" aria-hidden="true" />
 
           <button
             type="button"
@@ -1166,7 +1210,7 @@ export const CityQuizMapView: React.FC<CityQuizMapViewProps> = ({
             <ZoomOut className="w-3.5 h-3.5" />
           </button>
 
-          <span className="text-[11px] font-mono font-semibold text-stone-700 px-1 tabular-nums hidden sm:inline">
+          <span className="text-[11px] font-mono font-semibold text-stone-700 px-1.5 tabular-nums hidden sm:inline">
             {Math.round(zoomLevel * 100)}%
           </span>
 
@@ -1191,64 +1235,123 @@ export const CityQuizMapView: React.FC<CityQuizMapViewProps> = ({
           </button>
         </div>
 
-        {/* Bottom-Left Ornate Compass Rose & Scale Bar */}
-        <div className="absolute bottom-4 left-4 z-30 flex items-end gap-2.5 pointer-events-none">
-          <div className="w-11 h-11 rounded-full bg-[#FAF8F5]/92 backdrop-blur-md border border-stone-900/15 shadow-xs flex items-center justify-center">
-            <svg viewBox="0 0 64 64" className="w-9 h-9">
+        {/* Bottom-Left 16-Point Brass Mariner's Compass Rose & Engraved Scale */}
+        <div className="absolute bottom-5 left-5 z-30 flex items-end gap-2.5 pointer-events-none">
+          <div className="w-14 h-14 rounded-full bg-[#FCF9F2]/94 backdrop-blur-md border border-[#C6B9A0] shadow-sm flex items-center justify-center">
+            <svg viewBox="0 0 80 80" className="w-12 h-12">
               <circle
-                cx="32"
-                cy="32"
-                r="26"
+                cx="40"
+                cy="40"
+                r="34"
                 fill="none"
-                stroke="#78716C"
+                stroke="#8C7B65"
                 strokeWidth="0.9"
-                strokeDasharray="2 2"
               />
-              <polygon points="32,7 36,28 32,32 28,28" fill="#B45309" />
-              <polygon points="32,57 36,36 32,32 28,36" fill="#78716C" opacity="0.55" />
-              <polygon points="7,32 28,28 32,32 28,36" fill="#78716C" opacity="0.4" />
-              <polygon points="57,32 36,28 32,32 36,36" fill="#78716C" opacity="0.4" />
-              <circle cx="32" cy="32" r="2.4" fill="#1C1917" />
+              <circle
+                cx="40"
+                cy="40"
+                r="30"
+                fill="none"
+                stroke="#8C7B65"
+                strokeWidth="0.7"
+                strokeDasharray="1.5 2.5"
+              />
+              <circle
+                cx="40"
+                cy="40"
+                r="16"
+                fill="none"
+                stroke="#B45309"
+                strokeWidth="0.6"
+                opacity="0.55"
+              />
+              {/* Ordinal diagonal rays */}
+              <polygon points="40,40 20,20 35,34" fill="#9A8C7A" opacity="0.5" />
+              <polygon points="40,40 60,20 46,35" fill="#9A8C7A" opacity="0.5" />
+              <polygon points="40,40 60,60 45,46" fill="#9A8C7A" opacity="0.5" />
+              <polygon points="40,40 20,60 34,45" fill="#9A8C7A" opacity="0.5" />
+              {/* Cardinal shaded dual-tone needles */}
+              <polygon points="40,8 44.5,35.5 40,40" fill="#B45309" />
+              <polygon points="40,8 35.5,35.5 40,40" fill="#78350F" />
+              <polygon points="40,72 44.5,44.5 40,40" fill="#A8A29E" />
+              <polygon points="40,72 35.5,44.5 40,40" fill="#57534E" />
+              <polygon points="72,40 44.5,35.5 40,40" fill="#78716C" />
+              <polygon points="72,40 44.5,44.5 40,40" fill="#D6D3D1" />
+              <polygon points="8,40 35.5,35.5 40,40" fill="#D6D3D1" />
+              <polygon points="8,40 35.5,44.5 40,40" fill="#78716C" />
+              <circle cx="40" cy="40" r="3" fill="#1C1917" stroke="#F59E0B" strokeWidth="1" />
               <text
-                x="32"
-                y="15"
+                x="40"
+                y="6.2"
                 textAnchor="middle"
-                fontSize="7"
+                fontSize="6.5"
                 fontWeight="bold"
-                fill="#1C1917"
-                fontFamily="serif"
+                fill="#78350F"
+                fontFamily="Cinzel, Georgia, serif"
               >
                 N
+              </text>
+              <text
+                x="40"
+                y="78.5"
+                textAnchor="middle"
+                fontSize="5.5"
+                fill="#78716C"
+                fontFamily="Cinzel, Georgia, serif"
+              >
+                S
+              </text>
+              <text
+                x="76"
+                y="42"
+                textAnchor="middle"
+                fontSize="5.5"
+                fill="#78716C"
+                fontFamily="Cinzel, Georgia, serif"
+              >
+                E
+              </text>
+              <text
+                x="4"
+                y="42"
+                textAnchor="middle"
+                fontSize="5.5"
+                fill="#78716C"
+                fontFamily="Cinzel, Georgia, serif"
+              >
+                O
               </text>
             </svg>
           </div>
 
-          <div className="px-2.5 py-1.5 rounded-lg bg-[#FAF8F5]/90 backdrop-blur-md border border-stone-900/12 text-[9.5px] font-mono text-stone-700 hidden sm:flex flex-col gap-0.5 tabular-nums">
-            <div className="flex items-center justify-between gap-4">
+          <div className="px-3 py-1.5 rounded-lg bg-[#FCF9F2]/92 backdrop-blur-md border border-[#C6B9A0] text-[9.5px] font-mono text-stone-700 hidden sm:flex flex-col gap-1 tabular-nums shadow-2xs">
+            <div className="flex items-center justify-between gap-4 text-[9px] text-stone-600">
               <span>0</span>
-              <span>250m</span>
-              <span>500m</span>
+              <span>250 m</span>
+              <span>500 m</span>
             </div>
-            <div className="w-24 h-1.5 flex border border-stone-700/70 overflow-hidden">
-              <div className="w-1/2 h-full bg-stone-800" />
-              <div className="w-1/2 h-full bg-white" />
+            <div className="w-28 h-1.5 flex border border-stone-800/80 overflow-hidden">
+              <div className="w-1/4 h-full bg-stone-900" />
+              <div className="w-1/4 h-full bg-amber-100" />
+              <div className="w-1/4 h-full bg-stone-900" />
+              <div className="w-1/4 h-full bg-amber-100" />
             </div>
           </div>
         </div>
 
-        {/* Bottom-Right Subtle Cartographic Map Key */}
-        <div className="absolute bottom-4 right-4 z-30 hidden md:flex items-center gap-3 px-3 py-1.5 rounded-lg bg-[#FAF8F5]/90 backdrop-blur-md border border-stone-900/12 text-[10px] text-stone-700 pointer-events-none">
+        {/* Bottom-Right Museum Cartographic Legend */}
+        <div className="absolute bottom-5 right-5 z-30 hidden md:flex items-center gap-4 px-3.5 py-2 rounded-xl bg-[#FCF9F2]/92 backdrop-blur-md border border-[#C6B9A0] text-[10.5px] text-stone-700 pointer-events-none shadow-2xs">
           <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-700 inline-block" />
-            <span>已通关 (10/10章)</span>
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
+            <span>全十章通关</span>
           </span>
           <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-stone-900 ring-2 ring-amber-400 inline-block" />
-            <span>当前坐标</span>
+            <Compass className="w-3.5 h-3.5 text-amber-700" />
+            <span>当前驻点</span>
           </span>
           <span className="flex items-center gap-1.5">
             <Lock className="w-3 h-3 text-stone-400" />
-            <span>待解锁</span>
+            <span>未启封</span>
           </span>
         </div>
 
@@ -1259,7 +1362,7 @@ export const CityQuizMapView: React.FC<CityQuizMapViewProps> = ({
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
           onPointerLeave={handlePointerUp}
-          className={`relative w-full h-[460px] sm:h-[540px] lg:h-[580px] overflow-auto select-none touch-pan-x touch-pan-y ${
+          className={`relative w-full h-[470px] sm:h-[550px] lg:h-[600px] overflow-auto select-none touch-pan-x touch-pan-y ${
             isDragging ? 'cursor-grabbing' : 'cursor-grab'
           }`}
           style={{ backgroundColor: activeCity.palette.paperMid }}
@@ -1283,11 +1386,11 @@ export const CityQuizMapView: React.FC<CityQuizMapViewProps> = ({
                   height: `${WORLD_HEIGHT}px`,
                   transform: `scale(${zoomLevel})`,
                   transformOrigin: 'top left',
-                  background: `radial-gradient(ellipse at 52% 45%, ${activeCity.palette.paperFrom} 0%, ${activeCity.palette.paperMid} 58%, ${activeCity.palette.paperTo} 100%)`,
+                  background: `radial-gradient(ellipse at 52% 45%, ${activeCity.palette.paperFrom} 0%, ${activeCity.palette.paperMid} 56%, ${activeCity.palette.paperTo} 100%)`,
                 }}
                 className="relative overflow-hidden transition-transform duration-200 ease-out"
               >
-                {/* True-Aspect SVG Cartographic Atlas Layers */}
+                {/* Copperplate & Watercolor Architectural SVG Atlas */}
                 <svg
                   viewBox={`0 0 ${WORLD_WIDTH} ${WORLD_HEIGHT}`}
                   className="absolute inset-0 w-full h-full pointer-events-none"
@@ -1301,15 +1404,20 @@ export const CityQuizMapView: React.FC<CityQuizMapViewProps> = ({
                       y2="0%"
                     >
                       <stop offset="0%" stopColor={activeCity.palette.waterInner} />
-                      <stop offset="50%" stopColor="#D3E5E1" />
+                      <stop offset="50%" stopColor="#DCEAE7" />
                       <stop offset="100%" stopColor={activeCity.palette.waterInner} />
                     </linearGradient>
 
                     <linearGradient id="cityAtlasRouteGrad2" x1="0%" y1="100%" x2="100%" y2="0%">
-                      <stop offset="0%" stopColor="#059669" />
-                      <stop offset="48%" stopColor="#D97706" />
-                      <stop offset="100%" stopColor="#4F46E5" />
+                      <stop offset="0%" stopColor="#047857" />
+                      <stop offset="48%" stopColor="#B45309" />
+                      <stop offset="100%" stopColor="#4338CA" />
                     </linearGradient>
+
+                    <radialGradient id="parchmentVignette" cx="50%" cy="50%" r="65%">
+                      <stop offset="72%" stopColor="rgba(28, 25, 23, 0)" />
+                      <stop offset="100%" stopColor="rgba(68, 55, 38, 0.14)" />
+                    </radialGradient>
 
                     <pattern
                       id="parkStipple"
@@ -1317,8 +1425,25 @@ export const CityQuizMapView: React.FC<CityQuizMapViewProps> = ({
                       height="10"
                       patternUnits="userSpaceOnUse"
                     >
-                      <circle cx="2" cy="2" r="0.6" fill="rgba(20, 83, 45, 0.14)" />
-                      <circle cx="7" cy="7" r="0.6" fill="rgba(20, 83, 45, 0.1)" />
+                      <circle cx="2" cy="2" r="0.65" fill="rgba(20, 83, 45, 0.16)" />
+                      <circle cx="7" cy="7" r="0.6" fill="rgba(20, 83, 45, 0.12)" />
+                    </pattern>
+
+                    <pattern
+                      id="copperHatch"
+                      width="8"
+                      height="8"
+                      patternUnits="userSpaceOnUse"
+                      patternTransform="rotate(45)"
+                    >
+                      <line
+                        x1="0"
+                        y1="0"
+                        x2="0"
+                        y2="8"
+                        stroke="rgba(41, 37, 36, 0.08)"
+                        strokeWidth="0.9"
+                      />
                     </pattern>
 
                     <path id="riverLabelCurve" d={riverPathD} />
@@ -1326,20 +1451,85 @@ export const CityQuizMapView: React.FC<CityQuizMapViewProps> = ({
                     <path id="boulevardNorthCurve" d="M 225 152 C 420 180, 580 198, 700 210" />
                   </defs>
 
-                  {/* LAYER 1: IGN Latitude/Longitude Graticule */}
-                  <g opacity="0.45">
+                  {/* Soft Vintage Paper Vignette */}
+                  <rect
+                    x="0"
+                    y="0"
+                    width={WORLD_WIDTH}
+                    height={WORLD_HEIGHT}
+                    fill="url(#parchmentVignette)"
+                  />
+
+                  {/* LAYER 0: Double Engraved Copperplate Cartographic Neatline & Degree Scale */}
+                  <g>
+                    <rect
+                      x="18"
+                      y="18"
+                      width={WORLD_WIDTH - 36}
+                      height={WORLD_HEIGHT - 36}
+                      fill="none"
+                      stroke="rgba(68, 55, 38, 0.35)"
+                      strokeWidth="1.2"
+                    />
+                    <rect
+                      x="24"
+                      y="24"
+                      width={WORLD_WIDTH - 48}
+                      height={WORLD_HEIGHT - 48}
+                      fill="none"
+                      stroke="rgba(68, 55, 38, 0.25)"
+                      strokeWidth="0.8"
+                    />
+                    {/* Mitered Brass Corner Medallions */}
+                    {[
+                      [24, 24],
+                      [WORLD_WIDTH - 24, 24],
+                      [24, WORLD_HEIGHT - 24],
+                      [WORLD_WIDTH - 24, WORLD_HEIGHT - 24],
+                    ].map(([cx, cy], ci) => (
+                      <g key={`corner-${ci}`}>
+                        <circle
+                          cx={cx}
+                          cy={cy}
+                          r="4.5"
+                          fill="#FBF7EE"
+                          stroke="#78350F"
+                          strokeWidth="1"
+                        />
+                        <circle cx={cx} cy={cy} r="1.5" fill="#B45309" />
+                      </g>
+                    ))}
+                  </g>
+
+                  {/* LAYER 1: IGN Latitude/Longitude Engraved Graticule */}
+                  <g opacity="0.48">
                     {[160, 320, 480, 640, 800, 960].map((gx, i) => (
                       <g key={`gx-${gx}`}>
                         <line
                           x1={gx}
-                          y1={0}
+                          y1={24}
                           x2={gx}
-                          y2={WORLD_HEIGHT}
+                          y2={WORLD_HEIGHT - 24}
                           stroke="#78716C"
-                          strokeWidth="0.6"
+                          strokeWidth="0.55"
                           strokeDasharray="3 5"
                         />
-                        <text x={gx + 6} y={24} fontSize="9" fontFamily="monospace" fill="#78716C">
+                        <line x1={gx} y1={18} x2={gx} y2={24} stroke="#57534E" strokeWidth="1.1" />
+                        <line
+                          x1={gx}
+                          y1={WORLD_HEIGHT - 24}
+                          x2={gx}
+                          y2={WORLD_HEIGHT - 18}
+                          stroke="#57534E"
+                          strokeWidth="1.1"
+                        />
+                        <text
+                          x={gx + 6}
+                          y={38}
+                          fontSize="9"
+                          fontFamily="Cinzel, Georgia, serif"
+                          fill="#6D6357"
+                        >
                           {String.fromCharCode(65 + i)}
                         </text>
                       </g>
@@ -1347,75 +1537,135 @@ export const CityQuizMapView: React.FC<CityQuizMapViewProps> = ({
                     {[140, 280, 420, 560].map((gy, i) => (
                       <g key={`gy-${gy}`}>
                         <line
-                          x1={0}
+                          x1={24}
                           y1={gy}
-                          x2={WORLD_WIDTH}
+                          x2={WORLD_WIDTH - 24}
                           y2={gy}
                           stroke="#78716C"
-                          strokeWidth="0.6"
+                          strokeWidth="0.55"
                           strokeDasharray="3 5"
                         />
-                        <text x={16} y={gy - 5} fontSize="9" fontFamily="monospace" fill="#78716C">
+                        <line x1={18} y1={gy} x2={24} y2={gy} stroke="#57534E" strokeWidth="1.1" />
+                        <line
+                          x1={WORLD_WIDTH - 24}
+                          y1={gy}
+                          x2={WORLD_WIDTH - 18}
+                          y2={gy}
+                          stroke="#57534E"
+                          strokeWidth="1.1"
+                        />
+                        <text
+                          x={30}
+                          y={gy - 5}
+                          fontSize="9"
+                          fontFamily="Cinzel, Georgia, serif"
+                          fill="#6D6357"
+                        >
                           0{i + 1}
                         </text>
                       </g>
                     ))}
                   </g>
 
-                  {/* LAYER 2: Topographic Elevation Contours */}
-                  <g fill="none" stroke="rgba(161, 98, 7, 0.16)" strokeWidth="1">
-                    <ellipse cx="195" cy="155" rx="165" ry="105" />
-                    <ellipse cx="195" cy="155" rx="125" ry="78" />
-                    <ellipse cx="195" cy="155" rx="85" ry="52" />
-                    <ellipse cx="435" cy="182" rx="115" ry="72" />
-                    <ellipse cx="435" cy="182" rx="76" ry="46" />
-                    <path d="M 620 80 Q 790 155, 1080 120" strokeDasharray="4 4" />
-                    <path d="M 650 55 Q 820 120, 1090 92" strokeDasharray="4 4" />
+                  {/* LAYER 2: Topographic Relief Contours & Triangulation Marks */}
+                  <g fill="none" stroke="rgba(146, 64, 14, 0.19)">
+                    <ellipse cx="195" cy="155" rx="172" ry="110" strokeWidth="0.9" />
+                    <ellipse
+                      cx="195"
+                      cy="155"
+                      rx="142"
+                      ry="90"
+                      strokeWidth="0.7"
+                      strokeDasharray="3 3"
+                    />
+                    <ellipse cx="195" cy="155" rx="112" ry="70" strokeWidth="0.9" />
+                    <ellipse cx="195" cy="155" rx="80" ry="50" strokeWidth="0.8" />
+                    <ellipse cx="435" cy="182" rx="124" ry="78" strokeWidth="0.9" />
+                    <ellipse
+                      cx="435"
+                      cy="182"
+                      rx="94"
+                      ry="58"
+                      strokeWidth="0.7"
+                      strokeDasharray="4 3"
+                    />
+                    <ellipse cx="435" cy="182" rx="64" ry="38" strokeWidth="0.8" />
+                    <path d="M 620 80 Q 790 155, 1080 120" strokeDasharray="4 4" strokeWidth="0.9" />
+                    <path d="M 650 55 Q 820 120, 1090 92" strokeDasharray="4 4" strokeWidth="0.8" />
+                    <path
+                      d="M 780 615 Q 920 555, 1070 600"
+                      strokeDasharray="3 4"
+                      strokeWidth="0.8"
+                    />
                   </g>
-                  <text
-                    x="110"
-                    y="78"
-                    fontSize="9"
-                    fontFamily="serif"
-                    fontStyle="italic"
-                    fill="rgba(120, 53, 15, 0.6)"
-                  >
-                    {activeCity.hillLabel}
-                  </text>
-                  <text
-                    x="412"
-                    y="118"
-                    fontSize="8.5"
-                    fontFamily="serif"
-                    fontStyle="italic"
-                    fill="rgba(120, 53, 15, 0.55)"
-                  >
-                    {activeCity.heritageLandmark}
-                  </text>
+                  <g fill="rgba(120, 53, 15, 0.62)">
+                    <polygon points="104,76 108,69 112,76" />
+                    <text
+                      x="118"
+                      y="76"
+                      fontSize="9.5"
+                      fontFamily="Cormorant Garamond, Playfair Display, serif"
+                      fontStyle="italic"
+                    >
+                      {activeCity.hillLabel} · 130m
+                    </text>
+                    <text
+                      x="412"
+                      y="114"
+                      fontSize="9"
+                      fontFamily="Cormorant Garamond, Playfair Display, serif"
+                      fontStyle="italic"
+                    >
+                      {activeCity.heritageLandmark}
+                    </text>
+                  </g>
 
-                  {/* LAYER 3: Secondary Street Network */}
+                  {/* LAYER 3: Secondary Urban Boulevard & Street Grid */}
                   <g fill="none" strokeLinecap="round" strokeLinejoin="round">
                     {secondaryStreets.map((d, idx) => (
                       <React.Fragment key={`st-${idx}`}>
-                        <path d={d} stroke="rgba(28, 25, 23, 0.14)" strokeWidth="9" />
-                        <path d={d} stroke="#FAF7F0" strokeWidth="7" />
+                        <path d={d} stroke="rgba(41, 37, 36, 0.16)" strokeWidth="9.5" />
+                        <path d={d} stroke="#FBF8F1" strokeWidth="7" />
+                        <path
+                          d={d}
+                          stroke="rgba(120, 113, 108, 0.18)"
+                          strokeWidth="0.8"
+                          strokeDasharray="4 6"
+                        />
                       </React.Fragment>
                     ))}
                   </g>
 
-                  {/* LAYER 4: Urban Haussmannian Blocks */}
+                  {/* LAYER 4: Engraved Haussmannian Blocks & Architectural Courtyards */}
                   <g>
                     {cityBlocks.map((b, idx) => (
                       <g key={`blk-${idx}`}>
+                        {/* Subtle architectural drop-shadow offset */}
+                        <rect
+                          x={b.x + 2}
+                          y={b.y + 2}
+                          width={b.w}
+                          height={b.h}
+                          rx="2.5"
+                          fill="rgba(28, 25, 23, 0.08)"
+                        />
                         <rect
                           x={b.x}
                           y={b.y}
                           width={b.w}
                           height={b.h}
-                          rx="3"
+                          rx="2.5"
                           fill={activeCity.palette.blockFill}
-                          stroke="rgba(28, 25, 23, 0.14)"
-                          strokeWidth="1"
+                          stroke="rgba(41, 37, 36, 0.22)"
+                          strokeWidth="0.9"
+                        />
+                        <rect
+                          x={b.x}
+                          y={b.y}
+                          width={b.w}
+                          height={b.h}
+                          rx="2.5"
+                          fill="url(#copperHatch)"
                         />
                         {b.courtyard && (
                           <rect
@@ -1424,8 +1674,8 @@ export const CityQuizMapView: React.FC<CityQuizMapViewProps> = ({
                             width={Math.max(10, b.w - 22)}
                             height={Math.max(10, b.h - 20)}
                             rx="1.5"
-                            fill="#F7F3EA"
-                            stroke="rgba(28, 25, 23, 0.08)"
+                            fill="#F9F5EB"
+                            stroke="rgba(41, 37, 36, 0.14)"
                             strokeWidth="0.7"
                           />
                         )}
@@ -1433,7 +1683,7 @@ export const CityQuizMapView: React.FC<CityQuizMapViewProps> = ({
                     ))}
                   </g>
 
-                  {/* LAYER 5: Botanical Gardens & Parks */}
+                  {/* LAYER 5: Botanical Parterre Gardens & Canopy Studies */}
                   <g>
                     {botanicalParks.map((park, idx) => (
                       <g key={`park-${idx}`}>
@@ -1442,17 +1692,28 @@ export const CityQuizMapView: React.FC<CityQuizMapViewProps> = ({
                           y={park.y}
                           width={park.w}
                           height={park.h}
-                          rx="12"
+                          rx="10"
                           fill={activeCity.palette.parkFill}
-                          stroke="rgba(21, 128, 61, 0.28)"
-                          strokeWidth="1.2"
+                          stroke="rgba(20, 83, 45, 0.34)"
+                          strokeWidth="1.1"
+                        />
+                        <rect
+                          x={park.x + 3}
+                          y={park.y + 3}
+                          width={park.w - 6}
+                          height={park.h - 6}
+                          rx="8"
+                          fill="none"
+                          stroke="rgba(20, 83, 45, 0.18)"
+                          strokeWidth="0.7"
+                          strokeDasharray="2 2"
                         />
                         <rect
                           x={park.x}
                           y={park.y}
                           width={park.w}
                           height={park.h}
-                          rx="12"
+                          rx="10"
                           fill="url(#parkStipple)"
                         />
                         <path
@@ -1460,37 +1721,49 @@ export const CityQuizMapView: React.FC<CityQuizMapViewProps> = ({
                             park.x + park.w / 2
                           } ${park.y + 12}, ${park.x + park.w - 8} ${park.y + park.h / 2}`}
                           fill="none"
-                          stroke="rgba(255, 252, 245, 0.78)"
-                          strokeWidth="2.2"
+                          stroke="rgba(255, 252, 245, 0.85)"
+                          strokeWidth="2.4"
+                        />
+                        {/* Fountain Basin */}
+                        <circle
+                          cx={park.x + park.w / 2}
+                          cy={park.y + park.h / 2}
+                          r="7"
+                          fill="#C7DFDC"
+                          stroke="rgba(28, 25, 23, 0.25)"
+                          strokeWidth="0.9"
                         />
                         <circle
                           cx={park.x + park.w / 2}
                           cy={park.y + park.h / 2}
-                          r="5.5"
-                          fill="#BDD6D3"
-                          stroke="rgba(28, 25, 23, 0.18)"
-                          strokeWidth="0.8"
+                          r="3.2"
+                          fill="#F5F0E6"
+                          stroke="rgba(28, 25, 23, 0.2)"
+                          strokeWidth="0.6"
                         />
                         {park.trees.map(([tx, ty], ti) => (
-                          <circle
-                            key={`tree-${ti}`}
-                            cx={tx}
-                            cy={ty}
-                            r="6.5"
-                            fill="#A9C79E"
-                            stroke="rgba(20, 83, 45, 0.25)"
-                            strokeWidth="0.8"
-                          />
+                          <g key={`tree-${ti}`}>
+                            <circle cx={tx + 1.5} cy={ty + 1.5} r="6.2" fill="rgba(20,83,45,0.12)" />
+                            <circle
+                              cx={tx}
+                              cy={ty}
+                              r="6.2"
+                              fill="#9EBE94"
+                              stroke="rgba(20, 83, 45, 0.32)"
+                              strokeWidth="0.8"
+                            />
+                            <circle cx={tx - 1.5} cy={ty - 1.5} r="2.2" fill="#BBD5B1" />
+                          </g>
                         ))}
                         <text
                           x={park.x + park.w / 2}
-                          y={park.y + park.h - 7}
+                          y={park.y + park.h - 6}
                           textAnchor="middle"
                           fontSize="8.5"
-                          fontFamily="serif"
+                          fontFamily="Cormorant Garamond, Playfair Display, serif"
                           fontStyle="italic"
                           fill="#14532D"
-                          opacity="0.78"
+                          opacity="0.86"
                         >
                           {park.name}
                         </text>
@@ -1498,27 +1771,27 @@ export const CityQuizMapView: React.FC<CityQuizMapViewProps> = ({
                     ))}
                   </g>
 
-                  {/* LAYER 6: Capital City River + Stone Bridges */}
+                  {/* LAYER 6: Capital River with Watercolor Embankments & Masonry Starling Bridges */}
                   <g>
                     <path
                       d={riverPathD}
                       fill="none"
-                      stroke="rgba(28, 25, 23, 0.18)"
-                      strokeWidth="56"
+                      stroke="rgba(28, 25, 23, 0.22)"
+                      strokeWidth="58"
                       strokeLinecap="round"
                     />
                     <path
                       d={riverPathD}
                       fill="none"
-                      stroke="#F4EFE4"
-                      strokeWidth="51"
+                      stroke="#F6F1E6"
+                      strokeWidth="53"
                       strokeLinecap="round"
                     />
                     <path
                       d={riverPathD}
                       fill="none"
                       stroke={activeCity.palette.waterOuter}
-                      strokeWidth="44"
+                      strokeWidth="46"
                       strokeLinecap="round"
                     />
                     <path
@@ -1531,85 +1804,118 @@ export const CityQuizMapView: React.FC<CityQuizMapViewProps> = ({
                     <path
                       d={riverPathD}
                       fill="none"
-                      stroke="rgba(255, 255, 255, 0.55)"
-                      strokeWidth="1.4"
-                      strokeDasharray="14 20"
+                      stroke="rgba(255, 255, 255, 0.45)"
+                      strokeWidth="12"
+                      strokeLinecap="round"
+                    />
+                    <path
+                      d={riverPathD}
+                      fill="none"
+                      stroke="rgba(255, 255, 255, 0.72)"
+                      strokeWidth="1.5"
+                      strokeDasharray="16 22"
                       strokeLinecap="round"
                     />
 
                     <text
-                      fontSize="10"
-                      fontFamily="serif"
+                      fontSize="10.5"
+                      fontFamily="Cormorant Garamond, Playfair Display, serif"
                       fontStyle="italic"
-                      letterSpacing="2.4"
+                      letterSpacing="2.8"
                       fill="#134E4A"
-                      opacity="0.82"
+                      opacity="0.86"
                     >
                       <textPath href="#riverLabelCurve" startOffset="22%">
                         {activeCity.riverFr.toUpperCase()} · {activeCity.riverZh}
                       </textPath>
                     </text>
 
-                    <g transform="translate(240, 356) rotate(-8)">
-                      <rect
-                        x="-13"
-                        y="-30"
-                        width="26"
-                        height="60"
-                        rx="3"
-                        fill="#EDE5D5"
-                        stroke="#57534E"
-                        strokeWidth="1.2"
-                      />
-                      <line x1="-8" y1="-28" x2="-8" y2="28" stroke="#78716C" strokeWidth="0.9" />
-                      <line x1="8" y1="-28" x2="8" y2="28" stroke="#78716C" strokeWidth="0.9" />
-                    </g>
+                    {/* Western & Central Cutwater Stone Bridges */}
+                    {[
+                      { x: 240, y: 356, rot: -8 },
+                      { x: 525, y: 402, rot: 5 },
+                    ].map((br, bi) => (
+                      <g key={`bridge-${bi}`} transform={`translate(${br.x}, ${br.y}) rotate(${br.rot})`}>
+                        {/* Upstream/downstream masonry cutwater piers */}
+                        <polygon
+                          points="-20,-8 -13,-14 -13,14 -20,8"
+                          fill="#D6CBB8"
+                          stroke="#57534E"
+                          strokeWidth="0.9"
+                        />
+                        <polygon
+                          points="20,-8 13,-14 13,14 20,8"
+                          fill="#D6CBB8"
+                          stroke="#57534E"
+                          strokeWidth="0.9"
+                        />
+                        <rect
+                          x="-14"
+                          y="-32"
+                          width="28"
+                          height="64"
+                          rx="2.5"
+                          fill="#F1EAD9"
+                          stroke="#44403C"
+                          strokeWidth="1.2"
+                        />
+                        <line x1="-9" y1="-30" x2="-9" y2="30" stroke="#78716C" strokeWidth="0.9" />
+                        <line x1="9" y1="-30" x2="9" y2="30" stroke="#78716C" strokeWidth="0.9" />
+                        <line
+                          x1="0"
+                          y1="-28"
+                          x2="0"
+                          y2="28"
+                          stroke="#A8A29E"
+                          strokeWidth="0.8"
+                          strokeDasharray="3 3"
+                        />
+                      </g>
+                    ))}
 
-                    <g transform="translate(525, 402) rotate(5)">
-                      <rect
-                        x="-13"
-                        y="-30"
-                        width="26"
-                        height="60"
-                        rx="3"
-                        fill="#EDE5D5"
-                        stroke="#57534E"
-                        strokeWidth="1.2"
-                      />
-                      <line x1="-8" y1="-28" x2="-8" y2="28" stroke="#78716C" strokeWidth="0.9" />
-                      <line x1="8" y1="-28" x2="8" y2="28" stroke="#78716C" strokeWidth="0.9" />
-                    </g>
-
+                    {/* Grand Pont Monumental (Stage V Site) */}
                     <g transform="translate(855, 365) rotate(-10)">
+                      <polygon
+                        points="-30,-10 -22,-18 -22,18 -30,10"
+                        fill="#D8CEBC"
+                        stroke="#44403C"
+                        strokeWidth="1"
+                      />
+                      <polygon
+                        points="30,-10 22,-18 22,18 30,10"
+                        fill="#D8CEBC"
+                        stroke="#44403C"
+                        strokeWidth="1"
+                      />
                       <rect
                         x="-22"
-                        y="-36"
+                        y="-38"
                         width="44"
-                        height="72"
-                        rx="4"
-                        fill="#F7F1E4"
+                        height="76"
+                        rx="3"
+                        fill="#FAF4E8"
                         stroke="#292524"
-                        strokeWidth="1.5"
+                        strokeWidth="1.4"
                       />
                       <path
-                        d="M -22 -18 L -28 -24 M 22 -18 L 28 -24 M -22 18 L -28 24 M 22 18 L 28 24"
+                        d="M -22 -20 L -29 -27 M 22 -20 L 29 -27 M -22 20 L -29 27 M 22 20 L 29 27"
                         stroke="#57534E"
-                        strokeWidth="1.5"
+                        strokeWidth="1.4"
                       />
-                      <line x1="-15" y1="-34" x2="-15" y2="34" stroke="#A8A29E" strokeWidth="1" />
-                      <line x1="15" y1="-34" x2="15" y2="34" stroke="#A8A29E" strokeWidth="1" />
+                      <line x1="-15" y1="-36" x2="-15" y2="36" stroke="#A8A29E" strokeWidth="1" />
+                      <line x1="15" y1="-36" x2="15" y2="36" stroke="#A8A29E" strokeWidth="1" />
                     </g>
                   </g>
 
-                  {/* LAYER 7: Grand Boulevard Route & Animated Progress */}
+                  {/* LAYER 7: Illuminated Promenade & Animated Journey Ribbon */}
                   <g fill="none" strokeLinecap="round" strokeLinejoin="round">
-                    <path d={fullRoutePathD} stroke="rgba(28, 25, 23, 0.22)" strokeWidth="22" />
-                    <path d={fullRoutePathD} stroke="#FFFFFF" strokeWidth="18" />
-                    <path d={fullRoutePathD} stroke="#F3EDE0" strokeWidth="13" />
+                    <path d={fullRoutePathD} stroke="rgba(28, 25, 23, 0.24)" strokeWidth="23" />
+                    <path d={fullRoutePathD} stroke="#FFFDF8" strokeWidth="19" />
+                    <path d={fullRoutePathD} stroke="#F2EBD9" strokeWidth="13.5" />
                     <path
                       d={fullRoutePathD}
-                      stroke="rgba(120, 113, 108, 0.45)"
-                      strokeWidth="2.2"
+                      stroke="rgba(120, 113, 108, 0.42)"
+                      strokeWidth="1.8"
                       strokeDasharray="6 6"
                     />
                     <motion.path
@@ -1629,10 +1935,10 @@ export const CityQuizMapView: React.FC<CityQuizMapViewProps> = ({
 
                   <text
                     fontSize="8.5"
-                    fontFamily="sans-serif"
+                    fontFamily="Cinzel, Plus Jakarta Sans, sans-serif"
                     fontWeight="600"
                     letterSpacing="1.8"
-                    fill="rgba(41, 37, 36, 0.6)"
+                    fill="rgba(41, 37, 36, 0.62)"
                   >
                     <textPath href="#boulevardSouthCurve" startOffset="12%">
                       AVENUE DE {activeCity.cityFr.toUpperCase()} · 直觉思辨大道
@@ -1640,24 +1946,25 @@ export const CityQuizMapView: React.FC<CityQuizMapViewProps> = ({
                   </text>
                   <text
                     fontSize="8.5"
-                    fontFamily="sans-serif"
+                    fontFamily="Cinzel, Plus Jakarta Sans, sans-serif"
                     fontWeight="600"
                     letterSpacing="1.8"
-                    fill="rgba(41, 37, 36, 0.6)"
+                    fill="rgba(41, 37, 36, 0.62)"
                   >
                     <textPath href="#boulevardNorthCurve" startOffset="16%">
                       BOULEVARD MÉTACOGNITIF · 元认知高地大道
                     </textPath>
                   </text>
 
-                  {/* LAYER 8: Architectural Monument Plan Footprints */}
+                  {/* LAYER 8: Beaux-Arts Architectural Monument Plan Engravings */}
                   {cityStages.map((stage, idx) => {
                     const isUnlocked = checkPointUnlocked(progress, activeCity.index, idx);
                     const strokeCol = isUnlocked
-                      ? 'rgba(28, 25, 23, 0.4)'
-                      : 'rgba(120, 113, 108, 0.25)';
+                      ? 'rgba(28, 25, 23, 0.5)'
+                      : 'rgba(120, 113, 108, 0.28)';
+                    const goldCol = isUnlocked ? 'rgba(180, 83, 9, 0.48)' : 'rgba(120, 113, 108, 0.2)';
                     const fillCol = isUnlocked
-                      ? 'rgba(255, 255, 255, 0.72)'
+                      ? 'rgba(255, 252, 245, 0.85)'
                       : 'rgba(235, 228, 215, 0.55)';
                     return (
                       <g
@@ -1667,75 +1974,104 @@ export const CityQuizMapView: React.FC<CityQuizMapViewProps> = ({
                         <circle
                           cx="0"
                           cy="0"
-                          r="36"
+                          r="40"
                           fill={fillCol}
-                          stroke={strokeCol}
+                          stroke={goldCol}
                           strokeWidth="1"
                           strokeDasharray="3 2"
                         />
                         {stage.monumentType === 'colonnade' && (
-                          <g stroke={strokeCol} strokeWidth="1.1" fill="none">
-                            <circle cx="0" cy="0" r="29" />
-                            {[0, 45, 90, 135, 180, 225, 270, 315].map((deg) => (
+                          <g stroke={strokeCol} strokeWidth="1" fill="none">
+                            <circle cx="0" cy="0" r="32" />
+                            <circle cx="0" cy="0" r="24" strokeDasharray="2 2" />
+                            {[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map((deg) => (
                               <circle
                                 key={deg}
-                                cx={Math.cos((deg * Math.PI) / 180) * 29}
-                                cy={Math.sin((deg * Math.PI) / 180) * 29}
-                                r="2"
-                                fill="#D6CEBE"
+                                cx={Math.cos((deg * Math.PI) / 180) * 32}
+                                cy={Math.sin((deg * Math.PI) / 180) * 32}
+                                r="2.1"
+                                fill="#E5DCCB"
                               />
                             ))}
                           </g>
                         )}
                         {stage.monumentType === 'palace' && (
-                          <path
-                            d="M -34 -24 L 34 -24 L 34 22 L 16 22 L 16 -8 L -16 -8 L -16 22 L -34 22 Z"
-                            fill="#EAE2D3"
-                            stroke={strokeCol}
-                            strokeWidth="1.1"
-                          />
+                          <g>
+                            <path
+                              d="M -38 -26 L 38 -26 L 38 24 L 18 24 L 18 -8 L -18 -8 L -18 24 L -38 24 Z"
+                              fill="#EDE4D3"
+                              stroke={strokeCol}
+                              strokeWidth="1.1"
+                            />
+                            <rect
+                              x="-14"
+                              y="-4"
+                              width="28"
+                              height="24"
+                              fill="#FBF8F1"
+                              stroke={goldCol}
+                              strokeWidth="0.8"
+                            />
+                          </g>
                         )}
                         {stage.monumentType === 'market' && (
-                          <polygon
-                            points="0,-32 23,-23 32,0 23,23 0,32 -23,23 -32,0 -23,-23"
-                            fill="#EAE2D3"
-                            stroke={strokeCol}
-                            strokeWidth="1.1"
-                          />
+                          <g>
+                            <polygon
+                              points="0,-35 25,-25 35,0 25,25 0,35 -25,25 -35,0 -25,-25"
+                              fill="#EDE4D3"
+                              stroke={strokeCol}
+                              strokeWidth="1.1"
+                            />
+                            <polygon
+                              points="0,-24 17,-17 24,0 17,17 0,24 -17,17 -24,0 -17,-17"
+                              fill="#FBF8F1"
+                              stroke={goldCol}
+                              strokeWidth="0.8"
+                            />
+                          </g>
                         )}
                         {stage.monumentType === 'etoile' && (
                           <g stroke={strokeCol} strokeWidth="1">
-                            {[0, 60, 120, 180, 240, 300].map((deg) => (
+                            {[0, 30, 60, 90, 120, 150, 180, 210, 240, 270, 300, 330].map((deg) => (
                               <line
                                 key={deg}
                                 x1="0"
                                 y1="0"
-                                x2={Math.cos((deg * Math.PI) / 180) * 44}
-                                y2={Math.sin((deg * Math.PI) / 180) * 44}
+                                x2={Math.cos((deg * Math.PI) / 180) * 48}
+                                y2={Math.sin((deg * Math.PI) / 180) * 48}
+                                strokeOpacity={deg % 60 === 0 ? 0.7 : 0.35}
                               />
                             ))}
-                            <circle cx="0" cy="0" r="28" fill="#FAF6ED" />
+                            <circle cx="0" cy="0" r="29" fill="#FAF6ED" />
+                            <circle cx="0" cy="0" r="21" fill="none" stroke={goldCol} />
                           </g>
                         )}
                         {stage.monumentType === 'conservatory' && (
-                          <g stroke={strokeCol} strokeWidth="1" fill="#E8EFE7">
-                            <rect x="-32" y="-20" width="64" height="40" rx="18" />
-                            <line x1="-26" y1="0" x2="26" y2="0" />
-                            <line x1="0" y1="-20" x2="0" y2="20" />
+                          <g stroke={strokeCol} strokeWidth="1" fill="#E6EFE5">
+                            <rect x="-35" y="-22" width="70" height="44" rx="20" />
+                            <rect x="-26" y="-14" width="52" height="28" rx="14" fill="none" stroke={goldCol} />
+                            <line x1="-30" y1="0" x2="30" y2="0" />
+                            <line x1="0" y1="-22" x2="0" y2="22" />
                           </g>
                         )}
                         {stage.monumentType === 'observatory' && (
                           <g stroke={strokeCol} strokeWidth="1" fill="none">
-                            <circle cx="0" cy="0" r="30" fill="#EAE4D8" />
-                            <line x1="-38" y1="0" x2="38" y2="0" />
-                            <line x1="0" y1="-38" x2="0" y2="38" />
+                            <circle cx="0" cy="0" r="32" fill="#EDE6D8" />
+                            <circle cx="0" cy="0" r="22" stroke={goldCol} strokeDasharray="2 2" />
+                            <line x1="-42" y1="0" x2="42" y2="0" />
+                            <line x1="0" y1="-42" x2="0" y2="42" />
                           </g>
                         )}
                         {stage.monumentType === 'citadel' && (
                           <g stroke={strokeCol} strokeWidth="1.1">
                             <polygon
-                              points="0,-38 14,-24 34,-28 24,-10 38,6 20,16 24,34 0,26 -24,34 -20,16 -38,6 -24,-10 -34,-28 -14,-24"
-                              fill="#E5DCCB"
+                              points="0,-42 15,-25 38,-30 26,-10 42,6 22,17 26,38 0,28 -26,38 -22,17 -42,6 -26,-10 -38,-30 -15,-25"
+                              fill="#E6DEC9"
+                            />
+                            <polygon
+                              points="0,-28 10,-16 25,-20 17,-7 28,4 14,11 17,25 0,18 -17,25 -14,11 -28,4 -17,-7 -25,-20 -10,-16"
+                              fill="#FAF5EB"
+                              stroke={goldCol}
                             />
                           </g>
                         )}
@@ -1743,33 +2079,34 @@ export const CityQuizMapView: React.FC<CityQuizMapViewProps> = ({
                     );
                   })}
 
+                  {/* Engraved Rive Nord / Rive Sud Watermark Inscriptions */}
                   <text
-                    x="960"
-                    y="54"
+                    x="1058"
+                    y="62"
                     textAnchor="end"
-                    fontSize="11"
-                    fontFamily="serif"
+                    fontSize="11.5"
+                    fontFamily="Cinzel, Cormorant Garamond, serif"
                     fontStyle="italic"
-                    letterSpacing="2.2"
-                    fill="rgba(41, 37, 36, 0.45)"
+                    letterSpacing="2.6"
+                    fill="rgba(41, 37, 36, 0.5)"
                   >
                     RIVE NORD · {activeCity.cityFr.toUpperCase()}
                   </text>
                   <text
-                    x="960"
-                    y="668"
+                    x="1058"
+                    y="658"
                     textAnchor="end"
-                    fontSize="11"
-                    fontFamily="serif"
+                    fontSize="11.5"
+                    fontFamily="Cinzel, Cormorant Garamond, serif"
                     fontStyle="italic"
-                    letterSpacing="2.2"
-                    fill="rgba(41, 37, 36, 0.45)"
+                    letterSpacing="2.6"
+                    fill="rgba(41, 37, 36, 0.5)"
                   >
                     RIVE SUD · {activeCity.countryFr.toUpperCase()}
                   </text>
                 </svg>
 
-                {/* INTERACTIVE HTML LAYER: Strictly Locked/Unlocked Point Pins & Explorer Token */}
+                {/* INTERACTIVE HTML LAYER: Monumental Stage Pins, Explorer Medallion & Specimen Plaques */}
                 {cityStages.map((stage, idx) => {
                   const isUnlocked = checkPointUnlocked(progress, activeCity.index, idx);
                   const isCompleted = checkPointCompleted(progress, activeCity.index, idx);
@@ -1815,7 +2152,7 @@ export const CityQuizMapView: React.FC<CityQuizMapViewProps> = ({
                         )}
                       </AnimatePresence>
 
-                      {/* Explorer Avatar Pin */}
+                      {/* Explorer Medallion Avatar Marker */}
                       {isCurrent && (
                         <motion.div
                           layoutId="city-quiz-player-token"
@@ -1825,18 +2162,18 @@ export const CityQuizMapView: React.FC<CityQuizMapViewProps> = ({
                             damping: 22,
                             mass: 0.85,
                           }}
-                          className="absolute -top-11 left-1/2 -translate-x-1/2 z-30 pointer-events-none"
+                          className="absolute -top-12 left-1/2 -translate-x-1/2 z-30 pointer-events-none"
                         >
                           <motion.div
                             animate={{ y: [0, -3.5, 0] }}
                             transition={{
-                              duration: 2.2,
+                              duration: 2.4,
                               repeat: Infinity,
                               ease: 'easeInOut',
                             }}
                             className="flex flex-col items-center"
                           >
-                            <div className="w-9 h-9 rounded-full border-2 border-white shadow-xl overflow-hidden bg-stone-900 flex items-center justify-center ring-2 ring-amber-500">
+                            <div className="w-10 h-10 rounded-full border-2 border-[#FCF9F2] shadow-xl overflow-hidden bg-stone-900 flex items-center justify-center ring-2 ring-amber-600">
                               {playerAvatar ? (
                                 <img
                                   src={playerAvatar}
@@ -1848,12 +2185,12 @@ export const CityQuizMapView: React.FC<CityQuizMapViewProps> = ({
                                 <Compass className="w-4 h-4 text-amber-300" />
                               )}
                             </div>
-                            <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[6px] border-t-amber-500 -mt-0.5 drop-shadow-sm" />
+                            <div className="w-0 h-0 border-l-[5px] border-l-transparent border-r-[5px] border-r-transparent border-t-[6px] border-t-amber-600 -mt-0.5 drop-shadow-sm" />
                           </motion.div>
                         </motion.div>
                       )}
 
-                      {/* Point Pin */}
+                      {/* Circular Architectural Node Pin */}
                       <motion.button
                         type="button"
                         disabled={!isUnlocked}
@@ -1872,10 +2209,10 @@ export const CityQuizMapView: React.FC<CityQuizMapViewProps> = ({
                           !isUnlocked
                             ? 'bg-[#EAE3D5] border-stone-300 text-stone-400 cursor-not-allowed'
                             : isCurrent
-                            ? 'bg-stone-900 border-amber-400 text-white cursor-pointer shadow-xl ring-4 ring-amber-400/25'
+                            ? 'bg-stone-900 border-amber-400 text-white cursor-pointer shadow-xl ring-4 ring-amber-500/20'
                             : isCompleted
-                            ? 'bg-emerald-700 border-emerald-100 text-white cursor-pointer'
-                            : 'bg-white border-stone-800/85 text-stone-900 hover:border-amber-600 cursor-pointer'
+                            ? 'bg-emerald-800 border-emerald-100 text-white cursor-pointer'
+                            : 'bg-[#FCF9F2] border-stone-800/85 text-stone-900 hover:border-amber-700 cursor-pointer'
                         }`}
                         title={
                           isUnlocked
@@ -1886,10 +2223,10 @@ export const CityQuizMapView: React.FC<CityQuizMapViewProps> = ({
                         <span
                           className={`absolute inset-1 rounded-full border pointer-events-none ${
                             isCurrent
-                              ? 'border-amber-400/40'
+                              ? 'border-amber-400/45'
                               : isCompleted
                               ? 'border-white/30'
-                              : 'border-stone-900/10'
+                              : 'border-stone-900/12'
                           }`}
                         />
 
@@ -1905,13 +2242,13 @@ export const CityQuizMapView: React.FC<CityQuizMapViewProps> = ({
                         )}
 
                         <span
-                          className={`absolute -bottom-2 px-1.5 rounded-full text-[9px] font-serif-editorial font-bold border shadow-2xs ${
+                          className={`absolute -bottom-2 px-1.5 rounded-full text-[9px] font-bold border shadow-2xs font-['Cinzel','Playfair_Display',serif] ${
                             isCurrent
                               ? 'bg-amber-500 text-stone-950 border-white'
                               : isCompleted
-                              ? 'bg-emerald-800 text-white border-emerald-100'
+                              ? 'bg-emerald-900 text-white border-emerald-100'
                               : isUnlocked
-                              ? 'bg-stone-900 text-white border-white'
+                              ? 'bg-stone-900 text-amber-50 border-white'
                               : 'bg-stone-300 text-stone-600 border-stone-100'
                           }`}
                         >
@@ -1919,7 +2256,7 @@ export const CityQuizMapView: React.FC<CityQuizMapViewProps> = ({
                         </span>
                       </motion.button>
 
-                      {/* District Plaque */}
+                      {/* Archival Brass-Trimmed Specimen Plaque */}
                       <button
                         type="button"
                         disabled={!isUnlocked}
@@ -1928,16 +2265,16 @@ export const CityQuizMapView: React.FC<CityQuizMapViewProps> = ({
                           gameAudio.playTap();
                           onSelectPoint(idx);
                         }}
-                        className={`absolute w-44 px-3 py-2 rounded-xl border backdrop-blur-md transition-all ${plaquePosClass} ${
+                        className={`absolute w-46 px-3.5 py-2 rounded-lg border backdrop-blur-md transition-all ${plaquePosClass} ${
                           isCurrent
-                            ? 'bg-[#FAF8F5]/96 border-stone-900 shadow-lg cursor-pointer z-20'
+                            ? 'bg-[#FCF9F2]/96 border-stone-900 ring-1 ring-amber-600/35 shadow-[0_10px_28px_-10px_rgba(28,25,23,0.38)] cursor-pointer z-20'
                             : isUnlocked
-                            ? 'bg-white/90 border-stone-300/95 hover:border-stone-700 shadow-xs cursor-pointer'
-                            : 'bg-[#F5F1E8]/85 border-stone-300/60 opacity-75 cursor-not-allowed'
+                            ? 'bg-[#FCF9F2]/92 border-[#C8BCA6] hover:border-stone-800 shadow-xs cursor-pointer'
+                            : 'bg-[#F3EEE4]/85 border-stone-300/65 opacity-75 cursor-not-allowed'
                         }`}
                       >
                         <div
-                          className={`text-[9.5px] font-mono font-bold tracking-wider uppercase truncate flex items-center gap-1 ${
+                          className={`text-[9.5px] font-mono font-semibold tracking-wider uppercase truncate flex items-center gap-1 font-numeric tabular-nums ${
                             stage.plaquePlacement === 'left'
                               ? 'justify-end'
                               : stage.plaquePlacement === 'top' ||
@@ -1965,7 +2302,7 @@ export const CityQuizMapView: React.FC<CityQuizMapViewProps> = ({
                         <div className="font-serif-editorial text-xs font-bold text-stone-900 truncate mt-0.5">
                           {stage.districtZh}
                         </div>
-                        <div className="text-[10px] text-stone-500 italic truncate font-serif-editorial">
+                        <div className="text-[10.5px] text-stone-500 italic truncate font-['Cormorant_Garamond','Playfair_Display',serif]">
                           {stage.districtFr}
                         </div>
                       </button>

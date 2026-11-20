@@ -24,6 +24,7 @@ import { MicroHabitGame } from '../components/games/MicroHabitGame';
 import { BystanderBreakerGame } from '../components/games/BystanderBreakerGame';
 import { FalsificationChallengeGame } from '../components/games/FalsificationChallengeGame';
 import { LoveAleatoricArenaGame } from '../components/games/LoveAleatoricArenaGame';
+import { ReverseAleatoricArenaGame } from '../components/games/ReverseAleatoricArenaGame';
 
 export const GamePlayPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -78,6 +79,8 @@ export const GamePlayPage: React.FC = () => {
         return <FalsificationChallengeGame />;
       case 'love-aleatoric-arena':
         return <LoveAleatoricArenaGame />;
+      case 'reverse-aleatoric-arena':
+        return <ReverseAleatoricArenaGame />;
 
       // 经典竞技场实验室
       case 'memory-lab':

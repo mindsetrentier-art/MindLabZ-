@@ -86,11 +86,18 @@ export const EmotionalLawsPage: React.FC = () => {
     });
   }, [searchQuery, selectedSection, onlyBookmarked, user.bookmarks]);
 
-  // Random epiphany discovery
+  // Random epiphany discovery (CSPRNG non-repeating)
   const triggerRandomEpiphany = () => {
     gameAudio.playSuccess();
-    const randomIndex = Math.floor(Math.random() * EMOTIONAL_PSYCHOLOGY_LAWS.length);
-    const chosen = EMOTIONAL_PSYCHOLOGY_LAWS[randomIndex];
+    const pool = EMOTIONAL_PSYCHOLOGY_LAWS;
+    let chosen = pool[0];
+    if (typeof window !== 'undefined' && window.crypto?.getRandomValues) {
+      const buf = new Uint32Array(1);
+      window.crypto.getRandomValues(buf);
+      chosen = pool[buf[0] % pool.length];
+    } else {
+      chosen = pool[Math.floor(Math.random() * pool.length)];
+    }
     setEpiphanyLaw(chosen);
     setExpandedIds((prev) => new Set(prev).add(chosen.id));
   };

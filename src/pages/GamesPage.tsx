@@ -10,10 +10,16 @@ import { DifficultySelector } from '../components/games/DifficultySelector';
 import { GameLeaderboardModule } from '../components/games/GameLeaderboardModule';
 import { ArenaHorizontalAccordion } from '../components/games/ArenaHorizontalAccordion';
 import { gameAudio } from '../utils/gameAudio';
-import { getAleatoricStats, resetAleatoricDeck } from '../utils/aleatoricEngine';
+import {
+  getAleatoricStats,
+  resetAleatoricDeck,
+  getReverseAleatoricStats,
+  resetReverseAleatoricDeck,
+} from '../utils/aleatoricEngine';
 import { MICROEXPRESSION_LAWS } from '../data/microexpressionLaws';
+import { REVERSE_SCENARIOS, REVERSE_CATEGORIES } from '../data/reversePsychologyLaws';
 
-const GAME_CATEGORIES = ['全部', '心理学核心实验', '认知', '决策', '社会', '情绪', '习惯', '记忆', '逻辑'];
+const GAME_CATEGORIES = ['全部', '零重复随机博弈', '心理学核心实验', '认知', '决策', '社会', '情绪', '习惯', '记忆', '逻辑'];
 
 export const GamesPage: React.FC = () => {
   const navigate = useNavigate();
@@ -22,6 +28,7 @@ export const GamesPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [isMuted, setIsMuted] = useState(() => gameAudio.getMuted());
   const [aleatoricStats, setAleatoricStats] = useState(() => getAleatoricStats());
+  const [reverseStats, setReverseStats] = useState(() => getReverseAleatoricStats());
 
   const [arenaDifficulty, setArenaDifficulty] = useState<GameDifficulty>(() => {
     try {
@@ -62,6 +69,8 @@ export const GamesPage: React.FC = () => {
 
   const filteredGames = selectedCat === '全部'
     ? PSYCHOLOGY_GAMES
+    : selectedCat === '零重复随机博弈'
+    ? PSYCHOLOGY_GAMES.filter(g => g.id === 'love-aleatoric-arena' || g.id === 'reverse-aleatoric-arena')
     : selectedCat === '心理学核心实验' || selectedCat === '10款心理学小游戏'
     ? PSYCHOLOGY_GAMES.filter(g => Boolean(g.numberPrefix))
     : PSYCHOLOGY_GAMES.filter(g => g.category === selectedCat);
@@ -330,12 +339,131 @@ export const GamesPage: React.FC = () => {
                 resetAleatoricDeck();
                 setAleatoricStats(getAleatoricStats());
               }}
-              className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-stone-200 text-[11px] font-semibold flex items-center justify-center gap-1.5 cursor-pointer"
+              className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-stone-200 text-[11px] font-semibold flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
             >
               <RotateCcw className="w-3 h-3" />
               <span>重置全库防重洗牌盒</span>
             </button>
           )}
+        </div>
+      </section>
+
+      {/* Featured Reverse Psychology 100 CSPRNG Arena & Scenario/Category Matrix */}
+      <section className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-[#0F2A2A] via-[#132635] to-[#111827] text-white p-5 sm:p-7 border border-teal-400/35 shadow-xl space-y-5">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
+          <div className="space-y-2 max-w-2xl">
+            <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono">
+              <span className="inline-flex items-center gap-1.5 text-teal-300 font-bold">
+                <Shuffle className="w-3.5 h-3.5" />
+                <span>REVERSE PSYCHOLOGY · CSPRNG 100 DECK</span>
+              </span>
+              <span className="text-stone-500" aria-hidden="true">/</span>
+              <span className="text-amber-300 font-bold tabular-nums">
+                {reverseStats.totalConcepts} 词条 × 5 视角 = {reverseStats.totalUniqueEncounters} 张零重复题卡
+              </span>
+            </div>
+            <h3 className="font-serif-editorial text-xl sm:text-2xl font-bold text-white">
+              逆向心理学与心理抗拒 · 100 律真随机实战竞技场
+            </h3>
+            <p className="text-xs sm:text-sm text-stone-300 leading-relaxed">
+              全量导入「心理抗拒、自由威胁、禁果效应、双面信息与伦理边界」20 章 × 5 大沟通场景。每次开局通过 CSPRNG 真随机洗牌并锁定跨局冷却队列，当前已探索{' '}
+              <strong className="text-amber-300 font-numeric tabular-nums">
+                {reverseStats.seenEncountersCount} / {reverseStats.totalUniqueEncounters}
+              </strong>{' '}
+              张题卡（覆盖 <strong className="text-emerald-300 font-numeric tabular-nums">{reverseStats.uniqueConceptsExplored}</strong> / {reverseStats.totalConcepts} 律）。
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row md:flex-col gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                gameAudio.playSuccess();
+                navigate(`/game/reverse-aleatoric-arena?difficulty=${encodeURIComponent(arenaDifficulty)}`);
+              }}
+              className="px-5 py-3 rounded-xl bg-teal-600 hover:bg-teal-500 text-white font-bold text-xs sm:text-sm shadow-lg flex items-center justify-center gap-2 cursor-pointer active:scale-95 whitespace-nowrap shrink-0 transition-colors"
+            >
+              <Shuffle className="w-4 h-4" />
+              <span>开启逆向心理真随机对战</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  gameAudio.playTap();
+                  navigate('/learn?mode=reverse');
+                }}
+                className="flex-1 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-teal-100 text-[11px] font-semibold flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
+              >
+                <BookOpen className="w-3 h-3" />
+                <span>定律随听馆查看 100 律</span>
+              </button>
+
+              {reverseStats.seenEncountersCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    gameAudio.playTap();
+                    resetReverseAleatoricDeck();
+                    setReverseStats(getReverseAleatoricStats());
+                  }}
+                  className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-stone-200 text-[11px] font-semibold flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap shrink-0"
+                  title="重置逆向心理防重洗牌盒"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  <span>重置洗牌</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Fast Categorized Scenario Launchers */}
+        <div className="pt-3 border-t border-white/10 grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <span className="text-[11px] font-mono text-teal-300 font-bold block">
+              按 5 大高频沟通场景一键随机挑战：
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {REVERSE_SCENARIOS.map((sc) => (
+                <button
+                  key={sc.id}
+                  type="button"
+                  onClick={() => {
+                    gameAudio.playTap();
+                    navigate(`/game/reverse-aleatoric-arena?scenario=${encodeURIComponent(sc.id)}&difficulty=${encodeURIComponent(arenaDifficulty)}`);
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 text-xs font-semibold text-white flex items-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap shrink-0"
+                >
+                  <span>{sc.label}</span>
+                  <span className="text-[10px] font-mono text-teal-300 tabular-nums">{sc.count}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <span className="text-[11px] font-mono text-amber-300 font-bold block">
+              按 12 大心理机制分类直达：
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {REVERSE_CATEGORIES.map((cat) => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => {
+                    gameAudio.playTap();
+                    navigate(`/game/reverse-aleatoric-arena?category=${encodeURIComponent(cat.id)}&difficulty=${encodeURIComponent(arenaDifficulty)}`);
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-black/25 hover:bg-white/15 border border-white/12 text-[11px] font-medium text-stone-200 hover:text-white cursor-pointer transition-colors whitespace-nowrap shrink-0"
+                >
+                  {cat.label} ({cat.count})
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 

@@ -178,6 +178,22 @@ export const PSYCHOLOGY_GAMES: GameDefinition[] = [
     relatedLawId: 'love-001',
     accentColor: '#E11D48'
   },
+  {
+    id: 'reverse-aleatoric-arena',
+    numberPrefix: '12',
+    name: 'Reverse Psychology Aleatoric Arena',
+    nameEn: '100-Card Reactance & Autonomy CSPRNG Arena',
+    nameZh: '逆向心理 · 100律极速博弈',
+    description: '全量导入 100 条逆向心理学与心理抗拒词条（20 章 × 5 大实战场景 × 5 种出题变式 = 500 张题卡），加密真随机零重复出题！',
+    category: '认知',
+    difficulty: 'Medium',
+    bestScore: 5600,
+    icon: 'shuffle',
+    estimatedTime: '110秒',
+    conceptLearned: '心理抗拒理论、禁果效应、逆反边界与自主支持型沟通策略',
+    relatedLawId: 'rev0101',
+    accentColor: '#0D9488'
+  },
 
   // 经典神经竞技实验室 (原有矩阵/反应游戏)
   {
