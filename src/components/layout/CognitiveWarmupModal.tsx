@@ -7,11 +7,15 @@ import {
   ArrowRight,
   RefreshCw,
   X,
+  Compass,
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import {
   drawCognitiveWarmupTask,
+  inferUserPracticeProfile,
   PatternTileSpec,
+  PRACTICE_DOMAIN_META,
+  PracticeDomainFocus,
   WarmupTask,
 } from '../../utils/cognitiveWarmupTasks';
 import { gameAudio } from '../../utils/gameAudio';
@@ -33,6 +37,14 @@ const WARMUP_SECONDS = 30;
 const LAUNCH_DELAY_MS = 420;
 const EXIT_DURATION_MS = 220;
 const DAILY_XP_BONUS = 15;
+
+const DOMAIN_FOCUS_OPTIONS: Array<{ id: 'auto' | PracticeDomainFocus; labelZh: string }> = [
+  { id: 'auto', labelZh: '智能匹配' },
+  { id: 'cognitive-bias', labelZh: '心理偏差' },
+  { id: 'decision-science', labelZh: '决策科学' },
+  { id: 'memory-pattern', labelZh: '模式记忆' },
+  { id: 'social-emotion', labelZh: '情绪社会' },
+];
 
 function getLocalDateKey(): string {
   const now = new Date();
@@ -200,7 +212,6 @@ const PatternGlyph: React.FC<{ tile: PatternTileSpec; size?: number }> = ({
         )}
       </g>
 
-      {/* Directional indicator dot (absolute frame so rotation vs dot rule stays crisp) */}
       <circle cx={dot.cx} cy={dot.cy} r="4" fill="#532CD8" />
     </svg>
   );
@@ -210,10 +221,11 @@ export const CognitiveWarmupModal: React.FC<CognitiveWarmupModalProps> = ({
   isPlayingGame = false,
   onComplete,
 }) => {
-  const { addXP } = useApp();
+  const { user, laws, addXP } = useApp();
 
   const [mounted, setMounted] = useState(false);
   const [exiting, setExiting] = useState(false);
+  const [selectedFocus, setSelectedFocus] = useState<'auto' | PracticeDomainFocus>('auto');
   const [task, setTask] = useState<WarmupTask | null>(null);
   const [roundSeed, setRoundSeed] = useState(0);
   const [secondsLeft, setSecondsLeft] = useState(WARMUP_SECONDS);
@@ -228,6 +240,14 @@ export const CognitiveWarmupModal: React.FC<CognitiveWarmupModalProps> = ({
 
   const todayKey = useMemo(() => getLocalDateKey(), []);
   const yesterdayKey = useMemo(() => getYesterdayDateKey(), []);
+
+  const practiceProfile = useMemo(
+    () => inferUserPracticeProfile(user, laws),
+    [user, laws]
+  );
+
+  const effectiveFocus: PracticeDomainFocus =
+    selectedFocus === 'auto' ? practiceProfile.primaryFocus : selectedFocus;
 
   const finishWarmup = useCallback(
     (muteToday = false) => {
@@ -260,9 +280,9 @@ export const CognitiveWarmupModal: React.FC<CognitiveWarmupModalProps> = ({
     [onComplete, todayKey]
   );
 
-  // Schedule launch warmup before DailyLawPushNotification
+  // Schedule targeted launch warmup before DailyLawPushNotification
   useEffect(() => {
-    if (hasFinishedRef.current || mounted) return;
+    if (hasFinishedRef.current || mounted || laws.length === 0) return;
 
     if (isPlayingGame) {
       hasFinishedRef.current = true;
@@ -277,7 +297,10 @@ export const CognitiveWarmupModal: React.FC<CognitiveWarmupModalProps> = ({
       return;
     }
 
-    const initialTask = drawCognitiveWarmupTask();
+    const initialTask = drawCognitiveWarmupTask({
+      focus: practiceProfile.primaryFocus,
+      profile: practiceProfile,
+    });
     setTask(initialTask);
 
     launchTimerRef.current = window.setTimeout(() => {
@@ -293,11 +316,11 @@ export const CognitiveWarmupModal: React.FC<CognitiveWarmupModalProps> = ({
         window.clearTimeout(launchTimerRef.current);
       }
     };
-  }, [isPlayingGame, mounted, onComplete, todayKey]);
+  }, [isPlayingGame, laws.length, mounted, onComplete, practiceProfile, todayKey]);
 
-  // 30-second countdown interval while task is open and unanswered
   const isResolved = selectedIndex !== null || timedOut;
 
+  // 30-second countdown interval while task is open and unanswered
   useEffect(() => {
     if (!mounted || exiting || isResolved) {
       if (countdownTimerRef.current !== null) {
@@ -350,7 +373,7 @@ export const CognitiveWarmupModal: React.FC<CognitiveWarmupModalProps> = ({
             streak: nextStreak,
             totalCompleted: stored.totalCompleted + 1,
           });
-          addXP(DAILY_XP_BONUS, '每日认知热身校准');
+          addXP(DAILY_XP_BONUS, '每日定制认知热身');
           setXpAwardedThisSession(DAILY_XP_BONUS);
         } else {
           writeWarmupState({
@@ -365,14 +388,34 @@ export const CognitiveWarmupModal: React.FC<CognitiveWarmupModalProps> = ({
     [addXP, isResolved, task, todayKey, yesterdayKey]
   );
 
+  const loadTaskForFocus = useCallback(
+    (targetFocus: PracticeDomainFocus) => {
+      const nextTask = drawCognitiveWarmupTask({
+        focus: targetFocus,
+        profile: practiceProfile,
+        excludeDomain: task?.domain,
+        excludeTaskId: task?.id,
+      });
+      setTask(nextTask);
+      setSelectedIndex(null);
+      setTimedOut(false);
+      setSecondsLeft(WARMUP_SECONDS);
+      setRoundSeed((prev) => prev + 1);
+    },
+    [practiceProfile, task?.domain, task?.id]
+  );
+
   const handleAnotherWarmup = () => {
     gameAudio.playTap();
-    const nextTask = drawCognitiveWarmupTask(task?.domain);
-    setTask(nextTask);
-    setSelectedIndex(null);
-    setTimedOut(false);
-    setSecondsLeft(WARMUP_SECONDS);
-    setRoundSeed((prev) => prev + 1);
+    loadTaskForFocus(effectiveFocus);
+  };
+
+  const handleChangeFocus = (nextMode: 'auto' | PracticeDomainFocus) => {
+    if (selectedFocus === nextMode) return;
+    gameAudio.playTap();
+    setSelectedFocus(nextMode);
+    const resolvedFocus = nextMode === 'auto' ? practiceProfile.primaryFocus : nextMode;
+    loadTaskForFocus(resolvedFocus);
   };
 
   // Keyboard support: Escape skips, 1-4 selects options
@@ -407,6 +450,7 @@ export const CognitiveWarmupModal: React.FC<CognitiveWarmupModalProps> = ({
 
   const isCorrect = selectedIndex === task.correctIndex;
   const isPatternGrid = Boolean(task.sequenceTiles && task.options.every((o) => o.tile));
+  const activeDomainMeta = PRACTICE_DOMAIN_META[effectiveFocus];
 
   return (
     <div
@@ -433,12 +477,14 @@ export const CognitiveWarmupModal: React.FC<CognitiveWarmupModalProps> = ({
 
         <div className="p-4 sm:p-6">
           {/* Header Kicker + Timer + Close */}
-          <div className="flex items-center justify-between gap-3 mb-3">
-            <div className="flex items-center gap-1.5 min-w-0 text-[11px] uppercase tracking-[0.12em] font-medium text-stone-500 truncate">
+          <div className="flex items-center justify-between gap-3 mb-2">
+            <div className="flex items-center gap-1.5 min-w-0 text-[11px] tracking-[0.06em] font-medium text-stone-500 truncate">
               <Brain className="w-3.5 h-3.5 text-[#532CD8] shrink-0" aria-hidden="true" />
               <span className="text-[#1C1917] font-semibold shrink-0">认知唤醒热身</span>
               <span aria-hidden="true">·</span>
-              <span className="truncate">{task.domainLabelZh}</span>
+              <span className="text-[#532CD8] font-semibold shrink-0">{task.focusLabelZh}</span>
+              <span aria-hidden="true">·</span>
+              <span className="truncate">{task.knowledgePoint}</span>
             </div>
 
             <div className="flex items-center gap-2 shrink-0">
@@ -466,6 +512,41 @@ export const CognitiveWarmupModal: React.FC<CognitiveWarmupModalProps> = ({
             </div>
           </div>
 
+          {/* Targeted Practice Matching Context */}
+          <div className="mb-3 flex items-start gap-1.5 text-[11px] sm:text-xs text-stone-600 leading-snug">
+            <Compass className="w-3.5 h-3.5 text-[#532CD8] shrink-0 mt-0.5" aria-hidden="true" />
+            <span>
+              {selectedFocus === 'auto'
+                ? practiceProfile.reasonText
+                : `当前手动聚焦「${activeDomainMeta.labelZh}」：${activeDomainMeta.description}`}
+            </span>
+          </div>
+
+          {/* Domain Focus Selector (Auto Match + 4 Practice Domains) */}
+          <div className="mb-3.5 flex items-center gap-1 p-1 rounded-xl bg-stone-100/90 border border-stone-200/80 overflow-x-auto no-scrollbar">
+            {DOMAIN_FOCUS_OPTIONS.map((opt) => {
+              const active = selectedFocus === opt.id;
+              const label =
+                opt.id === 'auto'
+                  ? `智能(${practiceProfile.matchedLabelZh})`
+                  : opt.labelZh;
+              return (
+                <button
+                  key={opt.id}
+                  type="button"
+                  onClick={() => handleChangeFocus(opt.id)}
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-medium transition-colors whitespace-nowrap shrink-0 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#532CD8] ${
+                    active
+                      ? 'bg-white text-[#1C1917] shadow-xs font-semibold'
+                      : 'text-stone-600 hover:text-stone-900'
+                  }`}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+
           {/* Title & Prompt */}
           <h2
             id="cognitive-warmup-title"
@@ -477,7 +558,7 @@ export const CognitiveWarmupModal: React.FC<CognitiveWarmupModalProps> = ({
 
           {/* Optional Sequence / Symbolic Sub-prompt */}
           {task.subPrompt && (
-            <div className="mt-3 px-4 py-3 rounded-xl bg-white border border-stone-200/90 text-center font-numeric tabular-nums text-base sm:text-lg font-semibold tracking-wider text-[#1C1917]">
+            <div className="mt-3 px-4 py-3 rounded-xl bg-white border border-stone-200/90 text-center font-numeric tabular-nums text-sm sm:text-base font-semibold tracking-wide text-[#1C1917]">
               {task.subPrompt}
             </div>
           )}
