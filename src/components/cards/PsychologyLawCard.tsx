@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bookmark, ChevronRight, CheckCircle2, Sparkles, Heart, Eye, Gamepad2, BookOpen, Volume2, ShieldCheck, Shuffle } from 'lucide-react';
+import { Bookmark, ChevronRight, CheckCircle2, Sparkles, Heart, Eye, Gamepad2, BookOpen, Volume2, ShieldCheck, Shuffle, Scale } from 'lucide-react';
 import { PsychologyLaw, CategoryZh } from '../../types';
 import { useApp } from '../../context/AppContext';
 import { gameAudio } from '../../utils/gameAudio';
@@ -144,6 +144,18 @@ export const PsychologyLawCard: React.FC<PsychologyLawCardProps> = ({ law, compa
               <Shuffle className="w-2.5 h-2.5" />
               <span>
                 {law.reverseCategory} · {law.reverseScenario}
+              </span>
+            </span>
+          )}
+
+          {law.isCriminalPsychology && (
+            <span
+              className="inline-flex items-center gap-1 font-mono text-[10px] font-bold px-2 py-0.5 rounded-md border bg-rose-50 text-rose-900 border-rose-200 shadow-2xs"
+              title={`犯罪心理学 · ${law.criminalCategory || ''} · ${law.criminalContext || ''}`}
+            >
+              <Scale className="w-2.5 h-2.5" />
+              <span>
+                {law.criminalCategory} · {law.criminalContext}
               </span>
             </span>
           )}
@@ -323,6 +335,19 @@ export const PsychologyLawCard: React.FC<PsychologyLawCardProps> = ({ law, compa
                 <div className="flex items-center gap-1.5 text-[11px] font-bold text-teal-900">
                   <ShieldCheck className="w-3.5 h-3.5 text-teal-700" />
                   <span>逆向心理 · 诚实沟通与自主权边界（{law.reverseScenario}）</span>
+                </div>
+                <p className="text-[11px] text-stone-700 leading-relaxed">
+                  {law.healthyBoundary}
+                </p>
+              </div>
+            )}
+
+            {/* Criminal Psychology Non-Diagnostic Scientific Boundary */}
+            {law.isCriminalPsychology && law.healthyBoundary && (
+              <div className="p-3.5 rounded-xl bg-rose-50/75 border border-rose-200/80 space-y-1">
+                <div className="flex items-center gap-1.5 text-[11px] font-bold text-rose-900">
+                  <Scale className="w-3.5 h-3.5 text-rose-800" />
+                  <span>犯罪心理学 · 研究与预防边界（{law.criminalContext}）</span>
                 </div>
                 <p className="text-[11px] text-stone-700 leading-relaxed">
                   {law.healthyBoundary}

@@ -6,6 +6,7 @@ import { getMicroexpressionsForGame } from '../../data/microexpressionLaws';
 import { useApp } from '../../context/AppContext';
 import { gameAudio } from '../../utils/gameAudio';
 import { ReversePsychologyGameDispatchCard } from './ReversePsychologyGameDispatchCard';
+import { CriminalPsychologyGameDispatchCard } from './CriminalPsychologyGameDispatchCard';
 
 interface MicroexpressionGameDispatchCardProps {
   gameId: GameType;
@@ -29,7 +30,10 @@ export const MicroexpressionGameDispatchCard: React.FC<MicroexpressionGameDispat
 
   if (dispatchedLaws.length === 0) {
     return (
-      <ReversePsychologyGameDispatchCard gameId={gameId} theme={theme} compact={compact} />
+      <div className="space-y-4 w-full">
+        <CriminalPsychologyGameDispatchCard gameId={gameId} theme={theme} compact={compact} />
+        <ReversePsychologyGameDispatchCard gameId={gameId} theme={theme} compact={compact} />
+      </div>
     );
   }
 
@@ -249,6 +253,7 @@ export const MicroexpressionGameDispatchCard: React.FC<MicroexpressionGameDispat
         })}
       </div>
 
+      <CriminalPsychologyGameDispatchCard gameId={gameId} theme={theme} compact={compact} />
       <ReversePsychologyGameDispatchCard gameId={gameId} theme={theme} compact={compact} />
     </div>
   );

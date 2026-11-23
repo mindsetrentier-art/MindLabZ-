@@ -29,6 +29,7 @@ import {
   Pause,
   SkipForward,
   ShieldCheck,
+  Scale,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useFontScale } from '../context/FontScaleContext';
@@ -64,6 +65,14 @@ import {
   REVERSE_CHAPTERS,
   REVERSE_PSYCHOLOGY_NOTE,
 } from '../data/reversePsychologyLaws';
+import {
+  CRIMINAL_PSYCHOLOGY_LAWS,
+  CRIMINAL_CATEGORIES,
+  CRIMINAL_CONTEXTS,
+  CRIMINAL_THEORY_TOPICS,
+  CRIMINAL_PSYCHOLOGY_NOTE,
+} from '../data/criminalPsychologyLaws';
+import { CylindricalThemeRoller, CylindricalThemeItem } from '../components/ui/CylindricalThemeRoller';
 
 interface CategoryOption {
   key: 'all' | CategoryZh;
@@ -168,6 +177,7 @@ const POPULAR_SEARCH_TAGS: PopularSearchTag[] = [
 
 export type LibraryCurationMode =
   | 'all_corpus'
+  | 'criminal_psychology'
   | 'reverse_psychology'
   | 'love_codex'
   | 'emotional_sections'
@@ -186,21 +196,28 @@ export const LearnPage: React.FC = () => {
   const initialMode: LibraryCurationMode =
     modeParam === 'all'
       ? 'all_corpus'
+      : modeParam === 'criminal' || modeParam === 'criminal_psychology'
+      ? 'criminal_psychology'
       : modeParam === 'reverse' || modeParam === 'reverse_psychology'
       ? 'reverse_psychology'
+      : modeParam === 'love'
+      ? 'love_codex'
       : modeParam === 'classic'
       ? 'classic_domains'
       : modeParam === 'emotional'
       ? 'emotional_sections'
       : modeParam === 'microexpressions'
       ? 'microexpressions'
-      : 'reverse_psychology';
+      : 'criminal_psychology';
   const initialSectionParam = searchParams.get('section');
   const initialSection = initialSectionParam ? (Number(initialSectionParam) as number) || 'all' : 'all';
 
   const [curationMode, setCurationMode] = useState<LibraryCurationMode>(initialMode);
   const [sortMode, setSortMode] = useState<'aleatoric' | 'sequential'>('aleatoric');
   const [shuffleNonce, setShuffleNonce] = useState<number>(1);
+  const [selectedCriminalContext, setSelectedCriminalContext] = useState<string>('all');
+  const [selectedCriminalCategory, setSelectedCriminalCategory] = useState<string>('all');
+  const [selectedCriminalTheory, setSelectedCriminalTheory] = useState<string>('all');
   const [selectedReverseScenario, setSelectedReverseScenario] = useState<string>('all');
   const [selectedReverseCategory, setSelectedReverseCategory] = useState<string>('all');
   const [selectedReverseChapter, setSelectedReverseChapter] = useState<string>('all');
@@ -233,6 +250,8 @@ export const LearnPage: React.FC = () => {
     const urlMode = searchParams.get('mode');
     if (urlMode === 'all') {
       setCurationMode('all_corpus');
+    } else if (urlMode === 'criminal' || urlMode === 'criminal_psychology') {
+      setCurationMode('criminal_psychology');
     } else if (urlMode === 'reverse' || urlMode === 'reverse_psychology') {
       setCurationMode('reverse_psychology');
     } else if (urlMode === 'love') {
@@ -333,7 +352,9 @@ export const LearnPage: React.FC = () => {
   // Trigger CSPRNG non-repeating random inspiring law discovery
   const handleRandomEpiphany = () => {
     const pool =
-      curationMode === 'reverse_psychology'
+      curationMode === 'criminal_psychology'
+        ? CRIMINAL_PSYCHOLOGY_LAWS
+        : curationMode === 'reverse_psychology'
         ? REVERSE_PSYCHOLOGY_LAWS
         : curationMode === 'love_codex'
         ? LOVE_PSYCHOLOGY_LAWS
@@ -354,6 +375,20 @@ export const LearnPage: React.FC = () => {
         const matchesCategory = selectedCategory === 'all' || law.categoryZh === selectedCategory;
         const matchesDiff = selectedDifficulty === 'all' || law.difficulty === selectedDifficulty;
         return matchesCategory && matchesDiff;
+      }
+
+      if (curationMode === 'criminal_psychology') {
+        if (!law.isCriminalPsychology) return false;
+        if (selectedCriminalContext !== 'all' && law.criminalContext !== selectedCriminalContext) {
+          return false;
+        }
+        if (selectedCriminalCategory !== 'all' && law.criminalCategory !== selectedCriminalCategory) {
+          return false;
+        }
+        if (selectedCriminalTheory !== 'all' && law.criminalTheoryName !== selectedCriminalTheory) {
+          return false;
+        }
+        return true;
       }
 
       if (curationMode === 'reverse_psychology') {
@@ -404,7 +439,7 @@ export const LearnPage: React.FC = () => {
         return true;
       }
 
-      if (law.isLoveCodex || law.isReversePsychology) return false;
+      if (law.isLoveCodex || law.isReversePsychology || law.isCriminalPsychology) return false;
       const matchesCategory = selectedCategory === 'all' || law.categoryZh === selectedCategory;
       const matchesChapter = selectedChapter === 'all' || law.chapter === selectedChapter;
       return matchesCategory && matchesChapter;
@@ -413,7 +448,7 @@ export const LearnPage: React.FC = () => {
     if (sortMode === 'aleatoric') {
       return drawNonRepeatingLawOrder(
         subset,
-        `library::${curationMode}::${selectedReverseScenario}::${selectedReverseCategory}::${selectedCategory}`,
+        `library::${curationMode}::${selectedCriminalContext}::${selectedCriminalCategory}::${selectedCriminalTheory}::${selectedReverseScenario}::${selectedReverseCategory}::${selectedCategory}`,
         { markHeadCount: Math.min(24, Math.max(4, Math.ceil(subset.length * 0.25))) }
       );
     }
@@ -440,6 +475,9 @@ export const LearnPage: React.FC = () => {
     curationMode,
     sortMode,
     shuffleNonce,
+    selectedCriminalContext,
+    selectedCriminalCategory,
+    selectedCriminalTheory,
     selectedReverseScenario,
     selectedReverseCategory,
     selectedReverseChapter,
@@ -464,6 +502,9 @@ export const LearnPage: React.FC = () => {
         law.nameEn.toLowerCase().includes(q) ||
         law.shortExplanation.toLowerCase().includes(q) ||
         law.detailedExplanation.toLowerCase().includes(q) ||
+        (law.criminalCategory && law.criminalCategory.toLowerCase().includes(q)) ||
+        (law.criminalContext && law.criminalContext.toLowerCase().includes(q)) ||
+        (law.criminalTheoryName && law.criminalTheoryName.toLowerCase().includes(q)) ||
         (law.reverseCategory && law.reverseCategory.toLowerCase().includes(q)) ||
         (law.reverseScenario && law.reverseScenario.toLowerCase().includes(q)) ||
         (law.actionUnitCode && law.actionUnitCode.toLowerCase().includes(q)) ||
@@ -476,6 +517,75 @@ export const LearnPage: React.FC = () => {
       );
     });
   }, [baseModeLaws, searchQuery]);
+
+  const rollerItems: CylindricalThemeItem[] = useMemo(
+    () => [
+      {
+        id: 'all_corpus',
+        label: '全库真随机总览',
+        group: '总览全景',
+        count: laws.length,
+        subtitle: '全馆藏实时洗牌',
+        accentColor: '#D97706',
+        icon: <Sparkles className="w-3.5 h-3.5" />,
+      },
+      {
+        id: 'criminal_psychology',
+        label: '犯罪心理学与预防',
+        group: '实战心理专题',
+        count: CRIMINAL_PSYCHOLOGY_LAWS.length,
+        subtitle: '4 大理论 × 5 大场景',
+        accentColor: '#9F1239',
+        icon: <Scale className="w-3.5 h-3.5" />,
+      },
+      {
+        id: 'reverse_psychology',
+        label: '逆向心理学与抗拒',
+        group: '实战心理专题',
+        count: REVERSE_PSYCHOLOGY_LAWS.length,
+        subtitle: '20 章 × 5 大沟通场景',
+        accentColor: '#0D9488',
+        icon: <Shuffle className="w-3.5 h-3.5" />,
+      },
+      {
+        id: 'love_codex',
+        label: '爱情心理学全书',
+        group: '情感与关系',
+        count: LOVE_PSYCHOLOGY_LAWS.length,
+        subtitle: '7 大依恋与边界维度',
+        accentColor: '#E11D48',
+        icon: <Heart className="w-3.5 h-3.5" />,
+      },
+      {
+        id: 'emotional_sections',
+        label: '情感五大板块',
+        group: '情感与关系',
+        count: 50,
+        subtitle: '01-50 发展脉络',
+        accentColor: '#B45309',
+        icon: <Crown className="w-3.5 h-3.5" />,
+      },
+      {
+        id: 'microexpressions',
+        label: '微表情与动作',
+        group: '经典实证展厅',
+        count: MICROEXPRESSION_LAWS.length,
+        subtitle: 'FACS 动作单元排榜',
+        accentColor: '#4338CA',
+        icon: <Eye className="w-3.5 h-3.5" />,
+      },
+      {
+        id: 'classic_domains',
+        label: '经典六大展厅',
+        group: '经典实证展厅',
+        count: 142,
+        subtitle: '认知 / 记忆 / 决策 / 社会',
+        accentColor: '#1C1917',
+        icon: <Layers className="w-3.5 h-3.5" />,
+      },
+    ],
+    [laws.length]
+  );
 
   // Continuous Web Speech Audio Queue Handler (听力库随听连播)
   const speakLawAt = (idx: number, rateOverride: number = audioRate) => {
@@ -565,7 +675,7 @@ export const LearnPage: React.FC = () => {
               </span>
               <span className="text-stone-500" aria-hidden="true">/</span>
               <span className="text-stone-300 font-serif-editorial italic font-sans">
-                ML001–ML010 · REV0101–REV2005 · LAW001–LAW142 · LOVE001–LOVE{LOVE_PSYCHOLOGY_LAWS.length}
+                CRIM001–CRIM{CRIMINAL_PSYCHOLOGY_LAWS.length} · ML001–ML010 · REV0101–REV2005 · LAW001–LAW142 · LOVE001–LOVE{LOVE_PSYCHOLOGY_LAWS.length}
               </span>
             </div>
 
@@ -576,7 +686,7 @@ export const LearnPage: React.FC = () => {
 
             {/* Editorial Dek */}
             <p className="text-xs sm:text-sm text-stone-300/90 font-normal leading-relaxed">
-              全量收录 {REVERSE_PSYCHOLOGY_LAWS.length} 条逆向心理学与心理抗拒词条（REV）、{MICROEXPRESSION_LAWS.length} 条微表情实证定律（ML）、142 条经典心智规律及 {LOVE_PSYCHOLOGY_LAWS.length} 条爱情心理学词条，配备 CSPRNG 零重复洗牌与语音随听连播。
+              全量收录 {CRIMINAL_PSYCHOLOGY_LAWS.length} 条犯罪心理学理论与应用卡（CRIM）、{REVERSE_PSYCHOLOGY_LAWS.length} 条逆向心理学与心理抗拒词条（REV）、{MICROEXPRESSION_LAWS.length} 条微表情实证定律（ML）、142 条经典心智规律及 {LOVE_PSYCHOLOGY_LAWS.length} 条爱情心理学词条，配备 CSPRNG 零重复洗牌与语音随听连播。
             </p>
 
             {/* Curatorial Index Stats */}
@@ -777,85 +887,13 @@ export const LearnPage: React.FC = () => {
 
         {/* Curatorial Taxonomy Switcher + CSPRNG True Shuffle & Audio Listening Bar */}
         <div className="space-y-3 pt-1">
-          <div className="flex items-center p-1 bg-stone-100/90 border border-stone-200/90 rounded-2xl shadow-inner max-w-full overflow-x-auto no-scrollbar gap-1">
-            <button
-              onClick={() => handleCurationModeChange('all_corpus')}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer active:scale-95 ${
-                curationMode === 'all_corpus'
-                  ? 'bg-stone-900 text-amber-200 shadow-md'
-                  : 'text-stone-600 hover:text-stone-900'
-              }`}
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>全库真随机总览</span>
-              <span className="font-mono text-[10px] tabular-nums opacity-80">({laws.length})</span>
-            </button>
-
-            <button
-              onClick={() => handleCurationModeChange('reverse_psychology')}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer active:scale-95 ${
-                curationMode === 'reverse_psychology'
-                  ? 'bg-teal-800 text-teal-100 shadow-md border border-teal-400/35'
-                  : 'text-stone-600 hover:text-stone-900'
-              }`}
-            >
-              <Shuffle className={`w-3.5 h-3.5 ${curationMode === 'reverse_psychology' ? 'text-teal-300' : 'text-teal-700'}`} />
-              <span>逆向心理学与抗拒</span>
-              <span className="font-mono text-[10px] tabular-nums opacity-80">({REVERSE_PSYCHOLOGY_LAWS.length})</span>
-            </button>
-
-            <button
-              onClick={() => handleCurationModeChange('love_codex')}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer active:scale-95 ${
-                curationMode === 'love_codex'
-                  ? 'bg-gradient-to-r from-rose-900 via-stone-900 to-amber-950 text-rose-200 shadow-md border border-rose-400/35'
-                  : 'text-stone-600 hover:text-stone-900'
-              }`}
-            >
-              <Heart className={`w-3.5 h-3.5 ${curationMode === 'love_codex' ? 'fill-rose-400 text-rose-400' : 'text-rose-500'}`} />
-              <span>爱情心理学全书</span>
-              <span className="font-mono text-[10px] tabular-nums opacity-80">({LOVE_PSYCHOLOGY_LAWS.length})</span>
-            </button>
-
-            <button
-              onClick={() => handleCurationModeChange('emotional_sections')}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer active:scale-95 ${
-                curationMode === 'emotional_sections'
-                  ? 'bg-stone-900 text-amber-300 shadow-md border border-amber-500/30'
-                  : 'text-stone-600 hover:text-stone-900'
-              }`}
-            >
-              <Crown className={`w-3.5 h-3.5 ${curationMode === 'emotional_sections' ? 'fill-amber-400 text-amber-400' : 'text-stone-500'}`} />
-              <span>情感五大板块</span>
-              <span className="font-mono text-[10px] tabular-nums opacity-80">(50)</span>
-            </button>
-
-            <button
-              onClick={() => handleCurationModeChange('microexpressions')}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer active:scale-95 ${
-                curationMode === 'microexpressions'
-                  ? 'bg-indigo-900 text-indigo-100 shadow-md border border-indigo-400/35'
-                  : 'text-stone-600 hover:text-stone-900'
-              }`}
-            >
-              <Eye className={`w-3.5 h-3.5 ${curationMode === 'microexpressions' ? 'text-amber-300' : 'text-indigo-600'}`} />
-              <span>微表情与动作</span>
-              <span className="font-mono text-[10px] tabular-nums opacity-80">({MICROEXPRESSION_LAWS.length})</span>
-            </button>
-
-            <button
-              onClick={() => handleCurationModeChange('classic_domains')}
-              className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer active:scale-95 ${
-                curationMode === 'classic_domains'
-                  ? 'bg-stone-900 text-white shadow-md'
-                  : 'text-stone-600 hover:text-stone-900'
-              }`}
-            >
-              <Layers className="w-3.5 h-3.5" />
-              <span>经典六大展厅</span>
-              <span className="font-mono text-[10px] tabular-nums opacity-80">(142)</span>
-            </button>
-          </div>
+          <CylindricalThemeRoller
+            title="定律库专题滚筒导航 · 按类别归档速查"
+            variant="library"
+            items={rollerItems}
+            activeId={curationMode}
+            onChange={(nextId) => handleCurationModeChange(nextId as LibraryCurationMode)}
+          />
 
           {/* CSPRNG Shuffle & Audio Listening Bar (随听图书馆控制台) */}
           <div className="bg-white rounded-2xl p-3.5 sm:p-4 border border-stone-200/90 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-3">
@@ -984,7 +1022,139 @@ export const LearnPage: React.FC = () => {
         </div>
 
         {/* 3. Category Controls depending on active Taxonomy Mode */}
-        {curationMode === 'reverse_psychology' ? (
+        {curationMode === 'criminal_psychology' ? (
+          <div className="space-y-4">
+            {/* Scientific Non-Diagnostic Disclaimer Banner */}
+            <div className="rounded-2xl p-4 bg-rose-50/85 border border-rose-200/90 text-xs text-rose-950 flex items-start gap-2.5 leading-relaxed">
+              <Scale className="w-4 h-4 text-rose-800 shrink-0 mt-0.5" />
+              <div>
+                <strong className="font-bold">犯罪心理学 100 律专题分类导航 · </strong>
+                <span>{CRIMINAL_PSYCHOLOGY_NOTE}</span>
+              </div>
+            </div>
+
+            {/* Axis 1: 5 Observation & Prevention Contexts */}
+            <div className="space-y-1.5">
+              <div className="text-[11px] font-mono font-bold text-stone-500">
+                ① 按 5 大观察与预防场景快速定位：
+              </div>
+              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+                <button
+                  onClick={() => {
+                    gameAudio.playSelect();
+                    setSelectedCriminalContext('all');
+                  }}
+                  className={`text-xs font-bold px-4 py-2 rounded-xl transition-all shrink-0 whitespace-nowrap cursor-pointer ${
+                    selectedCriminalContext === 'all'
+                      ? 'bg-stone-900 text-white shadow-sm'
+                      : 'bg-white text-stone-700 border border-stone-200 hover:border-stone-400'
+                  }`}
+                >
+                  全部场景 ({CRIMINAL_PSYCHOLOGY_LAWS.length})
+                </button>
+                {CRIMINAL_CONTEXTS.map((ctx) => {
+                  const isSelected = selectedCriminalContext === ctx.id;
+                  return (
+                    <button
+                      key={ctx.id}
+                      onClick={() => {
+                        gameAudio.playSelect();
+                        setSelectedCriminalContext(ctx.id);
+                      }}
+                      className={`text-xs font-bold px-3.5 py-2 rounded-xl transition-all shrink-0 whitespace-nowrap cursor-pointer ${
+                        isSelected
+                          ? 'text-white shadow-sm'
+                          : 'bg-white text-stone-700 border border-stone-200 hover:border-stone-400'
+                      }`}
+                      style={isSelected ? { backgroundColor: ctx.color } : undefined}
+                    >
+                      {ctx.label} ({ctx.count})
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Axis 2: 4 Core Theoretical Categories */}
+            <div className="space-y-1.5">
+              <div className="text-[11px] font-mono font-bold text-stone-500">
+                ② 按 4 大核心理论领域精准过滤：
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  onClick={() => {
+                    gameAudio.playTap();
+                    setSelectedCriminalCategory('all');
+                  }}
+                  className={`text-[11px] font-bold px-3 py-1.5 rounded-lg border cursor-pointer whitespace-nowrap shrink-0 ${
+                    selectedCriminalCategory === 'all'
+                      ? 'bg-rose-800 text-white border-rose-800'
+                      : 'bg-white text-stone-700 border-stone-200 hover:border-stone-400'
+                  }`}
+                >
+                  全部领域 (4)
+                </button>
+                {CRIMINAL_CATEGORIES.map((cat) => {
+                  const isSelected = selectedCriminalCategory === cat.id;
+                  return (
+                    <button
+                      key={cat.id}
+                      onClick={() => {
+                        gameAudio.playTap();
+                        setSelectedCriminalCategory(cat.id);
+                      }}
+                      className={`text-[11px] font-bold px-3 py-1.5 rounded-lg border cursor-pointer whitespace-nowrap shrink-0 transition-colors ${
+                        isSelected
+                          ? 'text-white'
+                          : 'bg-white text-stone-700 border-stone-200 hover:border-stone-400'
+                      }`}
+                      style={
+                        isSelected
+                          ? { backgroundColor: cat.color, borderColor: cat.color }
+                          : undefined
+                      }
+                    >
+                      {cat.label} ({cat.count})
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Axis 3: 20 Core Theory Topics Quick Selector */}
+            <div className="bg-stone-50/90 p-2.5 rounded-2xl border border-stone-200/80 flex items-center gap-1.5 overflow-x-auto no-scrollbar text-xs">
+              <button
+                onClick={() => {
+                  gameAudio.playTap();
+                  setSelectedCriminalTheory('all');
+                }}
+                className={`text-[11px] font-bold px-3 py-1.5 rounded-xl shrink-0 cursor-pointer whitespace-nowrap ${
+                  selectedCriminalTheory === 'all'
+                    ? 'bg-stone-900 text-white'
+                    : 'text-stone-600 hover:bg-stone-200/70'
+                }`}
+              >
+                全部 20 大核心理论 (5视角/题)
+              </button>
+              {CRIMINAL_THEORY_TOPICS.map((topic) => (
+                <button
+                  key={topic.id}
+                  onClick={() => {
+                    gameAudio.playTap();
+                    setSelectedCriminalTheory(topic.id);
+                  }}
+                  className={`text-[11px] font-medium px-3 py-1.5 rounded-xl shrink-0 cursor-pointer whitespace-nowrap ${
+                    selectedCriminalTheory === topic.id
+                      ? 'bg-rose-800 text-white font-bold'
+                      : 'text-stone-600 hover:bg-stone-200/70'
+                  }`}
+                >
+                  {topic.titleZh}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : curationMode === 'reverse_psychology' ? (
           <div className="space-y-4">
             {/* Scientific Disclaimer Banner */}
             <div className="rounded-2xl p-4 bg-teal-50/80 border border-teal-200/90 text-xs text-teal-950 flex items-start gap-2.5 leading-relaxed">
@@ -1670,7 +1840,9 @@ export const LearnPage: React.FC = () => {
           )}
         </div>
 
-        {((curationMode === 'reverse_psychology'
+        {((curationMode === 'criminal_psychology'
+          ? selectedCriminalContext !== 'all' || selectedCriminalCategory !== 'all' || selectedCriminalTheory !== 'all'
+          : curationMode === 'reverse_psychology'
           ? selectedReverseScenario !== 'all' || selectedReverseCategory !== 'all' || selectedReverseChapter !== 'all'
           : curationMode === 'love_codex'
           ? selectedLoveDomain !== 'all' || selectedLoveSubTag !== 'all' || selectedDifficulty !== 'all'
@@ -1685,6 +1857,9 @@ export const LearnPage: React.FC = () => {
             onClick={() => {
               gameAudio.playTap();
               setSearchQuery('');
+              setSelectedCriminalContext('all');
+              setSelectedCriminalCategory('all');
+              setSelectedCriminalTheory('all');
               setSelectedReverseScenario('all');
               setSelectedReverseCategory('all');
               setSelectedReverseChapter('all');

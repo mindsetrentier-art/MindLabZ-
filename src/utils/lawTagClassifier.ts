@@ -1,6 +1,7 @@
 import { PsychologyLaw } from '../types';
 
 export type LibraryTagId =
+  | 'criminal-psychology'
   | 'reverse-psychology'
   | 'microexpressions'
   | 'cognitive-bias'
@@ -18,6 +19,12 @@ export interface LibraryTagDefinition {
 }
 
 export const LIBRARY_TAG_DEFINITIONS: LibraryTagDefinition[] = [
+  {
+    id: 'criminal-psychology',
+    labelZh: '犯罪心理学',
+    labelEn: 'Criminal Psychology',
+    description: '多因素风险模型、暴力攻击机制、道德脱离与预防边界',
+  },
   {
     id: 'reverse-psychology',
     labelZh: '逆向心理学',
@@ -84,6 +91,10 @@ export function getLawClassificationTags(law: PsychologyLaw): LibraryTagId[] {
     law.reverseCategory || '',
     law.shortExplanation,
   ].join(' ');
+
+  if (law.isCriminalPsychology || /犯罪|暴力|攻击|道德脱离|精神病态|去人性化|责任分散/i.test(haystack)) {
+    tags.add('criminal-psychology');
+  }
 
   if (law.isReversePsychology || REVERSE_PATTERN.test(haystack)) {
     tags.add('reverse-psychology');

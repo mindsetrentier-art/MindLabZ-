@@ -18,18 +18,30 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/profile', label: '我的', icon: User },
 ];
 
+interface CapsuleGeometry {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  opacity: number;
+}
+
+interface CapsuleMotionState {
+  scaleX: number;
+  scaleY: number;
+  origin: 'left center' | 'right center' | 'center center';
+  phase: 'idle' | 'stretching' | 'settling';
+}
+
+const STRETCH_RELEASE_MS = 140;
+const SETTLE_IDLE_MS = 400;
+
 export const BottomNavigation: React.FC = () => {
   const location = useLocation();
   const containerRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLAnchorElement | null)[]>([]);
 
-  const [highlightStyle, setHighlightStyle] = useState<{
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-    opacity: number;
-  }>({
+  const [capsuleGeom, setCapsuleGeom] = useState<CapsuleGeometry>({
     x: 0,
     y: 0,
     width: 0,
@@ -37,9 +49,18 @@ export const BottomNavigation: React.FC = () => {
     opacity: 0,
   });
 
-  const isInitialRef = useRef(true);
+  const [motionState, setMotionState] = useState<CapsuleMotionState>({
+    scaleX: 1,
+    scaleY: 1,
+    origin: 'center center',
+    phase: 'idle',
+  });
 
-  // Compute active item index from location.pathname accurately across sub-routes
+  const isInitialRef = useRef(true);
+  const prevXRef = useRef<number | null>(null);
+  const stretchTimerRef = useRef<number | null>(null);
+  const settleTimerRef = useRef<number | null>(null);
+
   const getActiveIndex = useCallback((pathname: string): number => {
     if (pathname === '/') return 0;
     if (
@@ -75,50 +96,113 @@ export const BottomNavigation: React.FC = () => {
 
   const activeIndex = getActiveIndex(location.pathname);
 
-  const updateHighlight = useCallback(() => {
-    if (!containerRef.current) return;
-    const currentActiveIdx = getActiveIndex(location.pathname);
-    const targetEl = itemRefs.current[currentActiveIdx];
-    if (!targetEl) return;
+  const triggerDirectionalStretch = useCallback((deltaX: number) => {
+    const absDelta = Math.abs(deltaX);
+    if (absDelta < 4) return;
 
-    const containerRect = containerRef.current.getBoundingClientRect();
-    const itemRect = targetEl.getBoundingClientRect();
-    const nextX = Math.round(itemRect.left - containerRect.left);
-    const nextY = Math.round(itemRect.top - containerRect.top);
-    const nextWidth = Math.round(itemRect.width);
-    const nextHeight = Math.round(itemRect.height);
+    const prefersReducedMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) return;
 
-    setHighlightStyle((prev) => {
-      if (
-        prev.x === nextX &&
-        prev.y === nextY &&
-        prev.width === nextWidth &&
-        prev.height === nextHeight &&
-        prev.opacity === 1
-      ) {
-        return prev;
-      }
-      return {
-        x: nextX,
-        y: nextY,
-        width: nextWidth,
-        height: nextHeight,
-        opacity: 1,
-      };
+    if (stretchTimerRef.current !== null) {
+      window.clearTimeout(stretchTimerRef.current);
+      stretchTimerRef.current = null;
+    }
+    if (settleTimerRef.current !== null) {
+      window.clearTimeout(settleTimerRef.current);
+      settleTimerRef.current = null;
+    }
+
+    // Elongate along the movement axis proportional to travel distance
+    const stretchX = Math.min(1.42, 1.16 + absDelta / 540);
+    const squashY = Math.max(0.86, 1 - (stretchX - 1) * 0.34);
+    // Anchor origin on the leading side so the trailing edge lags and stretches along travel direction
+    const origin: CapsuleMotionState['origin'] =
+      deltaX > 0 ? 'right center' : 'left center';
+
+    setMotionState({
+      scaleX: stretchX,
+      scaleY: squashY,
+      origin,
+      phase: 'stretching',
     });
-  }, [location.pathname, getActiveIndex]);
+
+    stretchTimerRef.current = window.setTimeout(() => {
+      setMotionState({
+        scaleX: 1,
+        scaleY: 1,
+        origin,
+        phase: 'settling',
+      });
+
+      settleTimerRef.current = window.setTimeout(() => {
+        setMotionState({
+          scaleX: 1,
+          scaleY: 1,
+          origin: 'center center',
+          phase: 'idle',
+        });
+      }, SETTLE_IDLE_MS);
+    }, STRETCH_RELEASE_MS);
+  }, []);
+
+  const updateCapsule = useCallback(
+    (animateDirectional = false) => {
+      if (!containerRef.current) return;
+      const currentActiveIdx = getActiveIndex(location.pathname);
+      const targetEl = itemRefs.current[currentActiveIdx];
+      if (!targetEl) return;
+
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const itemRect = targetEl.getBoundingClientRect();
+      const nextX = Math.round(itemRect.left - containerRect.left);
+      const nextY = Math.round(itemRect.top - containerRect.top);
+      const nextWidth = Math.round(itemRect.width);
+      const nextHeight = Math.round(itemRect.height);
+
+      if (animateDirectional && !isInitialRef.current && prevXRef.current !== null) {
+        const deltaX = nextX - prevXRef.current;
+        if (Math.abs(deltaX) >= 4) {
+          triggerDirectionalStretch(deltaX);
+        }
+      }
+
+      prevXRef.current = nextX;
+
+      setCapsuleGeom((prev) => {
+        if (
+          prev.x === nextX &&
+          prev.y === nextY &&
+          prev.width === nextWidth &&
+          prev.height === nextHeight &&
+          prev.opacity === 1
+        ) {
+          return prev;
+        }
+        return {
+          x: nextX,
+          y: nextY,
+          width: nextWidth,
+          height: nextHeight,
+          opacity: 1,
+        };
+      });
+    },
+    [location.pathname, getActiveIndex, triggerDirectionalStretch]
+  );
 
   useLayoutEffect(() => {
-    updateHighlight();
-    const timer = setTimeout(() => {
+    updateCapsule(true);
+    const timer = window.setTimeout(() => {
       isInitialRef.current = false;
     }, 60);
-    return () => clearTimeout(timer);
-  }, [updateHighlight]);
+    return () => window.clearTimeout(timer);
+  }, [updateCapsule]);
 
   useEffect(() => {
     const handleResize = () => {
-      updateHighlight();
+      updateCapsule(false);
     };
 
     window.addEventListener('resize', handleResize);
@@ -127,7 +211,7 @@ export const BottomNavigation: React.FC = () => {
     let resizeObserver: ResizeObserver | null = null;
     if (typeof ResizeObserver !== 'undefined' && containerRef.current) {
       resizeObserver = new ResizeObserver(() => {
-        updateHighlight();
+        updateCapsule(false);
       });
       resizeObserver.observe(containerRef.current);
     }
@@ -137,33 +221,62 @@ export const BottomNavigation: React.FC = () => {
       window.removeEventListener('orientationchange', handleResize);
       resizeObserver?.disconnect();
     };
-  }, [updateHighlight]);
+  }, [updateCapsule]);
+
+  useEffect(() => {
+    return () => {
+      if (stretchTimerRef.current !== null) window.clearTimeout(stretchTimerRef.current);
+      if (settleTimerRef.current !== null) window.clearTimeout(settleTimerRef.current);
+    };
+  }, []);
+
+  const innerTransition =
+    motionState.phase === 'stretching'
+      ? 'transform 135ms cubic-bezier(0.2, 0.9, 0.35, 1)'
+      : motionState.phase === 'settling'
+        ? 'transform 390ms cubic-bezier(0.22, 1.48, 0.44, 1)'
+        : 'transform 180ms ease-out';
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 pointer-events-auto glass-dock pb-[max(0.5rem,env(safe-area-inset-bottom))] transition-all">
-      {/* Focus Soundscape Player: HTML5 Audio, Toggle, Volume Slider & Soundscapes */}
+      {/* Focus Soundscape Player */}
       <FocusSoundscapePlayer />
 
       <div
         ref={containerRef}
-        className="flex justify-around items-center px-2 sm:px-6 md:px-10 lg:px-12 py-1.5 sm:py-2.5 max-w-2xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto relative"
+        className="flex justify-around items-center px-2 sm:px-6 md:px-10 lg:px-12 py-1.5 sm:py-2 max-w-2xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto relative"
       >
-        {/* Dynamic Sliding Elastic Rounded Highlight Pill with Spring Bounce */}
+        {/* Translucent Glass Sliding Capsule Carrier (Glides to New Position + Elastic Rebound) */}
         <div
           aria-hidden="true"
-          className="absolute top-0 left-0 rounded-2xl pointer-events-none z-0 bg-white/95 backdrop-blur-md border border-stone-200/90 shadow-[0_3px_14px_-2px_rgba(28,25,23,0.12),0_1px_3px_rgba(28,25,23,0.06)]"
+          className="glass-nav-capsule-carrier absolute top-0 left-0 pointer-events-none z-0"
           style={{
-            transform: `translate3d(${highlightStyle.x}px, ${highlightStyle.y}px, 0)`,
-            width: `${highlightStyle.width}px`,
-            height: `${highlightStyle.height}px`,
-            opacity: highlightStyle.opacity,
+            transform: `translate3d(${capsuleGeom.x}px, ${capsuleGeom.y}px, 0)`,
+            width: `${capsuleGeom.width}px`,
+            height: `${capsuleGeom.height}px`,
+            opacity: capsuleGeom.opacity,
+            willChange: 'transform, width',
             transitionProperty: isInitialRef.current ? 'none' : 'transform, width, height, opacity',
-            transitionDuration: isInitialRef.current ? '0ms' : '420ms',
-            transitionTimingFunction: 'cubic-bezier(0.34, 1.45, 0.64, 1)',
+            transitionDuration: isInitialRef.current ? '0ms' : '460ms',
+            transitionTimingFunction: 'cubic-bezier(0.26, 1.34, 0.42, 1)',
           }}
         >
-          {/* Subtle top reflection sheen & micro-accent */}
-          <div className="absolute inset-x-2 top-0 h-[1px] bg-gradient-to-r from-transparent via-stone-900/10 to-transparent" />
+          {/* Inner Frosted Glass Capsule (Stretches Along Travel Vector, Rebounds on Arrival, Specular Edge Rim) */}
+          <div
+            className="glass-nav-capsule relative w-full h-full rounded-full overflow-hidden"
+            style={{
+              transform: `scale3d(${motionState.scaleX}, ${motionState.scaleY}, 1)`,
+              transformOrigin: motionState.origin,
+              transition: isInitialRef.current ? 'none' : innerTransition,
+              willChange: 'transform',
+            }}
+          >
+            {/* Full-Perimeter Specular Rim Highlight */}
+            <div className="glass-nav-capsule-rim" />
+
+            {/* Soft Top Curvature Glint */}
+            <div className="absolute inset-x-3 top-[1px] h-[35%] rounded-full bg-gradient-to-b from-white/55 to-transparent pointer-events-none" />
+          </div>
         </div>
 
         {NAV_ITEMS.map((item, index) => {
@@ -183,7 +296,7 @@ export const BottomNavigation: React.FC = () => {
                   // ignore
                 }
               }}
-              className={`flex flex-col items-center justify-center min-w-[50px] sm:min-w-[56px] min-h-[44px] py-1 px-2 sm:px-3 rounded-2xl transition-colors duration-200 relative z-10 group active:scale-95 touch-manipulation ${
+              className={`flex flex-col items-center justify-center min-w-[60px] sm:min-w-[74px] min-h-[44px] py-1.5 px-3.5 sm:px-5 rounded-full transition-colors duration-200 relative z-10 group active:scale-95 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#532CD8] ${
                 isCurrent
                   ? 'text-stone-950 font-bold'
                   : 'text-stone-500 hover:text-stone-900'
@@ -193,7 +306,7 @@ export const BottomNavigation: React.FC = () => {
                 className={`w-5 h-5 mb-0.5 transition-all duration-300 ${
                   isCurrent
                     ? 'stroke-[2.2px] text-stone-950 -translate-y-0.5 scale-105'
-                    : 'stroke-[1.6px] text-stone-400 group-hover:text-stone-700'
+                    : 'stroke-[1.6px] text-stone-500 group-hover:text-stone-800'
                 }`}
               />
               <span
@@ -203,13 +316,6 @@ export const BottomNavigation: React.FC = () => {
               >
                 {item.label}
               </span>
-
-              {/* Restrained Editorial Active Indicator Dot */}
-              <span
-                className={`w-1 h-1 rounded-full bg-stone-900 transition-all duration-300 mt-0.5 ${
-                  isCurrent ? 'scale-100 opacity-100' : 'scale-0 opacity-0'
-                }`}
-              />
             </NavLink>
           );
         })}
@@ -217,4 +323,3 @@ export const BottomNavigation: React.FC = () => {
     </nav>
   );
 };
-

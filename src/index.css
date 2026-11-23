@@ -191,11 +191,11 @@
 }
 
 .glass-dock {
-  background: rgba(250, 248, 245, 0.92);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: rgba(247, 244, 238, 0.78);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
   border-top: 1px solid rgba(28, 25, 23, 0.08);
-  box-shadow: 0 -4px 20px -4px rgba(28, 25, 23, 0.04);
+  box-shadow: 0 -6px 24px -6px rgba(28, 25, 23, 0.06);
 }
 
 .glass-pill {
@@ -727,6 +727,52 @@
   transform-origin: left center;
   animation: warmupCountdown 30000ms linear forwards;
   will-change: transform;
+}
+
+/* Bottom Navigation Liquid-Glass Active Capsule */
+.glass-nav-capsule {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.68) 0%,
+    rgba(255, 255, 255, 0.42) 55%,
+    rgba(248, 245, 240, 0.54) 100%
+  );
+  backdrop-filter: blur(18px) saturate(180%);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  border: 1px solid rgba(28, 25, 23, 0.07);
+  box-shadow:
+    0 8px 22px -6px rgba(28, 25, 23, 0.14),
+    0 2px 6px rgba(28, 25, 23, 0.05),
+    inset 0 1px 1.5px rgba(255, 255, 255, 0.92),
+    inset 0 -1px 1px rgba(255, 255, 255, 0.45);
+}
+
+.glass-nav-capsule-rim {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  padding: 1px;
+  pointer-events: none;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.98) 0%,
+    rgba(255, 255, 255, 0.55) 36%,
+    rgba(255, 255, 255, 0.24) 68%,
+    rgba(255, 255, 255, 0.92) 100%
+  );
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: exclude;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-nav-capsule-carrier,
+  .glass-nav-capsule {
+    transition-duration: 120ms !important;
+    transition-timing-function: ease-out !important;
+    transform: none !important;
+  }
 }
 
 /* Print Styles for PDF Report Export */

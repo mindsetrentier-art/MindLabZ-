@@ -2,6 +2,7 @@ import { DifficultyLevel, GameDifficulty, LoveDomainId, PsychologyLaw } from '..
 import { LOVE_PSYCHOLOGY_LAWS } from '../data/lovePsychologyCodex';
 import { LOVE_DOMAIN_MAP } from '../data/lovePsychologyTypes';
 import { REVERSE_PSYCHOLOGY_LAWS } from '../data/reversePsychologyLaws';
+import { CRIMINAL_PSYCHOLOGY_LAWS } from '../data/criminalPsychologyLaws';
 
 export type AleatoricTemplateId =
   | 'principle-from-concept'
@@ -923,6 +924,386 @@ export function drawAleatoricReverseQuestions(
   state.totalDraws += results.length;
   state.lastPlayedAt = new Date().toISOString();
   saveReverseDeckState(state);
+
+  return results;
+}
+
+// ---------------------------------------------------------------------------
+// 3. Criminal Psychology 100-Concept Aleatoric Engine (500 Non-Repeating Encounters)
+// ---------------------------------------------------------------------------
+
+export type CriminalAleatoricTemplateId =
+  | 'theory-mechanism'
+  | 'context-prevention'
+  | 'ethical-boundary'
+  | 'concept-identification'
+  | 'risk-calibration';
+
+export const CRIMINAL_ALEATORIC_TEMPLATES: CriminalAleatoricTemplateId[] = [
+  'theory-mechanism',
+  'context-prevention',
+  'ethical-boundary',
+  'concept-identification',
+  'risk-calibration',
+];
+
+export interface AleatoricCriminalQuestion {
+  encounterKey: string;
+  templateId: CriminalAleatoricTemplateId;
+  templateLabel: string;
+  law: PsychologyLaw;
+  prompt: string;
+  contextTag: string;
+  options: string[];
+  correctAnswer: number;
+  explanation: string;
+  healthyBoundary: string;
+}
+
+const CRIMINAL_STORAGE_KEY = 'mindlabz_criminal_aleatoric_deck_v1';
+const CRIMINAL_COOLDOWN_WINDOW = 30;
+
+function loadCriminalDeckState(): AleatoricStorageState {
+  try {
+    if (typeof window === 'undefined') {
+      return { seenEncounters: [], recentLawIds: [], totalDraws: 0, lastPlayedAt: '' };
+    }
+    const raw = window.localStorage.getItem(CRIMINAL_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return {
+        seenEncounters: Array.isArray(parsed.seenEncounters) ? parsed.seenEncounters : [],
+        recentLawIds: Array.isArray(parsed.recentLawIds) ? parsed.recentLawIds : [],
+        totalDraws: typeof parsed.totalDraws === 'number' ? parsed.totalDraws : 0,
+        lastPlayedAt: typeof parsed.lastPlayedAt === 'string' ? parsed.lastPlayedAt : '',
+      };
+    }
+  } catch {
+    // ignore storage errors
+  }
+  return { seenEncounters: [], recentLawIds: [], totalDraws: 0, lastPlayedAt: '' };
+}
+
+function saveCriminalDeckState(state: AleatoricStorageState): void {
+  try {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(CRIMINAL_STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    // ignore quota errors
+  }
+}
+
+export function resetCriminalAleatoricDeck(): void {
+  saveCriminalDeckState({
+    seenEncounters: [],
+    recentLawIds: [],
+    totalDraws: 0,
+    lastPlayedAt: new Date().toISOString(),
+  });
+}
+
+export function getCriminalAleatoricStats(): {
+  totalConcepts: number;
+  totalUniqueEncounters: number;
+  seenEncountersCount: number;
+  uniqueConceptsExplored: number;
+  totalDraws: number;
+} {
+  const state = loadCriminalDeckState();
+  const seenConcepts = new Set(state.seenEncounters.map((k) => k.split('::')[0]));
+  return {
+    totalConcepts: CRIMINAL_PSYCHOLOGY_LAWS.length,
+    totalUniqueEncounters: CRIMINAL_PSYCHOLOGY_LAWS.length * CRIMINAL_ALEATORIC_TEMPLATES.length,
+    seenEncountersCount: state.seenEncounters.length,
+    uniqueConceptsExplored: seenConcepts.size,
+    totalDraws: state.totalDraws,
+  };
+}
+
+function pickCriminalDistractors(
+  target: PsychologyLaw,
+  pool: PsychologyLaw[],
+  count: number,
+  preferDistinctField: 'theory' | 'context' = 'theory'
+): PsychologyLaw[] {
+  const candidates = cryptoShuffle(pool.filter((l) => l.id !== target.id));
+  const picked: PsychologyLaw[] = [];
+  const usedKeys = new Set<string>([
+    preferDistinctField === 'theory'
+      ? target.criminalTheoryName || target.nameZh
+      : target.criminalContext || '',
+  ]);
+
+  for (const item of candidates) {
+    if (picked.length >= count) break;
+    const key =
+      preferDistinctField === 'theory'
+        ? item.criminalTheoryName || item.nameZh
+        : item.criminalContext || '';
+    if (!usedKeys.has(key)) {
+      usedKeys.add(key);
+      picked.push(item);
+    }
+  }
+
+  for (const item of candidates) {
+    if (picked.length >= count) break;
+    if (!picked.some((p) => p.id === item.id)) {
+      picked.push(item);
+    }
+  }
+
+  return picked;
+}
+
+function materializeCriminalQuestion(
+  law: PsychologyLaw,
+  templateId: CriminalAleatoricTemplateId,
+  referencePool: PsychologyLaw[]
+): AleatoricCriminalQuestion {
+  const theoryName = law.criminalTheoryName || law.nameZh.split('：')[0] || law.nameZh;
+  const contextLabel = law.criminalContext || '理论核心';
+  const categoryLabel = law.criminalCategory || '基础理论';
+  const coreTheory = law.criminalCoreTheory || law.whyItHappens || law.shortExplanation;
+  const appliedAngle = law.criminalAppliedAngle || law.realLifeExample;
+  const boundary =
+    law.healthyBoundary ||
+    law.criminalLearningNote ||
+    '用于理解风险机制和预防，不可单独作为诊断、定罪或预测依据。';
+  const encounterKey = `${law.id}::${templateId}`;
+
+  if (templateId === 'theory-mechanism') {
+    const distractors = pickCriminalDistractors(law, referencePool, 3, 'theory');
+    const { options, correctAnswer } = shuffleOptions(
+      coreTheory,
+      distractors.map((d) => d.criminalCoreTheory || d.whyItHappens || d.shortExplanation)
+    );
+    return {
+      encounterKey,
+      templateId,
+      templateLabel: '核心理论机制辨析',
+      law,
+      prompt: `在犯罪心理学「${theoryName}（${categoryLabel}）」中，以下哪项阐述最准确概括了其核心理论机制？`,
+      contextTag: `${law.codeId} · ${categoryLabel}`,
+      options,
+      correctAnswer,
+      explanation: `【${law.codeId} · ${law.nameZh}】${coreTheory}`,
+      healthyBoundary: boundary,
+    };
+  }
+
+  if (templateId === 'context-prevention') {
+    const distractors = pickCriminalDistractors(law, referencePool, 3, 'context');
+    const { options, correctAnswer } = shuffleOptions(
+      appliedAngle,
+      distractors.map((d) => d.criminalAppliedAngle || d.realLifeExample)
+    );
+    return {
+      encounterKey,
+      templateId,
+      templateLabel: '实景观察与风险预防',
+      law,
+      prompt: `在「${contextLabel}」场景下参考「${theoryName}」进行风险识别与预防时，以下哪项专业视角最合理？`,
+      contextTag: `${contextLabel} · ${categoryLabel}`,
+      options,
+      correctAnswer,
+      explanation: `在「${contextLabel}」视角下，${appliedAngle}`,
+      healthyBoundary: boundary,
+    };
+  }
+
+  if (templateId === 'ethical-boundary') {
+    const { options, correctAnswer } = shuffleOptions(
+      boundary,
+      [
+        `只要发现个体符合「${theoryName}」单一条目描述，即可直接作出确定性犯罪预测`,
+        `可以用主观人格推测与家庭结构标签替代客观事实核查与法定程序`,
+        `犯罪心理学研究概念等价于临床司法诊断工具，非专业人员可独立用于画像定性`,
+      ]
+    );
+    return {
+      encounterKey,
+      templateId,
+      templateLabel: '科学伦理与防误判边界',
+      law,
+      prompt: `关于「${law.nameZh}」的科学应用边界，以下哪项原则最符合犯罪心理学实证规范？`,
+      contextTag: `非诊断边界 · ${contextLabel}`,
+      options,
+      correctAnswer,
+      explanation: `科学边界提示：犯罪心理学概念用于理解机制与预防支持，绝非确定性犯罪预测工具。${boundary}`,
+      healthyBoundary: boundary,
+    };
+  }
+
+  if (templateId === 'concept-identification') {
+    const distractors = pickCriminalDistractors(law, referencePool, 3, 'theory');
+    const { options, correctAnswer } = shuffleOptions(
+      `${theoryName}（${categoryLabel}）`,
+      distractors.map(
+        (d) => `${d.criminalTheoryName || d.nameZh.split('：')[0]}（${d.criminalCategory || '基础理论'}）`
+      )
+    );
+    return {
+      encounterKey,
+      templateId,
+      templateLabel: '研究模型精准定位',
+      law,
+      prompt: `核心机制线索：“${coreTheory}” 这一研究视角直接属于下列哪一项犯罪心理学模型？`,
+      contextTag: `模型定位 · ${contextLabel}`,
+      options,
+      correctAnswer,
+      explanation: `正确对应「${theoryName}（${categoryLabel}）」。预防应用：${appliedAngle}`,
+      healthyBoundary: boundary,
+    };
+  }
+
+  // risk-calibration
+  const distractors = pickCriminalDistractors(law, referencePool, 3, 'context');
+  const { options, correctAnswer } = shuffleOptions(
+    `【${contextLabel} · ${theoryName}】${appliedAngle}`,
+    distractors.map(
+      (d) =>
+        `【${d.criminalContext || '理论核心'} · ${d.criminalTheoryName || d.nameZh.split('：')[0]}】${
+          d.criminalAppliedAngle || d.shortExplanation
+        }`
+    )
+  );
+  return {
+    encounterKey,
+    templateId,
+    templateLabel: '跨场景风险因子校准',
+    law,
+    prompt: `针对「${contextLabel}」场景下「${theoryName}」的观察重点与防标签化原则，下列哪项匹配完全准确？`,
+    contextTag: `${law.codeId} · 跨场景校准`,
+    options,
+    correctAnswer,
+    explanation: `「${law.nameZh}」应用核心：${appliedAngle}`,
+    healthyBoundary: boundary,
+  };
+}
+
+/**
+ * Draw CSPRNG non-repeating Criminal Psychology Arena questions across all 100 laws × 5 templates.
+ */
+export function drawAleatoricCriminalQuestions(
+  count: number,
+  options?: {
+    contextFilter?: string;
+    categoryFilter?: string;
+    arenaDifficulty?: GameDifficulty | 'all';
+    gameIdFilter?: PsychologyLaw['relatedGame'];
+  }
+): AleatoricCriminalQuestion[] {
+  const contextFilter = options?.contextFilter || 'all';
+  const categoryFilter = options?.categoryFilter || 'all';
+  const allowedDiffs = getAllowedDifficulties(options?.arenaDifficulty);
+
+  let pool = CRIMINAL_PSYCHOLOGY_LAWS.filter((law) => {
+    if (contextFilter !== 'all' && law.criminalContext !== contextFilter) return false;
+    if (categoryFilter !== 'all' && law.criminalCategory !== categoryFilter) return false;
+    if (
+      options?.gameIdFilter &&
+      law.relatedGame !== options.gameIdFilter &&
+      !(law.dispatchedGames && law.dispatchedGames.includes(options.gameIdFilter))
+    ) {
+      return false;
+    }
+    if (!allowedDiffs.includes(law.difficulty)) return false;
+    return true;
+  });
+
+  if (pool.length < count) {
+    pool = CRIMINAL_PSYCHOLOGY_LAWS.filter((law) => {
+      if (contextFilter !== 'all' && law.criminalContext !== contextFilter) return false;
+      if (categoryFilter !== 'all' && law.criminalCategory !== categoryFilter) return false;
+      return true;
+    });
+  }
+  if (pool.length === 0) {
+    pool = CRIMINAL_PSYCHOLOGY_LAWS;
+  }
+
+  const state = loadCriminalDeckState();
+  const seenSet = new Set(state.seenEncounters);
+  const recentSet = new Set(state.recentLawIds);
+
+  const buildUnseenPairs = (ignoreRecent: boolean) => {
+    const pairs: Array<{ law: PsychologyLaw; templateId: CriminalAleatoricTemplateId }> = [];
+    for (const law of pool) {
+      if (!ignoreRecent && recentSet.has(law.id)) continue;
+      for (const tpl of CRIMINAL_ALEATORIC_TEMPLATES) {
+        const key = `${law.id}::${tpl}`;
+        if (!seenSet.has(key)) {
+          pairs.push({ law, templateId: tpl });
+        }
+      }
+    }
+    return cryptoShuffle(pairs);
+  };
+
+  let unseenQueue = buildUnseenPairs(false);
+  if (unseenQueue.length < count) {
+    unseenQueue = buildUnseenPairs(true);
+  }
+  if (unseenQueue.length < count) {
+    const poolIds = new Set(pool.map((l) => l.id));
+    state.seenEncounters = state.seenEncounters.filter((k) => !poolIds.has(k.split('::')[0]));
+    seenSet.clear();
+    state.seenEncounters.forEach((k) => seenSet.add(k));
+    unseenQueue = buildUnseenPairs(false);
+    if (unseenQueue.length < count) {
+      unseenQueue = buildUnseenPairs(true);
+    }
+  }
+
+  const chosen: Array<{ law: PsychologyLaw; templateId: CriminalAleatoricTemplateId }> = [];
+  const chosenLawIdsInBatch = new Set<string>();
+  let lastContext = '';
+
+  for (const cand of unseenQueue) {
+    if (chosen.length >= count) break;
+    if (chosenLawIdsInBatch.has(cand.law.id)) continue;
+    if (cand.law.criminalContext && cand.law.criminalContext === lastContext && pool.length > 5) {
+      continue;
+    }
+    chosen.push(cand);
+    chosenLawIdsInBatch.add(cand.law.id);
+    lastContext = cand.law.criminalContext || '';
+  }
+
+  if (chosen.length < count) {
+    for (const cand of unseenQueue) {
+      if (chosen.length >= count) break;
+      if (chosenLawIdsInBatch.has(cand.law.id)) continue;
+      chosen.push(cand);
+      chosenLawIdsInBatch.add(cand.law.id);
+    }
+  }
+
+  if (chosen.length < count) {
+    for (const cand of unseenQueue) {
+      if (chosen.length >= count) break;
+      if (!chosen.some((c) => c.law.id === cand.law.id && c.templateId === cand.templateId)) {
+        chosen.push(cand);
+      }
+    }
+  }
+
+  const nextRecent = [...state.recentLawIds];
+  const results = chosen.map(({ law, templateId }) => {
+    const key = `${law.id}::${templateId}`;
+    if (!seenSet.has(key)) {
+      seenSet.add(key);
+      state.seenEncounters.push(key);
+    }
+    nextRecent.push(law.id);
+    return materializeCriminalQuestion(law, templateId, CRIMINAL_PSYCHOLOGY_LAWS);
+  });
+
+  state.recentLawIds = nextRecent.slice(-CRIMINAL_COOLDOWN_WINDOW);
+  state.totalDraws += results.length;
+  state.lastPlayedAt = new Date().toISOString();
+  saveCriminalDeckState(state);
 
   return results;
 }

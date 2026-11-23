@@ -109,7 +109,7 @@ export const LawDetailPage: React.FC = () => {
       setIsLoading(false);
     }, 150);
 
-    if (law && !law.isLoveCodex && !law.isMicroexpression) {
+    if (law && !law.isLoveCodex && !law.isMicroexpression && !law.isCriminalPsychology && !law.isReversePsychology) {
       void fetchStructuredLaw(law.codeId || law.id, false);
     }
 
@@ -481,6 +481,25 @@ export const LawDetailPage: React.FC = () => {
                 )}
               </div>
             )}
+          </div>
+        )}
+        {/* Criminal Psychology Scientific & Legal Boundary Disclaimer */}
+        {law.isCriminalPsychology && (
+          <div className="pt-4 border-t border-stone-200/80 space-y-3">
+            <div className="p-4 rounded-xl bg-rose-50/75 border border-rose-200/80 space-y-1.5">
+              <span className="text-xs font-bold text-rose-900 flex items-center gap-1.5">
+                <ShieldAlert className="w-4 h-4 text-rose-800" />
+                <span>科学使用边界与非诊断声明（{law.criminalCategory} · {law.criminalContext}）</span>
+              </span>
+              <p className="text-sm text-rose-950/90 leading-relaxed">
+                {law.healthyBoundary || law.criminalLearningNote}
+              </p>
+              {law.limitations && (
+                <p className="text-xs text-stone-600 leading-relaxed pt-1 border-t border-rose-200/60">
+                  {law.limitations}
+                </p>
+              )}
+            </div>
           </div>
         )}
       </section>

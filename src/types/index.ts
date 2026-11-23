@@ -117,6 +117,13 @@ export interface PsychologyLaw {
   reverseScenario?: string;
   reversePrinciple?: string;
   reverseApplication?: string;
+  isCriminalPsychology?: boolean;
+  criminalCategory?: string;
+  criminalContext?: string;
+  criminalTheoryName?: string;
+  criminalCoreTheory?: string;
+  criminalAppliedAngle?: string;
+  criminalLearningNote?: string;
   experimentSetup?: {
     scenario: string;
     optionA: { label: string; biasDescription?: string; rationalDescription?: string; description?: string };
@@ -129,6 +136,7 @@ export interface PsychologyLaw {
 export type GameType = 
   | 'love-aleatoric-arena'
   | 'reverse-aleatoric-arena'
+  | 'criminal-aleatoric-arena'
   | 'memory-lab' 
   | 'mind-trap' 
   | 'brain-rush' 
@@ -151,7 +159,7 @@ export interface GameDefinition {
   nameEn?: string;
   nameZh: string;
   description: string;
-  category: '记忆' | '注意力' | '速度' | '逻辑' | '决策' | '心理实验' | '认知' | '情绪' | '习惯' | '社会';
+  category: '记忆' | '注意力' | '速度' | '逻辑' | '决策' | '心理实验' | '认知' | '情绪' | '习惯' | '社会' | '犯罪心理';
   difficulty: DifficultyLevel;
   bestScore: number;
   icon: string;
@@ -159,7 +167,7 @@ export interface GameDefinition {
   conceptLearned: string;
   relatedLawId?: string;
   accentColor: string;
-  numberPrefix?: string; // e.g. "01", "02" ... "10"
+  numberPrefix?: string; // e.g. "01", "02" ... "13"
 }
 
 export type GameDifficulty = '低' | '中' | '高' | '高级';

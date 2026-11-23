@@ -3,6 +3,7 @@ import manifestData from '../../data/laws.manifest.json';
 import { LOVE_PSYCHOLOGY_LAWS } from './lovePsychologyCodex';
 import { MICROEXPRESSION_LAWS, MICROEXPRESSION_CHAPTER } from './microexpressionLaws';
 import { REVERSE_PSYCHOLOGY_LAWS } from './reversePsychologyLaws';
+import { CRIMINAL_PSYCHOLOGY_LAWS } from './criminalPsychologyLaws';
 
 const CORE_PSYCHOLOGY_LAWS: PsychologyLaw[] = [
   {
@@ -746,9 +747,10 @@ export const CORE_AND_EMOTIONAL_LAWS: PsychologyLaw[] = [
   ...UNIQUE_EMOTIONAL_LAWS,
 ];
 
-export { LOVE_PSYCHOLOGY_LAWS, MICROEXPRESSION_LAWS, REVERSE_PSYCHOLOGY_LAWS };
+export { LOVE_PSYCHOLOGY_LAWS, MICROEXPRESSION_LAWS, REVERSE_PSYCHOLOGY_LAWS, CRIMINAL_PSYCHOLOGY_LAWS };
 
 export const INITIAL_PSYCHOLOGY_LAWS: PsychologyLaw[] = [
+  ...CRIMINAL_PSYCHOLOGY_LAWS,
   ...MICROEXPRESSION_LAWS,
   ...REVERSE_PSYCHOLOGY_LAWS,
   ...CORE_MANIFEST_LAWS,

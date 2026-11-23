@@ -383,6 +383,7 @@ export function buildLawKnowledgeGraph(
   const GAME_LABELS: Partial<Record<GameType, string>> = {
     'love-aleatoric-arena': '爱情概率竞技场',
     'reverse-aleatoric-arena': '逆向心理抗拒竞技场',
+    'criminal-aleatoric-arena': '犯罪心理剖析竞技场',
     'memory-lab': '空间记忆实验室',
     'mind-trap': '认知陷阱辨析',
     'brain-rush': '极速神经反应',

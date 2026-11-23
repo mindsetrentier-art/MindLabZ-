@@ -194,6 +194,22 @@ export const PSYCHOLOGY_GAMES: GameDefinition[] = [
     relatedLawId: 'rev0101',
     accentColor: '#0D9488'
   },
+  {
+    id: 'criminal-aleatoric-arena',
+    numberPrefix: '13',
+    name: 'Criminal Psychology Aleatoric Arena',
+    nameEn: '100-Concept Risk & Prevention CSPRNG Arena',
+    nameZh: '犯罪心理 · 100律行为剖析',
+    description: '全量导入 100 条犯罪心理学知识卡（4 大理论领域 × 5 大观察预防场景 × 5 种出题变式 = 500 张题卡），每次真随机洗牌绝不重复！',
+    category: '犯罪心理',
+    difficulty: 'Medium',
+    bestScore: 5800,
+    icon: 'scale',
+    estimatedTime: '110秒',
+    conceptLearned: '犯罪心理学多因素模型、风险机制与非预测性实证伦理边界',
+    relatedLawId: 'crim-001',
+    accentColor: '#9F1239'
+  },
 
   // 经典神经竞技实验室 (原有矩阵/反应游戏)
   {

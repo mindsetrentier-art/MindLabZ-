@@ -99,6 +99,7 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
   // Live per-tag counts across the entire 500+ laws corpus
   const tagCounts = useMemo(() => {
     const counts: Record<LibraryTagId, number> = {
+      'criminal-psychology': 0,
       'reverse-psychology': 0,
       microexpressions: 0,
       'cognitive-bias': 0,

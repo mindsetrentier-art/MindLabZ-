@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { GameCard } from '../components/cards/GameCard';
 import { GameCardSkeleton } from '../components/ui/Skeleton';
 import { PSYCHOLOGY_GAMES } from '../data/games';
-import { Brain, Trophy, Zap, Sparkles, Shuffle, ShieldCheck, Flame, Crown, CheckCircle2, Volume2, VolumeX, Gamepad2, Award, ArrowRight, Heart, RotateCcw, Eye, BookOpen } from 'lucide-react';
+import { Brain, Trophy, Zap, Sparkles, Shuffle, ShieldCheck, Flame, Crown, CheckCircle2, Volume2, VolumeX, Gamepad2, Award, ArrowRight, Heart, RotateCcw, Eye, BookOpen, Scale, Layers } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { GameDifficulty, DEFAULT_DIFFICULTY, DIFFICULTY_LIST, DIFFICULTY_CONFIGS } from '../data/difficulty';
 import { DifficultySelector } from '../components/games/DifficultySelector';
@@ -15,11 +15,13 @@ import {
   resetAleatoricDeck,
   getReverseAleatoricStats,
   resetReverseAleatoricDeck,
+  getCriminalAleatoricStats,
+  resetCriminalAleatoricDeck,
 } from '../utils/aleatoricEngine';
 import { MICROEXPRESSION_LAWS } from '../data/microexpressionLaws';
 import { REVERSE_SCENARIOS, REVERSE_CATEGORIES } from '../data/reversePsychologyLaws';
-
-const GAME_CATEGORIES = ['全部', '零重复随机博弈', '心理学核心实验', '认知', '决策', '社会', '情绪', '习惯', '记忆', '逻辑'];
+import { CRIMINAL_CONTEXTS, CRIMINAL_CATEGORIES } from '../data/criminalPsychologyLaws';
+import { CylindricalThemeRoller, CylindricalThemeItem } from '../components/ui/CylindricalThemeRoller';
 
 export const GamesPage: React.FC = () => {
   const navigate = useNavigate();
@@ -29,6 +31,145 @@ export const GamesPage: React.FC = () => {
   const [isMuted, setIsMuted] = useState(() => gameAudio.getMuted());
   const [aleatoricStats, setAleatoricStats] = useState(() => getAleatoricStats());
   const [reverseStats, setReverseStats] = useState(() => getReverseAleatoricStats());
+  const [criminalStats, setCriminalStats] = useState(() => getCriminalAleatoricStats());
+
+  const arenaRollerItems: CylindricalThemeItem[] = useMemo(() => {
+    const countFor = (cat: string) => {
+      if (cat === '全部') return PSYCHOLOGY_GAMES.length;
+      if (cat === '零重复随机博弈') {
+        return PSYCHOLOGY_GAMES.filter(
+          (g) =>
+            g.id === 'love-aleatoric-arena' ||
+            g.id === 'reverse-aleatoric-arena' ||
+            g.id === 'criminal-aleatoric-arena'
+        ).length;
+      }
+      if (cat === '心理学核心实验') {
+        return PSYCHOLOGY_GAMES.filter((g) => Boolean(g.numberPrefix)).length;
+      }
+      return PSYCHOLOGY_GAMES.filter((g) => g.category === cat).length;
+    };
+
+    return [
+      {
+        id: '全部',
+        label: '全部竞技项目',
+        group: '总览与零重引擎',
+        count: countFor('全部'),
+        subtitle: '全实验室交互游戏',
+        accentColor: '#F59E0B',
+        icon: <Gamepad2 className="w-3.5 h-3.5" />,
+      },
+      {
+        id: '零重复随机博弈',
+        label: 'CSPRNG 零重复博弈',
+        group: '总览与零重引擎',
+        count: countFor('零重复随机博弈'),
+        subtitle: '犯罪100 · 逆向100 · 爱情696',
+        accentColor: '#10B981',
+        icon: <Shuffle className="w-3.5 h-3.5" />,
+      },
+      {
+        id: '犯罪心理',
+        label: '犯罪心理学专场',
+        group: '热点专题赛区',
+        count: countFor('犯罪心理'),
+        subtitle: '100 律行为剖析与预防',
+        accentColor: '#E11D48',
+        icon: <Scale className="w-3.5 h-3.5" />,
+      },
+      {
+        id: '心理学核心实验',
+        label: '心理学核心实验',
+        group: '热点专题赛区',
+        count: countFor('心理学核心实验'),
+        subtitle: '#01–#13 序列实验室',
+        accentColor: '#6366F1',
+        icon: <Sparkles className="w-3.5 h-3.5" />,
+      },
+      {
+        id: '认知',
+        label: '认知与逆向对抗',
+        group: '心智维度赛区',
+        count: countFor('认知'),
+        subtitle: '第一印象 · 逆向心理100',
+        accentColor: '#0D9488',
+        icon: <Brain className="w-3.5 h-3.5" />,
+      },
+      {
+        id: '决策',
+        label: '决策与锚定博弈',
+        group: '心智维度赛区',
+        count: countFor('决策'),
+        subtitle: '锚定 · 免费陷阱 · 侦探',
+        accentColor: '#3B82F6',
+        icon: <Layers className="w-3.5 h-3.5" />,
+      },
+      {
+        id: '社会',
+        label: '社会动能实验',
+        group: '心智维度赛区',
+        count: countFor('社会'),
+        subtitle: '从众 · 归因 · 旁观破局',
+        accentColor: '#8B5CF6',
+        icon: <Zap className="w-3.5 h-3.5" />,
+      },
+      {
+        id: '情绪',
+        label: '情绪与依恋竞技',
+        group: '心智维度赛区',
+        count: countFor('情绪'),
+        subtitle: '情绪侦探 · 爱情696阵',
+        accentColor: '#EC4899',
+        icon: <Heart className="w-3.5 h-3.5" />,
+      },
+      {
+        id: '逻辑',
+        label: '逻辑与证伪挑战',
+        group: '认知基础域',
+        count: countFor('逻辑'),
+        subtitle: '反证挑战 · 思维陷阱',
+        accentColor: '#4F46E5',
+        icon: <CheckCircle2 className="w-3.5 h-3.5" />,
+      },
+      {
+        id: '记忆',
+        label: '记忆宫殿与峰终',
+        group: '认知基础域',
+        count: countFor('记忆'),
+        subtitle: '空间编码 · 峰终体验',
+        accentColor: '#06B6D4',
+        icon: <Brain className="w-3.5 h-3.5" />,
+      },
+      {
+        id: '习惯',
+        label: '微习惯设计域',
+        group: '认知基础域',
+        count: countFor('习惯'),
+        subtitle: '习惯回路 · 提示重构',
+        accentColor: '#14B8A6',
+        icon: <Sparkles className="w-3.5 h-3.5" />,
+      },
+      {
+        id: '注意力',
+        label: '选择性注意风暴',
+        group: '认知基础域',
+        count: countFor('注意力'),
+        subtitle: '神经反应时过滤训练',
+        accentColor: '#10B981',
+        icon: <Eye className="w-3.5 h-3.5" />,
+      },
+      {
+        id: '心理实验',
+        label: '经典行为经济学',
+        group: '认知基础域',
+        count: countFor('心理实验'),
+        subtitle: '前景理论实景模拟',
+        accentColor: '#3B82F6',
+        icon: <BookOpen className="w-3.5 h-3.5" />,
+      },
+    ];
+  }, []);
 
   const [arenaDifficulty, setArenaDifficulty] = useState<GameDifficulty>(() => {
     try {
@@ -70,7 +211,12 @@ export const GamesPage: React.FC = () => {
   const filteredGames = selectedCat === '全部'
     ? PSYCHOLOGY_GAMES
     : selectedCat === '零重复随机博弈'
-    ? PSYCHOLOGY_GAMES.filter(g => g.id === 'love-aleatoric-arena' || g.id === 'reverse-aleatoric-arena')
+    ? PSYCHOLOGY_GAMES.filter(
+        (g) =>
+          g.id === 'love-aleatoric-arena' ||
+          g.id === 'reverse-aleatoric-arena' ||
+          g.id === 'criminal-aleatoric-arena'
+      )
     : selectedCat === '心理学核心实验' || selectedCat === '10款心理学小游戏'
     ? PSYCHOLOGY_GAMES.filter(g => Boolean(g.numberPrefix))
     : PSYCHOLOGY_GAMES.filter(g => g.category === selectedCat);
@@ -467,6 +613,125 @@ export const GamesPage: React.FC = () => {
         </div>
       </section>
 
+      {/* Featured Criminal Psychology 100 CSPRNG Arena & Context/Category Matrix */}
+      <section className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-[#230E16] via-[#1C1628] to-[#111827] text-white p-5 sm:p-7 border border-rose-400/35 shadow-xl space-y-5">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
+          <div className="space-y-2 max-w-2xl">
+            <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono">
+              <span className="inline-flex items-center gap-1.5 text-rose-300 font-bold">
+                <Scale className="w-3.5 h-3.5" />
+                <span>CRIMINAL PSYCHOLOGY · CSPRNG 100 DECK</span>
+              </span>
+              <span className="text-stone-500" aria-hidden="true">/</span>
+              <span className="text-amber-300 font-bold tabular-nums">
+                {criminalStats.totalConcepts} 词条 × 5 视角 = {criminalStats.totalUniqueEncounters} 张零重复题卡
+              </span>
+            </div>
+            <h3 className="font-serif-editorial text-xl sm:text-2xl font-bold text-white">
+              犯罪心理学与风险预防 · 100 律真随机剖析竞技场
+            </h3>
+            <p className="text-xs sm:text-sm text-stone-300 leading-relaxed">
+              全量导入「多因素犯罪模型、暴力与攻击机制、人格差异与群体责任分散」4 大领域 × 5 大观察预防场景。每次开局均执行 CSPRNG 真随机洗牌与跨局防重冷却，当前已破译{' '}
+              <strong className="text-amber-300 font-numeric tabular-nums">
+                {criminalStats.seenEncountersCount} / {criminalStats.totalUniqueEncounters}
+              </strong>{' '}
+              张题卡（覆盖 <strong className="text-emerald-300 font-numeric tabular-nums">{criminalStats.uniqueConceptsExplored}</strong> / {criminalStats.totalConcepts} 律）。
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row md:flex-col gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                gameAudio.playSuccess();
+                navigate(`/game/criminal-aleatoric-arena?difficulty=${encodeURIComponent(arenaDifficulty)}`);
+              }}
+              className="px-5 py-3 rounded-xl bg-rose-700 hover:bg-rose-600 text-white font-bold text-xs sm:text-sm shadow-lg flex items-center justify-center gap-2 cursor-pointer active:scale-95 whitespace-nowrap shrink-0 transition-colors"
+            >
+              <Shuffle className="w-4 h-4" />
+              <span>开启犯罪心理真随机剖析</span>
+              <ArrowRight className="w-4 h-4" />
+            </button>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  gameAudio.playTap();
+                  navigate('/learn?mode=criminal');
+                }}
+                className="flex-1 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-rose-100 text-[11px] font-semibold flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
+              >
+                <BookOpen className="w-3 h-3" />
+                <span>定律随听馆查看 100 律</span>
+              </button>
+
+              {criminalStats.seenEncountersCount > 0 && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    gameAudio.playTap();
+                    resetCriminalAleatoricDeck();
+                    setCriminalStats(getCriminalAleatoricStats());
+                  }}
+                  className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-stone-200 text-[11px] font-semibold flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap shrink-0"
+                  title="重置犯罪心理防重洗牌盒"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  <span>重置洗牌</span>
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Fast Categorized Criminal Context & Domain Launchers */}
+        <div className="pt-3 border-t border-white/10 grid grid-cols-1 lg:grid-cols-2 gap-3">
+          <div className="space-y-2">
+            <span className="text-[11px] font-mono text-rose-300 font-bold block">
+              按 5 大观察与预防场景一键真随机开局：
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {CRIMINAL_CONTEXTS.map((ctx) => (
+                <button
+                  key={ctx.id}
+                  type="button"
+                  onClick={() => {
+                    gameAudio.playTap();
+                    navigate(`/game/criminal-aleatoric-arena?context=${encodeURIComponent(ctx.id)}&difficulty=${encodeURIComponent(arenaDifficulty)}`);
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 text-xs font-semibold text-white flex items-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap shrink-0"
+                >
+                  <span>{ctx.label}</span>
+                  <span className="text-[10px] font-mono text-rose-300 tabular-nums">{ctx.count}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <span className="text-[11px] font-mono text-amber-300 font-bold block">
+              按 4 大犯罪心理学核心领域直达：
+            </span>
+            <div className="flex flex-wrap gap-1.5">
+              {CRIMINAL_CATEGORIES.map((cat) => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => {
+                    gameAudio.playTap();
+                    navigate(`/game/criminal-aleatoric-arena?category=${encodeURIComponent(cat.id)}&difficulty=${encodeURIComponent(arenaDifficulty)}`);
+                  }}
+                  className="px-2.5 py-1 rounded-lg bg-black/25 hover:bg-white/15 border border-white/12 text-[11px] font-medium text-stone-200 hover:text-white cursor-pointer transition-colors whitespace-nowrap shrink-0"
+                >
+                  {cat.label} ({cat.count})
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Arena Horizontal Accordion: Psychological Experiments Canvas */}
       <ArenaHorizontalAccordion difficulty={arenaDifficulty} />
 
@@ -573,30 +838,14 @@ export const GamesPage: React.FC = () => {
         </div>
       </section>
 
-      {/* Category Filter Controls */}
-      <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
-        {GAME_CATEGORIES.map((cat) => {
-          const isSelected = selectedCat === cat;
-          return (
-            <button
-              key={cat}
-              onClick={() => handleSelectCat(cat)}
-              type="button"
-              className={`text-xs font-bold px-4 py-2.5 rounded-2xl transition-all shrink-0 whitespace-nowrap cursor-pointer active:scale-95 ${
-                isSelected
-                  ? 'bg-stone-900 text-white shadow-md shadow-stone-900/15'
-                  : 'bg-white text-stone-600 border border-stone-200 hover:border-stone-400 hover:text-stone-900'
-              }`}
-            >
-              {cat === '全部'
-                ? `全部项目 (${PSYCHOLOGY_GAMES.length}款)`
-                : cat === '心理学核心实验' || cat === '10款心理学小游戏'
-                ? '🔥 心理学核心实验'
-                : `${cat}训练`}
-            </button>
-          );
-        })}
-      </div>
+      {/* 3D Cylindrical Drum Category Filter Controls */}
+      <CylindricalThemeRoller
+        title="竞技场分类滚筒导航 · 按训练维度速查"
+        variant="arena"
+        items={arenaRollerItems}
+        activeId={selectedCat}
+        onChange={handleSelectCat}
+      />
 
       {/* Games Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-7">
