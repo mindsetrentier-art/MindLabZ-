@@ -3,8 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { GameCard } from '../components/cards/GameCard';
 import { GameCardSkeleton } from '../components/ui/Skeleton';
 import { PSYCHOLOGY_GAMES } from '../data/games';
-import { Brain, Trophy, Zap, Sparkles, Shuffle, ShieldCheck, Flame, Crown, CheckCircle2, Volume2, VolumeX, Gamepad2, Award, ArrowRight, Heart, RotateCcw, Eye, BookOpen, Scale, Layers, HeartHandshake } from 'lucide-react';
+import { Brain, Trophy, Zap, Sparkles, Shuffle, ShieldCheck, Flame, Crown, CheckCircle2, Volume2, VolumeX, Gamepad2, Award, ArrowRight, Heart, RotateCcw, Eye, BookOpen, Scale, Layers, HeartHandshake, Search, X } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { searchArenaWithLunr } from '../utils/globalSearchIndex';
 import { GameDifficulty, DEFAULT_DIFFICULTY, DIFFICULTY_LIST, DIFFICULTY_CONFIGS } from '../data/difficulty';
 import { DifficultySelector } from '../components/games/DifficultySelector';
 import { GameLeaderboardModule } from '../components/games/GameLeaderboardModule';
@@ -41,8 +42,9 @@ import {
 
 export const GamesPage: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useApp();
+  const { user, openSearchModal } = useApp();
   const [selectedCat, setSelectedCat] = useState('全部');
+  const [arenaSearch, setArenaSearch] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isMuted, setIsMuted] = useState(() => gameAudio.getMuted());
   const [aleatoricStats, setAleatoricStats] = useState(() => getAleatoricStats());
@@ -237,7 +239,7 @@ export const GamesPage: React.FC = () => {
     setIsMuted(next);
   };
 
-  const filteredGames = selectedCat === '全部'
+  const catFilteredGames = selectedCat === '全部'
     ? PSYCHOLOGY_GAMES
     : selectedCat === '零重复随机博弈'
     ? PSYCHOLOGY_GAMES.filter(
@@ -250,6 +252,42 @@ export const GamesPage: React.FC = () => {
     : selectedCat === '心理学核心实验' || selectedCat === '10款心理学小游戏'
     ? PSYCHOLOGY_GAMES.filter(g => Boolean(g.numberPrefix))
     : PSYCHOLOGY_GAMES.filter(g => g.category === selectedCat);
+
+  const arenaLunrResults = useMemo(() => {
+    const q = arenaSearch.trim();
+    if (!q) return [];
+    return searchArenaWithLunr(q, 24);
+  }, [arenaSearch]);
+
+  const filteredGames = useMemo(() => {
+    const q = arenaSearch.trim();
+    if (!q) return catFilteredGames;
+    const matchedGameIds = new Map<string, number>();
+    arenaLunrResults.forEach((res, idx) => {
+      if (res.game) {
+        matchedGameIds.set(res.game.id, idx);
+      }
+    });
+    const qLower = q.toLowerCase();
+    return catFilteredGames
+      .filter(
+        (g) =>
+          matchedGameIds.has(g.id) ||
+          g.nameZh.toLowerCase().includes(qLower) ||
+          (g.nameEn && g.nameEn.toLowerCase().includes(qLower)) ||
+          g.description.toLowerCase().includes(qLower) ||
+          g.conceptLearned.toLowerCase().includes(qLower)
+      )
+      .sort(
+        (a, b) =>
+          (matchedGameIds.get(a.id) ?? 999) - (matchedGameIds.get(b.id) ?? 999)
+      );
+  }, [arenaSearch, arenaLunrResults, catFilteredGames]);
+
+  const subArenaMatches = useMemo(
+    () => arenaLunrResults.filter((r) => !r.game).slice(0, 8),
+    [arenaLunrResults]
+  );
 
   const currentDiffConfig = DIFFICULTY_CONFIGS[arenaDifficulty];
   const completedCount = user.completedGames?.length || 0;
@@ -1123,6 +1161,72 @@ export const GamesPage: React.FC = () => {
             );
           })}
         </CylinderScrollList>
+      </section>
+
+      {/* Lunr.js Arena Quick Discovery Search Bar */}
+      <section className="bg-white rounded-2xl p-3.5 sm:p-4 border border-stone-200/90 shadow-xs space-y-3">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+          <div className="relative flex-1">
+            <Search className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+            <input
+              type="text"
+              value={arenaSearch}
+              onChange={(e) => setArenaSearch(e.target.value)}
+              placeholder="Lunr 竞技场速搜：输入项目名、心理学机制或专项场景（如：锚定、同意、犯罪、第一印象）…"
+              className="w-full pl-10 pr-9 py-2.5 rounded-xl bg-stone-50 border border-stone-200/90 focus:bg-white focus:border-indigo-500 focus:outline-none text-xs sm:text-sm text-stone-900 placeholder-stone-400 transition-colors"
+              aria-label="竞技场 Lunr 搜索"
+            />
+            {arenaSearch && (
+              <button
+                type="button"
+                onClick={() => setArenaSearch('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 w-6 h-6 rounded-md bg-stone-200/70 hover:bg-stone-300 text-stone-600 flex items-center justify-center cursor-pointer"
+                aria-label="清空竞技场搜索"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={openSearchModal}
+            className="px-3.5 py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 transition-colors"
+          >
+            <Search className="w-3.5 h-3.5 text-amber-300" />
+            <span>全库检索定律 + 竞技场 (⌘K)</span>
+          </button>
+        </div>
+
+        {arenaSearch.trim() !== '' && subArenaMatches.length > 0 && (
+          <div className="pt-2 border-t border-stone-100 space-y-2">
+            <div className="text-[11px] font-mono font-semibold text-stone-500">
+              直达匹配的子竞技场模式 ({subArenaMatches.length})
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {subArenaMatches.map((sub) => (
+                <button
+                  key={sub.docId}
+                  type="button"
+                  onClick={() => {
+                    gameAudio.playTap();
+                    const sep = sub.route.includes('?') ? '&' : '?';
+                    navigate(`${sub.route}${sep}difficulty=${encodeURIComponent(arenaDifficulty)}`);
+                  }}
+                  className="p-2.5 rounded-xl bg-stone-50 hover:bg-indigo-50/70 border border-stone-200/80 hover:border-indigo-300 text-left flex items-center justify-between gap-2 transition-colors cursor-pointer"
+                >
+                  <div className="min-w-0">
+                    <div className="text-[10px] font-mono font-bold text-indigo-700">
+                      {sub.codeId} · {sub.category}
+                    </div>
+                    <div className="text-xs font-bold text-stone-900 truncate">{sub.title}</div>
+                  </div>
+                  <ArrowRight className="w-3.5 h-3.5 text-stone-400 shrink-0" />
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
 
       {/* 3D Cylindrical Drum Category Filter Controls */}

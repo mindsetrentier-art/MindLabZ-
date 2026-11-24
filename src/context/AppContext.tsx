@@ -92,6 +92,9 @@ interface AppContextType {
   pwaModalOpen: boolean;
   setPwaModalOpen: (open: boolean) => void;
   openPwaModal: () => void;
+  searchModalOpen: boolean;
+  setSearchModalOpen: (open: boolean) => void;
+  openSearchModal: () => void;
 }
 
 const STORAGE_KEY = 'mindlabz_user_profile_v1';
@@ -342,6 +345,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // PWA & Desktop App Icon Installation Modal
   const [pwaModalOpen, setPwaModalOpen] = useState<boolean>(false);
   const openPwaModal = () => setPwaModalOpen(true);
+
+  // Global Lunr.js Search Command Modal
+  const [searchModalOpen, setSearchModalOpen] = useState<boolean>(false);
+  const openSearchModal = () => setSearchModalOpen(true);
 
   const openComposerWithPreload = (preload?: Partial<CognitiveJournalEntry>) => {
     setComposerPreload(preload || null);
@@ -1080,6 +1087,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         pwaModalOpen,
         setPwaModalOpen,
         openPwaModal,
+        searchModalOpen,
+        setSearchModalOpen,
+        openSearchModal,
       }}
     >
       {children}

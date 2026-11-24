@@ -30,6 +30,7 @@ import { PwaUpdateToast } from './components/pwa/PwaUpdateToast';
 import { BiometricSetupModal } from './components/journal/BiometricSetupModal';
 import { BadgeUnlockedModal } from './components/profile/BadgeUnlockedModal';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
+import { GlobalSearchModal } from './components/search/GlobalSearchModal';
 
 const AppRoutes: React.FC = () => {
   const navigate = useNavigate();
@@ -135,6 +136,8 @@ const AppRoutes: React.FC = () => {
           navigate('/profile');
         }}
       />
+
+      <GlobalSearchModal />
     </>
   );
 };

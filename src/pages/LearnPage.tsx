@@ -87,6 +87,7 @@ import {
   CylinderScrollItem,
 } from '../components/ui/CylinderScrollList';
 import { SexualPsychologyOrganizer } from '../components/sexual/SexualPsychologyOrganizer';
+import { searchLawsWithLunr } from '../utils/globalSearchIndex';
 
 interface CategoryOption {
   key: 'all' | CategoryZh;
@@ -577,33 +578,9 @@ export const LearnPage: React.FC = () => {
   ]);
 
   const filteredLaws = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
+    const q = searchQuery.trim();
     if (!q) return baseModeLaws;
-    return baseModeLaws.filter((law) => {
-      return (
-        (law.codeId && law.codeId.toLowerCase().includes(q)) ||
-        law.nameZh.toLowerCase().includes(q) ||
-        law.nameEn.toLowerCase().includes(q) ||
-        law.shortExplanation.toLowerCase().includes(q) ||
-        law.detailedExplanation.toLowerCase().includes(q) ||
-        (law.sexualPillar && law.sexualPillar.toLowerCase().includes(q)) ||
-        (law.sexualCategory && law.sexualCategory.toLowerCase().includes(q)) ||
-        (law.sexualContext && law.sexualContext.toLowerCase().includes(q)) ||
-        (law.sexualTopicName && law.sexualTopicName.toLowerCase().includes(q)) ||
-        (law.criminalCategory && law.criminalCategory.toLowerCase().includes(q)) ||
-        (law.criminalContext && law.criminalContext.toLowerCase().includes(q)) ||
-        (law.criminalTheoryName && law.criminalTheoryName.toLowerCase().includes(q)) ||
-        (law.reverseCategory && law.reverseCategory.toLowerCase().includes(q)) ||
-        (law.reverseScenario && law.reverseScenario.toLowerCase().includes(q)) ||
-        (law.actionUnitCode && law.actionUnitCode.toLowerCase().includes(q)) ||
-        (law.researcher && law.researcher.toLowerCase().includes(q)) ||
-        (law.storyScenario?.title && law.storyScenario.title.toLowerCase().includes(q)) ||
-        (law.observableSigns && law.observableSigns.join(' ').toLowerCase().includes(q)) ||
-        (law.subTag && law.subTag.toLowerCase().includes(q)) ||
-        (law.assignedCityZh && law.assignedCityZh.toLowerCase().includes(q)) ||
-        (law.chapter && law.chapter.toLowerCase().includes(q))
-      );
-    });
+    return searchLawsWithLunr(baseModeLaws, q);
   }, [baseModeLaws, searchQuery]);
 
   const rollerItems: CylindricalThemeItem[] = useMemo(

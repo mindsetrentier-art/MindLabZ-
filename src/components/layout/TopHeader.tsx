@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Flame, Star, ArrowLeft, Sparkles, Wind, Cloud } from 'lucide-react';
+import { Flame, Star, ArrowLeft, Sparkles, Wind, Cloud, Search } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { ChameleonColorControl } from '../ui/ChameleonColorPopover';
 
@@ -13,7 +13,7 @@ interface TopHeaderProps {
 export const TopHeader: React.FC<TopHeaderProps> = ({ title, showBack, hasTopBar = false }) => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, firebaseUser, isSyncing, openAuthModal, openPwaModal, setAiTutorOpen, setBreathingOpen } = useApp();
+  const { user, firebaseUser, isSyncing, openAuthModal, openPwaModal, openSearchModal, setAiTutorOpen, setBreathingOpen } = useApp();
 
   return (
     <header
@@ -100,6 +100,19 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ title, showBack, hasTopBar
 
         {/* Gamification Stats & Quick Actions (Clean Unboxed Editorial Metadata) */}
         <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+          {/* Global Lunr.js Search Trigger (Cmd/Ctrl + K) */}
+          <button
+            type="button"
+            onClick={openSearchModal}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white border border-stone-200/90 text-stone-700 hover:text-stone-900 hover:border-stone-400 hover:bg-stone-50 transition-colors btn-tactile cursor-pointer whitespace-nowrap shrink-0"
+            title="全局全文检索定律库与竞技场 (⌘K / Ctrl+K)"
+            aria-label="全局全文检索"
+          >
+            <Search className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+            <span className="text-[11px] font-semibold hidden md:inline">检索</span>
+            <span className="text-[10px] font-mono text-stone-400 hidden lg:inline">⌘K</span>
+          </button>
+
           {/* Cloud Auth / Google Connection Trigger */}
           <button
             onClick={openAuthModal}

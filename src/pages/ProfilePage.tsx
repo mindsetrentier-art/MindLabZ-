@@ -8,6 +8,7 @@ import { useApp, DEFAULT_USER, normalizeUserProfile, LocalUserAccount } from '..
 import { useBiometricLock } from '../context/BiometricLockContext';
 import { OverlappingCardStack } from '../components/ui/OverlappingCardStack';
 import { CognitiveMedalsHall } from '../components/profile/CognitiveMedalsHall';
+import { CognitiveHeatmap } from '../components/profile/CognitiveHeatmap';
 import { setupNetlifyBadgeRemover } from '../utils/netlifyBadgeRemover';
 import { ErrorBoundary } from '../components/ui/ErrorBoundary';
 
@@ -24,6 +25,7 @@ export const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
   const {
     user,
+    laws,
     firebaseUser,
     activeAccountEmail,
     savedAccounts,
@@ -666,6 +668,11 @@ export const ProfilePage: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* D3.js Cognitive Heatmap across Psychology Domains */}
+      <ErrorBoundary fallbackTitle="心理学掌握热力图加载中">
+        <CognitiveHeatmap user={safeUser} laws={laws} />
+      </ErrorBoundary>
 
       {/* App Icon & Desktop Installation (PWA) Showcase Card */}
       <section className="editorial-card rounded-2xl p-6 sm:p-8 space-y-5">
