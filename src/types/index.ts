@@ -124,6 +124,14 @@ export interface PsychologyLaw {
   criminalCoreTheory?: string;
   criminalAppliedAngle?: string;
   criminalLearningNote?: string;
+  isSexualPsychology?: boolean;
+  sexualPillar?: string;
+  sexualCategory?: string;
+  sexualContext?: string;
+  sexualTopicName?: string;
+  sexualCoreConcept?: string;
+  sexualAppliedAngle?: string;
+  sexualLearningNote?: string;
   experimentSetup?: {
     scenario: string;
     optionA: { label: string; biasDescription?: string; rationalDescription?: string; description?: string };
@@ -137,6 +145,7 @@ export type GameType =
   | 'love-aleatoric-arena'
   | 'reverse-aleatoric-arena'
   | 'criminal-aleatoric-arena'
+  | 'sexual-aleatoric-arena'
   | 'memory-lab' 
   | 'mind-trap' 
   | 'brain-rush' 
@@ -159,7 +168,7 @@ export interface GameDefinition {
   nameEn?: string;
   nameZh: string;
   description: string;
-  category: '记忆' | '注意力' | '速度' | '逻辑' | '决策' | '心理实验' | '认知' | '情绪' | '习惯' | '社会' | '犯罪心理';
+  category: '记忆' | '注意力' | '速度' | '逻辑' | '决策' | '心理实验' | '认知' | '情绪' | '习惯' | '社会' | '犯罪心理' | '性心理';
   difficulty: DifficultyLevel;
   bestScore: number;
   icon: string;

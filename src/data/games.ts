@@ -210,6 +210,22 @@ export const PSYCHOLOGY_GAMES: GameDefinition[] = [
     relatedLawId: 'crim-001',
     accentColor: '#9F1239'
   },
+  {
+    id: 'sexual-aleatoric-arena',
+    numberPrefix: '14',
+    name: 'Sexual Psychology Aleatoric Arena',
+    nameEn: '100-Concept Consent, Intimacy & Health CSPRNG Arena',
+    nameZh: '性心理 · 100律亲密与健康思辨',
+    description: '全量导入 100 条性心理学知识卡（4 大主题板块 × 5 大应用观察场景 × 5 种出题变式 = 500 张独立题卡），加密真随机零重复洗牌！',
+    category: '性心理',
+    difficulty: 'Medium',
+    bestScore: 5900,
+    icon: 'heart-handshake',
+    estimatedTime: '110秒',
+    conceptLearned: '性反应双因素模型、持续知情同意、依恋与沟通、多元尊重与性健康科普边界',
+    relatedLawId: 'sex-0101',
+    accentColor: '#7E22CE'
+  },
 
   // 经典神经竞技实验室 (原有矩阵/反应游戏)
   {

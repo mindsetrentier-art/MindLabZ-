@@ -100,6 +100,7 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
   const tagCounts = useMemo(() => {
     const counts: Record<LibraryTagId, number> = {
       'criminal-psychology': 0,
+      'sexual-psychology': 0,
       'reverse-psychology': 0,
       microexpressions: 0,
       'cognitive-bias': 0,

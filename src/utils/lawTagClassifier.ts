@@ -2,6 +2,7 @@ import { PsychologyLaw } from '../types';
 
 export type LibraryTagId =
   | 'criminal-psychology'
+  | 'sexual-psychology'
   | 'reverse-psychology'
   | 'microexpressions'
   | 'cognitive-bias'
@@ -24,6 +25,12 @@ export const LIBRARY_TAG_DEFINITIONS: LibraryTagDefinition[] = [
     labelZh: '犯罪心理学',
     labelEn: 'Criminal Psychology',
     description: '多因素风险模型、暴力攻击机制、道德脱离与预防边界',
+  },
+  {
+    id: 'sexual-psychology',
+    labelZh: '性心理学',
+    labelEn: 'Sexual Psychology',
+    description: '性反应周期、知情同意边界、身体意象与多元性健康科学',
   },
   {
     id: 'reverse-psychology',
@@ -94,6 +101,15 @@ export function getLawClassificationTags(law: PsychologyLaw): LibraryTagId[] {
 
   if (law.isCriminalPsychology || /犯罪|暴力|攻击|道德脱离|精神病态|去人性化|责任分散/i.test(haystack)) {
     tags.add('criminal-psychology');
+  }
+
+  if (
+    law.isSexualPsychology ||
+    /性反应|性欲|性唤起|性同意|性健康|性取向|性别认同|性心理|身体意象|性幻想|性脚本|sexual|arousal|consent/i.test(
+      haystack
+    )
+  ) {
+    tags.add('sexual-psychology');
   }
 
   if (law.isReversePsychology || REVERSE_PATTERN.test(haystack)) {

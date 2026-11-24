@@ -3,6 +3,7 @@ import { LOVE_PSYCHOLOGY_LAWS } from '../data/lovePsychologyCodex';
 import { LOVE_DOMAIN_MAP } from '../data/lovePsychologyTypes';
 import { REVERSE_PSYCHOLOGY_LAWS } from '../data/reversePsychologyLaws';
 import { CRIMINAL_PSYCHOLOGY_LAWS } from '../data/criminalPsychologyLaws';
+import { SEXUAL_PSYCHOLOGY_LAWS } from '../data/sexualPsychologyLaws';
 
 export type AleatoricTemplateId =
   | 'principle-from-concept'
@@ -513,35 +514,58 @@ export function drawNonRepeatingLawOrder<T extends { id: string }>(
   scopeKey: string,
   options?: { markHeadCount?: number; resetScope?: boolean }
 ): T[] {
-  if (pool.length <= 1) return [...pool];
-  const markHeadCount = options?.markHeadCount ?? Math.min(24, Math.max(4, Math.ceil(pool.length * 0.25)));
+  // Ensure unique input pool by id
+  const uniquePool: T[] = [];
+  const poolSeenIds = new Set<string>();
+  for (const item of pool) {
+    if (!poolSeenIds.has(item.id)) {
+      poolSeenIds.add(item.id);
+      uniquePool.push(item);
+    }
+  }
+
+  if (uniquePool.length <= 1) return [...uniquePool];
+  const markHeadCount =
+    options?.markHeadCount ?? Math.min(24, Math.max(4, Math.ceil(uniquePool.length * 0.25)));
 
   const map = loadLibraryDeckMap();
   let scopeState = options?.resetScope
     ? { seenIds: [], recentBatchIds: [], shuffleCycles: 0 }
     : map[scopeKey] || { seenIds: [], recentBatchIds: [], shuffleCycles: 0 };
 
-  const seenSet = new Set(scopeState.seenIds);
+  let seenSet = new Set(scopeState.seenIds);
   const recentSet = new Set(scopeState.recentBatchIds);
 
-  let unseen = pool.filter((item) => !seenSet.has(item.id));
+  let unseen = uniquePool.filter((item) => !seenSet.has(item.id));
   if (unseen.length === 0) {
     // Entire deck conquered -> reset seen history while keeping very recent cooldown to avoid edge repeat
-    const poolIds = new Set(pool.map((p) => p.id));
     scopeState = {
-      seenIds: scopeState.seenIds.filter((id) => !poolIds.has(id)),
+      seenIds: scopeState.seenIds.filter((id) => !poolSeenIds.has(id)),
       recentBatchIds: scopeState.recentBatchIds,
       shuffleCycles: (scopeState.shuffleCycles || 0) + 1,
     };
-    unseen = [...pool];
+    seenSet = new Set(scopeState.seenIds);
+    unseen = [...uniquePool];
   }
+
+  const unseenIds = new Set(unseen.map((item) => item.id));
 
   // Partition unseen into fresh (not in immediate previous batch) vs cooldown
   const freshUnseen = cryptoShuffle(unseen.filter((item) => !recentSet.has(item.id)));
   const cooldownUnseen = cryptoShuffle(unseen.filter((item) => recentSet.has(item.id)));
-  const seenRemainder = cryptoShuffle(pool.filter((item) => seenSet.has(item.id)));
+  const seenRemainder = cryptoShuffle(
+    uniquePool.filter((item) => !unseenIds.has(item.id) && seenSet.has(item.id))
+  );
 
-  const ordered = [...freshUnseen, ...cooldownUnseen, ...seenRemainder];
+  const orderedRaw = [...freshUnseen, ...cooldownUnseen, ...seenRemainder];
+  const ordered: T[] = [];
+  const emittedIds = new Set<string>();
+  for (const item of orderedRaw) {
+    if (!emittedIds.has(item.id)) {
+      emittedIds.add(item.id);
+      ordered.push(item);
+    }
+  }
 
   const newlyExposed = ordered.slice(0, markHeadCount).map((item) => item.id);
   const nextSeenSet = new Set(scopeState.seenIds);
@@ -1304,6 +1328,394 @@ export function drawAleatoricCriminalQuestions(
   state.totalDraws += results.length;
   state.lastPlayedAt = new Date().toISOString();
   saveCriminalDeckState(state);
+
+  return results;
+}
+
+// ---------------------------------------------------------------------------
+// 4. Sexual Psychology 100-Concept Aleatoric Engine (500 Non-Repeating Encounters)
+// ---------------------------------------------------------------------------
+
+export type SexualAleatoricTemplateId =
+  | 'concept-core'
+  | 'context-practice'
+  | 'consent-boundary'
+  | 'topic-matching'
+  | 'myth-debunking';
+
+export const SEXUAL_ALEATORIC_TEMPLATES: SexualAleatoricTemplateId[] = [
+  'concept-core',
+  'context-practice',
+  'consent-boundary',
+  'topic-matching',
+  'myth-debunking',
+];
+
+export interface AleatoricSexualQuestion {
+  encounterKey: string;
+  templateId: SexualAleatoricTemplateId;
+  templateLabel: string;
+  law: PsychologyLaw;
+  prompt: string;
+  contextTag: string;
+  options: string[];
+  correctAnswer: number;
+  explanation: string;
+  healthyBoundary: string;
+}
+
+const SEXUAL_STORAGE_KEY = 'mindlabz_sexual_aleatoric_deck_v1';
+const SEXUAL_COOLDOWN_WINDOW = 30;
+
+function loadSexualDeckState(): AleatoricStorageState {
+  try {
+    if (typeof window === 'undefined') {
+      return { seenEncounters: [], recentLawIds: [], totalDraws: 0, lastPlayedAt: '' };
+    }
+    const raw = window.localStorage.getItem(SEXUAL_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return {
+        seenEncounters: Array.isArray(parsed.seenEncounters) ? parsed.seenEncounters : [],
+        recentLawIds: Array.isArray(parsed.recentLawIds) ? parsed.recentLawIds : [],
+        totalDraws: typeof parsed.totalDraws === 'number' ? parsed.totalDraws : 0,
+        lastPlayedAt: typeof parsed.lastPlayedAt === 'string' ? parsed.lastPlayedAt : '',
+      };
+    }
+  } catch {
+    // ignore storage errors
+  }
+  return { seenEncounters: [], recentLawIds: [], totalDraws: 0, lastPlayedAt: '' };
+}
+
+function saveSexualDeckState(state: AleatoricStorageState): void {
+  try {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(SEXUAL_STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    // ignore quota errors
+  }
+}
+
+export function resetSexualAleatoricDeck(): void {
+  saveSexualDeckState({
+    seenEncounters: [],
+    recentLawIds: [],
+    totalDraws: 0,
+    lastPlayedAt: new Date().toISOString(),
+  });
+}
+
+export function getSexualAleatoricStats(): {
+  totalConcepts: number;
+  totalUniqueEncounters: number;
+  seenEncountersCount: number;
+  uniqueConceptsExplored: number;
+  totalDraws: number;
+} {
+  const state = loadSexualDeckState();
+  const seenConcepts = new Set(state.seenEncounters.map((k) => k.split('::')[0]));
+  return {
+    totalConcepts: SEXUAL_PSYCHOLOGY_LAWS.length,
+    totalUniqueEncounters: SEXUAL_PSYCHOLOGY_LAWS.length * SEXUAL_ALEATORIC_TEMPLATES.length,
+    seenEncountersCount: state.seenEncounters.length,
+    uniqueConceptsExplored: seenConcepts.size,
+    totalDraws: state.totalDraws,
+  };
+}
+
+function pickSexualDistractors(
+  target: PsychologyLaw,
+  pool: PsychologyLaw[],
+  count: number,
+  preferDistinctField: 'topic' | 'context' = 'topic'
+): PsychologyLaw[] {
+  const candidates = cryptoShuffle(pool.filter((l) => l.id !== target.id));
+  const picked: PsychologyLaw[] = [];
+  const usedKeys = new Set<string>([
+    preferDistinctField === 'topic'
+      ? target.sexualTopicName || target.nameZh
+      : target.sexualContext || '',
+  ]);
+
+  for (const item of candidates) {
+    if (picked.length >= count) break;
+    const key =
+      preferDistinctField === 'topic'
+        ? item.sexualTopicName || item.nameZh
+        : item.sexualContext || '';
+    if (!usedKeys.has(key)) {
+      usedKeys.add(key);
+      picked.push(item);
+    }
+  }
+
+  for (const item of candidates) {
+    if (picked.length >= count) break;
+    if (!picked.some((p) => p.id === item.id)) {
+      picked.push(item);
+    }
+  }
+
+  return picked;
+}
+
+function materializeSexualQuestion(
+  law: PsychologyLaw,
+  templateId: SexualAleatoricTemplateId,
+  referencePool: PsychologyLaw[]
+): AleatoricSexualQuestion {
+  const topicName = law.sexualTopicName || law.nameZh.split('：')[0] || law.nameZh;
+  const contextLabel = law.sexualContext || '个人自我认识';
+  const categoryLabel = law.sexualCategory || '生理与性反应';
+  const pillarLabel = law.sexualPillar || '生理唤起与欲望机制';
+  const coreConcept = law.sexualCoreConcept || law.whyItHappens || law.shortExplanation;
+  const appliedAngle = law.sexualAppliedAngle || law.realLifeExample;
+  const boundary =
+    law.healthyBoundary ||
+    law.sexualLearningNote ||
+    '尊重自主、知情同意、隐私与多样性；遇到持续困扰请咨询合格医疗或心理专业人员。';
+  const encounterKey = `${law.id}::${templateId}`;
+
+  if (templateId === 'concept-core') {
+    const distractors = pickSexualDistractors(law, referencePool, 3, 'topic');
+    const { options, correctAnswer } = shuffleOptions(
+      coreConcept,
+      distractors.map((d) => d.sexualCoreConcept || d.whyItHappens || d.shortExplanation)
+    );
+    return {
+      encounterKey,
+      templateId,
+      templateLabel: '科学原理核心辨析',
+      law,
+      prompt: `在性心理学「${topicName}（${categoryLabel}）」中，以下哪项阐述最准确概括了其科学规律？`,
+      contextTag: `${law.codeId} · ${pillarLabel}`,
+      options,
+      correctAnswer,
+      explanation: `【${law.codeId} · ${law.nameZh}】${coreConcept}`,
+      healthyBoundary: boundary,
+    };
+  }
+
+  if (templateId === 'context-practice') {
+    const distractors = pickSexualDistractors(law, referencePool, 3, 'context');
+    const { options, correctAnswer } = shuffleOptions(
+      appliedAngle,
+      distractors.map((d) => d.sexualAppliedAngle || d.realLifeExample)
+    );
+    return {
+      encounterKey,
+      templateId,
+      templateLabel: '场景尊重与健康践行',
+      law,
+      prompt: `在「${contextLabel}」场景下理解并应用「${topicName}」时，哪项互动与自我认知方式最科学健康？`,
+      contextTag: `${contextLabel} · ${categoryLabel}`,
+      options,
+      correctAnswer,
+      explanation: `在「${contextLabel}」视角下，${appliedAngle}`,
+      healthyBoundary: boundary,
+    };
+  }
+
+  if (templateId === 'consent-boundary') {
+    const learningNote =
+      law.sexualLearningNote ||
+      '本卡用于科学知识学习与自我理解，不构成医学诊断、心理诊断或个体行为预测。';
+    const { options, correctAnswer } = shuffleOptions(
+      `${appliedAngle}（原则：${learningNote}）`,
+      [
+        `一旦出现生理反应或过往亲密历史，即可视作无需再沟通的默许同意`,
+        `可以用色情商业媒体演绎或刻板性别角色，直接要求自己或伴侣达到统一反应`,
+        `无需了解情境压力或寻求专业支持，仅凭一次反应差异即可下定功能缺陷结论`,
+      ]
+    );
+    return {
+      encounterKey,
+      templateId,
+      templateLabel: '同意边界与去羞耻原则',
+      law,
+      prompt: `围绕「${law.nameZh}」，以下哪项最符合知情同意、身体自主与科学支持的底线规范？`,
+      contextTag: `同意与边界 · ${contextLabel}`,
+      options,
+      correctAnswer,
+      explanation: `核心尊重边界：${appliedAngle} ${learningNote}`,
+      healthyBoundary: boundary,
+    };
+  }
+
+  if (templateId === 'topic-matching') {
+    const distractors = pickSexualDistractors(law, referencePool, 3, 'topic');
+    const { options, correctAnswer } = shuffleOptions(
+      `${topicName}（${categoryLabel}）`,
+      distractors.map(
+        (d) => `${d.sexualTopicName || d.nameZh.split('：')[0]}（${d.sexualCategory || '性心理'}）`
+      )
+    );
+    return {
+      encounterKey,
+      templateId,
+      templateLabel: '核心议题精准归类',
+      law,
+      prompt: `原理线索：“${coreConcept}” 这一科学描述直接对应以下哪一项性心理学专题？`,
+      contextTag: `专题归类 · ${pillarLabel}`,
+      options,
+      correctAnswer,
+      explanation: `正确对应「${topicName}（${categoryLabel}）」。场景践行：${appliedAngle}`,
+      healthyBoundary: boundary,
+    };
+  }
+
+  // myth-debunking
+  const distractors = pickSexualDistractors(law, referencePool, 3, 'context');
+  const { options, correctAnswer } = shuffleOptions(
+    `【${contextLabel} · ${topicName}】${appliedAngle}`,
+    distractors.map(
+      (d) =>
+        `【${d.sexualContext || '自我认识'} · ${d.sexualTopicName || d.nameZh.split('：')[0]}】${
+          d.sexualAppliedAngle || d.shortExplanation
+        }`
+    )
+  );
+  return {
+    encounterKey,
+    templateId,
+    templateLabel: '破除误区与跨场景校准',
+    law,
+    prompt: `针对「${contextLabel}」维度下「${topicName}」的常见迷思拆解与科学指引，哪项匹配完全准确？`,
+    contextTag: `${law.codeId} · 科学校准`,
+    options,
+    correctAnswer,
+    explanation: `「${law.nameZh}」科学指引：${appliedAngle}`,
+    healthyBoundary: boundary,
+  };
+}
+
+/**
+ * Draw CSPRNG non-repeating Sexual Psychology Arena questions across 100 concepts × 5 templates.
+ */
+export function drawAleatoricSexualQuestions(
+  count: number,
+  options?: {
+    pillarFilter?: string;
+    contextFilter?: string;
+    categoryFilter?: string;
+    arenaDifficulty?: GameDifficulty | 'all';
+    gameIdFilter?: PsychologyLaw['relatedGame'];
+  }
+): AleatoricSexualQuestion[] {
+  const pillarFilter = options?.pillarFilter || 'all';
+  const contextFilter = options?.contextFilter || 'all';
+  const categoryFilter = options?.categoryFilter || 'all';
+  const allowedDiffs = getAllowedDifficulties(options?.arenaDifficulty);
+
+  let pool = SEXUAL_PSYCHOLOGY_LAWS.filter((law) => {
+    if (pillarFilter !== 'all' && law.sexualPillar !== pillarFilter) return false;
+    if (contextFilter !== 'all' && law.sexualContext !== contextFilter) return false;
+    if (categoryFilter !== 'all' && law.sexualCategory !== categoryFilter) return false;
+    if (
+      options?.gameIdFilter &&
+      law.relatedGame !== options.gameIdFilter &&
+      !(law.dispatchedGames && law.dispatchedGames.includes(options.gameIdFilter))
+    ) {
+      return false;
+    }
+    if (!allowedDiffs.includes(law.difficulty)) return false;
+    return true;
+  });
+
+  if (pool.length < count) {
+    pool = SEXUAL_PSYCHOLOGY_LAWS.filter((law) => {
+      if (pillarFilter !== 'all' && law.sexualPillar !== pillarFilter) return false;
+      if (contextFilter !== 'all' && law.sexualContext !== contextFilter) return false;
+      if (categoryFilter !== 'all' && law.sexualCategory !== categoryFilter) return false;
+      return true;
+    });
+  }
+  if (pool.length === 0) {
+    pool = SEXUAL_PSYCHOLOGY_LAWS;
+  }
+
+  const state = loadSexualDeckState();
+  const seenSet = new Set(state.seenEncounters);
+  const recentSet = new Set(state.recentLawIds);
+
+  const buildUnseenPairs = (ignoreRecent: boolean) => {
+    const pairs: Array<{ law: PsychologyLaw; templateId: SexualAleatoricTemplateId }> = [];
+    for (const law of pool) {
+      if (!ignoreRecent && recentSet.has(law.id)) continue;
+      for (const tpl of SEXUAL_ALEATORIC_TEMPLATES) {
+        const key = `${law.id}::${tpl}`;
+        if (!seenSet.has(key)) {
+          pairs.push({ law, templateId: tpl });
+        }
+      }
+    }
+    return cryptoShuffle(pairs);
+  };
+
+  let unseenQueue = buildUnseenPairs(false);
+  if (unseenQueue.length < count) {
+    unseenQueue = buildUnseenPairs(true);
+  }
+  if (unseenQueue.length < count) {
+    const poolIds = new Set(pool.map((l) => l.id));
+    state.seenEncounters = state.seenEncounters.filter((k) => !poolIds.has(k.split('::')[0]));
+    seenSet.clear();
+    state.seenEncounters.forEach((k) => seenSet.add(k));
+    unseenQueue = buildUnseenPairs(false);
+    if (unseenQueue.length < count) {
+      unseenQueue = buildUnseenPairs(true);
+    }
+  }
+
+  const chosen: Array<{ law: PsychologyLaw; templateId: SexualAleatoricTemplateId }> = [];
+  const chosenLawIdsInBatch = new Set<string>();
+  let lastContext = '';
+
+  for (const cand of unseenQueue) {
+    if (chosen.length >= count) break;
+    if (chosenLawIdsInBatch.has(cand.law.id)) continue;
+    if (cand.law.sexualContext && cand.law.sexualContext === lastContext && pool.length > 5) {
+      continue;
+    }
+    chosen.push(cand);
+    chosenLawIdsInBatch.add(cand.law.id);
+    lastContext = cand.law.sexualContext || '';
+  }
+
+  if (chosen.length < count) {
+    for (const cand of unseenQueue) {
+      if (chosen.length >= count) break;
+      if (chosenLawIdsInBatch.has(cand.law.id)) continue;
+      chosen.push(cand);
+      chosenLawIdsInBatch.add(cand.law.id);
+    }
+  }
+
+  if (chosen.length < count) {
+    for (const cand of unseenQueue) {
+      if (chosen.length >= count) break;
+      if (!chosen.some((c) => c.law.id === cand.law.id && c.templateId === cand.templateId)) {
+        chosen.push(cand);
+      }
+    }
+  }
+
+  const nextRecent = [...state.recentLawIds];
+  const results = chosen.map(({ law, templateId }) => {
+    const key = `${law.id}::${templateId}`;
+    if (!seenSet.has(key)) {
+      seenSet.add(key);
+      state.seenEncounters.push(key);
+    }
+    nextRecent.push(law.id);
+    return materializeSexualQuestion(law, templateId, SEXUAL_PSYCHOLOGY_LAWS);
+  });
+
+  state.recentLawIds = nextRecent.slice(-SEXUAL_COOLDOWN_WINDOW);
+  state.totalDraws += results.length;
+  state.lastPlayedAt = new Date().toISOString();
+  saveSexualDeckState(state);
 
   return results;
 }

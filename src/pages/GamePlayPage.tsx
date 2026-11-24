@@ -26,6 +26,7 @@ import { FalsificationChallengeGame } from '../components/games/FalsificationCha
 import { LoveAleatoricArenaGame } from '../components/games/LoveAleatoricArenaGame';
 import { ReverseAleatoricArenaGame } from '../components/games/ReverseAleatoricArenaGame';
 import { CriminalAleatoricArenaGame } from '../components/games/CriminalAleatoricArenaGame';
+import { SexualAleatoricArenaGame } from '../components/games/SexualAleatoricArenaGame';
 
 export const GamePlayPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -84,6 +85,8 @@ export const GamePlayPage: React.FC = () => {
         return <ReverseAleatoricArenaGame />;
       case 'criminal-aleatoric-arena':
         return <CriminalAleatoricArenaGame />;
+      case 'sexual-aleatoric-arena':
+        return <SexualAleatoricArenaGame />;
 
       // 经典竞技场实验室
       case 'memory-lab':

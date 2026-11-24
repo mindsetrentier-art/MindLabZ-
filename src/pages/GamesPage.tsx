@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { GameCard } from '../components/cards/GameCard';
 import { GameCardSkeleton } from '../components/ui/Skeleton';
 import { PSYCHOLOGY_GAMES } from '../data/games';
-import { Brain, Trophy, Zap, Sparkles, Shuffle, ShieldCheck, Flame, Crown, CheckCircle2, Volume2, VolumeX, Gamepad2, Award, ArrowRight, Heart, RotateCcw, Eye, BookOpen, Scale, Layers } from 'lucide-react';
+import { Brain, Trophy, Zap, Sparkles, Shuffle, ShieldCheck, Flame, Crown, CheckCircle2, Volume2, VolumeX, Gamepad2, Award, ArrowRight, Heart, RotateCcw, Eye, BookOpen, Scale, Layers, HeartHandshake } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { GameDifficulty, DEFAULT_DIFFICULTY, DIFFICULTY_LIST, DIFFICULTY_CONFIGS } from '../data/difficulty';
 import { DifficultySelector } from '../components/games/DifficultySelector';
@@ -17,11 +17,27 @@ import {
   resetReverseAleatoricDeck,
   getCriminalAleatoricStats,
   resetCriminalAleatoricDeck,
+  getSexualAleatoricStats,
+  resetSexualAleatoricDeck,
 } from '../utils/aleatoricEngine';
 import { MICROEXPRESSION_LAWS } from '../data/microexpressionLaws';
 import { REVERSE_SCENARIOS, REVERSE_CATEGORIES } from '../data/reversePsychologyLaws';
 import { CRIMINAL_CONTEXTS, CRIMINAL_CATEGORIES } from '../data/criminalPsychologyLaws';
-import { CylindricalThemeRoller, CylindricalThemeItem } from '../components/ui/CylindricalThemeRoller';
+import {
+  SEXUAL_PSYCHOLOGY_LAWS,
+  SEXUAL_PILLARS,
+  SEXUAL_CONTEXTS,
+  SEXUAL_CATEGORIES,
+} from '../data/sexualPsychologyLaws';
+import {
+  CylindricalThemeRoller,
+  CylindricalThemeItem,
+  CylindricalThemeChangeMeta,
+} from '../components/ui/CylindricalThemeRoller';
+import {
+  CylinderScrollList,
+  CylinderScrollItem,
+} from '../components/ui/CylinderScrollList';
 
 export const GamesPage: React.FC = () => {
   const navigate = useNavigate();
@@ -32,6 +48,7 @@ export const GamesPage: React.FC = () => {
   const [aleatoricStats, setAleatoricStats] = useState(() => getAleatoricStats());
   const [reverseStats, setReverseStats] = useState(() => getReverseAleatoricStats());
   const [criminalStats, setCriminalStats] = useState(() => getCriminalAleatoricStats());
+  const [sexualStats, setSexualStats] = useState(() => getSexualAleatoricStats());
 
   const arenaRollerItems: CylindricalThemeItem[] = useMemo(() => {
     const countFor = (cat: string) => {
@@ -41,7 +58,8 @@ export const GamesPage: React.FC = () => {
           (g) =>
             g.id === 'love-aleatoric-arena' ||
             g.id === 'reverse-aleatoric-arena' ||
-            g.id === 'criminal-aleatoric-arena'
+            g.id === 'criminal-aleatoric-arena' ||
+            g.id === 'sexual-aleatoric-arena'
         ).length;
       }
       if (cat === '心理学核心实验') {
@@ -65,9 +83,18 @@ export const GamesPage: React.FC = () => {
         label: 'CSPRNG 零重复博弈',
         group: '总览与零重引擎',
         count: countFor('零重复随机博弈'),
-        subtitle: '犯罪100 · 逆向100 · 爱情696',
+        subtitle: '性心理100 · 犯罪100 · 逆向100 · 爱情696',
         accentColor: '#10B981',
         icon: <Shuffle className="w-3.5 h-3.5" />,
+      },
+      {
+        id: '性心理',
+        label: '性心理学专场',
+        group: '热点专题赛区',
+        count: countFor('性心理'),
+        subtitle: '100 律亲密与健康思辨',
+        accentColor: '#7E22CE',
+        icon: <HeartHandshake className="w-3.5 h-3.5" />,
       },
       {
         id: '犯罪心理',
@@ -83,7 +110,7 @@ export const GamesPage: React.FC = () => {
         label: '心理学核心实验',
         group: '热点专题赛区',
         count: countFor('心理学核心实验'),
-        subtitle: '#01–#13 序列实验室',
+        subtitle: '#01–#14 序列实验室',
         accentColor: '#6366F1',
         icon: <Sparkles className="w-3.5 h-3.5" />,
       },
@@ -193,14 +220,16 @@ export const GamesPage: React.FC = () => {
     }
   };
 
-  const handleSelectCat = (cat: string) => {
+  const handleSelectCat = (cat: string, meta?: CylindricalThemeChangeMeta) => {
     if (selectedCat === cat) return;
-    gameAudio.playTap();
-    setIsLoading(true);
+    if (!meta?.isAuto) {
+      gameAudio.playTap();
+      setIsLoading(true);
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 180);
+    }
     setSelectedCat(cat);
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 180);
   };
 
   const handleToggleSound = () => {
@@ -215,7 +244,8 @@ export const GamesPage: React.FC = () => {
         (g) =>
           g.id === 'love-aleatoric-arena' ||
           g.id === 'reverse-aleatoric-arena' ||
-          g.id === 'criminal-aleatoric-arena'
+          g.id === 'criminal-aleatoric-arena' ||
+          g.id === 'sexual-aleatoric-arena'
       )
     : selectedCat === '心理学核心实验' || selectedCat === '10款心理学小游戏'
     ? PSYCHOLOGY_GAMES.filter(g => Boolean(g.numberPrefix))
@@ -732,6 +762,264 @@ export const GamesPage: React.FC = () => {
         </div>
       </section>
 
+      {/* Featured Sexual Psychology 100 CSPRNG Arena & 4-Pillar Structured Matrix */}
+      {(() => {
+        const masteryMap = user.lawMasteryMap || {};
+        const sexualMasteredCount = SEXUAL_PSYCHOLOGY_LAWS.filter(
+          (l) => (masteryMap[l.id] || 0) >= 80
+        ).length;
+        const deckProgressPct = Math.round(
+          (sexualStats.seenEncountersCount / Math.max(1, sexualStats.totalUniqueEncounters)) * 100
+        );
+
+        return (
+          <section className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-[#1F0F2B] via-[#1C1433] to-[#111827] text-white p-5 sm:p-7 border border-purple-400/35 shadow-xl space-y-5">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
+              <div className="space-y-2 max-w-2xl">
+                <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono">
+                  <span className="inline-flex items-center gap-1.5 text-purple-300 font-bold">
+                    <HeartHandshake className="w-3.5 h-3.5" />
+                    <span>SEXUAL PSYCHOLOGY · CSPRNG 100 DECK</span>
+                  </span>
+                  <span className="text-stone-500" aria-hidden="true">/</span>
+                  <span className="text-amber-300 font-bold tabular-nums">
+                    {sexualStats.totalConcepts} 词条 × 5 视角 = {sexualStats.totalUniqueEncounters} 张防重题卡
+                  </span>
+                  <span className="text-stone-500" aria-hidden="true">·</span>
+                  <span className="text-emerald-300 font-bold tabular-nums">
+                    已精熟 {sexualMasteredCount} / {SEXUAL_PSYCHOLOGY_LAWS.length} 律
+                  </span>
+                </div>
+                <h3 className="font-serif-editorial text-xl sm:text-2xl font-bold text-white">
+                  性心理学与亲密健康 · 100 律真随机思辨竞技场
+                </h3>
+                <p className="text-xs sm:text-sm text-stone-300 leading-relaxed">
+                  按 4 大核心板块与 5 大观察场景科学组织。每次开局均通过 CSPRNG 真随机洗牌并锁定防重队列，当前已探索{' '}
+                  <strong className="text-amber-300 font-numeric tabular-nums">
+                    {sexualStats.seenEncountersCount} / {sexualStats.totalUniqueEncounters}
+                  </strong>{' '}
+                  张题卡（覆盖 <strong className="text-emerald-300 font-numeric tabular-nums">{sexualStats.uniqueConceptsExplored}</strong> / {sexualStats.totalConcepts} 律）。
+                </p>
+
+                {/* CSPRNG Exploration Bar */}
+                <div className="pt-1 space-y-1 max-w-md">
+                  <div className="flex items-center justify-between text-[11px] font-mono text-stone-300 tabular-nums">
+                    <span>CSPRNG 题库破译进度</span>
+                    <span>{deckProgressPct}%</span>
+                  </div>
+                  <div className="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-purple-400 via-fuchsia-400 to-amber-300 transition-all duration-500"
+                      style={{ width: `${Math.max(deckProgressPct, sexualStats.seenEncountersCount > 0 ? 4 : 0)}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row md:flex-col gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    gameAudio.playSuccess();
+                    navigate(`/game/sexual-aleatoric-arena?difficulty=${encodeURIComponent(arenaDifficulty)}`);
+                  }}
+                  className="px-5 py-3 rounded-xl bg-purple-700 hover:bg-purple-600 text-white font-bold text-xs sm:text-sm shadow-lg flex items-center justify-center gap-2 cursor-pointer active:scale-95 whitespace-nowrap shrink-0 transition-colors"
+                >
+                  <Shuffle className="w-4 h-4" />
+                  <span>开启性心理真随机思辨</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      gameAudio.playTap();
+                      navigate('/learn?mode=sexual');
+                    }}
+                    className="flex-1 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-purple-100 text-[11px] font-semibold flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
+                  >
+                    <BookOpen className="w-3 h-3" />
+                    <span>定律库分类研读</span>
+                  </button>
+
+                  {sexualStats.seenEncountersCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        gameAudio.playTap();
+                        resetSexualAleatoricDeck();
+                        setSexualStats(getSexualAleatoricStats());
+                      }}
+                      className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-stone-200 text-[11px] font-semibold flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap shrink-0"
+                      title="重置性心理防重洗牌盒"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      <span>重置洗牌</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* 4-Pillar Structured Matrix Box inside Arena */}
+            <div className="pt-3 border-t border-white/10 space-y-3">
+              <div className="flex items-center justify-between gap-2 text-[11px] font-mono text-purple-200">
+                <span className="font-bold">4 大主题板块分栏直选 · 支持「竞技场实战」与「定律库研读」双向直连</span>
+                <span className="text-stone-400 hidden sm:inline">4 Pillars × 25/20/30 律</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {SEXUAL_PILLARS.map((pillar, idx) => {
+                  const pillarMastered = SEXUAL_PSYCHOLOGY_LAWS.filter(
+                    (l) => l.sexualPillar === pillar.id && (masteryMap[l.id] || 0) >= 80
+                  ).length;
+                  const pillarPct = Math.round((pillarMastered / Math.max(1, pillar.count)) * 100);
+                  const subCats = SEXUAL_CATEGORIES.filter((c) => c.pillarId === pillar.id);
+
+                  return (
+                    <div
+                      key={pillar.id}
+                      className="rounded-2xl bg-white/[0.06] border border-white/12 p-4 flex flex-col justify-between gap-3 hover:border-purple-300/45 transition-colors"
+                    >
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between gap-2 text-[11px] font-mono text-purple-200 tabular-nums">
+                          <span>0{idx + 1} · {pillar.count} 律</span>
+                          <span className="text-emerald-300">精熟 {pillarMastered}/{pillar.count}</span>
+                        </div>
+                        <h4 className="font-serif-editorial text-sm font-bold text-white leading-snug">
+                          {pillar.label}
+                        </h4>
+                        <p className="text-[11px] text-stone-300 leading-relaxed line-clamp-2">
+                          {pillar.description}
+                        </p>
+                      </div>
+
+                      <div className="space-y-2.5">
+                        <div className="flex flex-wrap gap-1">
+                          {subCats.map((cat) => (
+                            <button
+                              key={cat.id}
+                              type="button"
+                              onClick={() => {
+                                gameAudio.playTap();
+                                navigate(
+                                  `/game/sexual-aleatoric-arena?pillar=${encodeURIComponent(
+                                    pillar.id
+                                  )}&category=${encodeURIComponent(cat.id)}&difficulty=${encodeURIComponent(
+                                    arenaDifficulty
+                                  )}`
+                                );
+                              }}
+                              className="text-[10px] px-2 py-0.5 rounded-md bg-black/25 hover:bg-purple-600/60 border border-white/10 text-stone-200 cursor-pointer whitespace-nowrap shrink-0 transition-colors"
+                            >
+                              {cat.label} · {cat.count}
+                            </button>
+                          ))}
+                        </div>
+
+                        <div className="w-full h-1 rounded-full bg-white/10 overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all duration-300"
+                            style={{
+                              width: `${Math.max(pillarPct, pillarMastered > 0 ? 6 : 0)}%`,
+                              backgroundColor: pillar.color,
+                            }}
+                          />
+                        </div>
+
+                        <div className="flex items-center gap-1.5 pt-0.5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              gameAudio.playSuccess();
+                              navigate(
+                                `/game/sexual-aleatoric-arena?pillar=${encodeURIComponent(
+                                  pillar.id
+                                )}&difficulty=${encodeURIComponent(arenaDifficulty)}`
+                              );
+                            }}
+                            className="flex-1 px-2.5 py-1.5 rounded-lg bg-purple-600 hover:bg-purple-500 text-white text-[11px] font-bold flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap shrink-0 transition-colors"
+                          >
+                            <span>练习此板块</span>
+                            <ArrowRight className="w-3 h-3" />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              gameAudio.playTap();
+                              navigate(`/learn?mode=sexual&pillar=${encodeURIComponent(pillar.id)}`);
+                            }}
+                            className="px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 text-purple-100 text-[11px] font-semibold cursor-pointer whitespace-nowrap shrink-0 transition-colors"
+                          >
+                            研读
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Fast 5 Contexts & 12 Fine Categories Launchers */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 pt-2 border-t border-white/10">
+                <div className="space-y-2">
+                  <span className="text-[11px] font-mono text-amber-300 font-bold block">
+                    按 5 大观察与应用场景直达练习：
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {SEXUAL_CONTEXTS.map((ctx) => (
+                      <button
+                        key={ctx.id}
+                        type="button"
+                        onClick={() => {
+                          gameAudio.playTap();
+                          navigate(
+                            `/game/sexual-aleatoric-arena?context=${encodeURIComponent(
+                              ctx.id
+                            )}&difficulty=${encodeURIComponent(arenaDifficulty)}`
+                          );
+                        }}
+                        className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 text-xs font-semibold text-white flex items-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap shrink-0"
+                      >
+                        <span>{ctx.label}</span>
+                        <span className="text-[10px] font-mono text-amber-300 tabular-nums">{ctx.count}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <span className="text-[11px] font-mono text-stone-300 font-bold block">
+                    按 12 大细分知识专题快速切入：
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {SEXUAL_CATEGORIES.map((cat) => (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => {
+                          gameAudio.playTap();
+                          navigate(
+                            `/game/sexual-aleatoric-arena?category=${encodeURIComponent(
+                              cat.id
+                            )}&difficulty=${encodeURIComponent(arenaDifficulty)}`
+                          );
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-black/25 hover:bg-white/15 border border-white/12 text-[11px] font-medium text-stone-200 hover:text-white cursor-pointer transition-colors whitespace-nowrap shrink-0"
+                      >
+                        {cat.label} ({cat.count})
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        );
+      })()}
+
       {/* Arena Horizontal Accordion: Psychological Experiments Canvas */}
       <ArenaHorizontalAccordion difficulty={arenaDifficulty} />
 
@@ -767,7 +1055,7 @@ export const GamesPage: React.FC = () => {
           </button>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+        <CylinderScrollList className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
           {MICROEXPRESSION_LAWS.map((law) => {
             const mastery = user.lawMasteryMap?.[law.id] ?? 0;
             const gamesList = (law.dispatchedGames || [])
@@ -775,67 +1063,66 @@ export const GamesPage: React.FC = () => {
               .filter((g): g is NonNullable<typeof g> => Boolean(g));
 
             return (
-              <div
-                key={law.id}
-                className="rounded-2xl bg-white border border-stone-200/90 hover:border-indigo-300 p-4 space-y-2.5 transition-all"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="space-y-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-mono">
-                      <span className="font-bold text-indigo-700">
-                        {law.id.toUpperCase()}
-                      </span>
-                      <span className="text-stone-300" aria-hidden="true">·</span>
-                      <span className="font-semibold text-stone-600">
-                        {law.actionUnitCode}
-                      </span>
-                      <span className="text-stone-300" aria-hidden="true">·</span>
-                      <span className="font-sans font-bold text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200/80">
-                        {law.categoryZh} #{law.categoryRank}
-                      </span>
+              <CylinderScrollItem key={law.id} radiusClass="rounded-2xl">
+                <div className="rounded-2xl bg-white border border-stone-200/90 hover:border-indigo-300 p-4 space-y-2.5 transition-colors h-full">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="space-y-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-1.5 text-[11px] font-mono">
+                        <span className="font-bold text-indigo-700">
+                          {law.id.toUpperCase()}
+                        </span>
+                        <span className="text-stone-300" aria-hidden="true">·</span>
+                        <span className="font-semibold text-stone-600">
+                          {law.actionUnitCode}
+                        </span>
+                        <span className="text-stone-300" aria-hidden="true">·</span>
+                        <span className="font-sans font-bold text-amber-800">
+                          {law.categoryZh} #{law.categoryRank}
+                        </span>
+                      </div>
+                      <h3 className="text-sm font-bold text-stone-900 font-serif-editorial truncate">
+                        {law.nameZh}
+                      </h3>
                     </div>
-                    <h3 className="text-sm font-bold text-stone-900 font-serif-editorial truncate">
-                      {law.nameZh}
-                    </h3>
+
+                    <button
+                      type="button"
+                      onClick={() => navigate(`/law/${law.id}`)}
+                      className="text-[11px] font-numeric font-bold text-stone-600 hover:text-indigo-700 bg-stone-50 hover:bg-indigo-50 px-2 py-1 rounded-lg border border-stone-200 shrink-0 cursor-pointer transition-colors"
+                      title="查看定律详细机制与完整故事场景"
+                    >
+                      掌握 {mastery}%
+                    </button>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() => navigate(`/law/${law.id}`)}
-                    className="text-[11px] font-numeric font-bold text-stone-600 hover:text-indigo-700 bg-stone-50 hover:bg-indigo-50 px-2 py-1 rounded-lg border border-stone-200 shrink-0 cursor-pointer transition-colors"
-                    title="查看定律详细机制与完整故事场景"
-                  >
-                    掌握 {mastery}%
-                  </button>
-                </div>
+                  {law.storyScenario && (
+                    <p className="text-[11px] text-stone-600 leading-relaxed line-clamp-1">
+                      <span className="font-semibold text-stone-800">实案：</span>
+                      {law.storyScenario.title}
+                    </p>
+                  )}
 
-                {law.storyScenario && (
-                  <p className="text-[11px] text-stone-600 leading-relaxed line-clamp-1">
-                    <span className="font-semibold text-stone-800">实案：</span>
-                    {law.storyScenario.title}
-                  </p>
-                )}
-
-                <div className="flex flex-wrap items-center gap-1.5 pt-1">
-                  {gamesList.map((g) => (
-                    <button
-                      key={g.id}
-                      type="button"
-                      onClick={() => {
-                        gameAudio.playTap();
-                        navigate(`/game/${g.id}?difficulty=${encodeURIComponent(arenaDifficulty)}`);
-                      }}
-                      className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-indigo-50/70 hover:bg-indigo-600 text-indigo-800 hover:text-white border border-indigo-200/80 transition-colors cursor-pointer flex items-center gap-1"
-                    >
-                      <span>{g.nameZh}</span>
-                      <ArrowRight className="w-3 h-3" />
-                    </button>
-                  ))}
+                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                    {gamesList.map((g) => (
+                      <button
+                        key={g.id}
+                        type="button"
+                        onClick={() => {
+                          gameAudio.playTap();
+                          navigate(`/game/${g.id}?difficulty=${encodeURIComponent(arenaDifficulty)}`);
+                        }}
+                        className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-indigo-50/70 hover:bg-indigo-600 text-indigo-800 hover:text-white border border-indigo-200/80 transition-colors cursor-pointer flex items-center gap-1 whitespace-nowrap shrink-0"
+                      >
+                        <span>{g.nameZh}</span>
+                        <ArrowRight className="w-3 h-3" />
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              </CylinderScrollItem>
             );
           })}
-        </div>
+        </CylinderScrollList>
       </section>
 
       {/* 3D Cylindrical Drum Category Filter Controls */}
@@ -847,8 +1134,8 @@ export const GamesPage: React.FC = () => {
         onChange={handleSelectCat}
       />
 
-      {/* Games Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-7">
+      {/* Games Grid with 3D Cylindrical Vertical Scroll Perspective */}
+      <CylinderScrollList className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-7">
         {isLoading ? (
           <>
             <GameCardSkeleton />
@@ -858,16 +1145,17 @@ export const GamesPage: React.FC = () => {
           </>
         ) : (
           filteredGames.map((game, idx) => (
-            <div
-              key={game.id}
-              className="animate-stageEnter"
-              style={{ animationDelay: `${Math.min(idx * 35, 210)}ms` }}
-            >
-              <GameCard game={game} difficulty={arenaDifficulty} />
-            </div>
+            <CylinderScrollItem key={game.id} radiusClass="rounded-3xl">
+              <div
+                className="animate-stageEnter h-full"
+                style={{ animationDelay: `${Math.min(idx * 35, 210)}ms` }}
+              >
+                <GameCard game={game} difficulty={arenaDifficulty} />
+              </div>
+            </CylinderScrollItem>
           ))
         )}
-      </div>
+      </CylinderScrollList>
     </div>
   );
 };

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   Play, Trophy, Clock, Brain, Zap, Sparkles, Search, FlaskConical, Shuffle,
   Eye, Anchor, Users, Activity, HeartPulse, Heart, Gift, LifeBuoy, SearchCheck, CheckCircle2,
-  ChevronRight, Award, Flame, Scale
+  ChevronRight, Award, Flame, Scale, HeartHandshake
 } from 'lucide-react';
 import { GameDefinition } from '../../types';
 import { useApp } from '../../context/AppContext';
@@ -30,6 +30,7 @@ const GAME_ICONS: Record<string, React.ElementType> = {
   'love-aleatoric-arena': Heart,
   'reverse-aleatoric-arena': Shuffle,
   'criminal-aleatoric-arena': Scale,
+  'sexual-aleatoric-arena': HeartHandshake,
   'memory-lab': Brain,
   'mind-trap': Zap,
   'brain-rush': Sparkles,

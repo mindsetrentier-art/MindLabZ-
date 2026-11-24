@@ -30,6 +30,7 @@ import {
   SkipForward,
   ShieldCheck,
   Scale,
+  HeartHandshake,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useFontScale } from '../context/FontScaleContext';
@@ -72,7 +73,20 @@ import {
   CRIMINAL_THEORY_TOPICS,
   CRIMINAL_PSYCHOLOGY_NOTE,
 } from '../data/criminalPsychologyLaws';
-import { CylindricalThemeRoller, CylindricalThemeItem } from '../components/ui/CylindricalThemeRoller';
+import {
+  SEXUAL_PSYCHOLOGY_LAWS,
+  SEXUAL_PILLARS,
+} from '../data/sexualPsychologyLaws';
+import {
+  CylindricalThemeRoller,
+  CylindricalThemeItem,
+  CylindricalThemeChangeMeta,
+} from '../components/ui/CylindricalThemeRoller';
+import {
+  CylinderScrollList,
+  CylinderScrollItem,
+} from '../components/ui/CylinderScrollList';
+import { SexualPsychologyOrganizer } from '../components/sexual/SexualPsychologyOrganizer';
 
 interface CategoryOption {
   key: 'all' | CategoryZh;
@@ -177,6 +191,7 @@ const POPULAR_SEARCH_TAGS: PopularSearchTag[] = [
 
 export type LibraryCurationMode =
   | 'all_corpus'
+  | 'sexual_psychology'
   | 'criminal_psychology'
   | 'reverse_psychology'
   | 'love_codex'
@@ -191,11 +206,12 @@ export const LearnPage: React.FC = () => {
   const [searchParams] = useSearchParams();
 
   const initialQuery = searchParams.get('q') || '';
-  const initialCategory = (searchParams.get('category') as CategoryZh) || 'all';
   const modeParam = searchParams.get('mode');
   const initialMode: LibraryCurationMode =
     modeParam === 'all'
       ? 'all_corpus'
+      : modeParam === 'sexual' || modeParam === 'sexual_psychology'
+      ? 'sexual_psychology'
       : modeParam === 'criminal' || modeParam === 'criminal_psychology'
       ? 'criminal_psychology'
       : modeParam === 'reverse' || modeParam === 'reverse_psychology'
@@ -209,12 +225,35 @@ export const LearnPage: React.FC = () => {
       : modeParam === 'microexpressions'
       ? 'microexpressions'
       : 'criminal_psychology';
+  const isInitialSexual = initialMode === 'sexual_psychology';
+  const initialCategory = isInitialSexual
+    ? 'all'
+    : ((searchParams.get('category') as CategoryZh) || 'all');
   const initialSectionParam = searchParams.get('section');
   const initialSection = initialSectionParam ? (Number(initialSectionParam) as number) || 'all' : 'all';
+  const initialDifficultyParam = searchParams.get('difficulty');
+  const initialDifficulty: 'all' | DifficultyLevel =
+    initialDifficultyParam === 'Easy' ||
+    initialDifficultyParam === 'Medium' ||
+    initialDifficultyParam === 'Hard'
+      ? initialDifficultyParam
+      : 'all';
 
   const [curationMode, setCurationMode] = useState<LibraryCurationMode>(initialMode);
   const [sortMode, setSortMode] = useState<'aleatoric' | 'sequential'>('aleatoric');
   const [shuffleNonce, setShuffleNonce] = useState<number>(1);
+  const [selectedSexualPillar, setSelectedSexualPillar] = useState<string>(
+    isInitialSexual ? searchParams.get('pillar') || 'all' : 'all'
+  );
+  const [selectedSexualContext, setSelectedSexualContext] = useState<string>(
+    isInitialSexual ? searchParams.get('context') || 'all' : 'all'
+  );
+  const [selectedSexualCategory, setSelectedSexualCategory] = useState<string>(
+    isInitialSexual ? searchParams.get('sexualCat') || searchParams.get('category') || 'all' : 'all'
+  );
+  const [selectedSexualTopic, setSelectedSexualTopic] = useState<string>(
+    isInitialSexual ? searchParams.get('topic') || 'all' : 'all'
+  );
   const [selectedCriminalContext, setSelectedCriminalContext] = useState<string>('all');
   const [selectedCriminalCategory, setSelectedCriminalCategory] = useState<string>('all');
   const [selectedCriminalTheory, setSelectedCriminalTheory] = useState<string>('all');
@@ -224,7 +263,7 @@ export const LearnPage: React.FC = () => {
   const [selectedMicroCategory, setSelectedMicroCategory] = useState<'all' | '认知' | '情绪' | '社会' | '行为'>('all');
   const [selectedLoveDomain, setSelectedLoveDomain] = useState<'all' | LoveDomainId>('all');
   const [selectedLoveSubTag, setSelectedLoveSubTag] = useState<string>('all');
-  const [selectedDifficulty, setSelectedDifficulty] = useState<'all' | DifficultyLevel>('all');
+  const [selectedDifficulty, setSelectedDifficulty] = useState<'all' | DifficultyLevel>(initialDifficulty);
   const [visibleLimit, setVisibleLimit] = useState<number>(24);
   const [selectedEmotionalSection, setSelectedEmotionalSection] = useState<number | 'all'>(initialSection);
   const [searchQuery, setSearchQuery] = useState(initialQuery);
@@ -250,6 +289,20 @@ export const LearnPage: React.FC = () => {
     const urlMode = searchParams.get('mode');
     if (urlMode === 'all') {
       setCurationMode('all_corpus');
+    } else if (urlMode === 'sexual' || urlMode === 'sexual_psychology') {
+      setCurationMode('sexual_psychology');
+      const p = searchParams.get('pillar');
+      const ctx = searchParams.get('context');
+      const cat = searchParams.get('sexualCat') || searchParams.get('category');
+      const topic = searchParams.get('topic');
+      const diff = searchParams.get('difficulty');
+      if (p) setSelectedSexualPillar(p);
+      if (ctx) setSelectedSexualContext(ctx);
+      if (cat) setSelectedSexualCategory(cat);
+      if (topic) setSelectedSexualTopic(topic);
+      if (diff === 'Easy' || diff === 'Medium' || diff === 'Hard' || diff === 'all') {
+        setSelectedDifficulty(diff);
+      }
     } else if (urlMode === 'criminal' || urlMode === 'criminal_psychology') {
       setCurationMode('criminal_psychology');
     } else if (urlMode === 'reverse' || urlMode === 'reverse_psychology') {
@@ -274,19 +327,24 @@ export const LearnPage: React.FC = () => {
     };
   }, []);
 
-  const handleCurationModeChange = (mode: LibraryCurationMode) => {
+  const handleCurationModeChange = (
+    mode: LibraryCurationMode,
+    meta?: CylindricalThemeChangeMeta
+  ) => {
     if (curationMode === mode) return;
-    gameAudio.playTap();
-    setIsLoading(true);
+    if (!meta?.isAuto) {
+      gameAudio.playTap();
+      setIsLoading(true);
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 140);
+    }
     setCurationMode(mode);
     setVisibleLimit(24);
     setAudioPlayingIdx(null);
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
     }
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 140);
   };
 
   const handleReshuffle = () => {
@@ -352,7 +410,9 @@ export const LearnPage: React.FC = () => {
   // Trigger CSPRNG non-repeating random inspiring law discovery
   const handleRandomEpiphany = () => {
     const pool =
-      curationMode === 'criminal_psychology'
+      curationMode === 'sexual_psychology'
+        ? SEXUAL_PSYCHOLOGY_LAWS
+        : curationMode === 'criminal_psychology'
         ? CRIMINAL_PSYCHOLOGY_LAWS
         : curationMode === 'reverse_psychology'
         ? REVERSE_PSYCHOLOGY_LAWS
@@ -375,6 +435,26 @@ export const LearnPage: React.FC = () => {
         const matchesCategory = selectedCategory === 'all' || law.categoryZh === selectedCategory;
         const matchesDiff = selectedDifficulty === 'all' || law.difficulty === selectedDifficulty;
         return matchesCategory && matchesDiff;
+      }
+
+      if (curationMode === 'sexual_psychology') {
+        if (!law.isSexualPsychology) return false;
+        if (selectedSexualPillar !== 'all' && law.sexualPillar !== selectedSexualPillar) {
+          return false;
+        }
+        if (selectedSexualContext !== 'all' && law.sexualContext !== selectedSexualContext) {
+          return false;
+        }
+        if (selectedSexualCategory !== 'all' && law.sexualCategory !== selectedSexualCategory) {
+          return false;
+        }
+        if (selectedSexualTopic !== 'all' && law.sexualTopicName !== selectedSexualTopic) {
+          return false;
+        }
+        if (selectedDifficulty !== 'all' && law.difficulty !== selectedDifficulty) {
+          return false;
+        }
+        return true;
       }
 
       if (curationMode === 'criminal_psychology') {
@@ -439,7 +519,7 @@ export const LearnPage: React.FC = () => {
         return true;
       }
 
-      if (law.isLoveCodex || law.isReversePsychology || law.isCriminalPsychology) return false;
+      if (law.isLoveCodex || law.isReversePsychology || law.isCriminalPsychology || law.isSexualPsychology) return false;
       const matchesCategory = selectedCategory === 'all' || law.categoryZh === selectedCategory;
       const matchesChapter = selectedChapter === 'all' || law.chapter === selectedChapter;
       return matchesCategory && matchesChapter;
@@ -448,7 +528,7 @@ export const LearnPage: React.FC = () => {
     if (sortMode === 'aleatoric') {
       return drawNonRepeatingLawOrder(
         subset,
-        `library::${curationMode}::${selectedCriminalContext}::${selectedCriminalCategory}::${selectedCriminalTheory}::${selectedReverseScenario}::${selectedReverseCategory}::${selectedCategory}`,
+        `library::${curationMode}::${selectedSexualPillar}::${selectedSexualContext}::${selectedSexualCategory}::${selectedSexualTopic}::${selectedDifficulty}::${selectedCriminalContext}::${selectedCriminalCategory}::${selectedCriminalTheory}::${selectedReverseScenario}::${selectedReverseCategory}::${selectedCategory}`,
         { markHeadCount: Math.min(24, Math.max(4, Math.ceil(subset.length * 0.25))) }
       );
     }
@@ -475,6 +555,10 @@ export const LearnPage: React.FC = () => {
     curationMode,
     sortMode,
     shuffleNonce,
+    selectedSexualPillar,
+    selectedSexualContext,
+    selectedSexualCategory,
+    selectedSexualTopic,
     selectedCriminalContext,
     selectedCriminalCategory,
     selectedCriminalTheory,
@@ -502,6 +586,10 @@ export const LearnPage: React.FC = () => {
         law.nameEn.toLowerCase().includes(q) ||
         law.shortExplanation.toLowerCase().includes(q) ||
         law.detailedExplanation.toLowerCase().includes(q) ||
+        (law.sexualPillar && law.sexualPillar.toLowerCase().includes(q)) ||
+        (law.sexualCategory && law.sexualCategory.toLowerCase().includes(q)) ||
+        (law.sexualContext && law.sexualContext.toLowerCase().includes(q)) ||
+        (law.sexualTopicName && law.sexualTopicName.toLowerCase().includes(q)) ||
         (law.criminalCategory && law.criminalCategory.toLowerCase().includes(q)) ||
         (law.criminalContext && law.criminalContext.toLowerCase().includes(q)) ||
         (law.criminalTheoryName && law.criminalTheoryName.toLowerCase().includes(q)) ||
@@ -528,6 +616,15 @@ export const LearnPage: React.FC = () => {
         subtitle: '全馆藏实时洗牌',
         accentColor: '#D97706',
         icon: <Sparkles className="w-3.5 h-3.5" />,
+      },
+      {
+        id: 'sexual_psychology',
+        label: '性心理学与亲密健康',
+        group: '实战心理专题',
+        count: SEXUAL_PSYCHOLOGY_LAWS.length,
+        subtitle: '4 大板块 × 5 大场景',
+        accentColor: '#7E22CE',
+        icon: <HeartHandshake className="w-3.5 h-3.5" />,
       },
       {
         id: 'criminal_psychology',
@@ -675,7 +772,7 @@ export const LearnPage: React.FC = () => {
               </span>
               <span className="text-stone-500" aria-hidden="true">/</span>
               <span className="text-stone-300 font-serif-editorial italic font-sans">
-                CRIM001–CRIM{CRIMINAL_PSYCHOLOGY_LAWS.length} · ML001–ML010 · REV0101–REV2005 · LAW001–LAW142 · LOVE001–LOVE{LOVE_PSYCHOLOGY_LAWS.length}
+                SEX0101–SEX2005 · CRIM001–CRIM{CRIMINAL_PSYCHOLOGY_LAWS.length} · REV0101–REV2005 · ML001–ML010 · LAW001–LAW142 · LOVE001–LOVE{LOVE_PSYCHOLOGY_LAWS.length}
               </span>
             </div>
 
@@ -686,7 +783,7 @@ export const LearnPage: React.FC = () => {
 
             {/* Editorial Dek */}
             <p className="text-xs sm:text-sm text-stone-300/90 font-normal leading-relaxed">
-              全量收录 {CRIMINAL_PSYCHOLOGY_LAWS.length} 条犯罪心理学理论与应用卡（CRIM）、{REVERSE_PSYCHOLOGY_LAWS.length} 条逆向心理学与心理抗拒词条（REV）、{MICROEXPRESSION_LAWS.length} 条微表情实证定律（ML）、142 条经典心智规律及 {LOVE_PSYCHOLOGY_LAWS.length} 条爱情心理学词条，配备 CSPRNG 零重复洗牌与语音随听连播。
+              全量收录 {SEXUAL_PSYCHOLOGY_LAWS.length} 条性心理学与亲密健康词条（SEX）、{CRIMINAL_PSYCHOLOGY_LAWS.length} 条犯罪心理学理论与应用卡（CRIM）、{REVERSE_PSYCHOLOGY_LAWS.length} 条逆向心理学与心理抗拒词条（REV）、{MICROEXPRESSION_LAWS.length} 条微表情实证定律（ML）、142 条经典心智规律及 {LOVE_PSYCHOLOGY_LAWS.length} 条爱情心理学词条，配备 CSPRNG 零重复洗牌与语音随听连播。
             </p>
 
             {/* Curatorial Index Stats */}
@@ -773,6 +870,96 @@ export const LearnPage: React.FC = () => {
             <span>进入 50 律典藏馆</span>
             <ArrowRight className="w-4 h-4 text-stone-950" />
           </button>
+        </div>
+      </section>
+
+      {/* Dedicated Showcase Box: 性心理学与亲密健康 100 律 · 4 大分类栏框 */}
+      <section className="rounded-3xl bg-gradient-to-br from-[#231030] via-[#1C1433] to-[#111827] p-5 sm:p-6 text-white border border-purple-400/30 shadow-lg space-y-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="space-y-1.5 max-w-2xl">
+            <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono text-purple-200">
+              <HeartHandshake className="w-3.5 h-3.5 text-purple-300 shrink-0" />
+              <span className="font-bold text-purple-200">SEX0101–SEX2005</span>
+              <span className="text-stone-500" aria-hidden="true">·</span>
+              <span className="text-amber-300 tabular-nums">4 大主题板块 · 5 大应用场景 · 100 律</span>
+            </div>
+            <h3 className="font-serif-editorial text-lg sm:text-xl font-bold text-white tracking-tight">
+              性心理学与亲密健康 · 100 律结构化专馆
+            </h3>
+            <p className="text-xs text-stone-300 leading-relaxed">
+              依据科学教育与知情同意原则系统归档，按 4 大核心板块与 5 大观察视角清晰分栏，支持定律随听研读与竞技场真随机实战直连。
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                gameAudio.playTap();
+                setCurationMode('sexual_psychology');
+                setSelectedSexualPillar('all');
+                setSelectedSexualCategory('all');
+                setSelectedSexualTopic('all');
+                setVisibleLimit(24);
+                setTimeout(() => {
+                  document.getElementById('sexual-organizer')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 80);
+              }}
+              className="px-4 py-2.5 rounded-xl bg-white text-stone-900 hover:bg-purple-50 text-xs font-bold flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 transition-colors"
+            >
+              <span>展开 100 律分类总栏</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                gameAudio.playSuccess();
+                navigate('/game/sexual-aleatoric-arena');
+              }}
+              className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 transition-colors"
+            >
+              <Shuffle className="w-3.5 h-3.5" />
+              <span>竞技场真随机演练</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1">
+          {SEXUAL_PILLARS.map((pillar, idx) => {
+            const isActivePillar =
+              curationMode === 'sexual_psychology' && selectedSexualPillar === pillar.id;
+            return (
+              <button
+                key={pillar.id}
+                type="button"
+                onClick={() => {
+                  gameAudio.playSelect();
+                  setCurationMode('sexual_psychology');
+                  setSelectedSexualPillar(pillar.id);
+                  setSelectedSexualCategory('all');
+                  setSelectedSexualTopic('all');
+                  setVisibleLimit(24);
+                  setTimeout(() => {
+                    document.getElementById('sexual-organizer')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }, 80);
+                }}
+                className={`text-left rounded-2xl p-3.5 border transition-all cursor-pointer flex flex-col justify-between gap-2 ${
+                  isActivePillar
+                    ? 'bg-white/15 border-amber-300/70'
+                    : 'bg-white/5 hover:bg-white/10 border-white/10 hover:border-purple-300/50'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2 text-[11px] font-mono text-purple-200 tabular-nums">
+                  <span>0{idx + 1} · {pillar.count} 律</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-purple-300" />
+                </div>
+                <div className="text-xs sm:text-sm font-bold text-white leading-snug">
+                  {pillar.label}
+                </div>
+              </button>
+            );
+          })}
         </div>
       </section>
 
@@ -892,7 +1079,10 @@ export const LearnPage: React.FC = () => {
             variant="library"
             items={rollerItems}
             activeId={curationMode}
-            onChange={(nextId) => handleCurationModeChange(nextId as LibraryCurationMode)}
+            autoPlay={audioPlayingIdx === null && searchQuery.trim() === ''}
+            onChange={(nextId, meta) =>
+              handleCurationModeChange(nextId as LibraryCurationMode, meta)
+            }
           />
 
           {/* CSPRNG Shuffle & Audio Listening Bar (随听图书馆控制台) */}
@@ -1022,7 +1212,66 @@ export const LearnPage: React.FC = () => {
         </div>
 
         {/* 3. Category Controls depending on active Taxonomy Mode */}
-        {curationMode === 'criminal_psychology' ? (
+        {curationMode === 'sexual_psychology' ? (
+          <div id="sexual-organizer">
+            <SexualPsychologyOrganizer
+              lawsMasteryMap={user.lawMasteryMap}
+              selectedPillar={selectedSexualPillar}
+              selectedContext={selectedSexualContext}
+              selectedCategory={selectedSexualCategory}
+              selectedTopic={selectedSexualTopic}
+              selectedDifficulty={selectedDifficulty}
+              matchedCount={filteredLaws.length}
+              onSelectPillar={(pillarId) => {
+                setSelectedSexualPillar(pillarId);
+                setSelectedSexualCategory('all');
+                setSelectedSexualTopic('all');
+                setVisibleLimit(24);
+              }}
+              onSelectContext={(contextId) => {
+                setSelectedSexualContext(contextId);
+                setVisibleLimit(24);
+              }}
+              onSelectCategory={(catId) => {
+                setSelectedSexualCategory(catId);
+                setSelectedSexualTopic('all');
+                setVisibleLimit(24);
+              }}
+              onSelectTopic={(topicId) => {
+                setSelectedSexualTopic(topicId);
+                setVisibleLimit(24);
+              }}
+              onSelectDifficulty={(diff) => {
+                setSelectedDifficulty(diff);
+                setVisibleLimit(24);
+              }}
+              onResetFilters={() => {
+                setSelectedSexualPillar('all');
+                setSelectedSexualContext('all');
+                setSelectedSexualCategory('all');
+                setSelectedSexualTopic('all');
+                setSelectedDifficulty('all');
+                setVisibleLimit(24);
+              }}
+              onLaunchArena={() => {
+                const params = new URLSearchParams();
+                if (selectedSexualPillar !== 'all') params.set('pillar', selectedSexualPillar);
+                if (selectedSexualContext !== 'all') params.set('context', selectedSexualContext);
+                if (selectedSexualCategory !== 'all') params.set('category', selectedSexualCategory);
+                const arenaDiff =
+                  selectedDifficulty === 'Easy'
+                    ? '低'
+                    : selectedDifficulty === 'Medium'
+                    ? '中'
+                    : selectedDifficulty === 'Hard'
+                    ? '高'
+                    : '中';
+                params.set('difficulty', arenaDiff);
+                navigate(`/game/sexual-aleatoric-arena?${params.toString()}`);
+              }}
+            />
+          </div>
+        ) : curationMode === 'criminal_psychology' ? (
           <div className="space-y-4">
             {/* Scientific Non-Diagnostic Disclaimer Banner */}
             <div className="rounded-2xl p-4 bg-rose-50/85 border border-rose-200/90 text-xs text-rose-950 flex items-start gap-2.5 leading-relaxed">
@@ -1840,7 +2089,13 @@ export const LearnPage: React.FC = () => {
           )}
         </div>
 
-        {((curationMode === 'criminal_psychology'
+        {((curationMode === 'sexual_psychology'
+          ? selectedSexualPillar !== 'all' ||
+            selectedSexualContext !== 'all' ||
+            selectedSexualCategory !== 'all' ||
+            selectedSexualTopic !== 'all' ||
+            selectedDifficulty !== 'all'
+          : curationMode === 'criminal_psychology'
           ? selectedCriminalContext !== 'all' || selectedCriminalCategory !== 'all' || selectedCriminalTheory !== 'all'
           : curationMode === 'reverse_psychology'
           ? selectedReverseScenario !== 'all' || selectedReverseCategory !== 'all' || selectedReverseChapter !== 'all'
@@ -1857,6 +2112,10 @@ export const LearnPage: React.FC = () => {
             onClick={() => {
               gameAudio.playTap();
               setSearchQuery('');
+              setSelectedSexualPillar('all');
+              setSelectedSexualContext('all');
+              setSelectedSexualCategory('all');
+              setSelectedSexualTopic('all');
               setSelectedCriminalContext('all');
               setSelectedCriminalCategory('all');
               setSelectedCriminalTheory('all');
@@ -1883,7 +2142,7 @@ export const LearnPage: React.FC = () => {
 
       {/* 6. Display Mode: Gallery Grid vs Dossier View */}
       {viewMode === 'grid' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
+        <CylinderScrollList className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6">
           {isLoading ? (
             <>
               <LawCardSkeleton />
@@ -1894,13 +2153,14 @@ export const LearnPage: React.FC = () => {
           ) : visibleLaws.length > 0 ? (
             <>
               {visibleLaws.map((law, idx) => (
-                <div
-                  key={law.id}
-                  className="animate-stageEnter"
-                  style={{ animationDelay: `${Math.min(idx * 20, 180)}ms` }}
-                >
-                  <PsychologyLawCard law={law} />
-                </div>
+                <CylinderScrollItem key={law.id} radiusClass="rounded-2xl">
+                  <div
+                    className="animate-stageEnter h-full"
+                    style={{ animationDelay: `${Math.min(idx * 20, 180)}ms` }}
+                  >
+                    <PsychologyLawCard law={law} />
+                  </div>
+                </CylinderScrollItem>
               ))}
               {filteredLaws.length > visibleLaws.length && (
                 <div className="col-span-full flex flex-wrap items-center justify-center gap-3 pt-2">
@@ -1954,10 +2214,10 @@ export const LearnPage: React.FC = () => {
               </button>
             </div>
           )}
-        </div>
+        </CylinderScrollList>
       ) : (
         /* Dossier List Mode: Sleek High-End Archival View */
-        <div className="space-y-3">
+        <CylinderScrollList className="space-y-3">
           {isLoading ? (
             <>
               <LawCardSkeleton />
@@ -1969,56 +2229,62 @@ export const LearnPage: React.FC = () => {
                 const mastery = (user?.lawMasteryMap && user.lawMasteryMap[law.id]) || 0;
                 const isMastered = mastery >= 80;
                 return (
-                  <div
-                    key={law.id}
-                    onClick={() => {
-                      gameAudio.playTap();
-                      navigate(`/law/${law.id}`);
-                    }}
-                    className="group bg-white hover:bg-stone-50/80 rounded-2xl p-4 sm:p-5 border border-stone-200/80 hover:border-amber-400/80 transition-all cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-2xs hover:shadow-xs"
-                  >
-                    <div className="flex items-start gap-3.5 min-w-0 flex-1">
-                      <span className="font-mono text-xs font-bold px-2 py-1 rounded bg-stone-100 text-stone-800 shrink-0 mt-0.5">
-                        {law.codeId || 'LAW'}
-                      </span>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="font-serif-editorial text-base font-bold text-stone-900 group-hover:text-amber-800 transition-colors truncate">
-                            {law.nameZh}
-                          </h3>
-                          <span className="text-xs text-stone-400 font-serif-editorial italic truncate">
-                            {law.nameEn}
-                          </span>
+                  <CylinderScrollItem key={law.id} radiusClass="rounded-2xl">
+                    <div
+                      onClick={() => {
+                        gameAudio.playTap();
+                        navigate(`/law/${law.id}`);
+                      }}
+                      className="group bg-white hover:bg-stone-50/80 rounded-2xl p-4 sm:p-5 border border-stone-200/80 hover:border-amber-400/80 transition-colors cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                    >
+                      <div className="flex items-start gap-3.5 min-w-0 flex-1">
+                        <span className="font-mono text-xs font-bold text-stone-800 shrink-0 mt-0.5 tabular-nums">
+                          {law.codeId || 'LAW'}
+                        </span>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="font-serif-editorial text-base font-bold text-stone-900 group-hover:text-amber-800 transition-colors truncate">
+                              {law.nameZh}
+                            </h3>
+                            <span className="text-xs text-stone-400 font-serif-editorial italic truncate">
+                              {law.nameEn}
+                            </span>
+                          </div>
+                          <p className="text-xs text-stone-600 line-clamp-1 mt-0.5">
+                            {law.shortExplanation}
+                          </p>
                         </div>
-                        <p className="text-xs text-stone-600 line-clamp-1 mt-0.5">
-                          {law.shortExplanation}
-                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0 self-end sm:self-center text-[11px] text-stone-600">
+                        {law.subTag && (
+                          <>
+                            <span className="text-rose-700 font-medium">{law.subTag}</span>
+                            <span className="text-stone-300" aria-hidden="true">·</span>
+                          </>
+                        )}
+                        {law.assignedCityZh && (
+                          <>
+                            <span className="text-amber-800 font-medium">
+                              {law.assignedCityZh.split(' ')[0]}
+                            </span>
+                            <span className="text-stone-300" aria-hidden="true">·</span>
+                          </>
+                        )}
+                        <span className="font-medium text-stone-600">{law.categoryZh}</span>
+                        {isMastered && (
+                          <>
+                            <span className="text-stone-300" aria-hidden="true">·</span>
+                            <span className="text-emerald-700 font-semibold flex items-center gap-1">
+                              <CheckCircle2 className="w-3.5 h-3.5 fill-emerald-600 text-white" />
+                              <span>已内化</span>
+                            </span>
+                          </>
+                        )}
+                        <ChevronRight className="w-4 h-4 text-stone-400 group-hover:text-stone-900 group-hover:translate-x-1 transition-all ml-1" />
                       </div>
                     </div>
-
-                    <div className="flex items-center gap-2.5 shrink-0 self-end sm:self-center text-xs">
-                      {law.subTag && (
-                        <span className="text-[11px] px-2 py-0.5 rounded bg-rose-50 text-rose-700 font-medium">
-                          {law.subTag}
-                        </span>
-                      )}
-                      {law.assignedCityZh && (
-                        <span className="text-[11px] px-2 py-0.5 rounded bg-amber-50 text-amber-800 font-medium">
-                          {law.assignedCityZh.split(' ')[0]}
-                        </span>
-                      )}
-                      <span className="text-[11px] px-2 py-0.5 rounded bg-stone-100 text-stone-600 font-medium">
-                        {law.categoryZh}
-                      </span>
-                      {isMastered && (
-                        <span className="text-[11px] text-emerald-700 font-semibold flex items-center gap-1">
-                          <CheckCircle2 className="w-3.5 h-3.5 fill-emerald-600 text-white" />
-                          <span>已内化</span>
-                        </span>
-                      )}
-                      <ChevronRight className="w-4 h-4 text-stone-400 group-hover:text-stone-900 group-hover:translate-x-1 transition-all" />
-                    </div>
-                  </div>
+                  </CylinderScrollItem>
                 );
               })}
               {filteredLaws.length > visibleLaws.length && (
@@ -2040,7 +2306,7 @@ export const LearnPage: React.FC = () => {
               <p className="text-xs text-stone-500">未检索到匹配结果</p>
             </div>
           )}
-        </div>
+        </CylinderScrollList>
       )}
 
       {/* 7. Epiphany Modal (Random Inspirational Discovery Dialog) */}

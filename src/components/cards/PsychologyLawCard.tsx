@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bookmark, ChevronRight, CheckCircle2, Sparkles, Heart, Eye, Gamepad2, BookOpen, Volume2, ShieldCheck, Shuffle, Scale } from 'lucide-react';
+import { Bookmark, ChevronRight, CheckCircle2, Sparkles, Heart, Eye, Gamepad2, BookOpen, Volume2, ShieldCheck, Shuffle, Scale, HeartHandshake } from 'lucide-react';
 import { PsychologyLaw, CategoryZh } from '../../types';
 import { useApp } from '../../context/AppContext';
 import { gameAudio } from '../../utils/gameAudio';
@@ -156,6 +156,18 @@ export const PsychologyLawCard: React.FC<PsychologyLawCardProps> = ({ law, compa
               <Scale className="w-2.5 h-2.5" />
               <span>
                 {law.criminalCategory} · {law.criminalContext}
+              </span>
+            </span>
+          )}
+
+          {law.isSexualPsychology && (
+            <span
+              className="inline-flex items-center gap-1 font-mono text-[10px] font-bold px-2 py-0.5 rounded-md border bg-purple-50 text-purple-900 border-purple-200 shadow-2xs"
+              title={`性心理学 · ${law.sexualPillar || ''} · ${law.sexualCategory || ''} · ${law.sexualContext || ''}`}
+            >
+              <HeartHandshake className="w-2.5 h-2.5" />
+              <span>
+                {law.sexualCategory} · {law.sexualContext}
               </span>
             </span>
           )}
@@ -348,6 +360,19 @@ export const PsychologyLawCard: React.FC<PsychologyLawCardProps> = ({ law, compa
                 <div className="flex items-center gap-1.5 text-[11px] font-bold text-rose-900">
                   <Scale className="w-3.5 h-3.5 text-rose-800" />
                   <span>犯罪心理学 · 研究与预防边界（{law.criminalContext}）</span>
+                </div>
+                <p className="text-[11px] text-stone-700 leading-relaxed">
+                  {law.healthyBoundary}
+                </p>
+              </div>
+            )}
+
+            {/* Sexual Psychology Consent & Non-Diagnostic Scientific Boundary */}
+            {law.isSexualPsychology && law.healthyBoundary && (
+              <div className="p-3.5 rounded-xl bg-purple-50/75 border border-purple-200/80 space-y-1">
+                <div className="flex items-center gap-1.5 text-[11px] font-bold text-purple-900">
+                  <HeartHandshake className="w-3.5 h-3.5 text-purple-800" />
+                  <span>性心理学 · 知情同意与科学非诊断边界（{law.sexualContext}）</span>
                 </div>
                 <p className="text-[11px] text-stone-700 leading-relaxed">
                   {law.healthyBoundary}
