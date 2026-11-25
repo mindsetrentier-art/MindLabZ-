@@ -5,6 +5,8 @@ import { MICROEXPRESSION_LAWS, MICROEXPRESSION_CHAPTER } from './microexpression
 import { REVERSE_PSYCHOLOGY_LAWS } from './reversePsychologyLaws';
 import { CRIMINAL_PSYCHOLOGY_LAWS } from './criminalPsychologyLaws';
 import { SEXUAL_PSYCHOLOGY_LAWS } from './sexualPsychologyLaws';
+import { LOVE100_PSYCHOLOGY_LAWS } from './love100PsychologyLaws';
+import { INTIMATE_RELATIONSHIPS_LAWS } from './intimateRelationshipsLaws';
 
 const CORE_PSYCHOLOGY_LAWS: PsychologyLaw[] = [
   {
@@ -754,9 +756,13 @@ export {
   REVERSE_PSYCHOLOGY_LAWS,
   CRIMINAL_PSYCHOLOGY_LAWS,
   SEXUAL_PSYCHOLOGY_LAWS,
+  LOVE100_PSYCHOLOGY_LAWS,
+  INTIMATE_RELATIONSHIPS_LAWS,
 };
 
 export const INITIAL_PSYCHOLOGY_LAWS: PsychologyLaw[] = [
+  ...INTIMATE_RELATIONSHIPS_LAWS,
+  ...LOVE100_PSYCHOLOGY_LAWS,
   ...CRIMINAL_PSYCHOLOGY_LAWS,
   ...SEXUAL_PSYCHOLOGY_LAWS,
   ...MICROEXPRESSION_LAWS,

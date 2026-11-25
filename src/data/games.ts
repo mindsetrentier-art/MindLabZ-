@@ -226,6 +226,38 @@ export const PSYCHOLOGY_GAMES: GameDefinition[] = [
     relatedLawId: 'sex-0101',
     accentColor: '#7E22CE'
   },
+  {
+    id: 'love100-aleatoric-arena',
+    numberPrefix: '15',
+    name: 'Love 100 Psychology Aleatoric Arena',
+    nameEn: '100-Card Attachment, Communication & Repair CSPRNG Arena',
+    nameZh: '恋爱心理 · 100律亲密关系博弈',
+    description: '全量导入 100 条恋爱心理学应用知识卡（4 大关系板块 × 7 知识类别 × 5 大相处情境 × 5 种出题变式 = 500 张防重题卡），CSPRNG 加密洗牌！',
+    category: '恋爱心理100',
+    difficulty: 'Medium',
+    bestScore: 6000,
+    icon: 'heart',
+    estimatedTime: '110秒',
+    conceptLearned: '成人依恋与安全基地、非暴力沟通、冲突修复、承诺信任与亲密认知去偏',
+    relatedLawId: 'lovepsy-0101',
+    accentColor: '#E11D48'
+  },
+  {
+    id: 'intimate-aleatoric-arena',
+    numberPrefix: '16',
+    name: 'Intimate Relationships Aleatoric Arena',
+    nameEn: '100-Card Attachment, Co-Regulation & Conflict Repair CSPRNG Arena',
+    nameZh: '亲密关系 · 100律安全联结与修复实战',
+    description: '全量导入 100 条亲密关系心理学核心知识卡（4 大关系板块 × 5 大知识类别 × 5 大相处情境 × 5 种出题变式 = 500 张防重题卡），CSPRNG 零重复洗牌！',
+    category: '亲密关系100',
+    difficulty: 'Medium',
+    bestScore: 6200,
+    icon: 'heart-handshake',
+    estimatedTime: '110秒',
+    conceptLearned: '安全基地探索、共同情绪调节、温和开场与修复尝试、识别批评/轻蔑/防御/石墙及归因去偏',
+    relatedLawId: 'int-0101',
+    accentColor: '#BE123C'
+  },
 
   // 经典神经竞技实验室 (原有矩阵/反应游戏)
   {

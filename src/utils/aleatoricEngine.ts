@@ -4,6 +4,8 @@ import { LOVE_DOMAIN_MAP } from '../data/lovePsychologyTypes';
 import { REVERSE_PSYCHOLOGY_LAWS } from '../data/reversePsychologyLaws';
 import { CRIMINAL_PSYCHOLOGY_LAWS } from '../data/criminalPsychologyLaws';
 import { SEXUAL_PSYCHOLOGY_LAWS } from '../data/sexualPsychologyLaws';
+import { LOVE100_PSYCHOLOGY_LAWS } from '../data/love100PsychologyLaws';
+import { INTIMATE_RELATIONSHIPS_LAWS } from '../data/intimateRelationshipsLaws';
 
 export type AleatoricTemplateId =
   | 'principle-from-concept'
@@ -1716,6 +1718,784 @@ export function drawAleatoricSexualQuestions(
   state.totalDraws += results.length;
   state.lastPlayedAt = new Date().toISOString();
   saveSexualDeckState(state);
+
+  return results;
+}
+
+// ---------------------------------------------------------------------------
+// 5. Love Psychology 100-Card Aleatoric Engine (500 Non-Repeating Encounters)
+// ---------------------------------------------------------------------------
+
+export type Love100AleatoricTemplateId =
+  | 'concept-core'
+  | 'context-practice'
+  | 'healthy-boundary'
+  | 'topic-matching'
+  | 'scenario-calibration';
+
+export const LOVE100_ALEATORIC_TEMPLATES: Love100AleatoricTemplateId[] = [
+  'concept-core',
+  'context-practice',
+  'healthy-boundary',
+  'topic-matching',
+  'scenario-calibration',
+];
+
+export interface AleatoricLove100Question {
+  encounterKey: string;
+  templateId: Love100AleatoricTemplateId;
+  templateLabel: string;
+  law: PsychologyLaw;
+  prompt: string;
+  contextTag: string;
+  options: string[];
+  correctAnswer: number;
+  explanation: string;
+  healthyBoundary: string;
+}
+
+const LOVE100_STORAGE_KEY = 'mindlabz_love100_aleatoric_deck_v1';
+const LOVE100_COOLDOWN_WINDOW = 30;
+
+function loadLove100DeckState(): AleatoricStorageState {
+  try {
+    if (typeof window === 'undefined') {
+      return { seenEncounters: [], recentLawIds: [], totalDraws: 0, lastPlayedAt: '' };
+    }
+    const raw = window.localStorage.getItem(LOVE100_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return {
+        seenEncounters: Array.isArray(parsed.seenEncounters) ? parsed.seenEncounters : [],
+        recentLawIds: Array.isArray(parsed.recentLawIds) ? parsed.recentLawIds : [],
+        totalDraws: typeof parsed.totalDraws === 'number' ? parsed.totalDraws : 0,
+        lastPlayedAt: typeof parsed.lastPlayedAt === 'string' ? parsed.lastPlayedAt : '',
+      };
+    }
+  } catch {
+    // ignore storage errors
+  }
+  return { seenEncounters: [], recentLawIds: [], totalDraws: 0, lastPlayedAt: '' };
+}
+
+function saveLove100DeckState(state: AleatoricStorageState): void {
+  try {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(LOVE100_STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    // ignore quota errors
+  }
+}
+
+export function resetLove100AleatoricDeck(): void {
+  saveLove100DeckState({
+    seenEncounters: [],
+    recentLawIds: [],
+    totalDraws: 0,
+    lastPlayedAt: new Date().toISOString(),
+  });
+}
+
+export function getLove100AleatoricStats(): {
+  totalConcepts: number;
+  totalUniqueEncounters: number;
+  seenEncountersCount: number;
+  uniqueConceptsExplored: number;
+  totalDraws: number;
+} {
+  const state = loadLove100DeckState();
+  const seenConcepts = new Set(state.seenEncounters.map((k) => k.split('::')[0]));
+  return {
+    totalConcepts: LOVE100_PSYCHOLOGY_LAWS.length,
+    totalUniqueEncounters: LOVE100_PSYCHOLOGY_LAWS.length * LOVE100_ALEATORIC_TEMPLATES.length,
+    seenEncountersCount: state.seenEncounters.length,
+    uniqueConceptsExplored: seenConcepts.size,
+    totalDraws: state.totalDraws,
+  };
+}
+
+function pickLove100Distractors(
+  target: PsychologyLaw,
+  pool: PsychologyLaw[],
+  count: number,
+  preferDistinctField: 'topic' | 'context' = 'topic'
+): PsychologyLaw[] {
+  const candidates = cryptoShuffle(pool.filter((l) => l.id !== target.id));
+  const picked: PsychologyLaw[] = [];
+  const usedKeys = new Set<string>([
+    preferDistinctField === 'topic'
+      ? target.love100TopicName || target.nameZh
+      : target.love100Context || '',
+  ]);
+
+  for (const item of candidates) {
+    if (picked.length >= count) break;
+    const key =
+      preferDistinctField === 'topic'
+        ? item.love100TopicName || item.nameZh
+        : item.love100Context || '';
+    if (!usedKeys.has(key)) {
+      usedKeys.add(key);
+      picked.push(item);
+    }
+  }
+
+  for (const item of candidates) {
+    if (picked.length >= count) break;
+    if (!picked.some((p) => p.id === item.id)) {
+      picked.push(item);
+    }
+  }
+
+  return picked;
+}
+
+function materializeLove100Question(
+  law: PsychologyLaw,
+  templateId: Love100AleatoricTemplateId,
+  referencePool: PsychologyLaw[]
+): AleatoricLove100Question {
+  const topicName = law.love100TopicName || law.nameZh.split('：')[0] || law.nameZh;
+  const contextLabel = law.love100Context || '自我认识';
+  const categoryLabel = law.love100Category || '依恋与安全感';
+  const pillarLabel = law.love100Pillar || '依恋安全与情感联结';
+  const coreConcept = law.love100CoreConcept || law.whyItHappens || law.shortExplanation;
+  const appliedAngle = law.love100AppliedAngle || law.realLifeExample;
+  const boundary =
+    law.healthyBoundary ||
+    law.love100LearningNote ||
+    '本知识卡用于心理学科普与自我反思，不是诊断工具或预测公式。关系应建立在自愿、平等、尊重与安全之上。';
+  const encounterKey = `${law.id}::${templateId}`;
+
+  if (templateId === 'concept-core') {
+    const distractors = pickLove100Distractors(law, referencePool, 3, 'topic');
+    const { options, correctAnswer } = shuffleOptions(
+      coreConcept,
+      distractors.map((d) => d.love100CoreConcept || d.whyItHappens || d.shortExplanation)
+    );
+    return {
+      encounterKey,
+      templateId,
+      templateLabel: '核心理论机制辨析',
+      law,
+      prompt: `在恋爱心理学「${topicName}（${categoryLabel}）」中，以下哪项最准确阐释了其核心理论机制？`,
+      contextTag: `${law.codeId} · ${pillarLabel}`,
+      options,
+      correctAnswer,
+      explanation: `【${law.codeId} · ${law.nameZh}】${coreConcept}`,
+      healthyBoundary: boundary,
+    };
+  }
+
+  if (templateId === 'context-practice') {
+    const distractors = pickLove100Distractors(law, referencePool, 3, 'context');
+    const { options, correctAnswer } = shuffleOptions(
+      appliedAngle,
+      distractors.map((d) => d.love100AppliedAngle || d.realLifeExample)
+    );
+    return {
+      encounterKey,
+      templateId,
+      templateLabel: '亲密情境应对策略',
+      law,
+      prompt: `处于「${contextLabel}」情境并运用「${topicName}」时，哪项应对与自我觉察方式最为恰当？`,
+      contextTag: `${contextLabel} · ${categoryLabel}`,
+      options,
+      correctAnswer,
+      explanation: `在「${contextLabel}」维度下，${appliedAngle}`,
+      healthyBoundary: boundary,
+    };
+  }
+
+  if (templateId === 'healthy-boundary') {
+    const learningNote =
+      law.love100LearningNote ||
+      '本知识卡用于心理学科普与自我反思，不是诊断工具或预测公式。关系应建立在自愿、平等、尊重与安全之上。';
+    const { options, correctAnswer } = shuffleOptions(
+      `${appliedAngle}（安全原则：尊重平等、沟通边界与非诊断自我反思）`,
+      [
+        '可以用某一次冷漠或情绪爆发，直接给对方盖章定性为“病态人格”或彻底不匹配',
+        '真正的爱意味着完全透明与高频掌控行踪，不应保留独立个人边界与喘息空间',
+        '只要存在强烈心动感觉或浪漫口头承诺，就能保证后续长期相处自然顺利',
+      ]
+    );
+    return {
+      encounterKey,
+      templateId,
+      templateLabel: '关系安全与去标签边界',
+      law,
+      prompt: `结合「${law.nameZh}」，下列哪项最符合自愿、平等、尊重与去标签化的亲密关系边界准则？`,
+      contextTag: `安全与边界 · ${contextLabel}`,
+      options,
+      correctAnswer,
+      explanation: `亲密边界准则：${appliedAngle} ${learningNote}`,
+      healthyBoundary: boundary,
+    };
+  }
+
+  if (templateId === 'topic-matching') {
+    const distractors = pickLove100Distractors(law, referencePool, 3, 'topic');
+    const { options, correctAnswer } = shuffleOptions(
+      `${topicName}（${categoryLabel}）`,
+      distractors.map(
+        (d) => `${d.love100TopicName || d.nameZh.split('：')[0]}（${d.love100Category || '恋爱心理'}）`
+      )
+    );
+    return {
+      encounterKey,
+      templateId,
+      templateLabel: '概念归类与现象识别',
+      law,
+      prompt: `心理线索：“${coreConcept}” 这一现象规律直接对应哪一项恋爱心理学核心概念？`,
+      contextTag: `概念归类 · ${pillarLabel}`,
+      options,
+      correctAnswer,
+      explanation: `正确对应「${topicName}（${categoryLabel}）」。现实应用：${appliedAngle}`,
+      healthyBoundary: boundary,
+    };
+  }
+
+  // scenario-calibration
+  const distractors = pickLove100Distractors(law, referencePool, 3, 'context');
+  const { options, correctAnswer } = shuffleOptions(
+    `【${contextLabel} · ${topicName}】${appliedAngle}`,
+    distractors.map(
+      (d) =>
+        `【${d.love100Context || '自我认识'} · ${d.love100TopicName || d.nameZh.split('：')[0]}】${
+          d.love100AppliedAngle || d.shortExplanation
+        }`
+    )
+  );
+  return {
+    encounterKey,
+    templateId,
+    templateLabel: '跨情境关系认知校准',
+    law,
+    prompt: `关于「${contextLabel}」维度下「${topicName}」的实践落地与认知去偏，哪项匹配完全准确？`,
+    contextTag: `${law.codeId} · 关系校准`,
+    options,
+    correctAnswer,
+    explanation: `「${law.nameZh}」校准建议：${appliedAngle}`,
+    healthyBoundary: boundary,
+  };
+}
+
+/**
+ * Draw CSPRNG non-repeating Love 100 Psychology Arena questions across 100 cards × 5 templates.
+ */
+export function drawAleatoricLove100Questions(
+  count: number,
+  options?: {
+    pillarFilter?: string;
+    contextFilter?: string;
+    categoryFilter?: string;
+    arenaDifficulty?: GameDifficulty | 'all';
+    gameIdFilter?: PsychologyLaw['relatedGame'];
+  }
+): AleatoricLove100Question[] {
+  const pillarFilter = options?.pillarFilter || 'all';
+  const contextFilter = options?.contextFilter || 'all';
+  const categoryFilter = options?.categoryFilter || 'all';
+  const allowedDiffs = getAllowedDifficulties(options?.arenaDifficulty);
+
+  let pool = LOVE100_PSYCHOLOGY_LAWS.filter((law) => {
+    if (pillarFilter !== 'all' && law.love100Pillar !== pillarFilter) return false;
+    if (contextFilter !== 'all' && law.love100Context !== contextFilter) return false;
+    if (categoryFilter !== 'all' && law.love100Category !== categoryFilter) return false;
+    if (
+      options?.gameIdFilter &&
+      law.relatedGame !== options.gameIdFilter &&
+      !(law.dispatchedGames && law.dispatchedGames.includes(options.gameIdFilter))
+    ) {
+      return false;
+    }
+    if (!allowedDiffs.includes(law.difficulty)) return false;
+    return true;
+  });
+
+  if (pool.length < count) {
+    pool = LOVE100_PSYCHOLOGY_LAWS.filter((law) => {
+      if (pillarFilter !== 'all' && law.love100Pillar !== pillarFilter) return false;
+      if (contextFilter !== 'all' && law.love100Context !== contextFilter) return false;
+      if (categoryFilter !== 'all' && law.love100Category !== categoryFilter) return false;
+      return true;
+    });
+  }
+  if (pool.length === 0) {
+    pool = LOVE100_PSYCHOLOGY_LAWS;
+  }
+
+  const state = loadLove100DeckState();
+  const seenSet = new Set(state.seenEncounters);
+  const recentSet = new Set(state.recentLawIds);
+
+  const buildUnseenPairs = (ignoreRecent: boolean) => {
+    const pairs: Array<{ law: PsychologyLaw; templateId: Love100AleatoricTemplateId }> = [];
+    for (const law of pool) {
+      if (!ignoreRecent && recentSet.has(law.id)) continue;
+      for (const tpl of LOVE100_ALEATORIC_TEMPLATES) {
+        const key = `${law.id}::${tpl}`;
+        if (!seenSet.has(key)) {
+          pairs.push({ law, templateId: tpl });
+        }
+      }
+    }
+    return cryptoShuffle(pairs);
+  };
+
+  let unseenQueue = buildUnseenPairs(false);
+  if (unseenQueue.length < count) {
+    unseenQueue = buildUnseenPairs(true);
+  }
+  if (unseenQueue.length < count) {
+    const poolIds = new Set(pool.map((l) => l.id));
+    state.seenEncounters = state.seenEncounters.filter((k) => !poolIds.has(k.split('::')[0]));
+    seenSet.clear();
+    state.seenEncounters.forEach((k) => seenSet.add(k));
+    unseenQueue = buildUnseenPairs(false);
+    if (unseenQueue.length < count) {
+      unseenQueue = buildUnseenPairs(true);
+    }
+  }
+
+  const chosen: Array<{ law: PsychologyLaw; templateId: Love100AleatoricTemplateId }> = [];
+  const chosenLawIdsInBatch = new Set<string>();
+  let lastContext = '';
+
+  for (const cand of unseenQueue) {
+    if (chosen.length >= count) break;
+    if (chosenLawIdsInBatch.has(cand.law.id)) continue;
+    if (cand.law.love100Context && cand.law.love100Context === lastContext && pool.length > 5) {
+      continue;
+    }
+    chosen.push(cand);
+    chosenLawIdsInBatch.add(cand.law.id);
+    lastContext = cand.law.love100Context || '';
+  }
+
+  if (chosen.length < count) {
+    for (const cand of unseenQueue) {
+      if (chosen.length >= count) break;
+      if (chosenLawIdsInBatch.has(cand.law.id)) continue;
+      chosen.push(cand);
+      chosenLawIdsInBatch.add(cand.law.id);
+    }
+  }
+
+  if (chosen.length < count) {
+    for (const cand of unseenQueue) {
+      if (chosen.length >= count) break;
+      if (!chosen.some((c) => c.law.id === cand.law.id && c.templateId === cand.templateId)) {
+        chosen.push(cand);
+      }
+    }
+  }
+
+  const nextRecent = [...state.recentLawIds];
+  const results = chosen.map(({ law, templateId }) => {
+    const key = `${law.id}::${templateId}`;
+    if (!seenSet.has(key)) {
+      seenSet.add(key);
+      state.seenEncounters.push(key);
+    }
+    nextRecent.push(law.id);
+    return materializeLove100Question(law, templateId, LOVE100_PSYCHOLOGY_LAWS);
+  });
+
+  state.recentLawIds = nextRecent.slice(-LOVE100_COOLDOWN_WINDOW);
+  state.totalDraws += results.length;
+  state.lastPlayedAt = new Date().toISOString();
+  saveLove100DeckState(state);
+
+  return results;
+}
+
+// ---------------------------------------------------------------------------
+// 6. Intimate Relationships 100-Card Aleatoric Engine (500 Encounters)
+// ---------------------------------------------------------------------------
+
+export type IntimateAleatoricTemplateId =
+  | 'concept-core'
+  | 'context-practice'
+  | 'healthy-boundary'
+  | 'topic-matching'
+  | 'scenario-calibration';
+
+export const INTIMATE_ALEATORIC_TEMPLATES: IntimateAleatoricTemplateId[] = [
+  'concept-core',
+  'context-practice',
+  'healthy-boundary',
+  'topic-matching',
+  'scenario-calibration',
+];
+
+export interface AleatoricIntimateQuestion {
+  encounterKey: string;
+  templateId: IntimateAleatoricTemplateId;
+  templateLabel: string;
+  law: PsychologyLaw;
+  prompt: string;
+  contextTag: string;
+  options: string[];
+  correctAnswer: number;
+  explanation: string;
+  healthyBoundary: string;
+}
+
+const INTIMATE_STORAGE_KEY = 'mindlabz_intimate_aleatoric_deck_v1';
+const INTIMATE_COOLDOWN_WINDOW = 30;
+
+function loadIntimateDeckState(): AleatoricStorageState {
+  try {
+    if (typeof window === 'undefined') {
+      return { seenEncounters: [], recentLawIds: [], totalDraws: 0, lastPlayedAt: '' };
+    }
+    const raw = window.localStorage.getItem(INTIMATE_STORAGE_KEY);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      return {
+        seenEncounters: Array.isArray(parsed.seenEncounters) ? parsed.seenEncounters : [],
+        recentLawIds: Array.isArray(parsed.recentLawIds) ? parsed.recentLawIds : [],
+        totalDraws: typeof parsed.totalDraws === 'number' ? parsed.totalDraws : 0,
+        lastPlayedAt: typeof parsed.lastPlayedAt === 'string' ? parsed.lastPlayedAt : '',
+      };
+    }
+  } catch {
+    // ignore storage errors
+  }
+  return { seenEncounters: [], recentLawIds: [], totalDraws: 0, lastPlayedAt: '' };
+}
+
+function saveIntimateDeckState(state: AleatoricStorageState): void {
+  try {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(INTIMATE_STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    // ignore quota errors
+  }
+}
+
+export function resetIntimateAleatoricDeck(): void {
+  saveIntimateDeckState({
+    seenEncounters: [],
+    recentLawIds: [],
+    totalDraws: 0,
+    lastPlayedAt: new Date().toISOString(),
+  });
+}
+
+export function getIntimateAleatoricStats(): {
+  totalConcepts: number;
+  totalUniqueEncounters: number;
+  seenEncountersCount: number;
+  uniqueConceptsExplored: number;
+  totalDraws: number;
+} {
+  const state = loadIntimateDeckState();
+  const seenConcepts = new Set(state.seenEncounters.map((k) => k.split('::')[0]));
+  return {
+    totalConcepts: INTIMATE_RELATIONSHIPS_LAWS.length,
+    totalUniqueEncounters:
+      INTIMATE_RELATIONSHIPS_LAWS.length * INTIMATE_ALEATORIC_TEMPLATES.length,
+    seenEncountersCount: state.seenEncounters.length,
+    uniqueConceptsExplored: seenConcepts.size,
+    totalDraws: state.totalDraws,
+  };
+}
+
+function pickIntimateDistractors(
+  target: PsychologyLaw,
+  pool: PsychologyLaw[],
+  count: number,
+  preferDistinctField: 'topic' | 'context' = 'topic'
+): PsychologyLaw[] {
+  const candidates = cryptoShuffle(pool.filter((l) => l.id !== target.id));
+  const picked: PsychologyLaw[] = [];
+  const usedKeys = new Set<string>([
+    preferDistinctField === 'topic'
+      ? target.intimateTopicName || target.nameZh
+      : target.intimateContext || '',
+  ]);
+
+  for (const item of candidates) {
+    if (picked.length >= count) break;
+    const key =
+      preferDistinctField === 'topic'
+        ? item.intimateTopicName || item.nameZh
+        : item.intimateContext || '';
+    if (!usedKeys.has(key)) {
+      usedKeys.add(key);
+      picked.push(item);
+    }
+  }
+
+  for (const item of candidates) {
+    if (picked.length >= count) break;
+    if (!picked.some((p) => p.id === item.id)) {
+      picked.push(item);
+    }
+  }
+
+  return picked;
+}
+
+function materializeIntimateQuestion(
+  law: PsychologyLaw,
+  templateId: IntimateAleatoricTemplateId,
+  referencePool: PsychologyLaw[]
+): AleatoricIntimateQuestion {
+  const topicName = law.intimateTopicName || law.nameZh.split('：')[0] || law.nameZh;
+  const contextLabel = law.intimateContext || '自我觉察';
+  const categoryLabel = law.intimateCategory || '依恋与情感联结';
+  const pillarLabel = law.intimatePillar || '依恋联结与安全基地';
+  const coreConcept = law.intimateCoreConcept || law.whyItHappens || law.shortExplanation;
+  const appliedAngle = law.intimateAppliedAngle || law.realLifeExample;
+  const boundary =
+    law.healthyBoundary ||
+    law.intimateLearningNote ||
+    '本知识卡用于亲密关系心理学科普与自我反思，不构成心理诊断。尊重双方自主、隐私、平等与持续有效的同意；若存在暴力、威胁或强制控制，优先考虑安全并寻求专业支持。';
+  const encounterKey = `${law.id}::${templateId}`;
+
+  if (templateId === 'concept-core') {
+    const distractors = pickIntimateDistractors(law, referencePool, 3, 'topic');
+    const { options, correctAnswer } = shuffleOptions(
+      coreConcept,
+      distractors.map((d) => d.intimateCoreConcept || d.whyItHappens || d.shortExplanation)
+    );
+    return {
+      encounterKey,
+      templateId,
+      templateLabel: '亲密关系核心理论辨析',
+      law,
+      prompt: `在亲密关系心理学「${topicName}（${categoryLabel}）」中，哪项论述最准确地阐释了其核心科学机理？`,
+      contextTag: `${law.codeId} · ${pillarLabel}`,
+      options,
+      correctAnswer,
+      explanation: `【${law.codeId} · ${law.nameZh}】${coreConcept}`,
+      healthyBoundary: boundary,
+    };
+  }
+
+  if (templateId === 'context-practice') {
+    const distractors = pickIntimateDistractors(law, referencePool, 3, 'context');
+    const { options, correctAnswer } = shuffleOptions(
+      appliedAngle,
+      distractors.map((d) => d.intimateAppliedAngle || d.realLifeExample)
+    );
+    return {
+      encounterKey,
+      templateId,
+      templateLabel: '五大情境实践应对选择',
+      law,
+      prompt: `处于「${contextLabel}」维度并实践「${topicName}」时，哪项应对策略或观察角度最恰当？`,
+      contextTag: `${contextLabel} · ${categoryLabel}`,
+      options,
+      correctAnswer,
+      explanation: `在「${contextLabel}」下：${appliedAngle}`,
+      healthyBoundary: boundary,
+    };
+  }
+
+  if (templateId === 'healthy-boundary') {
+    const learningNote =
+      law.intimateLearningNote ||
+      '本知识卡用于亲密关系心理学科普与自我反思，不构成心理诊断，也不能单凭单一行为判断伴侣人格或关系结局。';
+    const { options, correctAnswer } = shuffleOptions(
+      `${appliedAngle}（安全与自主原则：不贴标签、尊重平等与同意、以安全为先）`,
+      [
+        '仅凭伴侣几次防御反应或沉默回避，就可以直接断言对方人格有严重缺陷且无法改变',
+        '冲突升温时必须逼迫对方立刻当场表态认错，绝不能给彼此二十分钟以上暂停降温空间',
+        '真正的亲密关系不需要明确边界或协商请求，彼此只要真心就应该完全读懂对方心思',
+      ]
+    );
+    return {
+      encounterKey,
+      templateId,
+      templateLabel: '自主安全与去诊断边界',
+      law,
+      prompt: `结合「${law.nameZh}」，以下哪项完全符合亲密关系研究的科学边界、平等自主与非诊断原则？`,
+      contextTag: `安全边界 · ${contextLabel}`,
+      options,
+      correctAnswer,
+      explanation: `亲密关系安全边界：${appliedAngle} ${learningNote}`,
+      healthyBoundary: boundary,
+    };
+  }
+
+  if (templateId === 'topic-matching') {
+    const distractors = pickIntimateDistractors(law, referencePool, 3, 'topic');
+    const { options, correctAnswer } = shuffleOptions(
+      `${topicName}（${categoryLabel}）`,
+      distractors.map(
+        (d) =>
+          `${d.intimateTopicName || d.nameZh.split('：')[0]}（${d.intimateCategory || '亲密关系'}）`
+      )
+    );
+    return {
+      encounterKey,
+      templateId,
+      templateLabel: '互动模式精准识别',
+      law,
+      prompt: `实证观察：“${coreConcept}” 直接刻画了亲密关系研究中的哪一项核心机制或互动模式？`,
+      contextTag: `模式识别 · ${pillarLabel}`,
+      options,
+      correctAnswer,
+      explanation: `正确对应「${topicName}（${categoryLabel}）」。行动建议：${appliedAngle}`,
+      healthyBoundary: boundary,
+    };
+  }
+
+  // scenario-calibration
+  const distractors = pickIntimateDistractors(law, referencePool, 3, 'context');
+  const { options, correctAnswer } = shuffleOptions(
+    `【${contextLabel} · ${topicName}】${appliedAngle}`,
+    distractors.map(
+      (d) =>
+        `【${d.intimateContext || '自我觉察'} · ${d.intimateTopicName || d.nameZh.split('：')[0]}】${
+          d.intimateAppliedAngle || d.shortExplanation
+        }`
+    )
+  );
+  return {
+    encounterKey,
+    templateId,
+    templateLabel: '跨情境关系修复校准',
+    law,
+    prompt: `针对「${contextLabel}」维度下「${topicName}」的实证洞察与关系维护要点，哪项匹配完全准确？`,
+    contextTag: `${law.codeId} · 修复校准`,
+    options,
+    correctAnswer,
+    explanation: `「${law.nameZh}」校准要点：${appliedAngle}`,
+    healthyBoundary: boundary,
+  };
+}
+
+/**
+ * Draw CSPRNG non-repeating Intimate Relationships 100 Arena questions across 100 cards × 5 templates.
+ */
+export function drawAleatoricIntimateQuestions(
+  count: number,
+  options?: {
+    pillarFilter?: string;
+    contextFilter?: string;
+    categoryFilter?: string;
+    arenaDifficulty?: GameDifficulty | 'all';
+    gameIdFilter?: PsychologyLaw['relatedGame'];
+  }
+): AleatoricIntimateQuestion[] {
+  const pillarFilter = options?.pillarFilter || 'all';
+  const contextFilter = options?.contextFilter || 'all';
+  const categoryFilter = options?.categoryFilter || 'all';
+  const allowedDiffs = getAllowedDifficulties(options?.arenaDifficulty);
+
+  let pool = INTIMATE_RELATIONSHIPS_LAWS.filter((law) => {
+    if (pillarFilter !== 'all' && law.intimatePillar !== pillarFilter) return false;
+    if (contextFilter !== 'all' && law.intimateContext !== contextFilter) return false;
+    if (categoryFilter !== 'all' && law.intimateCategory !== categoryFilter) return false;
+    if (
+      options?.gameIdFilter &&
+      law.relatedGame !== options.gameIdFilter &&
+      !(law.dispatchedGames && law.dispatchedGames.includes(options.gameIdFilter))
+    ) {
+      return false;
+    }
+    if (!allowedDiffs.includes(law.difficulty)) return false;
+    return true;
+  });
+
+  if (pool.length < count) {
+    pool = INTIMATE_RELATIONSHIPS_LAWS.filter((law) => {
+      if (pillarFilter !== 'all' && law.intimatePillar !== pillarFilter) return false;
+      if (contextFilter !== 'all' && law.intimateContext !== contextFilter) return false;
+      if (categoryFilter !== 'all' && law.intimateCategory !== categoryFilter) return false;
+      return true;
+    });
+  }
+  if (pool.length === 0) {
+    pool = INTIMATE_RELATIONSHIPS_LAWS;
+  }
+
+  const state = loadIntimateDeckState();
+  const seenSet = new Set(state.seenEncounters);
+  const recentSet = new Set(state.recentLawIds);
+
+  const buildUnseenPairs = (ignoreRecent: boolean) => {
+    const pairs: Array<{ law: PsychologyLaw; templateId: IntimateAleatoricTemplateId }> = [];
+    for (const law of pool) {
+      if (!ignoreRecent && recentSet.has(law.id)) continue;
+      for (const tpl of INTIMATE_ALEATORIC_TEMPLATES) {
+        const key = `${law.id}::${tpl}`;
+        if (!seenSet.has(key)) {
+          pairs.push({ law, templateId: tpl });
+        }
+      }
+    }
+    return cryptoShuffle(pairs);
+  };
+
+  let unseenQueue = buildUnseenPairs(false);
+  if (unseenQueue.length < count) {
+    unseenQueue = buildUnseenPairs(true);
+  }
+  if (unseenQueue.length < count) {
+    const poolIds = new Set(pool.map((l) => l.id));
+    state.seenEncounters = state.seenEncounters.filter((k) => !poolIds.has(k.split('::')[0]));
+    seenSet.clear();
+    state.seenEncounters.forEach((k) => seenSet.add(k));
+    unseenQueue = buildUnseenPairs(false);
+    if (unseenQueue.length < count) {
+      unseenQueue = buildUnseenPairs(true);
+    }
+  }
+
+  const chosen: Array<{ law: PsychologyLaw; templateId: IntimateAleatoricTemplateId }> = [];
+  const chosenLawIdsInBatch = new Set<string>();
+  let lastContext = '';
+
+  for (const cand of unseenQueue) {
+    if (chosen.length >= count) break;
+    if (chosenLawIdsInBatch.has(cand.law.id)) continue;
+    if (cand.law.intimateContext && cand.law.intimateContext === lastContext && pool.length > 5) {
+      continue;
+    }
+    chosen.push(cand);
+    chosenLawIdsInBatch.add(cand.law.id);
+    lastContext = cand.law.intimateContext || '';
+  }
+
+  if (chosen.length < count) {
+    for (const cand of unseenQueue) {
+      if (chosen.length >= count) break;
+      if (chosenLawIdsInBatch.has(cand.law.id)) continue;
+      chosen.push(cand);
+      chosenLawIdsInBatch.add(cand.law.id);
+    }
+  }
+
+  if (chosen.length < count) {
+    for (const cand of unseenQueue) {
+      if (chosen.length >= count) break;
+      if (!chosen.some((c) => c.law.id === cand.law.id && c.templateId === cand.templateId)) {
+        chosen.push(cand);
+      }
+    }
+  }
+
+  const nextRecent = [...state.recentLawIds];
+  const results = chosen.map(({ law, templateId }) => {
+    const key = `${law.id}::${templateId}`;
+    if (!seenSet.has(key)) {
+      seenSet.add(key);
+      state.seenEncounters.push(key);
+    }
+    nextRecent.push(law.id);
+    return materializeIntimateQuestion(law, templateId, INTIMATE_RELATIONSHIPS_LAWS);
+  });
+
+  state.recentLawIds = nextRecent.slice(-INTIMATE_COOLDOWN_WINDOW);
+  state.totalDraws += results.length;
+  state.lastPlayedAt = new Date().toISOString();
+  saveIntimateDeckState(state);
 
   return results;
 }

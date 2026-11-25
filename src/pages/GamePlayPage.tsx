@@ -4,6 +4,7 @@ import { PSYCHOLOGY_GAMES } from '../data/games';
 import { GameArenaStageSkeleton } from '../components/ui/Skeleton';
 import { useFontScale } from '../context/FontScaleContext';
 import { FloatingFontScaleControl } from '../components/ui/FloatingFontScaleControl';
+import { CognitiveFocusAudioPlayer } from '../components/audio/CognitiveFocusAudioPlayer';
 
 // 经典小游戏
 import { MemoryLabGame } from '../components/games/MemoryLabGame';
@@ -27,6 +28,8 @@ import { LoveAleatoricArenaGame } from '../components/games/LoveAleatoricArenaGa
 import { ReverseAleatoricArenaGame } from '../components/games/ReverseAleatoricArenaGame';
 import { CriminalAleatoricArenaGame } from '../components/games/CriminalAleatoricArenaGame';
 import { SexualAleatoricArenaGame } from '../components/games/SexualAleatoricArenaGame';
+import { Love100AleatoricArenaGame } from '../components/games/Love100AleatoricArenaGame';
+import { IntimateAleatoricArenaGame } from '../components/games/IntimateAleatoricArenaGame';
 
 export const GamePlayPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -81,6 +84,10 @@ export const GamePlayPage: React.FC = () => {
         return <FalsificationChallengeGame />;
       case 'love-aleatoric-arena':
         return <LoveAleatoricArenaGame />;
+      case 'love100-aleatoric-arena':
+        return <Love100AleatoricArenaGame />;
+      case 'intimate-aleatoric-arena':
+        return <IntimateAleatoricArenaGame />;
       case 'reverse-aleatoric-arena':
         return <ReverseAleatoricArenaGame />;
       case 'criminal-aleatoric-arena':
@@ -124,6 +131,12 @@ export const GamePlayPage: React.FC = () => {
       className="animate-stageEnter w-full quiz-font-scope"
       data-quiz-font-scale={fontScale}
     >
+      <CognitiveFocusAudioPlayer
+        variant="compact"
+        className="mb-4 max-w-5xl mx-auto"
+        recommendedBinauralId="gamma-40"
+        taskContextLabel={currentGame?.nameZh}
+      />
       {renderGameComponent()}
       <FloatingFontScaleControl />
     </div>

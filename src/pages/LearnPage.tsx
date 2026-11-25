@@ -35,12 +35,21 @@ import {
 import { useApp } from '../context/AppContext';
 import { useFontScale } from '../context/FontScaleContext';
 import { FloatingFontScaleControl } from '../components/ui/FloatingFontScaleControl';
+import { CognitiveFocusAudioPlayer } from '../components/audio/CognitiveFocusAudioPlayer';
 import { PsychologyLawCard } from '../components/cards/PsychologyLawCard';
 import { LawCardSkeleton } from '../components/ui/Skeleton';
 import { VoiceTranscribeButton } from '../components/ui/VoiceTranscribeButton';
 import { CategoryZh, DifficultyLevel, LoveDomainId, PsychologyLaw } from '../types';
 import { MINDLABZ_CHAPTERS } from '../data/laws';
 import { gameAudio } from '../utils/gameAudio';
+import {
+  startLawSpeech,
+  stopLawSpeech,
+  toggleLawSpeech,
+  useLawSpeech,
+  LawSpeechSegment,
+} from '../utils/lawSpeechEngine';
+import { SilverSpeechText, LawVoiceToggleSwitch } from '../components/ui/SilverSpeechText';
 import { OverlappingCardStack } from '../components/ui/OverlappingCardStack';
 import {
   drawNonRepeatingLawOrder,
@@ -78,6 +87,14 @@ import {
   SEXUAL_PILLARS,
 } from '../data/sexualPsychologyLaws';
 import {
+  LOVE100_PSYCHOLOGY_LAWS,
+  LOVE100_PILLARS,
+} from '../data/love100PsychologyLaws';
+import {
+  INTIMATE_RELATIONSHIPS_LAWS,
+  INTIMATE_PILLARS,
+} from '../data/intimateRelationshipsLaws';
+import {
   CylindricalThemeRoller,
   CylindricalThemeItem,
   CylindricalThemeChangeMeta,
@@ -87,6 +104,8 @@ import {
   CylinderScrollItem,
 } from '../components/ui/CylinderScrollList';
 import { SexualPsychologyOrganizer } from '../components/sexual/SexualPsychologyOrganizer';
+import { Love100PsychologyOrganizer } from '../components/love100/Love100PsychologyOrganizer';
+import { IntimatePsychologyOrganizer } from '../components/intimate/IntimatePsychologyOrganizer';
 import { searchLawsWithLunr } from '../utils/globalSearchIndex';
 
 interface CategoryOption {
@@ -192,6 +211,8 @@ const POPULAR_SEARCH_TAGS: PopularSearchTag[] = [
 
 export type LibraryCurationMode =
   | 'all_corpus'
+  | 'intimate_psychology'
+  | 'love_100_psychology'
   | 'sexual_psychology'
   | 'criminal_psychology'
   | 'reverse_psychology'
@@ -211,6 +232,10 @@ export const LearnPage: React.FC = () => {
   const initialMode: LibraryCurationMode =
     modeParam === 'all'
       ? 'all_corpus'
+      : modeParam === 'intimate' || modeParam === 'intimate_psychology'
+      ? 'intimate_psychology'
+      : modeParam === 'love100' || modeParam === 'love_100_psychology'
+      ? 'love_100_psychology'
       : modeParam === 'sexual' || modeParam === 'sexual_psychology'
       ? 'sexual_psychology'
       : modeParam === 'criminal' || modeParam === 'criminal_psychology'
@@ -227,9 +252,12 @@ export const LearnPage: React.FC = () => {
       ? 'microexpressions'
       : 'criminal_psychology';
   const isInitialSexual = initialMode === 'sexual_psychology';
-  const initialCategory = isInitialSexual
-    ? 'all'
-    : ((searchParams.get('category') as CategoryZh) || 'all');
+  const isInitialLove100 = initialMode === 'love_100_psychology';
+  const isInitialIntimate = initialMode === 'intimate_psychology';
+  const initialCategory =
+    isInitialSexual || isInitialLove100 || isInitialIntimate
+      ? 'all'
+      : ((searchParams.get('category') as CategoryZh) || 'all');
   const initialSectionParam = searchParams.get('section');
   const initialSection = initialSectionParam ? (Number(initialSectionParam) as number) || 'all' : 'all';
   const initialDifficultyParam = searchParams.get('difficulty');
@@ -254,6 +282,30 @@ export const LearnPage: React.FC = () => {
   );
   const [selectedSexualTopic, setSelectedSexualTopic] = useState<string>(
     isInitialSexual ? searchParams.get('topic') || 'all' : 'all'
+  );
+  const [selectedLove100Pillar, setSelectedLove100Pillar] = useState<string>(
+    isInitialLove100 ? searchParams.get('pillar') || 'all' : 'all'
+  );
+  const [selectedLove100Context, setSelectedLove100Context] = useState<string>(
+    isInitialLove100 ? searchParams.get('context') || 'all' : 'all'
+  );
+  const [selectedLove100Category, setSelectedLove100Category] = useState<string>(
+    isInitialLove100 ? searchParams.get('love100Cat') || searchParams.get('category') || 'all' : 'all'
+  );
+  const [selectedLove100Topic, setSelectedLove100Topic] = useState<string>(
+    isInitialLove100 ? searchParams.get('topic') || 'all' : 'all'
+  );
+  const [selectedIntimatePillar, setSelectedIntimatePillar] = useState<string>(
+    isInitialIntimate ? searchParams.get('pillar') || 'all' : 'all'
+  );
+  const [selectedIntimateContext, setSelectedIntimateContext] = useState<string>(
+    isInitialIntimate ? searchParams.get('context') || 'all' : 'all'
+  );
+  const [selectedIntimateCategory, setSelectedIntimateCategory] = useState<string>(
+    isInitialIntimate ? searchParams.get('intimateCat') || searchParams.get('category') || 'all' : 'all'
+  );
+  const [selectedIntimateTopic, setSelectedIntimateTopic] = useState<string>(
+    isInitialIntimate ? searchParams.get('topic') || 'all' : 'all'
   );
   const [selectedCriminalContext, setSelectedCriminalContext] = useState<string>('all');
   const [selectedCriminalCategory, setSelectedCriminalCategory] = useState<string>('all');
@@ -290,6 +342,34 @@ export const LearnPage: React.FC = () => {
     const urlMode = searchParams.get('mode');
     if (urlMode === 'all') {
       setCurationMode('all_corpus');
+    } else if (urlMode === 'intimate' || urlMode === 'intimate_psychology') {
+      setCurationMode('intimate_psychology');
+      const p = searchParams.get('pillar');
+      const ctx = searchParams.get('context');
+      const cat = searchParams.get('intimateCat') || searchParams.get('category');
+      const topic = searchParams.get('topic');
+      const diff = searchParams.get('difficulty');
+      if (p) setSelectedIntimatePillar(p);
+      if (ctx) setSelectedIntimateContext(ctx);
+      if (cat) setSelectedIntimateCategory(cat);
+      if (topic) setSelectedIntimateTopic(topic);
+      if (diff === 'Easy' || diff === 'Medium' || diff === 'Hard' || diff === 'all') {
+        setSelectedDifficulty(diff);
+      }
+    } else if (urlMode === 'love100' || urlMode === 'love_100_psychology') {
+      setCurationMode('love_100_psychology');
+      const p = searchParams.get('pillar');
+      const ctx = searchParams.get('context');
+      const cat = searchParams.get('love100Cat') || searchParams.get('category');
+      const topic = searchParams.get('topic');
+      const diff = searchParams.get('difficulty');
+      if (p) setSelectedLove100Pillar(p);
+      if (ctx) setSelectedLove100Context(ctx);
+      if (cat) setSelectedLove100Category(cat);
+      if (topic) setSelectedLove100Topic(topic);
+      if (diff === 'Easy' || diff === 'Medium' || diff === 'Hard' || diff === 'all') {
+        setSelectedDifficulty(diff);
+      }
     } else if (urlMode === 'sexual' || urlMode === 'sexual_psychology') {
       setCurationMode('sexual_psychology');
       const p = searchParams.get('pillar');
@@ -322,9 +402,7 @@ export const LearnPage: React.FC = () => {
   // Cleanup Web Speech API on unmount
   useEffect(() => {
     return () => {
-      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-      }
+      stopLawSpeech();
     };
   }, []);
 
@@ -343,9 +421,7 @@ export const LearnPage: React.FC = () => {
     setCurationMode(mode);
     setVisibleLimit(24);
     setAudioPlayingIdx(null);
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-    }
+    stopLawSpeech();
   };
 
   const handleReshuffle = () => {
@@ -353,9 +429,7 @@ export const LearnPage: React.FC = () => {
     setShuffleNonce((n) => n + 1);
     setSortMode('aleatoric');
     setAudioPlayingIdx(null);
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-    }
+    stopLawSpeech();
   };
 
   const handleLoveDomainChange = (domain: 'all' | LoveDomainId) => {
@@ -411,7 +485,11 @@ export const LearnPage: React.FC = () => {
   // Trigger CSPRNG non-repeating random inspiring law discovery
   const handleRandomEpiphany = () => {
     const pool =
-      curationMode === 'sexual_psychology'
+      curationMode === 'intimate_psychology'
+        ? INTIMATE_RELATIONSHIPS_LAWS
+        : curationMode === 'love_100_psychology'
+        ? LOVE100_PSYCHOLOGY_LAWS
+        : curationMode === 'sexual_psychology'
         ? SEXUAL_PSYCHOLOGY_LAWS
         : curationMode === 'criminal_psychology'
         ? CRIMINAL_PSYCHOLOGY_LAWS
@@ -436,6 +514,46 @@ export const LearnPage: React.FC = () => {
         const matchesCategory = selectedCategory === 'all' || law.categoryZh === selectedCategory;
         const matchesDiff = selectedDifficulty === 'all' || law.difficulty === selectedDifficulty;
         return matchesCategory && matchesDiff;
+      }
+
+      if (curationMode === 'intimate_psychology') {
+        if (!law.isIntimateRelationship) return false;
+        if (selectedIntimatePillar !== 'all' && law.intimatePillar !== selectedIntimatePillar) {
+          return false;
+        }
+        if (selectedIntimateContext !== 'all' && law.intimateContext !== selectedIntimateContext) {
+          return false;
+        }
+        if (selectedIntimateCategory !== 'all' && law.intimateCategory !== selectedIntimateCategory) {
+          return false;
+        }
+        if (selectedIntimateTopic !== 'all' && law.intimateTopicName !== selectedIntimateTopic) {
+          return false;
+        }
+        if (selectedDifficulty !== 'all' && law.difficulty !== selectedDifficulty) {
+          return false;
+        }
+        return true;
+      }
+
+      if (curationMode === 'love_100_psychology') {
+        if (!law.isLove100Psychology) return false;
+        if (selectedLove100Pillar !== 'all' && law.love100Pillar !== selectedLove100Pillar) {
+          return false;
+        }
+        if (selectedLove100Context !== 'all' && law.love100Context !== selectedLove100Context) {
+          return false;
+        }
+        if (selectedLove100Category !== 'all' && law.love100Category !== selectedLove100Category) {
+          return false;
+        }
+        if (selectedLove100Topic !== 'all' && law.love100TopicName !== selectedLove100Topic) {
+          return false;
+        }
+        if (selectedDifficulty !== 'all' && law.difficulty !== selectedDifficulty) {
+          return false;
+        }
+        return true;
       }
 
       if (curationMode === 'sexual_psychology') {
@@ -520,7 +638,7 @@ export const LearnPage: React.FC = () => {
         return true;
       }
 
-      if (law.isLoveCodex || law.isReversePsychology || law.isCriminalPsychology || law.isSexualPsychology) return false;
+      if (law.isLoveCodex || law.isReversePsychology || law.isCriminalPsychology || law.isSexualPsychology || law.isLove100Psychology || law.isIntimateRelationship) return false;
       const matchesCategory = selectedCategory === 'all' || law.categoryZh === selectedCategory;
       const matchesChapter = selectedChapter === 'all' || law.chapter === selectedChapter;
       return matchesCategory && matchesChapter;
@@ -529,7 +647,7 @@ export const LearnPage: React.FC = () => {
     if (sortMode === 'aleatoric') {
       return drawNonRepeatingLawOrder(
         subset,
-        `library::${curationMode}::${selectedSexualPillar}::${selectedSexualContext}::${selectedSexualCategory}::${selectedSexualTopic}::${selectedDifficulty}::${selectedCriminalContext}::${selectedCriminalCategory}::${selectedCriminalTheory}::${selectedReverseScenario}::${selectedReverseCategory}::${selectedCategory}`,
+        `library::${curationMode}::${selectedIntimatePillar}::${selectedIntimateContext}::${selectedIntimateCategory}::${selectedIntimateTopic}::${selectedLove100Pillar}::${selectedLove100Context}::${selectedLove100Category}::${selectedLove100Topic}::${selectedSexualPillar}::${selectedSexualContext}::${selectedSexualCategory}::${selectedSexualTopic}::${selectedDifficulty}::${selectedCriminalContext}::${selectedCriminalCategory}::${selectedCriminalTheory}::${selectedReverseScenario}::${selectedReverseCategory}::${selectedCategory}`,
         { markHeadCount: Math.min(24, Math.max(4, Math.ceil(subset.length * 0.25))) }
       );
     }
@@ -556,6 +674,14 @@ export const LearnPage: React.FC = () => {
     curationMode,
     sortMode,
     shuffleNonce,
+    selectedIntimatePillar,
+    selectedIntimateContext,
+    selectedIntimateCategory,
+    selectedIntimateTopic,
+    selectedLove100Pillar,
+    selectedLove100Context,
+    selectedLove100Category,
+    selectedLove100Topic,
     selectedSexualPillar,
     selectedSexualContext,
     selectedSexualCategory,
@@ -593,6 +719,24 @@ export const LearnPage: React.FC = () => {
         subtitle: '全馆藏实时洗牌',
         accentColor: '#D97706',
         icon: <Sparkles className="w-3.5 h-3.5" />,
+      },
+      {
+        id: 'intimate_psychology',
+        label: '亲密关系 100 律',
+        group: '实战心理专题',
+        count: INTIMATE_RELATIONSHIPS_LAWS.length,
+        subtitle: '4 大板块 × 5 类别 × 5 情境',
+        accentColor: '#BE123C',
+        icon: <HeartHandshake className="w-3.5 h-3.5" />,
+      },
+      {
+        id: 'love_100_psychology',
+        label: '恋爱心理学 100 律',
+        group: '实战心理专题',
+        count: LOVE100_PSYCHOLOGY_LAWS.length,
+        subtitle: '4 大板块 × 7 类别 × 5 情境',
+        accentColor: '#E11D48',
+        icon: <Heart className="w-3.5 h-3.5" />,
       },
       {
         id: 'sexual_psychology',
@@ -661,41 +805,49 @@ export const LearnPage: React.FC = () => {
     [laws.length]
   );
 
-  // Continuous Web Speech Audio Queue Handler (听力库随听连播)
+  // Continuous Web Speech Audio Queue Handler (听力库随听连播 — 同步触发银字高亮)
   const speakLawAt = (idx: number, rateOverride: number = audioRate) => {
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
     if (idx < 0 || idx >= filteredLaws.length) {
-      window.speechSynthesis.cancel();
+      stopLawSpeech();
       setAudioPlayingIdx(null);
       return;
     }
     const targetLaw = filteredLaws[idx];
-    window.speechSynthesis.cancel();
-    const utter = new SpeechSynthesisUtterance(
-      `第 ${idx + 1} 条，${targetLaw.codeId || ''}，${targetLaw.nameZh}。${targetLaw.shortExplanation}。实用边界：${targetLaw.keyTakeaway}`
-    );
-    utter.lang = 'zh-CN';
-    utter.rate = rateOverride;
-    utter.onend = () => {
-      if (idx + 1 < filteredLaws.length) {
-        setAudioPlayingIdx(idx + 1);
-        speakLawAt(idx + 1, rateOverride);
-      } else {
-        setAudioPlayingIdx(null);
-      }
-    };
-    utter.onerror = () => {
-      setAudioPlayingIdx(null);
-    };
+    const mechanismText = targetLaw.whyItHappens || targetLaw.detailedExplanation;
+    const caseText = targetLaw.relationshipCase || targetLaw.realLifeExample;
+    const speechSegments: LawSpeechSegment[] = [
+      { key: 'title', text: targetLaw.nameZh, separator: '。' },
+      { key: 'short', text: targetLaw.shortExplanation, separator: '。' },
+    ];
+    if (mechanismText) {
+      speechSegments.push({ key: 'mechanism', text: mechanismText, separator: '。' });
+    }
+    if (caseText) {
+      speechSegments.push({ key: 'case', text: caseText, separator: '。' });
+    }
+    if (targetLaw.keyTakeaway) {
+      speechSegments.push({ key: 'takeaway', text: targetLaw.keyTakeaway, separator: '。' });
+    }
+
     setAudioPlayingIdx(idx);
-    window.speechSynthesis.speak(utter);
+    startLawSpeech({
+      lawId: targetLaw.id,
+      segments: speechSegments,
+      rate: rateOverride,
+      onComplete: () => {
+        if (idx + 1 < filteredLaws.length) {
+          speakLawAt(idx + 1, rateOverride);
+        } else {
+          setAudioPlayingIdx(null);
+        }
+      },
+    });
   };
 
   const handleToggleGlobalListen = () => {
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
     gameAudio.playTap();
     if (audioPlayingIdx !== null) {
-      window.speechSynthesis.cancel();
+      stopLawSpeech();
       setAudioPlayingIdx(null);
     } else if (filteredLaws.length > 0) {
       speakLawAt(0, audioRate);
@@ -749,7 +901,7 @@ export const LearnPage: React.FC = () => {
               </span>
               <span className="text-stone-500" aria-hidden="true">/</span>
               <span className="text-stone-300 font-serif-editorial italic font-sans">
-                SEX0101–SEX2005 · CRIM001–CRIM{CRIMINAL_PSYCHOLOGY_LAWS.length} · REV0101–REV2005 · ML001–ML010 · LAW001–LAW142 · LOVE001–LOVE{LOVE_PSYCHOLOGY_LAWS.length}
+                INT0101–INT2005 · LOVEPSY0101–LOVEPSY2005 · SEX0101–SEX2005 · CRIM001–CRIM{CRIMINAL_PSYCHOLOGY_LAWS.length} · REV0101–REV2005 · ML001–ML010 · LAW001–LAW142 · LOVE001–LOVE{LOVE_PSYCHOLOGY_LAWS.length}
               </span>
             </div>
 
@@ -760,7 +912,7 @@ export const LearnPage: React.FC = () => {
 
             {/* Editorial Dek */}
             <p className="text-xs sm:text-sm text-stone-300/90 font-normal leading-relaxed">
-              全量收录 {SEXUAL_PSYCHOLOGY_LAWS.length} 条性心理学与亲密健康词条（SEX）、{CRIMINAL_PSYCHOLOGY_LAWS.length} 条犯罪心理学理论与应用卡（CRIM）、{REVERSE_PSYCHOLOGY_LAWS.length} 条逆向心理学与心理抗拒词条（REV）、{MICROEXPRESSION_LAWS.length} 条微表情实证定律（ML）、142 条经典心智规律及 {LOVE_PSYCHOLOGY_LAWS.length} 条爱情心理学词条，配备 CSPRNG 零重复洗牌与语音随听连播。
+              全量收录 {INTIMATE_RELATIONSHIPS_LAWS.length} 条亲密关系心理学理论与应用卡（INT）、{LOVE100_PSYCHOLOGY_LAWS.length} 条恋爱心理学应用知识卡（LOVEPSY）、{SEXUAL_PSYCHOLOGY_LAWS.length} 条性心理学与亲密健康词条（SEX）、{CRIMINAL_PSYCHOLOGY_LAWS.length} 条犯罪心理学理论与应用卡（CRIM）、{REVERSE_PSYCHOLOGY_LAWS.length} 条逆向心理学与心理抗拒词条（REV）、{MICROEXPRESSION_LAWS.length} 条微表情实证定律（ML）、142 条经典心智规律及 {LOVE_PSYCHOLOGY_LAWS.length} 条爱情心理学词条，配备 CSPRNG 零重复洗牌与语音随听连播。
             </p>
 
             {/* Curatorial Index Stats */}
@@ -773,7 +925,7 @@ export const LearnPage: React.FC = () => {
               <span className="flex items-center gap-1.5 bg-white/5 border border-white/10 px-2.5 py-1 rounded-lg">
                 <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-xs shadow-emerald-400/50" />
                 <span>心智展厅:</span>
-                <strong className="text-white font-bold">6 大领域</strong>
+                <strong className="text-white font-bold">8 大领域</strong>
               </span>
               <span className="flex items-center gap-1.5 bg-white/5 border border-white/10 px-2.5 py-1 rounded-lg">
                 <span className="w-2 h-2 rounded-full bg-amber-400 shadow-xs shadow-amber-400/50" />
@@ -817,6 +969,12 @@ export const LearnPage: React.FC = () => {
           </div>
         </div>
       </section>
+
+      <CognitiveFocusAudioPlayer
+        variant="compact"
+        recommendedBinauralId="smr-14"
+        taskContextLabel="定律精读与语音随听"
+      />
 
       {/* Featured Hall Portal: 情感心理学 50 律典藏馆 */}
       <section className="relative rounded-2xl overflow-hidden art-salon-canvas p-5 sm:p-6 text-white border border-amber-500/35 shadow-xl transition-all">
@@ -930,6 +1088,186 @@ export const LearnPage: React.FC = () => {
                 <div className="flex items-center justify-between gap-2 text-[11px] font-mono text-purple-200 tabular-nums">
                   <span>0{idx + 1} · {pillar.count} 律</span>
                   <ArrowRight className="w-3.5 h-3.5 text-purple-300" />
+                </div>
+                <div className="text-xs sm:text-sm font-bold text-white leading-snug">
+                  {pillar.label}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Dedicated Showcase Box: 恋爱心理学 100 律 · 4 大关系板块栏框 */}
+      <section className="rounded-3xl bg-gradient-to-br from-[#2B0C1C] via-[#261129] to-[#111827] p-5 sm:p-6 text-white border border-rose-400/30 shadow-lg space-y-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="space-y-1.5 max-w-2xl">
+            <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono text-rose-200">
+              <Heart className="w-3.5 h-3.5 text-rose-300 fill-rose-400/50 shrink-0" />
+              <span className="font-bold text-rose-200">LOVEPSY0101–LOVEPSY2005</span>
+              <span className="text-stone-500" aria-hidden="true">·</span>
+              <span className="text-amber-300 tabular-nums">4 大关系板块 · 7 大知识类别 · 5 大相处情境 · 100 律</span>
+            </div>
+            <h3 className="font-serif-editorial text-lg sm:text-xl font-bold text-white tracking-tight">
+              恋爱心理学与亲密关系 · 100 律结构化专馆
+            </h3>
+            <p className="text-xs text-stone-300 leading-relaxed">
+              将 20 个恋爱心理学核心概念系统映射到「自我认识、恋爱初期、稳定关系、冲突情境、关系复盘」五大情境，清晰归档于 4 大关系板块，支持随听研读与竞技场真随机实战直连。
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                gameAudio.playTap();
+                setCurationMode('love_100_psychology');
+                setSelectedLove100Pillar('all');
+                setSelectedLove100Category('all');
+                setSelectedLove100Topic('all');
+                setVisibleLimit(24);
+                setTimeout(() => {
+                  document.getElementById('love100-organizer')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 80);
+              }}
+              className="px-4 py-2.5 rounded-xl bg-white text-stone-900 hover:bg-rose-50 text-xs font-bold flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 transition-colors"
+            >
+              <span>展开 100 卡分类总栏</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                gameAudio.playSuccess();
+                navigate('/game/love100-aleatoric-arena');
+              }}
+              className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 transition-colors"
+            >
+              <Shuffle className="w-3.5 h-3.5" />
+              <span>竞技场真随机博弈</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1">
+          {LOVE100_PILLARS.map((pillar, idx) => {
+            const isActivePillar =
+              curationMode === 'love_100_psychology' && selectedLove100Pillar === pillar.id;
+            return (
+              <button
+                key={pillar.id}
+                type="button"
+                onClick={() => {
+                  gameAudio.playSelect();
+                  setCurationMode('love_100_psychology');
+                  setSelectedLove100Pillar(pillar.id);
+                  setSelectedLove100Category('all');
+                  setSelectedLove100Topic('all');
+                  setVisibleLimit(24);
+                  setTimeout(() => {
+                    document.getElementById('love100-organizer')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }, 80);
+                }}
+                className={`text-left rounded-2xl p-3.5 border transition-all cursor-pointer flex flex-col justify-between gap-2 ${
+                  isActivePillar
+                    ? 'bg-white/15 border-amber-300/70'
+                    : 'bg-white/5 hover:bg-white/10 border-white/10 hover:border-rose-300/50'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2 text-[11px] font-mono text-rose-200 tabular-nums">
+                  <span>0{idx + 1} · {pillar.count} 卡</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-rose-300" />
+                </div>
+                <div className="text-xs sm:text-sm font-bold text-white leading-snug">
+                  {pillar.label}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Dedicated Showcase Box: 亲密关系心理学 100 律 · 4 大关系板块栏框 */}
+      <section className="rounded-3xl bg-gradient-to-br from-[#2B0C18] via-[#22162E] to-[#111827] p-5 sm:p-6 text-white border border-rose-400/30 shadow-lg space-y-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div className="space-y-1.5 max-w-2xl">
+            <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono text-rose-200">
+              <HeartHandshake className="w-3.5 h-3.5 text-rose-300 shrink-0" />
+              <span className="font-bold text-rose-200">INT0101–INT2005</span>
+              <span className="text-stone-500" aria-hidden="true">·</span>
+              <span className="text-amber-300 tabular-nums">4 大核心板块 · 5 大知识类别 · 5 大相处情境 · 100 律</span>
+            </div>
+            <h3 className="font-serif-editorial text-lg sm:text-xl font-bold text-white tracking-tight">
+              亲密关系心理学 · 100 律安全联结与冲突修复专馆
+            </h3>
+            <p className="text-xs text-stone-300 leading-relaxed">
+              系统归档依恋安全基地、情绪可及与共同调节、积极倾听与回应感知、温和开场与修复尝试等 20 章核心理论，并横跨「自我觉察、日常沟通、冲突情境、长期关系、关系复盘」五大实战维度。
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                gameAudio.playTap();
+                setCurationMode('intimate_psychology');
+                setSelectedIntimatePillar('all');
+                setSelectedIntimateCategory('all');
+                setSelectedIntimateTopic('all');
+                setVisibleLimit(24);
+                setTimeout(() => {
+                  document.getElementById('intimate-organizer')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }, 80);
+              }}
+              className="px-4 py-2.5 rounded-xl bg-white text-stone-900 hover:bg-rose-50 text-xs font-bold flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 transition-colors"
+            >
+              <span>展开 100 卡分类总栏</span>
+              <ChevronRight className="w-3.5 h-3.5" />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                gameAudio.playSuccess();
+                navigate('/game/intimate-aleatoric-arena');
+              }}
+              className="px-4 py-2.5 rounded-xl bg-rose-700 hover:bg-rose-600 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 transition-colors"
+            >
+              <Shuffle className="w-3.5 h-3.5" />
+              <span>竞技场真随机实战</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 pt-1">
+          {INTIMATE_PILLARS.map((pillar, idx) => {
+            const isActivePillar =
+              curationMode === 'intimate_psychology' && selectedIntimatePillar === pillar.id;
+            return (
+              <button
+                key={pillar.id}
+                type="button"
+                onClick={() => {
+                  gameAudio.playSelect();
+                  setCurationMode('intimate_psychology');
+                  setSelectedIntimatePillar(pillar.id);
+                  setSelectedIntimateCategory('all');
+                  setSelectedIntimateTopic('all');
+                  setVisibleLimit(24);
+                  setTimeout(() => {
+                    document.getElementById('intimate-organizer')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }, 80);
+                }}
+                className={`text-left rounded-2xl p-3.5 border transition-all cursor-pointer flex flex-col justify-between gap-2 ${
+                  isActivePillar
+                    ? 'bg-white/15 border-amber-300/70'
+                    : 'bg-white/5 hover:bg-white/10 border-white/10 hover:border-rose-300/50'
+                }`}
+              >
+                <div className="flex items-center justify-between gap-2 text-[11px] font-mono text-rose-200 tabular-nums">
+                  <span>0{idx + 1} · {pillar.count} 卡</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-rose-300" />
                 </div>
                 <div className="text-xs sm:text-sm font-bold text-white leading-snug">
                   {pillar.label}
@@ -1189,7 +1527,125 @@ export const LearnPage: React.FC = () => {
         </div>
 
         {/* 3. Category Controls depending on active Taxonomy Mode */}
-        {curationMode === 'sexual_psychology' ? (
+        {curationMode === 'intimate_psychology' ? (
+          <div id="intimate-organizer">
+            <IntimatePsychologyOrganizer
+              lawsMasteryMap={user.lawMasteryMap}
+              selectedPillar={selectedIntimatePillar}
+              selectedContext={selectedIntimateContext}
+              selectedCategory={selectedIntimateCategory}
+              selectedTopic={selectedIntimateTopic}
+              selectedDifficulty={selectedDifficulty}
+              matchedCount={filteredLaws.length}
+              onSelectPillar={(pillarId) => {
+                setSelectedIntimatePillar(pillarId);
+                setSelectedIntimateCategory('all');
+                setSelectedIntimateTopic('all');
+                setVisibleLimit(24);
+              }}
+              onSelectContext={(contextId) => {
+                setSelectedIntimateContext(contextId);
+                setVisibleLimit(24);
+              }}
+              onSelectCategory={(catId) => {
+                setSelectedIntimateCategory(catId);
+                setSelectedIntimateTopic('all');
+                setVisibleLimit(24);
+              }}
+              onSelectTopic={(topicId) => {
+                setSelectedIntimateTopic(topicId);
+                setVisibleLimit(24);
+              }}
+              onSelectDifficulty={(diff) => {
+                setSelectedDifficulty(diff);
+                setVisibleLimit(24);
+              }}
+              onResetFilters={() => {
+                setSelectedIntimatePillar('all');
+                setSelectedIntimateContext('all');
+                setSelectedIntimateCategory('all');
+                setSelectedIntimateTopic('all');
+                setSelectedDifficulty('all');
+                setVisibleLimit(24);
+              }}
+              onLaunchArena={() => {
+                const params = new URLSearchParams();
+                if (selectedIntimatePillar !== 'all') params.set('pillar', selectedIntimatePillar);
+                if (selectedIntimateContext !== 'all') params.set('context', selectedIntimateContext);
+                if (selectedIntimateCategory !== 'all') params.set('category', selectedIntimateCategory);
+                const arenaDiff =
+                  selectedDifficulty === 'Easy'
+                    ? '低'
+                    : selectedDifficulty === 'Medium'
+                    ? '中'
+                    : selectedDifficulty === 'Hard'
+                    ? '高'
+                    : '中';
+                params.set('difficulty', arenaDiff);
+                navigate(`/game/intimate-aleatoric-arena?${params.toString()}`);
+              }}
+            />
+          </div>
+        ) : curationMode === 'love_100_psychology' ? (
+          <div id="love100-organizer">
+            <Love100PsychologyOrganizer
+              lawsMasteryMap={user.lawMasteryMap}
+              selectedPillar={selectedLove100Pillar}
+              selectedContext={selectedLove100Context}
+              selectedCategory={selectedLove100Category}
+              selectedTopic={selectedLove100Topic}
+              selectedDifficulty={selectedDifficulty}
+              matchedCount={filteredLaws.length}
+              onSelectPillar={(pillarId) => {
+                setSelectedLove100Pillar(pillarId);
+                setSelectedLove100Category('all');
+                setSelectedLove100Topic('all');
+                setVisibleLimit(24);
+              }}
+              onSelectContext={(contextId) => {
+                setSelectedLove100Context(contextId);
+                setVisibleLimit(24);
+              }}
+              onSelectCategory={(catId) => {
+                setSelectedLove100Category(catId);
+                setSelectedLove100Topic('all');
+                setVisibleLimit(24);
+              }}
+              onSelectTopic={(topicId) => {
+                setSelectedLove100Topic(topicId);
+                setVisibleLimit(24);
+              }}
+              onSelectDifficulty={(diff) => {
+                setSelectedDifficulty(diff);
+                setVisibleLimit(24);
+              }}
+              onResetFilters={() => {
+                setSelectedLove100Pillar('all');
+                setSelectedLove100Context('all');
+                setSelectedLove100Category('all');
+                setSelectedLove100Topic('all');
+                setSelectedDifficulty('all');
+                setVisibleLimit(24);
+              }}
+              onLaunchArena={() => {
+                const params = new URLSearchParams();
+                if (selectedLove100Pillar !== 'all') params.set('pillar', selectedLove100Pillar);
+                if (selectedLove100Context !== 'all') params.set('context', selectedLove100Context);
+                if (selectedLove100Category !== 'all') params.set('category', selectedLove100Category);
+                const arenaDiff =
+                  selectedDifficulty === 'Easy'
+                    ? '低'
+                    : selectedDifficulty === 'Medium'
+                    ? '中'
+                    : selectedDifficulty === 'Hard'
+                    ? '高'
+                    : '中';
+                params.set('difficulty', arenaDiff);
+                navigate(`/game/love100-aleatoric-arena?${params.toString()}`);
+              }}
+            />
+          </div>
+        ) : curationMode === 'sexual_psychology' ? (
           <div id="sexual-organizer">
             <SexualPsychologyOrganizer
               lawsMasteryMap={user.lawMasteryMap}
@@ -2066,7 +2522,19 @@ export const LearnPage: React.FC = () => {
           )}
         </div>
 
-        {((curationMode === 'sexual_psychology'
+        {((curationMode === 'intimate_psychology'
+          ? selectedIntimatePillar !== 'all' ||
+            selectedIntimateContext !== 'all' ||
+            selectedIntimateCategory !== 'all' ||
+            selectedIntimateTopic !== 'all' ||
+            selectedDifficulty !== 'all'
+          : curationMode === 'love_100_psychology'
+          ? selectedLove100Pillar !== 'all' ||
+            selectedLove100Context !== 'all' ||
+            selectedLove100Category !== 'all' ||
+            selectedLove100Topic !== 'all' ||
+            selectedDifficulty !== 'all'
+          : curationMode === 'sexual_psychology'
           ? selectedSexualPillar !== 'all' ||
             selectedSexualContext !== 'all' ||
             selectedSexualCategory !== 'all' ||
@@ -2089,6 +2557,14 @@ export const LearnPage: React.FC = () => {
             onClick={() => {
               gameAudio.playTap();
               setSearchQuery('');
+              setSelectedIntimatePillar('all');
+              setSelectedIntimateContext('all');
+              setSelectedIntimateCategory('all');
+              setSelectedIntimateTopic('all');
+              setSelectedLove100Pillar('all');
+              setSelectedLove100Context('all');
+              setSelectedLove100Category('all');
+              setSelectedLove100Topic('all');
               setSelectedSexualPillar('all');
               setSelectedSexualContext('all');
               setSelectedSexualCategory('all');
@@ -2207,60 +2683,15 @@ export const LearnPage: React.FC = () => {
                 const isMastered = mastery >= 80;
                 return (
                   <CylinderScrollItem key={law.id} radiusClass="rounded-2xl">
-                    <div
-                      onClick={() => {
+                    <LearnDossierLawRow
+                      law={law}
+                      mastery={mastery}
+                      isMastered={isMastered}
+                      onOpen={() => {
                         gameAudio.playTap();
                         navigate(`/law/${law.id}`);
                       }}
-                      className="group bg-white hover:bg-stone-50/80 rounded-2xl p-4 sm:p-5 border border-stone-200/80 hover:border-amber-400/80 transition-colors cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-                    >
-                      <div className="flex items-start gap-3.5 min-w-0 flex-1">
-                        <span className="font-mono text-xs font-bold text-stone-800 shrink-0 mt-0.5 tabular-nums">
-                          {law.codeId || 'LAW'}
-                        </span>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <h3 className="font-serif-editorial text-base font-bold text-stone-900 group-hover:text-amber-800 transition-colors truncate">
-                              {law.nameZh}
-                            </h3>
-                            <span className="text-xs text-stone-400 font-serif-editorial italic truncate">
-                              {law.nameEn}
-                            </span>
-                          </div>
-                          <p className="text-xs text-stone-600 line-clamp-1 mt-0.5">
-                            {law.shortExplanation}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 shrink-0 self-end sm:self-center text-[11px] text-stone-600">
-                        {law.subTag && (
-                          <>
-                            <span className="text-rose-700 font-medium">{law.subTag}</span>
-                            <span className="text-stone-300" aria-hidden="true">·</span>
-                          </>
-                        )}
-                        {law.assignedCityZh && (
-                          <>
-                            <span className="text-amber-800 font-medium">
-                              {law.assignedCityZh.split(' ')[0]}
-                            </span>
-                            <span className="text-stone-300" aria-hidden="true">·</span>
-                          </>
-                        )}
-                        <span className="font-medium text-stone-600">{law.categoryZh}</span>
-                        {isMastered && (
-                          <>
-                            <span className="text-stone-300" aria-hidden="true">·</span>
-                            <span className="text-emerald-700 font-semibold flex items-center gap-1">
-                              <CheckCircle2 className="w-3.5 h-3.5 fill-emerald-600 text-white" />
-                              <span>已内化</span>
-                            </span>
-                          </>
-                        )}
-                        <ChevronRight className="w-4 h-4 text-stone-400 group-hover:text-stone-900 group-hover:translate-x-1 transition-all ml-1" />
-                      </div>
-                    </div>
+                    />
                   </CylinderScrollItem>
                 );
               })}
@@ -2288,80 +2719,240 @@ export const LearnPage: React.FC = () => {
 
       {/* 7. Epiphany Modal (Random Inspirational Discovery Dialog) */}
       {epiphanyLaw && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-          <div className="relative w-full max-w-lg rounded-3xl bg-white border border-amber-300 shadow-2xl p-7 sm:p-9 space-y-5 animate-stageEnter overflow-hidden">
-            {/* Top gold ribbon */}
-            <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-amber-400 via-amber-300 to-amber-600" />
-
-            <div className="flex items-center justify-between pb-3 border-b border-stone-200/80">
-              <div className="flex items-center gap-2">
-                <span className="p-1.5 rounded-xl bg-amber-100 text-amber-800">
-                  <Sparkles className="w-4 h-4" />
-                </span>
-                <span className="font-serif-editorial text-xs font-bold text-stone-900 tracking-wider uppercase">
-                  今日心智灵感 · 随机启迪
-                </span>
-              </div>
-              <button
-                onClick={() => setEpiphanyLaw(null)}
-                className="w-8 h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-800 hover:bg-stone-100 transition-colors cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-xs">
-                <span className="font-mono font-bold px-2 py-0.5 rounded bg-stone-100 text-stone-900">
-                  {epiphanyLaw.codeId}
-                </span>
-                <span className="text-stone-400">/</span>
-                <span className="font-semibold text-amber-800">
-                  {epiphanyLaw.categoryZh}展厅
-                </span>
-              </div>
-
-              <h3 className="font-serif-editorial text-2xl font-bold text-stone-900 leading-snug">
-                {epiphanyLaw.nameZh}
-              </h3>
-              <p className="text-xs text-stone-500 font-serif-editorial italic">
-                {epiphanyLaw.nameEn}
-              </p>
-
-              <blockquote className="rounded-2xl p-4 bg-amber-50/70 border border-amber-200/80 font-serif-editorial text-xs sm:text-sm text-stone-800 leading-relaxed italic">
-                “{epiphanyLaw.shortExplanation}”
-              </blockquote>
-
-              <p className="text-xs text-stone-600 leading-relaxed line-clamp-3">
-                {epiphanyLaw.detailedExplanation}
-              </p>
-            </div>
-
-            <div className="pt-2 flex items-center justify-between gap-3">
-              <button
-                onClick={handleRandomEpiphany}
-                className="px-4 py-2.5 rounded-xl border border-stone-200 text-stone-700 hover:bg-stone-100 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
-              >
-                <Shuffle className="w-3.5 h-3.5" />
-                <span>换一条启迪</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  setEpiphanyLaw(null);
-                  navigate(`/law/${epiphanyLaw.id}`);
-                }}
-                className="flex-1 px-5 py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
-              >
-                <span>进入深度解析</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </div>
+        <EpiphanyLawModal
+          epiphanyLaw={epiphanyLaw}
+          onClose={() => {
+            stopLawSpeech(epiphanyLaw.id);
+            setEpiphanyLaw(null);
+          }}
+          onNext={handleRandomEpiphany}
+          onNavigate={(id) => {
+            stopLawSpeech(id);
+            setEpiphanyLaw(null);
+            navigate(`/law/${id}`);
+          }}
+        />
       )}
 
       <FloatingFontScaleControl tone="paper" title="定律库字号调节" />
+    </div>
+  );
+};
+
+const LearnDossierLawRow: React.FC<{
+  law: PsychologyLaw;
+  mastery: number;
+  isMastered: boolean;
+  onOpen: () => void;
+}> = ({ law, isMastered, onOpen }) => {
+  const { isSpeakingThisLaw, activeCpIndex, segments } = useLawSpeech(law.id);
+
+  const handleToggleSpeech = () => {
+    gameAudio.playTap();
+    const speechSegments: LawSpeechSegment[] = [
+      { key: 'title', text: law.nameZh, separator: '。' },
+      { key: 'short', text: law.shortExplanation, separator: '。' },
+    ];
+    if (law.keyTakeaway) {
+      speechSegments.push({ key: 'takeaway', text: law.keyTakeaway, separator: '。' });
+    }
+    toggleLawSpeech({
+      lawId: law.id,
+      segments: speechSegments,
+    });
+  };
+
+  return (
+    <div
+      onClick={(e) => {
+        if ((e.target as HTMLElement).closest('button')) return;
+        onOpen();
+      }}
+      className="group bg-white hover:bg-stone-50/80 rounded-2xl p-4 sm:p-5 border border-stone-200/80 hover:border-amber-400/80 transition-colors cursor-pointer flex flex-col gap-3"
+    >
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-start gap-3.5 min-w-0 flex-1">
+          <span className="font-mono text-xs font-bold text-stone-800 shrink-0 mt-0.5 tabular-nums">
+            {law.codeId || 'LAW'}
+          </span>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="font-serif-editorial text-base font-bold text-stone-900 group-hover:text-amber-800 transition-colors truncate">
+                <SilverSpeechText
+                  text={law.nameZh}
+                  isSpeaking={isSpeakingThisLaw}
+                  activeCpIndex={activeCpIndex}
+                  segmentRange={segments.title}
+                />
+              </h3>
+              <span className="text-xs text-stone-400 font-serif-editorial italic truncate">
+                {law.nameEn}
+              </span>
+            </div>
+            <p className={`text-xs text-stone-600 mt-0.5 ${isSpeakingThisLaw ? 'leading-relaxed' : 'line-clamp-1'}`}>
+              <SilverSpeechText
+                text={law.shortExplanation}
+                isSpeaking={isSpeakingThisLaw}
+                activeCpIndex={activeCpIndex}
+                segmentRange={segments.short}
+              />
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0 self-end sm:self-center text-[11px] text-stone-600">
+          {law.subTag && (
+            <>
+              <span className="text-rose-700 font-medium">{law.subTag}</span>
+              <span className="text-stone-300" aria-hidden="true">·</span>
+            </>
+          )}
+          {law.assignedCityZh && (
+            <>
+              <span className="text-amber-800 font-medium">
+                {law.assignedCityZh.split(' ')[0]}
+              </span>
+              <span className="text-stone-300" aria-hidden="true">·</span>
+            </>
+          )}
+          <span className="font-medium text-stone-600">{law.categoryZh}</span>
+          {isMastered && (
+            <>
+              <span className="text-stone-300" aria-hidden="true">·</span>
+              <span className="text-emerald-700 font-semibold flex items-center gap-1">
+                <CheckCircle2 className="w-3.5 h-3.5 fill-emerald-600 text-white" />
+                <span>已内化</span>
+              </span>
+            </>
+          )}
+          <ChevronRight className="w-4 h-4 text-stone-400 group-hover:text-stone-900 group-hover:translate-x-1 transition-all ml-1" />
+        </div>
+      </div>
+
+      {/* Bottom-Right Voice Switch */}
+      <div className="flex items-center justify-end pt-2 border-t border-stone-100">
+        <LawVoiceToggleSwitch
+          isOn={isSpeakingThisLaw}
+          onToggle={handleToggleSpeech}
+          size="sm"
+        />
+      </div>
+    </div>
+  );
+};
+
+const EpiphanyLawModal: React.FC<{
+  epiphanyLaw: PsychologyLaw;
+  onClose: () => void;
+  onNext: () => void;
+  onNavigate: (id: string) => void;
+}> = ({ epiphanyLaw, onClose, onNext, onNavigate }) => {
+  const { isSpeakingThisLaw, activeCpIndex, segments } = useLawSpeech(epiphanyLaw.id);
+
+  const handleToggleSpeech = () => {
+    gameAudio.playTap();
+    toggleLawSpeech({
+      lawId: epiphanyLaw.id,
+      segments: [
+        { key: 'title', text: epiphanyLaw.nameZh, separator: '。' },
+        { key: 'short', text: epiphanyLaw.shortExplanation, separator: '。' },
+        { key: 'detail', text: epiphanyLaw.detailedExplanation, separator: '。' },
+      ],
+    });
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
+      <div className="relative w-full max-w-lg rounded-3xl bg-white border border-amber-300 shadow-2xl p-7 sm:p-9 space-y-5 animate-stageEnter overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-amber-400 via-amber-300 to-amber-600" />
+
+        <div className="flex items-center justify-between pb-3 border-b border-stone-200/80">
+          <div className="flex items-center gap-2">
+            <span className="p-1.5 rounded-xl bg-amber-100 text-amber-800">
+              <Sparkles className="w-4 h-4" />
+            </span>
+            <span className="font-serif-editorial text-xs font-bold text-stone-900 tracking-wider uppercase">
+              今日心智灵感 · 随机启迪
+            </span>
+          </div>
+          <button
+            onClick={onClose}
+            className="w-8 h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-800 hover:bg-stone-100 transition-colors cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-xs">
+            <span className="font-mono font-bold px-2 py-0.5 rounded bg-stone-100 text-stone-900">
+              {epiphanyLaw.codeId}
+            </span>
+            <span className="text-stone-400">/</span>
+            <span className="font-semibold text-amber-800">
+              {epiphanyLaw.categoryZh}展厅
+            </span>
+          </div>
+
+          <h3 className="font-serif-editorial text-2xl font-bold text-stone-900 leading-snug">
+            <SilverSpeechText
+              text={epiphanyLaw.nameZh}
+              isSpeaking={isSpeakingThisLaw}
+              activeCpIndex={activeCpIndex}
+              segmentRange={segments.title}
+            />
+          </h3>
+          <p className="text-xs text-stone-500 font-serif-editorial italic">
+            {epiphanyLaw.nameEn}
+          </p>
+
+          <blockquote className="rounded-2xl p-4 bg-amber-50/70 border border-amber-200/80 font-serif-editorial text-xs sm:text-sm text-stone-800 leading-relaxed italic">
+            “
+            <SilverSpeechText
+              text={epiphanyLaw.shortExplanation}
+              isSpeaking={isSpeakingThisLaw}
+              activeCpIndex={activeCpIndex}
+              segmentRange={segments.short}
+            />
+            ”
+          </blockquote>
+
+          <p className={`text-xs text-stone-600 leading-relaxed ${isSpeakingThisLaw ? '' : 'line-clamp-3'}`}>
+            <SilverSpeechText
+              text={epiphanyLaw.detailedExplanation}
+              isSpeaking={isSpeakingThisLaw}
+              activeCpIndex={activeCpIndex}
+              segmentRange={segments.detail}
+            />
+          </p>
+
+          <div className="flex justify-end pt-1">
+            <LawVoiceToggleSwitch
+              isOn={isSpeakingThisLaw}
+              onToggle={handleToggleSpeech}
+              size="sm"
+            />
+          </div>
+        </div>
+
+        <div className="pt-2 flex items-center justify-between gap-3">
+          <button
+            onClick={onNext}
+            className="px-4 py-2.5 rounded-xl border border-stone-200 text-stone-700 hover:bg-stone-100 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+          >
+            <Shuffle className="w-3.5 h-3.5" />
+            <span>换一条启迪</span>
+          </button>
+
+          <button
+            onClick={() => onNavigate(epiphanyLaw.id)}
+            className="flex-1 px-5 py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <span>进入深度解析</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
     </div>
   );
 };

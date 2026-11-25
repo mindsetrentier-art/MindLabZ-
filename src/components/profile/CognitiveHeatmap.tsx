@@ -21,7 +21,7 @@ interface CognitiveHeatmapProps {
 
 type HeatmapViewMode = 'domains' | 'matrix';
 
-type CollectionKey = 'classic' | 'love' | 'reverse' | 'criminal' | 'sexual' | 'micro';
+type CollectionKey = 'classic' | 'love' | 'love100' | 'intimate' | 'reverse' | 'criminal' | 'sexual' | 'micro';
 
 interface HeatmapCell {
   key: string;
@@ -77,6 +77,20 @@ const COLLECTION_META: Array<{
     arenaRoute: '/game/love-aleatoric-arena',
   },
   {
+    id: 'love100',
+    label: '恋爱心理 100',
+    shortLabel: '恋爱 100',
+    learnRoute: '/learn?mode=love100',
+    arenaRoute: '/game/love100-aleatoric-arena',
+  },
+  {
+    id: 'intimate',
+    label: '亲密关系 100',
+    shortLabel: '亲密 100',
+    learnRoute: '/learn?mode=intimate',
+    arenaRoute: '/game/intimate-aleatoric-arena',
+  },
+  {
     id: 'reverse',
     label: '逆向心理 100',
     shortLabel: '逆向 100',
@@ -123,6 +137,8 @@ const TIER_COLUMNS: Array<{ id: DifficultyLevel | 'ALL'; label: string }> = [
 ];
 
 function getLawCollection(law: PsychologyLaw): CollectionKey {
+  if (law.isIntimateRelationship) return 'intimate';
+  if (law.isLove100Psychology) return 'love100';
   if (law.isSexualPsychology) return 'sexual';
   if (law.isCriminalPsychology) return 'criminal';
   if (law.isReversePsychology) return 'reverse';
@@ -218,6 +234,10 @@ function computeCellStats(
   const cat = relatedGameCategoryOrId.category;
 
   if (col === 'love' && (highScores['love-aleatoric-arena'] || 0) > 0) {
+    matchedGameSignal = 1;
+  } else if (col === 'love100' && (highScores['love100-aleatoric-arena'] || 0) > 0) {
+    matchedGameSignal = 1;
+  } else if (col === 'intimate' && (highScores['intimate-aleatoric-arena'] || 0) > 0) {
     matchedGameSignal = 1;
   } else if (col === 'reverse' && (highScores['reverse-aleatoric-arena'] || 0) > 0) {
     matchedGameSignal = 1;
@@ -356,6 +376,22 @@ export const CognitiveHeatmap: React.FC<CognitiveHeatmapProps> = ({ user, laws }
         learnRoute: '/learn?mode=love',
         arenaRoute: '/game/love-aleatoric-arena',
         filter: (l) => getLawCollection(l) === 'love',
+      },
+      {
+        id: 'love100',
+        label: '恋爱心理 100',
+        collection: 'love100',
+        learnRoute: '/learn?mode=love100',
+        arenaRoute: '/game/love100-aleatoric-arena',
+        filter: (l) => getLawCollection(l) === 'love100',
+      },
+      {
+        id: 'intimate',
+        label: '亲密关系 100',
+        collection: 'intimate',
+        learnRoute: '/learn?mode=intimate',
+        arenaRoute: '/game/intimate-aleatoric-arena',
+        filter: (l) => getLawCollection(l) === 'intimate',
       },
       {
         id: 'reverse',

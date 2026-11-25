@@ -28,6 +28,8 @@ const GAME_ICONS: Record<string, React.ElementType> = {
   'bystander-breaker': LifeBuoy,
   'falsification-challenge': SearchCheck,
   'love-aleatoric-arena': Heart,
+  'love100-aleatoric-arena': Heart,
+  'intimate-aleatoric-arena': HeartHandshake,
   'reverse-aleatoric-arena': Shuffle,
   'criminal-aleatoric-arena': Scale,
   'sexual-aleatoric-arena': HeartHandshake,

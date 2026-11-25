@@ -4,6 +4,7 @@ import { Target, Trophy, Clock, ArrowRight, RotateCcw, CheckCircle2, XCircle, Sp
 import { useApp } from '../context/AppContext';
 import { useFontScale } from '../context/FontScaleContext';
 import { FloatingFontScaleControl } from '../components/ui/FloatingFontScaleControl';
+import { CognitiveFocusAudioPlayer } from '../components/audio/CognitiveFocusAudioPlayer';
 import { DAILY_CHALLENGE_QUESTIONS } from '../data/quizzes';
 
 export const DailyChallengePage: React.FC = () => {
@@ -110,6 +111,13 @@ export const DailyChallengePage: React.FC = () => {
           </div>
         </div>
       </div>
+
+      <CognitiveFocusAudioPlayer
+        variant="compact"
+        className="w-full mb-5"
+        recommendedBinauralId="gamma-40"
+        taskContextLabel="每日极速认知自测"
+      />
 
       {gameState === 'intro' ? (
         <div className="w-full max-w-2xl editorial-card rounded-2xl p-8 sm:p-10 text-center space-y-6">

@@ -622,6 +622,304 @@
   animation: soundWave4 0.85s ease-in-out infinite 0.2s;
 }
 
+/* Law TTS Active Character — Speed-Synced Calligraphic Silver Brushstroke Flow */
+@keyframes silverBrushSweep {
+  0% {
+    opacity: 0.32;
+    transform: scaleX(0.16) skewX(-9deg);
+  }
+  58% {
+    opacity: 0.96;
+    transform: scaleX(0.9) skewX(-3deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scaleX(1) skewX(0deg);
+  }
+}
+
+@keyframes silverLiquidPulse {
+  0% {
+    text-shadow: 0 0 2px rgba(248, 250, 252, 0.25);
+  }
+  100% {
+    text-shadow: 0 0 10px rgba(226, 232, 240, 0.72);
+  }
+}
+
+@keyframes silverMarkerFloat {
+  0%, 100% {
+    transform: translate(-50%, 0px) scale(1);
+    opacity: 0.92;
+  }
+  50% {
+    transform: translate(-50%, -1.5px) scale(1.1);
+    opacity: 1;
+  }
+}
+
+@keyframes silverUnderlineSweep {
+  0% {
+    transform: scaleX(0.14) skewX(-10deg);
+    opacity: 0.45;
+  }
+  60% {
+    transform: scaleX(0.92) skewX(-3deg);
+    opacity: 0.96;
+  }
+  100% {
+    transform: scaleX(1) skewX(0deg);
+    opacity: 1;
+  }
+}
+
+.law-tts-brush-root {
+  isolation: isolate;
+}
+
+.law-tts-silver-active-light {
+  position: relative;
+  display: inline;
+  z-index: 1;
+  color: #f8fafc;
+  border-radius: 3px;
+  text-shadow:
+    0 0 0.35px rgba(248, 250, 252, 0.85),
+    0 0 8px rgba(248, 250, 252, 0.6);
+}
+
+.law-tts-silver-active-light::before {
+  content: '';
+  position: absolute;
+  inset: -1px -1px;
+  z-index: -1;
+  border-radius: 4px 2px 5px 3px;
+  pointer-events: none;
+  background: linear-gradient(108deg, rgba(30, 41, 59, 0.9) 0%, rgba(71, 85, 105, 0.92) 55%, rgba(51, 65, 85, 0.86) 100%);
+  box-shadow:
+    0 0 0 1px rgba(203, 213, 225, 0.72),
+    0 2px 10px rgba(100, 116, 139, 0.36);
+  transform-origin: left center;
+}
+
+.law-tts-silver-active-dark {
+  position: relative;
+  display: inline;
+  z-index: 1;
+  color: #ffffff;
+  border-radius: 3px;
+  text-shadow:
+    0 0 0.35px rgba(255, 255, 255, 0.95),
+    0 0 10px rgba(255, 255, 255, 0.78);
+}
+
+.law-tts-silver-active-dark::before {
+  content: '';
+  position: absolute;
+  inset: -1px -1px;
+  z-index: -1;
+  border-radius: 4px 2px 5px 3px;
+  pointer-events: none;
+  background: linear-gradient(108deg, rgba(148, 163, 184, 0.36) 0%, rgba(226, 232, 240, 0.28) 55%, rgba(203, 213, 225, 0.2) 100%);
+  box-shadow:
+    0 0 0 1px rgba(226, 232, 240, 0.76),
+    0 0 12px rgba(226, 232, 240, 0.48);
+  transform-origin: left center;
+}
+
+/* Continuous wet-silver ink wash across already-spoken chars of the active word */
+.law-tts-brush-word-ink-light {
+  display: inline;
+  color: #0f172a;
+  background: linear-gradient(90deg, rgba(148, 163, 184, 0.26) 0%, rgba(203, 213, 225, 0.44) 100%);
+  border-radius: 2px;
+  text-shadow: 0 0 4px rgba(148, 163, 184, 0.32);
+}
+
+.law-tts-brush-word-ink-dark {
+  display: inline;
+  color: #f8fafc;
+  background: linear-gradient(90deg, rgba(148, 163, 184, 0.14) 0%, rgba(226, 232, 240, 0.24) 100%);
+  border-radius: 2px;
+  text-shadow: 0 0 6px rgba(226, 232, 240, 0.48);
+}
+
+/* Subtle stroke anticipation inside upcoming chars of the same word */
+.law-tts-brush-word-upcoming-light {
+  display: inline;
+  color: #334155;
+  background: rgba(226, 232, 240, 0.18);
+  border-radius: 2px;
+}
+
+.law-tts-brush-word-upcoming-dark {
+  display: inline;
+  color: #cbd5e1;
+  background: rgba(148, 163, 184, 0.08);
+  border-radius: 2px;
+}
+
+/* Feathered brush tip leading into the immediate next character */
+.law-tts-brush-tip-light {
+  display: inline;
+  color: #1e293b;
+  background: linear-gradient(90deg, rgba(203, 213, 225, 0.36) 0%, rgba(226, 232, 240, 0.14) 75%, transparent 100%);
+  border-radius: 2px;
+  text-shadow: 0 0 4px rgba(148, 163, 184, 0.26);
+}
+
+.law-tts-brush-tip-dark {
+  display: inline;
+  color: #e2e8f0;
+  background: linear-gradient(90deg, rgba(203, 213, 225, 0.2) 0%, rgba(148, 163, 184, 0.08) 75%, transparent 100%);
+  border-radius: 2px;
+  text-shadow: 0 0 5px rgba(226, 232, 240, 0.36);
+}
+
+/* Calligraphic dry-brush "feibai" fading ink tail across the 2 chars trailing behind */
+.law-tts-brush-tail-1-light {
+  display: inline;
+  color: #334155;
+  background: linear-gradient(90deg, rgba(203, 213, 225, 0.22) 0%, rgba(148, 163, 184, 0.34) 100%);
+  border-radius: 2px;
+}
+
+.law-tts-brush-tail-1-dark {
+  display: inline;
+  color: #cbd5e1;
+  background: linear-gradient(90deg, rgba(148, 163, 184, 0.1) 0%, rgba(203, 213, 225, 0.18) 100%);
+  border-radius: 2px;
+}
+
+.law-tts-brush-tail-2-light {
+  display: inline;
+  color: #475569;
+  background: linear-gradient(90deg, transparent 0%, rgba(203, 213, 225, 0.16) 100%);
+  border-radius: 2px;
+}
+
+.law-tts-brush-tail-2-dark {
+  display: inline;
+  color: #94a3b8;
+  background: linear-gradient(90deg, transparent 0%, rgba(148, 163, 184, 0.08) 100%);
+  border-radius: 2px;
+}
+
+/* Zero-layout-shift selectable reading markers */
+.law-tts-marker-underline {
+  position: absolute;
+  left: -1.5px;
+  right: -1.5px;
+  bottom: -2.5px;
+  height: 2.5px;
+  border-radius: 9999px 40% 9999px 55%;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    rgba(148, 163, 184, 0.18) 0%,
+    #e2e8f0 35%,
+    #ffffff 65%,
+    rgba(203, 213, 225, 0.35) 100%
+  );
+  box-shadow: 0 0 6px rgba(226, 232, 240, 0.85);
+  transform-origin: left center;
+}
+
+.law-tts-smooth .law-tts-marker-underline {
+  animation: silverUnderlineSweep var(--tts-brush-ms, 230ms) cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.law-tts-marker-symbol {
+  position: absolute;
+  left: 50%;
+  top: -0.78em;
+  transform: translate(-50%, 0);
+  font-size: 0.62em;
+  line-height: 1;
+  font-weight: 700;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.law-tts-marker-symbol-light {
+  color: #475569;
+  text-shadow: 0 0 6px rgba(203, 213, 225, 0.9), 0 1px 2px rgba(255, 255, 255, 0.9);
+}
+
+.law-tts-marker-symbol-dark {
+  color: #f1f5f9;
+  text-shadow: 0 0 8px rgba(248, 250, 252, 0.95), 0 0 3px rgba(203, 213, 225, 0.8);
+}
+
+.law-tts-smooth .law-tts-marker-symbol {
+  animation: silverMarkerFloat var(--tts-marker-ms, 680ms) ease-in-out infinite;
+}
+
+.law-tts-smooth .law-tts-silver-active-light,
+.law-tts-smooth .law-tts-silver-active-dark,
+.law-tts-smooth .law-tts-brush-word-ink-light,
+.law-tts-smooth .law-tts-brush-word-ink-dark,
+.law-tts-smooth .law-tts-brush-word-upcoming-light,
+.law-tts-smooth .law-tts-brush-word-upcoming-dark,
+.law-tts-smooth .law-tts-brush-tip-light,
+.law-tts-smooth .law-tts-brush-tip-dark,
+.law-tts-smooth .law-tts-brush-tail-1-light,
+.law-tts-smooth .law-tts-brush-tail-1-dark,
+.law-tts-smooth .law-tts-brush-tail-2-light,
+.law-tts-smooth .law-tts-brush-tail-2-dark {
+  transition:
+    color var(--tts-trail-ms, 340ms) cubic-bezier(0.22, 1, 0.36, 1),
+    background var(--tts-trail-ms, 340ms) cubic-bezier(0.22, 1, 0.36, 1),
+    text-shadow var(--tts-brush-ms, 230ms) ease;
+}
+
+.law-tts-smooth .law-tts-silver-active-light,
+.law-tts-smooth .law-tts-silver-active-dark {
+  animation: silverLiquidPulse var(--tts-brush-ms, 230ms) cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.law-tts-smooth .law-tts-silver-active-light::before,
+.law-tts-smooth .law-tts-silver-active-dark::before {
+  animation: silverBrushSweep var(--tts-brush-ms, 230ms) cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.law-tts-smooth .law-tts-read-char {
+  transition: color var(--tts-trail-ms, 340ms) ease, background var(--tts-trail-ms, 340ms) ease;
+}
+
+.law-tts-instant .law-tts-silver-active-light,
+.law-tts-instant .law-tts-silver-active-dark,
+.law-tts-instant .law-tts-silver-active-light::before,
+.law-tts-instant .law-tts-silver-active-dark::before,
+.law-tts-instant .law-tts-brush-word-ink-light,
+.law-tts-instant .law-tts-brush-word-ink-dark,
+.law-tts-instant .law-tts-brush-word-upcoming-light,
+.law-tts-instant .law-tts-brush-word-upcoming-dark,
+.law-tts-instant .law-tts-brush-tip-light,
+.law-tts-instant .law-tts-brush-tip-dark,
+.law-tts-instant .law-tts-brush-tail-1-light,
+.law-tts-instant .law-tts-brush-tail-1-dark,
+.law-tts-instant .law-tts-brush-tail-2-light,
+.law-tts-instant .law-tts-brush-tail-2-dark,
+.law-tts-instant .law-tts-marker-underline,
+.law-tts-instant .law-tts-marker-symbol,
+.law-tts-instant .law-tts-read-char {
+  transition: none !important;
+  animation: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .law-tts-smooth .law-tts-silver-active-light::before,
+  .law-tts-smooth .law-tts-silver-active-dark::before,
+  .law-tts-smooth .law-tts-marker-underline,
+  .law-tts-smooth .law-tts-marker-symbol,
+  .law-tts-smooth .law-tts-silver-active-light,
+  .law-tts-smooth .law-tts-silver-active-dark {
+    animation: none !important;
+  }
+}
+
 /* Daily Law Push Notification — Compositor-Only Motion */
 @keyframes dailyPushEnter {
   0% {

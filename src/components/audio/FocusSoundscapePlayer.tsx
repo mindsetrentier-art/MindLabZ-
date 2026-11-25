@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Play,
   Pause,
@@ -13,12 +14,14 @@ import {
   Headphones,
   Check,
   X,
+  ArrowUpRight,
 } from 'lucide-react';
 import {
   FOCUS_SOUNDSCAPE_TRACKS,
   FocusSoundscapeTrack,
   getSoundscapeWavUrl,
 } from '../../utils/focusSoundscapeAudio';
+import { cognitiveFocusAudio } from '../../utils/cognitiveFocusAudio';
 import { gameAudio } from '../../utils/gameAudio';
 
 const STORAGE_KEYS = {
@@ -30,6 +33,7 @@ const STORAGE_KEYS = {
 const AUTO_HIDE_DELAY_MS = 5000;
 
 export const FocusSoundscapePlayer: React.FC = () => {
+  const navigate = useNavigate();
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
@@ -310,6 +314,7 @@ export const FocusSoundscapePlayer: React.FC = () => {
       audioRef.current.pause();
       setIsPlaying(false);
     } else {
+      cognitiveFocusAudio.pause();
       if (!currentAudioSrc) {
         await loadTrackAudio(activeTrackId, true);
       } else {
@@ -597,24 +602,38 @@ export const FocusSoundscapePlayer: React.FC = () => {
           style={{ maxHeight: '70vh', overflowY: 'auto' }}
         >
           {/* Drawer Header */}
-          <div className="flex items-center justify-between pb-2 border-b border-stone-800">
+          <div className="flex items-center justify-between gap-2 pb-2 border-b border-stone-800">
             <div className="flex items-center gap-2">
               <Headphones className="w-4 h-4 text-amber-400" />
               <span className="font-serif-editorial text-sm font-bold text-stone-100">
                 专注环境音景库 · Focus Soundscapes
               </span>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                setIsDrawerOpen(false);
-                resetAutoHideTimer();
-              }}
-              className="p-1 rounded-lg text-stone-400 hover:text-white hover:bg-stone-800 transition-colors cursor-pointer"
-              title="收起音景选择面板"
-            >
-              <X className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  gameAudio.playTap();
+                  setIsDrawerOpen(false);
+                  navigate('/focus-audio');
+                }}
+                className="px-2.5 py-1 rounded-lg bg-sky-500/20 hover:bg-sky-500/30 border border-sky-400/35 text-sky-200 text-[11px] font-semibold inline-flex items-center gap-1 cursor-pointer whitespace-nowrap shrink-0 transition-colors"
+              >
+                <span>双耳节拍工作台</span>
+                <ArrowUpRight className="w-3 h-3" />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsDrawerOpen(false);
+                  resetAutoHideTimer();
+                }}
+                className="p-1 rounded-lg text-stone-400 hover:text-white hover:bg-stone-800 transition-colors cursor-pointer"
+                title="收起音景选择面板"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
           </div>
 
           <p className="text-xs text-stone-400 leading-relaxed">

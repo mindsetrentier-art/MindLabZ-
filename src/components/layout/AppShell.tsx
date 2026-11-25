@@ -45,6 +45,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
     if (path.startsWith('/law/')) return { title: '心理学定律解析', showBack: true };
     if (path.startsWith('/game/')) return { title: '认知竞技场', showBack: true };
     if (path === '/challenge') return { title: '今日挑战', showBack: true };
+    if (path === '/focus-audio') return { title: '专注声学实验室', showBack: true };
     return { showBack: true };
   };
 

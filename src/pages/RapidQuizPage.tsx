@@ -25,6 +25,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { useApp } from '../context/AppContext';
 import { useFontScale } from '../context/FontScaleContext';
 import { FloatingFontScaleControl } from '../components/ui/FloatingFontScaleControl';
+import { CognitiveFocusAudioPlayer } from '../components/audio/CognitiveFocusAudioPlayer';
 import {
   CityQuizMapView,
   buildStagesForCapital,
@@ -774,6 +775,12 @@ export const RapidQuizPage: React.FC = () => {
           : 'max-w-5xl'
       }`}
     >
+      <CognitiveFocusAudioPlayer
+        variant="compact"
+        className="w-full mb-4"
+        recommendedBinauralId="beta-18"
+        taskContextLabel="五十国认知闯关"
+      />
       {gameState === 'intro' ? (
         <>
           {/* Top Header / Folio */}

@@ -31,6 +31,8 @@ import { OverlappingStack, OverlappingItem } from '../components/ui/OverlappingS
 import { THINKER_ITEMS } from '../components/ui/OverlappingStackLabModal';
 import { KineticCutoutHero } from '../components/ui/KineticCutoutHero';
 import { PSYCHOLOGY_GAMES } from '../data/games';
+import { toggleLawSpeech, stopLawSpeech, useLawSpeech } from '../utils/lawSpeechEngine';
+import { SilverSpeechText, LawVoiceToggleSwitch } from '../components/ui/SilverSpeechText';
 
 export const LawDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -50,7 +52,6 @@ export const LawDetailPage: React.FC = () => {
   } = useApp();
 
   const [isLoading, setIsLoading] = useState(true);
-  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
 
   // Structured Output data from POST /api/laws/generate
   const [structuredLaw, setStructuredLaw] = useState<StructuredLawData | null>(null);
@@ -72,6 +73,8 @@ export const LawDetailPage: React.FC = () => {
       l.id.toLowerCase() === (id || '').toLowerCase() ||
       (l.codeId && l.codeId.toLowerCase() === (id || '').toLowerCase())
   );
+
+  const { isSpeakingThisLaw, activeCpIndex, segments } = useLawSpeech(law?.id);
 
   const fetchStructuredLaw = async (lawCodeOrId: string, forceRefresh = false) => {
     try {
@@ -115,12 +118,17 @@ export const LawDetailPage: React.FC = () => {
       !law.isMicroexpression &&
       !law.isCriminalPsychology &&
       !law.isReversePsychology &&
-      !law.isSexualPsychology
+      !law.isSexualPsychology &&
+      !law.isLove100Psychology &&
+      !law.isIntimateRelationship
     ) {
       void fetchStructuredLaw(law.codeId || law.id, false);
     }
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      stopLawSpeech();
+    };
   }, [id, law?.id]);
 
   if (isLoading) {
@@ -193,25 +201,15 @@ export const LawDetailPage: React.FC = () => {
   };
 
   const handleToggleAudio = () => {
-    if (!('speechSynthesis' in window)) {
-      setIsPlayingAudio(!isPlayingAudio);
-      return;
-    }
-
-    if (isPlayingAudio) {
-      window.speechSynthesis.cancel();
-      setIsPlayingAudio(false);
-    } else {
-      window.speechSynthesis.cancel();
-      const textToRead = `${law.codeId || ''}，${law.nameZh}。${displayDefinition}。${displayMechanism}`;
-      const utterance = new SpeechSynthesisUtterance(textToRead);
-      utterance.lang = 'zh-CN';
-      utterance.rate = 1.0;
-      utterance.onend = () => setIsPlayingAudio(false);
-      utterance.onerror = () => setIsPlayingAudio(false);
-      window.speechSynthesis.speak(utterance);
-      setIsPlayingAudio(true);
-    }
+    toggleLawSpeech({
+      lawId: law.id,
+      segments: [
+        { key: 'title', text: law.nameZh, separator: '。' },
+        { key: 'definition', text: displayDefinition, separator: '。' },
+        { key: 'mechanism', text: displayMechanism, separator: '。' },
+        { key: 'case', text: cases[activeCaseTab], separator: '。' },
+      ],
+    });
   };
 
   const handleGameChoice = (choice: 'A' | 'B') => {
@@ -353,13 +351,13 @@ export const LawDetailPage: React.FC = () => {
             <button
               onClick={handleToggleAudio}
               className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer border ${
-                isPlayingAudio
+                isSpeakingThisLaw
                   ? 'bg-stone-900 text-white border-stone-900'
                   : 'bg-white text-stone-700 border-stone-200 hover:border-stone-400'
               }`}
               title="语音朗读"
             >
-              {isPlayingAudio ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+              {isSpeakingThisLaw ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
             </button>
 
             <button
@@ -408,7 +406,12 @@ export const LawDetailPage: React.FC = () => {
 
         <div className="space-y-2">
           <h1 className="font-serif-editorial text-2xl sm:text-3xl md:text-4xl font-bold text-stone-900 tracking-tight leading-tight">
-            {law.nameZh}
+            <SilverSpeechText
+              text={law.nameZh}
+              isSpeaking={isSpeakingThisLaw}
+              activeCpIndex={activeCpIndex}
+              segmentRange={segments.title}
+            />
           </h1>
           <p className="font-serif-editorial italic text-stone-500 text-sm sm:text-base tracking-wide">
             {law.nameEn}
@@ -418,23 +421,35 @@ export const LawDetailPage: React.FC = () => {
         {/* Literary Definition Quote Box */}
         <div className="bg-[#FAF8F5]/90 border-l-2 border-stone-900 p-5 sm:p-6 rounded-r-xl">
           <p className="font-serif-editorial text-base sm:text-lg text-stone-800 leading-relaxed font-normal">
-            “{displayDefinition}”
+            “
+            <SilverSpeechText
+              text={displayDefinition}
+              isSpeaking={isSpeakingThisLaw}
+              activeCpIndex={activeCpIndex}
+              segmentRange={segments.definition}
+            />
+            ”
           </p>
         </div>
 
-        {/* Current Mastery & Reward Progress */}
-        <div className="pt-4 border-t border-stone-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+        {/* Current Mastery, Reward Progress & Bottom-Right Voice Switch */}
+        <div className="pt-4 border-t border-stone-200/80 flex flex-wrap items-center justify-between gap-3 text-xs">
           <span className="text-stone-500">
             当前心智内化度 · 研习奖励 <strong className="text-stone-800 font-numeric font-semibold">+{structuredLaw?.xp || law.xpReward || 20} XP</strong>
           </span>
-          <div className="flex items-center gap-3">
-            <div className="w-36 h-1 bg-stone-200 rounded-full overflow-hidden">
+          <div className="flex items-center gap-3 ml-auto flex-wrap justify-end">
+            <div className="w-28 sm:w-36 h-1 bg-stone-200 rounded-full overflow-hidden">
               <div
                 className="h-full chameleon-bar rounded-full"
                 style={{ width: `${mastery}%` }}
               />
             </div>
             <span className="font-numeric font-semibold text-stone-800">{mastery}%</span>
+            <LawVoiceToggleSwitch
+              isOn={isSpeakingThisLaw}
+              onToggle={handleToggleAudio}
+              size="sm"
+            />
           </div>
         </div>
       </article>
@@ -451,7 +466,12 @@ export const LawDetailPage: React.FC = () => {
           </h3>
         </div>
         <p className="text-sm sm:text-base text-stone-700 leading-relaxed sm:leading-loose">
-          {displayMechanism}
+          <SilverSpeechText
+            text={displayMechanism}
+            isSpeaking={isSpeakingThisLaw}
+            activeCpIndex={activeCpIndex}
+            segmentRange={segments.mechanism}
+          />
         </p>
 
         {/* Microexpression Scientific Attribution, Observable Signs & Limitations */}
@@ -523,6 +543,26 @@ export const LawDetailPage: React.FC = () => {
               </p>
               {law.limitations && (
                 <p className="text-xs text-stone-600 leading-relaxed pt-1 border-t border-purple-200/60">
+                  {law.limitations}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Intimate Relationships Scientific & Relational Safety Disclaimer */}
+        {law.isIntimateRelationship && (
+          <div className="pt-4 border-t border-stone-200/80 space-y-3">
+            <div className="p-4 rounded-xl bg-rose-50/75 border border-rose-200/80 space-y-1.5">
+              <span className="text-xs font-bold text-rose-900 flex items-center gap-1.5">
+                <ShieldAlert className="w-4 h-4 text-rose-800" />
+                <span>亲密关系科普、自主平等与非诊断声明（{law.intimatePillar} · {law.intimateCategory} · {law.intimateContext}）</span>
+              </span>
+              <p className="text-sm text-rose-950/90 leading-relaxed">
+                {law.healthyBoundary || law.intimateLearningNote}
+              </p>
+              {law.limitations && (
+                <p className="text-xs text-stone-600 leading-relaxed pt-1 border-t border-rose-200/60">
                   {law.limitations}
                 </p>
               )}
@@ -633,7 +673,12 @@ export const LawDetailPage: React.FC = () => {
         </div>
 
         <div className="bg-[#FAF8F5]/90 rounded-xl p-5 border border-stone-200/60 text-sm sm:text-base text-stone-700 leading-relaxed">
-          {cases[activeCaseTab]}
+          <SilverSpeechText
+            text={cases[activeCaseTab]}
+            isSpeaking={isSpeakingThisLaw}
+            activeCpIndex={activeCpIndex}
+            segmentRange={segments.case}
+          />
         </div>
       </section>
 

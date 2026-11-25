@@ -20,6 +20,10 @@ import {
   resetCriminalAleatoricDeck,
   getSexualAleatoricStats,
   resetSexualAleatoricDeck,
+  getLove100AleatoricStats,
+  resetLove100AleatoricDeck,
+  getIntimateAleatoricStats,
+  resetIntimateAleatoricDeck,
 } from '../utils/aleatoricEngine';
 import { MICROEXPRESSION_LAWS } from '../data/microexpressionLaws';
 import { REVERSE_SCENARIOS, REVERSE_CATEGORIES } from '../data/reversePsychologyLaws';
@@ -30,6 +34,18 @@ import {
   SEXUAL_CONTEXTS,
   SEXUAL_CATEGORIES,
 } from '../data/sexualPsychologyLaws';
+import {
+  LOVE100_PSYCHOLOGY_LAWS,
+  LOVE100_PILLARS,
+  LOVE100_CONTEXTS,
+  LOVE100_CATEGORIES,
+} from '../data/love100PsychologyLaws';
+import {
+  INTIMATE_RELATIONSHIPS_LAWS,
+  INTIMATE_PILLARS,
+  INTIMATE_CONTEXTS,
+  INTIMATE_CATEGORIES,
+} from '../data/intimateRelationshipsLaws';
 import {
   CylindricalThemeRoller,
   CylindricalThemeItem,
@@ -51,6 +67,8 @@ export const GamesPage: React.FC = () => {
   const [reverseStats, setReverseStats] = useState(() => getReverseAleatoricStats());
   const [criminalStats, setCriminalStats] = useState(() => getCriminalAleatoricStats());
   const [sexualStats, setSexualStats] = useState(() => getSexualAleatoricStats());
+  const [love100Stats, setLove100Stats] = useState(() => getLove100AleatoricStats());
+  const [intimateStats, setIntimateStats] = useState(() => getIntimateAleatoricStats());
 
   const arenaRollerItems: CylindricalThemeItem[] = useMemo(() => {
     const countFor = (cat: string) => {
@@ -59,6 +77,8 @@ export const GamesPage: React.FC = () => {
         return PSYCHOLOGY_GAMES.filter(
           (g) =>
             g.id === 'love-aleatoric-arena' ||
+            g.id === 'love100-aleatoric-arena' ||
+            g.id === 'intimate-aleatoric-arena' ||
             g.id === 'reverse-aleatoric-arena' ||
             g.id === 'criminal-aleatoric-arena' ||
             g.id === 'sexual-aleatoric-arena'
@@ -85,9 +105,27 @@ export const GamesPage: React.FC = () => {
         label: 'CSPRNG 零重复博弈',
         group: '总览与零重引擎',
         count: countFor('零重复随机博弈'),
-        subtitle: '性心理100 · 犯罪100 · 逆向100 · 爱情696',
+        subtitle: '亲密100 · 恋爱100 · 性心理100 · 犯罪100',
         accentColor: '#10B981',
         icon: <Shuffle className="w-3.5 h-3.5" />,
+      },
+      {
+        id: '亲密关系100',
+        label: '亲密关系 100 律专场',
+        group: '热点专题赛区',
+        count: countFor('亲密关系100'),
+        subtitle: '依恋安全 · 共同调节 · 冲突修复',
+        accentColor: '#BE123C',
+        icon: <HeartHandshake className="w-3.5 h-3.5" />,
+      },
+      {
+        id: '恋爱心理100',
+        label: '恋爱心理学 100 律专场',
+        group: '热点专题赛区',
+        count: countFor('恋爱心理100'),
+        subtitle: '依恋 · 沟通 · 冲突修复',
+        accentColor: '#E11D48',
+        icon: <Heart className="w-3.5 h-3.5" />,
       },
       {
         id: '性心理',
@@ -245,6 +283,8 @@ export const GamesPage: React.FC = () => {
     ? PSYCHOLOGY_GAMES.filter(
         (g) =>
           g.id === 'love-aleatoric-arena' ||
+          g.id === 'love100-aleatoric-arena' ||
+          g.id === 'intimate-aleatoric-arena' ||
           g.id === 'reverse-aleatoric-arena' ||
           g.id === 'criminal-aleatoric-arena' ||
           g.id === 'sexual-aleatoric-arena'
@@ -1041,6 +1081,520 @@ export const GamesPage: React.FC = () => {
                           gameAudio.playTap();
                           navigate(
                             `/game/sexual-aleatoric-arena?category=${encodeURIComponent(
+                              cat.id
+                            )}&difficulty=${encodeURIComponent(arenaDifficulty)}`
+                          );
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-black/25 hover:bg-white/15 border border-white/12 text-[11px] font-medium text-stone-200 hover:text-white cursor-pointer transition-colors whitespace-nowrap shrink-0"
+                      >
+                        {cat.label} ({cat.count})
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        );
+      })()}
+
+      {/* Featured Love 100 Psychology CSPRNG Arena & 4-Pillar Structured Matrix */}
+      {(() => {
+        const masteryMap = user.lawMasteryMap || {};
+        const love100MasteredCount = LOVE100_PSYCHOLOGY_LAWS.filter(
+          (l) => (masteryMap[l.id] || 0) >= 80
+        ).length;
+        const deckProgressPct = Math.round(
+          (love100Stats.seenEncountersCount / Math.max(1, love100Stats.totalUniqueEncounters)) * 100
+        );
+
+        return (
+          <section className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-[#2B0C1C] via-[#261129] to-[#111827] text-white p-5 sm:p-7 border border-rose-400/35 shadow-xl space-y-5">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
+              <div className="space-y-2 max-w-2xl">
+                <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono">
+                  <span className="inline-flex items-center gap-1.5 text-rose-300 font-bold">
+                    <Heart className="w-3.5 h-3.5 fill-rose-400" />
+                    <span>LOVE PSYCHOLOGY 100 · CSPRNG DECK</span>
+                  </span>
+                  <span className="text-stone-500" aria-hidden="true">/</span>
+                  <span className="text-amber-300 font-bold tabular-nums">
+                    {love100Stats.totalConcepts} 词条 × 5 视角 = {love100Stats.totalUniqueEncounters} 张防重题卡
+                  </span>
+                  <span className="text-stone-500" aria-hidden="true">·</span>
+                  <span className="text-emerald-300 font-bold tabular-nums">
+                    已精熟 {love100MasteredCount} / {LOVE100_PSYCHOLOGY_LAWS.length} 卡
+                  </span>
+                </div>
+                <h3 className="font-serif-editorial text-xl sm:text-2xl font-bold text-white">
+                  恋爱心理学与亲密关系 · 100 律真随机博弈竞技场
+                </h3>
+                <p className="text-xs sm:text-sm text-stone-300 leading-relaxed">
+                  按 4 大核心关系板块 × 7 大知识类别 × 5 大相处情境组织。每次开局均经 CSPRNG 真随机洗牌并锁定防重队列，当前已破译{' '}
+                  <strong className="text-amber-300 font-numeric tabular-nums">
+                    {love100Stats.seenEncountersCount} / {love100Stats.totalUniqueEncounters}
+                  </strong>{' '}
+                  张题卡（覆盖 <strong className="text-emerald-300 font-numeric tabular-nums">{love100Stats.uniqueConceptsExplored}</strong> / {love100Stats.totalConcepts} 卡）。
+                </p>
+
+                <div className="pt-1 space-y-1 max-w-md">
+                  <div className="flex items-center justify-between text-[11px] font-mono text-stone-300 tabular-nums">
+                    <span>CSPRNG 题库破译进度</span>
+                    <span>{deckProgressPct}%</span>
+                  </div>
+                  <div className="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-rose-400 via-pink-400 to-amber-300 transition-all duration-500"
+                      style={{ width: `${Math.max(deckProgressPct, love100Stats.seenEncountersCount > 0 ? 4 : 0)}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row md:flex-col gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    gameAudio.playSuccess();
+                    navigate(`/game/love100-aleatoric-arena?difficulty=${encodeURIComponent(arenaDifficulty)}`);
+                  }}
+                  className="px-5 py-3 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs sm:text-sm shadow-lg flex items-center justify-center gap-2 cursor-pointer active:scale-95 whitespace-nowrap shrink-0 transition-colors"
+                >
+                  <Shuffle className="w-4 h-4" />
+                  <span>开启恋爱 100 律真随机博弈</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      gameAudio.playTap();
+                      navigate('/learn?mode=love100');
+                    }}
+                    className="flex-1 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-rose-100 text-[11px] font-semibold flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
+                  >
+                    <BookOpen className="w-3 h-3" />
+                    <span>定律库分类研读</span>
+                  </button>
+
+                  {love100Stats.seenEncountersCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        gameAudio.playTap();
+                        resetLove100AleatoricDeck();
+                        setLove100Stats(getLove100AleatoricStats());
+                      }}
+                      className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-stone-200 text-[11px] font-semibold flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap shrink-0"
+                      title="重置恋爱心理 100 律防重洗牌盒"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      <span>重置洗牌</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* 4-Pillar Structured Matrix Box inside Arena */}
+            <div className="pt-3 border-t border-white/10 space-y-3">
+              <div className="flex items-center justify-between gap-2 text-[11px] font-mono text-rose-200">
+                <span className="font-bold">4 大亲密关系板块分栏直选 · 支持「竞技场实战」与「定律库研读」双向直连</span>
+                <span className="text-stone-400 hidden sm:inline">4 Pillars × 15/30/25/30 卡</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {LOVE100_PILLARS.map((pillar, idx) => {
+                  const pillarMastered = LOVE100_PSYCHOLOGY_LAWS.filter(
+                    (l) => l.love100Pillar === pillar.id && (masteryMap[l.id] || 0) >= 80
+                  ).length;
+                  const pillarPct = Math.round((pillarMastered / Math.max(1, pillar.count)) * 100);
+                  const subCats = LOVE100_CATEGORIES.filter((c) => c.pillarId === pillar.id);
+
+                  return (
+                    <div
+                      key={pillar.id}
+                      className="rounded-2xl bg-white/[0.06] border border-white/12 p-4 flex flex-col justify-between gap-3 hover:border-rose-300/45 transition-colors"
+                    >
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between gap-2 text-[11px] font-mono text-rose-200 tabular-nums">
+                          <span>0{idx + 1} · {pillar.count} 卡</span>
+                          <span className="text-emerald-300">精熟 {pillarMastered}/{pillar.count}</span>
+                        </div>
+                        <h4 className="font-serif-editorial text-sm font-bold text-white leading-snug">
+                          {pillar.label}
+                        </h4>
+                        <p className="text-[11px] text-stone-300 leading-relaxed line-clamp-2">
+                          {pillar.description}
+                        </p>
+                      </div>
+
+                      <div className="space-y-2.5">
+                        <div className="flex flex-wrap gap-1">
+                          {subCats.map((cat) => (
+                            <button
+                              key={cat.id}
+                              type="button"
+                              onClick={() => {
+                                gameAudio.playTap();
+                                navigate(
+                                  `/game/love100-aleatoric-arena?pillar=${encodeURIComponent(
+                                    pillar.id
+                                  )}&category=${encodeURIComponent(cat.id)}&difficulty=${encodeURIComponent(
+                                    arenaDifficulty
+                                  )}`
+                                );
+                              }}
+                              className="text-[10px] px-2 py-0.5 rounded-md bg-black/25 hover:bg-rose-600/60 border border-white/10 text-stone-200 cursor-pointer whitespace-nowrap shrink-0 transition-colors"
+                            >
+                              {cat.label} · {cat.count}
+                            </button>
+                          ))}
+                        </div>
+
+                        <div className="w-full h-1 rounded-full bg-white/10 overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all duration-300"
+                            style={{
+                              width: `${Math.max(pillarPct, pillarMastered > 0 ? 6 : 0)}%`,
+                              backgroundColor: pillar.color,
+                            }}
+                          />
+                        </div>
+
+                        <div className="flex items-center gap-1.5 pt-0.5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              gameAudio.playSuccess();
+                              navigate(
+                                `/game/love100-aleatoric-arena?pillar=${encodeURIComponent(
+                                  pillar.id
+                                )}&difficulty=${encodeURIComponent(arenaDifficulty)}`
+                              );
+                            }}
+                            className="flex-1 px-2.5 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-[11px] font-bold flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap shrink-0 transition-colors"
+                          >
+                            <span>练习此板块</span>
+                            <ArrowRight className="w-3 h-3" />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              gameAudio.playTap();
+                              navigate(`/learn?mode=love100&pillar=${encodeURIComponent(pillar.id)}`);
+                            }}
+                            className="px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 text-rose-100 text-[11px] font-semibold cursor-pointer whitespace-nowrap shrink-0 transition-colors"
+                          >
+                            研读
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Fast 5 Contexts & 7 Knowledge Categories Launchers */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 pt-2 border-t border-white/10">
+                <div className="space-y-2">
+                  <span className="text-[11px] font-mono text-amber-300 font-bold block">
+                    按 5 大亲密相处情境直达练习：
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {LOVE100_CONTEXTS.map((ctx) => (
+                      <button
+                        key={ctx.id}
+                        type="button"
+                        onClick={() => {
+                          gameAudio.playTap();
+                          navigate(
+                            `/game/love100-aleatoric-arena?context=${encodeURIComponent(
+                              ctx.id
+                            )}&difficulty=${encodeURIComponent(arenaDifficulty)}`
+                          );
+                        }}
+                        className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 text-xs font-semibold text-white flex items-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap shrink-0"
+                      >
+                        <span>{ctx.label}</span>
+                        <span className="text-[10px] font-mono text-amber-300 tabular-nums">{ctx.count}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <span className="text-[11px] font-mono text-stone-300 font-bold block">
+                    按 7 大知识类别快速切入：
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {LOVE100_CATEGORIES.map((cat) => (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => {
+                          gameAudio.playTap();
+                          navigate(
+                            `/game/love100-aleatoric-arena?category=${encodeURIComponent(
+                              cat.id
+                            )}&difficulty=${encodeURIComponent(arenaDifficulty)}`
+                          );
+                        }}
+                        className="px-2.5 py-1 rounded-lg bg-black/25 hover:bg-white/15 border border-white/12 text-[11px] font-medium text-stone-200 hover:text-white cursor-pointer transition-colors whitespace-nowrap shrink-0"
+                      >
+                        {cat.label} ({cat.count})
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        );
+      })()}
+
+      {/* Featured Intimate Relationships 100 CSPRNG Arena & 4-Pillar Structured Matrix */}
+      {(() => {
+        const masteryMap = user.lawMasteryMap || {};
+        const intimateMasteredCount = INTIMATE_RELATIONSHIPS_LAWS.filter(
+          (l) => (masteryMap[l.id] || 0) >= 80
+        ).length;
+        const deckProgressPct = Math.round(
+          (intimateStats.seenEncountersCount / Math.max(1, intimateStats.totalUniqueEncounters)) * 100
+        );
+
+        return (
+          <section className="relative rounded-3xl overflow-hidden bg-gradient-to-br from-[#2B0C18] via-[#22162E] to-[#111827] text-white p-5 sm:p-7 border border-rose-400/35 shadow-xl space-y-5">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
+              <div className="space-y-2 max-w-2xl">
+                <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono">
+                  <span className="inline-flex items-center gap-1.5 text-rose-300 font-bold">
+                    <HeartHandshake className="w-3.5 h-3.5" />
+                    <span>INTIMATE RELATIONSHIPS 100 · CSPRNG DECK</span>
+                  </span>
+                  <span className="text-stone-500" aria-hidden="true">/</span>
+                  <span className="text-amber-300 font-bold tabular-nums">
+                    {intimateStats.totalConcepts} 词条 × 5 视角 = {intimateStats.totalUniqueEncounters} 张防重题卡
+                  </span>
+                  <span className="text-stone-500" aria-hidden="true">·</span>
+                  <span className="text-emerald-300 font-bold tabular-nums">
+                    已精熟 {intimateMasteredCount} / {INTIMATE_RELATIONSHIPS_LAWS.length} 卡
+                  </span>
+                </div>
+                <h3 className="font-serif-editorial text-xl sm:text-2xl font-bold text-white">
+                  亲密关系心理学 · 100 律安全联结与修复竞技场
+                </h3>
+                <p className="text-xs sm:text-sm text-stone-300 leading-relaxed">
+                  按 4 大核心亲密关系板块 × 5 大知识类别 × 5 大相处情境组织。每次开局均经 CSPRNG 真随机洗牌并锁定防重队列，当前已破译{' '}
+                  <strong className="text-amber-300 font-numeric tabular-nums">
+                    {intimateStats.seenEncountersCount} / {intimateStats.totalUniqueEncounters}
+                  </strong>{' '}
+                  张题卡（覆盖 <strong className="text-emerald-300 font-numeric tabular-nums">{intimateStats.uniqueConceptsExplored}</strong> / {intimateStats.totalConcepts} 卡）。
+                </p>
+
+                <div className="pt-1 space-y-1 max-w-md">
+                  <div className="flex items-center justify-between text-[11px] font-mono text-stone-300 tabular-nums">
+                    <span>CSPRNG 题库破译进度</span>
+                    <span>{deckProgressPct}%</span>
+                  </div>
+                  <div className="w-full h-1.5 rounded-full bg-white/10 overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-rose-500 via-amber-400 to-emerald-400 transition-all duration-500"
+                      style={{ width: `${Math.max(deckProgressPct, intimateStats.seenEncountersCount > 0 ? 4 : 0)}%` }}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row md:flex-col gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    gameAudio.playSuccess();
+                    navigate(`/game/intimate-aleatoric-arena?difficulty=${encodeURIComponent(arenaDifficulty)}`);
+                  }}
+                  className="px-5 py-3 rounded-xl bg-rose-700 hover:bg-rose-600 text-white font-bold text-xs sm:text-sm shadow-lg flex items-center justify-center gap-2 cursor-pointer active:scale-95 whitespace-nowrap shrink-0 transition-colors"
+                >
+                  <Shuffle className="w-4 h-4" />
+                  <span>开启亲密关系 100 律对战</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      gameAudio.playTap();
+                      navigate('/learn?mode=intimate');
+                    }}
+                    className="flex-1 px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-rose-100 text-[11px] font-semibold flex items-center justify-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
+                  >
+                    <BookOpen className="w-3 h-3" />
+                    <span>定律库分类研读</span>
+                  </button>
+
+                  {intimateStats.seenEncountersCount > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        gameAudio.playTap();
+                        resetIntimateAleatoricDeck();
+                        setIntimateStats(getIntimateAleatoricStats());
+                      }}
+                      className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 text-stone-200 text-[11px] font-semibold flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap shrink-0"
+                      title="重置亲密关系 100 律防重洗牌盒"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      <span>重置洗牌</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* 4-Pillar Structured Matrix Box inside Arena */}
+            <div className="pt-3 border-t border-white/10 space-y-3">
+              <div className="flex items-center justify-between gap-2 text-[11px] font-mono text-rose-200">
+                <span className="font-bold">4 大亲密关系板块分栏直选 · 支持「竞技场实战」与「定律库研读」双向直连</span>
+                <span className="text-stone-400 hidden sm:inline">4 Pillars × 20/20/20/40 卡</span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {INTIMATE_PILLARS.map((pillar, idx) => {
+                  const pillarMastered = INTIMATE_RELATIONSHIPS_LAWS.filter(
+                    (l) => l.intimatePillar === pillar.id && (masteryMap[l.id] || 0) >= 80
+                  ).length;
+                  const pillarPct = Math.round((pillarMastered / Math.max(1, pillar.count)) * 100);
+                  const subCats = INTIMATE_CATEGORIES.filter((c) => c.pillarId === pillar.id);
+
+                  return (
+                    <div
+                      key={pillar.id}
+                      className="rounded-2xl bg-white/[0.06] border border-white/12 p-4 flex flex-col justify-between gap-3 hover:border-rose-300/45 transition-colors"
+                    >
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between gap-2 text-[11px] font-mono text-rose-200 tabular-nums">
+                          <span>0{idx + 1} · {pillar.count} 卡</span>
+                          <span className="text-emerald-300">精熟 {pillarMastered}/{pillar.count}</span>
+                        </div>
+                        <h4 className="font-serif-editorial text-sm font-bold text-white leading-snug">
+                          {pillar.label}
+                        </h4>
+                        <p className="text-[11px] text-stone-300 leading-relaxed line-clamp-2">
+                          {pillar.description}
+                        </p>
+                      </div>
+
+                      <div className="space-y-2.5">
+                        <div className="flex flex-wrap gap-1">
+                          {subCats.map((cat) => (
+                            <button
+                              key={cat.id}
+                              type="button"
+                              onClick={() => {
+                                gameAudio.playTap();
+                                navigate(
+                                  `/game/intimate-aleatoric-arena?pillar=${encodeURIComponent(
+                                    pillar.id
+                                  )}&category=${encodeURIComponent(cat.id)}&difficulty=${encodeURIComponent(
+                                    arenaDifficulty
+                                  )}`
+                                );
+                              }}
+                              className="text-[10px] px-2 py-0.5 rounded-md bg-black/25 hover:bg-rose-600/60 border border-white/10 text-stone-200 cursor-pointer whitespace-nowrap shrink-0 transition-colors"
+                            >
+                              {cat.label} · {cat.count}
+                            </button>
+                          ))}
+                        </div>
+
+                        <div className="w-full h-1 rounded-full bg-white/10 overflow-hidden">
+                          <div
+                            className="h-full rounded-full transition-all duration-300"
+                            style={{
+                              width: `${Math.max(pillarPct, pillarMastered > 0 ? 6 : 0)}%`,
+                              backgroundColor: pillar.color,
+                            }}
+                          />
+                        </div>
+
+                        <div className="flex items-center gap-1.5 pt-0.5">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              gameAudio.playSuccess();
+                              navigate(
+                                `/game/intimate-aleatoric-arena?pillar=${encodeURIComponent(
+                                  pillar.id
+                                )}&difficulty=${encodeURIComponent(arenaDifficulty)}`
+                              );
+                            }}
+                            className="flex-1 px-2.5 py-1.5 rounded-lg bg-rose-700 hover:bg-rose-600 text-white text-[11px] font-bold flex items-center justify-center gap-1 cursor-pointer whitespace-nowrap shrink-0 transition-colors"
+                          >
+                            <span>练习此板块</span>
+                            <ArrowRight className="w-3 h-3" />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              gameAudio.playTap();
+                              navigate(`/learn?mode=intimate&pillar=${encodeURIComponent(pillar.id)}`);
+                            }}
+                            className="px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 text-rose-100 text-[11px] font-semibold cursor-pointer whitespace-nowrap shrink-0 transition-colors"
+                          >
+                            研读
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Fast 5 Contexts & 5 Knowledge Categories Launchers */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 pt-2 border-t border-white/10">
+                <div className="space-y-2">
+                  <span className="text-[11px] font-mono text-amber-300 font-bold block">
+                    按 5 大亲密互动与复盘情境直达练习：
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {INTIMATE_CONTEXTS.map((ctx) => (
+                      <button
+                        key={ctx.id}
+                        type="button"
+                        onClick={() => {
+                          gameAudio.playTap();
+                          navigate(
+                            `/game/intimate-aleatoric-arena?context=${encodeURIComponent(
+                              ctx.id
+                            )}&difficulty=${encodeURIComponent(arenaDifficulty)}`
+                          );
+                        }}
+                        className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 border border-white/15 text-xs font-semibold text-white flex items-center gap-1.5 cursor-pointer transition-colors whitespace-nowrap shrink-0"
+                      >
+                        <span>{ctx.label}</span>
+                        <span className="text-[10px] font-mono text-amber-300 tabular-nums">{ctx.count}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <span className="text-[11px] font-mono text-stone-300 font-bold block">
+                    按 5 大知识类别快速切入：
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {INTIMATE_CATEGORIES.map((cat) => (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => {
+                          gameAudio.playTap();
+                          navigate(
+                            `/game/intimate-aleatoric-arena?category=${encodeURIComponent(
                               cat.id
                             )}&difficulty=${encodeURIComponent(arenaDifficulty)}`
                           );

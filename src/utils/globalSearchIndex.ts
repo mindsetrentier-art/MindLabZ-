@@ -10,6 +10,16 @@ import {
   SEXUAL_CONTEXTS,
   SEXUAL_CATEGORIES,
 } from '../data/sexualPsychologyLaws';
+import {
+  LOVE100_PILLARS,
+  LOVE100_CONTEXTS,
+  LOVE100_CATEGORIES,
+} from '../data/love100PsychologyLaws';
+import {
+  INTIMATE_PILLARS,
+  INTIMATE_CONTEXTS,
+  INTIMATE_CATEGORIES,
+} from '../data/intimateRelationshipsLaws';
 
 export type SearchResultKind = 'law' | 'arena';
 
@@ -126,6 +136,12 @@ function registerBilingualPipeline(): lunr.PipelineFunction {
 }
 
 function getLawDisplayCategory(law: PsychologyLaw): string {
+  if (law.isIntimateRelationship) {
+    return `亲密关系100 · ${law.intimateCategory || law.intimatePillar || law.categoryZh}`;
+  }
+  if (law.isLove100Psychology) {
+    return `恋爱心理100 · ${law.love100Category || law.love100Pillar || law.categoryZh}`;
+  }
   if (law.isSexualPsychology) {
     return `性心理学 · ${law.sexualCategory || law.sexualPillar || law.categoryZh}`;
   }
@@ -170,6 +186,16 @@ function buildSearchCorpus(): IndexedDocument[] {
       law.sexualCategory,
       law.sexualContext,
       law.sexualTopicName,
+      law.love100Pillar,
+      law.love100Category,
+      law.love100Context,
+      law.love100TopicName,
+      law.intimatePillar,
+      law.intimateCategory,
+      law.intimateContext,
+      law.intimateTopicName,
+      law.isIntimateRelationship ? '亲密关系 100律 安全基地 共同调节 情绪验证 温和开场 冲突修复 归因方式' : '',
+      law.isLove100Psychology ? '恋爱心理学 100律 依恋 亲密关系 非暴力沟通 冲突修复' : '',
       law.isSexualPsychology ? '性心理学 100律 亲密健康 知情同意' : '',
       law.isCriminalPsychology ? '犯罪心理学 100律 风险预防' : '',
       law.isReversePsychology ? '逆向心理学 100律 心理抗拒' : '',
@@ -184,6 +210,8 @@ function buildSearchCorpus(): IndexedDocument[] {
       law.keyTakeaway,
       law.criminalCoreTheory,
       law.sexualCoreConcept,
+      law.love100CoreConcept,
+      law.intimateCoreConcept,
       law.reversePrinciple,
     ]
       .filter(Boolean)
@@ -198,6 +226,8 @@ function buildSearchCorpus(): IndexedDocument[] {
       ...(law.observableSigns || []),
       law.criminalAppliedAngle,
       law.sexualAppliedAngle,
+      law.love100AppliedAngle,
+      law.intimateAppliedAngle,
     ]
       .filter(Boolean)
       .join(' ');
@@ -318,6 +348,126 @@ function buildSearchCorpus(): IndexedDocument[] {
       score: 0,
       accentColor: cat.color,
       tags: `性心理学 性心理 专题 竞技场 ${cat.label} ${cat.pillarId}`,
+      summary: cat.description,
+      details: `${cat.label} ${cat.pillarId}`,
+      searchBlob: `${title} ${cat.pillarId} ${cat.description}`.toLowerCase(),
+    });
+  }
+
+  for (const pillar of LOVE100_PILLARS) {
+    const title = `恋爱心理板块 · ${pillar.label}`;
+    docs.push({
+      docId: `arena::love100-pillar::${pillar.id}`,
+      kind: 'arena',
+      title,
+      subtitle: pillar.enLabel,
+      codeId: `LOVEPSY · ${pillar.count}卡`,
+      category: '竞技场 · 恋爱心理100专场',
+      snippet: pillar.description,
+      route: `/game/love100-aleatoric-arena?pillar=${encodeURIComponent(pillar.id)}`,
+      score: 0,
+      accentColor: pillar.color,
+      tags: `恋爱心理学 恋爱心理100 亲密关系 竞技场 板块 CSPRNG ${pillar.label} ${pillar.categories.join(' ')}`,
+      summary: pillar.description,
+      details: `${pillar.label} ${pillar.enLabel} ${pillar.categories.join(' ')}`,
+      searchBlob: `${title} ${pillar.enLabel} ${pillar.description} ${pillar.categories.join(' ')}`.toLowerCase(),
+    });
+  }
+
+  for (const ctx of LOVE100_CONTEXTS) {
+    const title = `恋爱心理情境实战 · ${ctx.label}`;
+    docs.push({
+      docId: `arena::love100-ctx::${ctx.id}`,
+      kind: 'arena',
+      title,
+      subtitle: ctx.enLabel,
+      codeId: `CONTEXT · ${ctx.count}卡`,
+      category: '竞技场 · 恋爱心理情境',
+      snippet: ctx.description,
+      route: `/game/love100-aleatoric-arena?context=${encodeURIComponent(ctx.id)}`,
+      score: 0,
+      accentColor: ctx.color,
+      tags: `恋爱心理学 恋爱心理100 亲密关系 情境 竞技场 ${ctx.label} ${ctx.shortLabel}`,
+      summary: ctx.description,
+      details: `${ctx.label} ${ctx.enLabel}`,
+      searchBlob: `${title} ${ctx.enLabel} ${ctx.description}`.toLowerCase(),
+    });
+  }
+
+  for (const cat of LOVE100_CATEGORIES) {
+    const title = `恋爱心理类别 · ${cat.label}`;
+    docs.push({
+      docId: `arena::love100-cat::${cat.id}`,
+      kind: 'arena',
+      title,
+      subtitle: `Love Psychology 100 · ${cat.pillarId}`,
+      codeId: `TOPIC · ${cat.count}卡`,
+      category: '竞技场 · 恋爱心理类别',
+      snippet: cat.description,
+      route: `/game/love100-aleatoric-arena?pillar=${encodeURIComponent(cat.pillarId)}&category=${encodeURIComponent(cat.id)}`,
+      score: 0,
+      accentColor: cat.color,
+      tags: `恋爱心理学 恋爱心理100 亲密关系 类别 竞技场 ${cat.label} ${cat.pillarId}`,
+      summary: cat.description,
+      details: `${cat.label} ${cat.pillarId}`,
+      searchBlob: `${title} ${cat.pillarId} ${cat.description}`.toLowerCase(),
+    });
+  }
+
+  for (const pillar of INTIMATE_PILLARS) {
+    const title = `亲密关系板块 · ${pillar.label}`;
+    docs.push({
+      docId: `arena::intimate-pillar::${pillar.id}`,
+      kind: 'arena',
+      title,
+      subtitle: pillar.enLabel,
+      codeId: `INT · ${pillar.count}卡`,
+      category: '竞技场 · 亲密关系100专场',
+      snippet: pillar.description,
+      route: `/game/intimate-aleatoric-arena?pillar=${encodeURIComponent(pillar.id)}`,
+      score: 0,
+      accentColor: pillar.color,
+      tags: `亲密关系 亲密关系心理学 依恋 共同调节 冲突修复 竞技场 板块 CSPRNG ${pillar.label} ${pillar.categories.join(' ')}`,
+      summary: pillar.description,
+      details: `${pillar.label} ${pillar.enLabel} ${pillar.categories.join(' ')}`,
+      searchBlob: `${title} ${pillar.enLabel} ${pillar.description} ${pillar.categories.join(' ')}`.toLowerCase(),
+    });
+  }
+
+  for (const ctx of INTIMATE_CONTEXTS) {
+    const title = `亲密关系情境实战 · ${ctx.label}`;
+    docs.push({
+      docId: `arena::intimate-ctx::${ctx.id}`,
+      kind: 'arena',
+      title,
+      subtitle: ctx.enLabel,
+      codeId: `CONTEXT · ${ctx.count}卡`,
+      category: '竞技场 · 亲密关系情境',
+      snippet: ctx.description,
+      route: `/game/intimate-aleatoric-arena?context=${encodeURIComponent(ctx.id)}`,
+      score: 0,
+      accentColor: ctx.color,
+      tags: `亲密关系 亲密关系心理学 情境 竞技场 ${ctx.label} ${ctx.shortLabel}`,
+      summary: ctx.description,
+      details: `${ctx.label} ${ctx.enLabel}`,
+      searchBlob: `${title} ${ctx.enLabel} ${ctx.description}`.toLowerCase(),
+    });
+  }
+
+  for (const cat of INTIMATE_CATEGORIES) {
+    const title = `亲密关系类别 · ${cat.label}`;
+    docs.push({
+      docId: `arena::intimate-cat::${cat.id}`,
+      kind: 'arena',
+      title,
+      subtitle: `Intimate Relationships 100 · ${cat.pillarId}`,
+      codeId: `TOPIC · ${cat.count}卡`,
+      category: '竞技场 · 亲密关系类别',
+      snippet: cat.description,
+      route: `/game/intimate-aleatoric-arena?pillar=${encodeURIComponent(cat.pillarId)}&category=${encodeURIComponent(cat.id)}`,
+      score: 0,
+      accentColor: cat.color,
+      tags: `亲密关系 亲密关系心理学 类别 竞技场 ${cat.label} ${cat.pillarId}`,
       summary: cat.description,
       details: `${cat.label} ${cat.pillarId}`,
       searchBlob: `${title} ${cat.pillarId} ${cat.description}`.toLowerCase(),
@@ -671,6 +821,14 @@ export function searchLawsWithLunr(
       (law.sexualCategory && law.sexualCategory.toLowerCase().includes(trimmed)) ||
       (law.sexualContext && law.sexualContext.toLowerCase().includes(trimmed)) ||
       (law.sexualTopicName && law.sexualTopicName.toLowerCase().includes(trimmed)) ||
+      (law.love100Pillar && law.love100Pillar.toLowerCase().includes(trimmed)) ||
+      (law.love100Category && law.love100Category.toLowerCase().includes(trimmed)) ||
+      (law.love100Context && law.love100Context.toLowerCase().includes(trimmed)) ||
+      (law.love100TopicName && law.love100TopicName.toLowerCase().includes(trimmed)) ||
+      (law.intimatePillar && law.intimatePillar.toLowerCase().includes(trimmed)) ||
+      (law.intimateCategory && law.intimateCategory.toLowerCase().includes(trimmed)) ||
+      (law.intimateContext && law.intimateContext.toLowerCase().includes(trimmed)) ||
+      (law.intimateTopicName && law.intimateTopicName.toLowerCase().includes(trimmed)) ||
       (law.criminalCategory && law.criminalCategory.toLowerCase().includes(trimmed)) ||
       (law.criminalContext && law.criminalContext.toLowerCase().includes(trimmed)) ||
       (law.criminalTheoryName && law.criminalTheoryName.toLowerCase().includes(trimmed)) ||

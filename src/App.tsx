@@ -20,6 +20,7 @@ import { CognitiveAssessmentPage } from './pages/CognitiveAssessmentPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { JournalPage } from './pages/JournalPage';
 import { BreathingPage } from './pages/BreathingPage';
+import { FocusAudioPage } from './pages/FocusAudioPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { OnboardingModal } from './pages/OnboardingModal';
 import { JournalComposerModal } from './components/journal/JournalComposerModal';
@@ -27,6 +28,7 @@ import { FocusedBreathingModal } from './components/breathing/FocusedBreathingMo
 import { GoogleAuthModal } from './components/auth/GoogleAuthModal';
 import { PwaInstallModal } from './components/pwa/PwaInstallModal';
 import { PwaUpdateToast } from './components/pwa/PwaUpdateToast';
+import { OfflineStatusToast } from './components/pwa/OfflineStatusToast';
 import { BiometricSetupModal } from './components/journal/BiometricSetupModal';
 import { BadgeUnlockedModal } from './components/profile/BadgeUnlockedModal';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
@@ -84,6 +86,7 @@ const AppRoutes: React.FC = () => {
             <Route path="/law/:id" element={<LawDetailPage />} />
             <Route path="/journal" element={<JournalPage />} />
             <Route path="/breathing" element={<BreathingPage />} />
+            <Route path="/focus-audio" element={<FocusAudioPage />} />
             <Route path="/games" element={<GamesPage />} />
             <Route path="/game/:id" element={<GamePlayPage />} />
             <Route path="/quiz" element={<RapidQuizPage />} />
@@ -99,6 +102,7 @@ const AppRoutes: React.FC = () => {
       </AppShell>
 
       <PwaUpdateToast />
+      <OfflineStatusToast />
 
       <FocusedBreathingModal
         isOpen={breathingOpen}

@@ -36,6 +36,13 @@ import {
   getPrimaryTagLabel,
 } from '../utils/lawTagClassifier';
 import { gameAudio } from '../utils/gameAudio';
+import {
+  toggleLawSpeech,
+  stopLawSpeech,
+  useLawSpeech,
+  LawSpeechSegment,
+} from '../utils/lawSpeechEngine';
+import { SilverSpeechText, LawVoiceToggleSwitch } from '../components/ui/SilverSpeechText';
 
 type LibraryViewMode = 'corpus' | 'emotional-archive';
 type DifficultyFilter = 'all' | DifficultyLevel;
@@ -57,7 +64,7 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
   const [visibleLimit, setVisibleLimit] = useState(PAGE_BATCH_SIZE);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set(['emo-01', 'emo-11']));
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [speakingLawId, setSpeakingLawId] = useState<string | null>(null);
+  const { activeLawId, globalIsSpeaking, activeCpIndex, segments } = useLawSpeech();
 
   const SECTION_TABS = [
     { index: 'all' as const, label: '全部板块', en: 'All 50 Laws', range: '01-50', color: '#F59E0B' },
@@ -71,9 +78,7 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
   // Stop speech cleanly on unmount
   useEffect(() => {
     return () => {
-      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-      }
+      stopLawSpeech();
     };
   }, []);
 
@@ -282,23 +287,47 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
 
   const handleSpeakLaw = (law: PsychologyLaw, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-
-    if (speakingLawId === law.id) {
-      window.speechSynthesis.cancel();
-      setSpeakingLawId(null);
-      return;
+    gameAudio.playTap();
+    const speechSegments: LawSpeechSegment[] = [
+      { key: 'title', text: law.nameZh, separator: '。' },
+      { key: 'short', text: law.shortExplanation, separator: '。' },
+    ];
+    if (law.detailedExplanation) {
+      speechSegments.push({ key: 'detail', text: law.detailedExplanation, separator: '。' });
     }
+    if (law.realLifeExample) {
+      speechSegments.push({ key: 'example', text: law.realLifeExample, separator: '。' });
+    }
+    const boundaryText = law.healthyBoundary || law.keyTakeaway;
+    if (boundaryText) {
+      speechSegments.push({ key: 'takeaway', text: boundaryText, separator: '。' });
+    }
+    const turnedOn = toggleLawSpeech({
+      lawId: law.id,
+      segments: speechSegments,
+    });
+    if (turnedOn) {
+      setExpandedIds((prev) => new Set(prev).add(law.id));
+    }
+  };
 
-    window.speechSynthesis.cancel();
-    const text = `${law.nameZh}。${law.shortExplanation}。${law.keyTakeaway}`;
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'zh-CN';
-    utterance.rate = 0.98;
-    utterance.onend = () => setSpeakingLawId(null);
-    utterance.onerror = () => setSpeakingLawId(null);
-    setSpeakingLawId(law.id);
-    window.speechSynthesis.speak(utterance);
+  const handleSpeakEmotionalLaw = (law: EmotionalPsychologyLaw, e: React.MouseEvent) => {
+    e.stopPropagation();
+    gameAudio.playTap();
+    const speechSegments: LawSpeechSegment[] = [
+      { key: 'title', text: law.titleZh, separator: '。' },
+      { key: 'core', text: law.corePrinciple, separator: '。' },
+      { key: 'mechanism', text: law.deepBreakdown.mechanism, separator: '。' },
+      { key: 'case', text: law.lifeCase.scenario, separator: '。' },
+      { key: 'summary', text: law.practicalTakeaways.summary, separator: '。' },
+    ];
+    const turnedOn = toggleLawSpeech({
+      lawId: law.id,
+      segments: speechSegments,
+    });
+    if (turnedOn) {
+      setExpandedIds((prev) => new Set(prev).add(law.id));
+    }
   };
 
   const handleRandomDraw = () => {
@@ -817,7 +846,7 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
                     {visibleCorpus.map(({ law, primaryTagLabel }) => {
                       const isExpanded = expandedIds.has(law.id);
                       const bookmarked = isBookmarked(law.id);
-                      const speaking = speakingLawId === law.id;
+                      const speaking = globalIsSpeaking && activeLawId === law.id;
 
                       return (
                         <article
@@ -856,15 +885,29 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
 
                               <div className="flex items-baseline gap-2.5 flex-wrap">
                                 <h2 className="font-serif-editorial text-base sm:text-lg font-bold text-white tracking-tight">
-                                  {law.nameZh}
+                                  <SilverSpeechText
+                                    text={law.nameZh}
+                                    isSpeaking={speaking}
+                                    activeCpIndex={activeCpIndex}
+                                    segmentRange={segments.title}
+                                    tone="dark"
+                                  />
                                 </h2>
                                 <span className="text-xs text-amber-200/75 font-serif-editorial italic">
                                   {law.nameEn}
                                 </span>
                               </div>
 
-                              <p className="text-xs sm:text-[13px] text-stone-300/90 leading-relaxed line-clamp-2">
-                                “{law.shortExplanation}”
+                              <p className={`text-xs sm:text-[13px] text-stone-300/90 leading-relaxed ${speaking ? '' : 'line-clamp-2'}`}>
+                                “
+                                <SilverSpeechText
+                                  text={law.shortExplanation}
+                                  isSpeaking={speaking}
+                                  activeCpIndex={activeCpIndex}
+                                  segmentRange={segments.short}
+                                  tone="dark"
+                                />
+                                ”
                               </p>
                             </div>
 
@@ -937,7 +980,13 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
                                     深度解析 · 心理机制
                                   </div>
                                   <p className="text-xs sm:text-sm text-stone-200 leading-relaxed">
-                                    {law.detailedExplanation}
+                                    <SilverSpeechText
+                                      text={law.detailedExplanation}
+                                      isSpeaking={speaking}
+                                      activeCpIndex={activeCpIndex}
+                                      segmentRange={segments.detail}
+                                      tone="dark"
+                                    />
                                   </p>
                                   {law.whyItHappens && (
                                     <p className="text-xs text-stone-400 leading-relaxed pt-1">
@@ -952,7 +1001,13 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
                                       现实案例观察
                                     </div>
                                     <p className="text-xs sm:text-[13px] text-stone-300 leading-relaxed">
-                                      {law.realLifeExample}
+                                      <SilverSpeechText
+                                        text={law.realLifeExample}
+                                        isSpeaking={speaking}
+                                        activeCpIndex={activeCpIndex}
+                                        segmentRange={segments.example}
+                                        tone="dark"
+                                      />
                                     </p>
                                   </div>
                                 )}
@@ -962,7 +1017,13 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
                                     实践启示与元认知边界
                                   </div>
                                   <p className="text-xs sm:text-[13px] text-amber-100 leading-relaxed font-medium">
-                                    {law.healthyBoundary || law.keyTakeaway}
+                                    <SilverSpeechText
+                                      text={law.healthyBoundary || law.keyTakeaway}
+                                      isSpeaking={speaking}
+                                      activeCpIndex={activeCpIndex}
+                                      segmentRange={segments.takeaway}
+                                      tone="dark"
+                                    />
                                   </p>
                                 </div>
 
@@ -994,6 +1055,19 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
                                 </div>
                               </div>
                             </div>
+                          </div>
+
+                          {/* Always-visible Bottom-Right Voice Switch Footer */}
+                          <div className="px-4 sm:px-5 py-2.5 border-t border-stone-800/70 bg-[#0c0907]/90 flex items-center justify-between gap-2">
+                            <span className="text-[10.5px] text-stone-500 font-numeric">
+                              {speaking ? '银字实时跟读定位中...' : '点击右下角开关，银字跟读此定律'}
+                            </span>
+                            <LawVoiceToggleSwitch
+                              isOn={speaking}
+                              onToggle={(e) => handleSpeakLaw(law, e)}
+                              tone="dark"
+                              size="sm"
+                            />
                           </div>
                         </article>
                       );
@@ -1153,6 +1227,7 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
                         {group.laws.map((law) => {
                           const isExpanded = expandedIds.has(law.id);
                           const bookmarked = isBookmarked(law.id);
+                          const speakingEmo = globalIsSpeaking && activeLawId === law.id;
 
                           return (
                             <div
@@ -1179,15 +1254,29 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
                                   <div className="min-w-0 flex-1 space-y-1">
                                     <div className="flex items-baseline gap-2 flex-wrap">
                                       <h3 className="text-base sm:text-lg font-bold text-white font-serif tracking-tight">
-                                        {law.titleZh}
+                                        <SilverSpeechText
+                                          text={law.titleZh}
+                                          isSpeaking={speakingEmo}
+                                          activeCpIndex={activeCpIndex}
+                                          segmentRange={segments.title}
+                                          tone="dark"
+                                        />
                                       </h3>
                                       <span className="text-xs text-amber-200/70 font-serif-editorial italic hidden md:inline">
                                         {law.titleEn}
                                       </span>
                                     </div>
 
-                                    <p className="text-xs text-stone-300/85 line-clamp-1 font-serif">
-                                      “{law.corePrinciple}”
+                                    <p className={`text-xs text-stone-300/85 font-serif ${speakingEmo ? '' : 'line-clamp-1'}`}>
+                                      “
+                                      <SilverSpeechText
+                                        text={law.corePrinciple}
+                                        isSpeaking={speakingEmo}
+                                        activeCpIndex={activeCpIndex}
+                                        segmentRange={segments.core}
+                                        tone="dark"
+                                      />
+                                      ”
                                     </p>
 
                                     <div className="text-[11px] text-amber-300/75 font-numeric truncate">
@@ -1248,7 +1337,15 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
                                         <span>核心定律原理 · CORE LAW PRINCIPLE</span>
                                       </div>
                                       <p className="text-sm sm:text-base text-amber-50 font-serif font-medium leading-relaxed">
-                                        “{law.corePrinciple}”
+                                        “
+                                        <SilverSpeechText
+                                          text={law.corePrinciple}
+                                          isSpeaking={speakingEmo}
+                                          activeCpIndex={activeCpIndex}
+                                          segmentRange={segments.core}
+                                          tone="dark"
+                                        />
+                                        ”
                                       </p>
                                     </div>
 
@@ -1257,7 +1354,13 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
                                         心理机制与认知逻辑拆解
                                       </div>
                                       <p className="text-xs sm:text-sm text-stone-300 leading-relaxed">
-                                        {law.deepBreakdown.mechanism}
+                                        <SilverSpeechText
+                                          text={law.deepBreakdown.mechanism}
+                                          isSpeaking={speakingEmo}
+                                          activeCpIndex={activeCpIndex}
+                                          segmentRange={segments.mechanism}
+                                          tone="dark"
+                                        />
                                       </p>
 
                                       {law.deepBreakdown.insights.length > 0 && (
@@ -1283,7 +1386,15 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
                                         <span>真实生活案例：{law.lifeCase.title}</span>
                                       </div>
                                       <p className="text-xs sm:text-sm text-stone-200 leading-relaxed font-serif italic">
-                                        “{law.lifeCase.scenario}”
+                                        “
+                                        <SilverSpeechText
+                                          text={law.lifeCase.scenario}
+                                          isSpeaking={speakingEmo}
+                                          activeCpIndex={activeCpIndex}
+                                          segmentRange={segments.case}
+                                          tone="dark"
+                                        />
+                                        ”
                                       </p>
                                       {law.lifeCase.analysis && (
                                         <p className="text-xs text-stone-300/85 pt-2 border-t border-stone-800/80 leading-relaxed">
@@ -1307,7 +1418,13 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
                                       </div>
 
                                       <p className="text-xs sm:text-sm text-amber-100 font-medium leading-relaxed font-serif">
-                                        {law.practicalTakeaways.summary}
+                                        <SilverSpeechText
+                                          text={law.practicalTakeaways.summary}
+                                          isSpeaking={speakingEmo}
+                                          activeCpIndex={activeCpIndex}
+                                          segmentRange={segments.summary}
+                                          tone="dark"
+                                        />
                                       </p>
 
                                       <div className="space-y-2 pt-1">
@@ -1355,6 +1472,19 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
                                     </div>
                                   </div>
                                 </div>
+                              </div>
+
+                              {/* Always-visible Bottom-Right Voice Switch Footer */}
+                              <div className="px-4 sm:px-5 py-2.5 border-t border-stone-800/70 bg-[#0b0907]/90 flex items-center justify-between gap-2">
+                                <span className="text-[10.5px] text-stone-500 font-numeric">
+                                  {speakingEmo ? '银字实时跟读定位中...' : '打开右下角开关，语音朗读并银色高亮字迹'}
+                                </span>
+                                <LawVoiceToggleSwitch
+                                  isOn={speakingEmo}
+                                  onToggle={(e) => handleSpeakEmotionalLaw(law, e)}
+                                  tone="dark"
+                                  size="sm"
+                                />
                               </div>
                             </div>
                           );

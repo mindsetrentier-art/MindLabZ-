@@ -9,6 +9,7 @@ import { useBiometricLock } from '../context/BiometricLockContext';
 import { OverlappingCardStack } from '../components/ui/OverlappingCardStack';
 import { CognitiveMedalsHall } from '../components/profile/CognitiveMedalsHall';
 import { CognitiveHeatmap } from '../components/profile/CognitiveHeatmap';
+import { VoiceReadingPreferencesSection } from '../components/profile/VoiceReadingPreferencesSection';
 import { setupNetlifyBadgeRemover } from '../utils/netlifyBadgeRemover';
 import { ErrorBoundary } from '../components/ui/ErrorBoundary';
 
@@ -1138,7 +1139,10 @@ export const ProfilePage: React.FC = () => {
         </div>
       </section>
 
-      {/* 3. Settings & Preferences */}
+      {/* 3A. Voice Guide Preferences (语音导读偏好) */}
+      <VoiceReadingPreferencesSection />
+
+      {/* 3B. Settings & Preferences */}
       <section className="editorial-card rounded-2xl p-7 sm:p-9 space-y-5">
         <div className="pb-3 border-b border-stone-200/80">
           <span className="editorial-kicker text-[10px] text-stone-500 block mb-0.5">

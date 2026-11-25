@@ -1598,6 +1598,140 @@ ${classicCatalogText}
     }
   });
 
+  // 6b. Natural Human Neural TTS endpoint using gemini-3.8-flash-lite-tts
+  const TTS_VOICE_MAP: Record<string, { voiceName: string; style: string }> = {
+    gentle_female: {
+      voiceName: "Kore",
+      style:
+        "Warm, empathetic, natural human Mandarin Chinese narrator speaking smoothly with gentle emotional nuance and conversational breathing pauses, never robotic",
+    },
+    wise_male: {
+      voiceName: "Puck",
+      style:
+        "Articulate, insightful, calm human Mandarin Chinese mentor speaking naturally with crisp diction, subtle warmth, and thoughtful cadence",
+    },
+    calm_bass: {
+      voiceName: "Fenrir",
+      style:
+        "Deep, grounded, serene human Mandarin Chinese narrator with rich resonant timbre and unhurried meditative rhythm",
+    },
+    system_default: {
+      voiceName: "Zephyr",
+      style:
+        "Balanced, clear, natural human Mandarin Chinese speaker with fluid everyday intonation and organic phrasing",
+    },
+  };
+
+  const ttsMemoryCache = new Map<string, { audioBase64: string; mimeType: string; voiceName: string }>();
+  const TTS_CACHE_LIMIT = 120;
+
+  function sanitizeTextForNaturalSpeech(raw: string): string {
+    return raw
+      .replace(/([\u4e00-\u9fff])\s*\/\s*([\u4e00-\u9fff])/g, "$1与$2")
+      .replace(/\s*\/\s*/g, "，")
+      .replace(/[·•・]/g, "，")
+      .replace(/[【】「」『』《》〈〉\[\]]/g, " ")
+      .replace(/\s*&\s*/g, " 和 ")
+      .replace(/\s*\+\s*/g, " 加 ")
+      .replace(/[ \t\r]+/g, " ")
+      .replace(/[，,]{2,}/g, "，")
+      .replace(/[。]{2,}/g, "。")
+      .trim();
+  }
+
+  app.post("/api/tts", async (req, res) => {
+    try {
+      const { text, preset = "gentle_female" } = req.body || {};
+      if (!text || typeof text !== "string" || !text.trim()) {
+        return res.status(400).json({ error: "Missing text payload" });
+      }
+
+      const ai = getAI();
+      if (!ai) {
+        return res.status(503).json({
+          error: "GEMINI_API_KEY not configured",
+        });
+      }
+
+      const cleanText = sanitizeTextForNaturalSpeech(text).slice(0, 1800);
+      if (!cleanText) {
+        return res.status(400).json({ error: "No speakable text after normalization" });
+      }
+
+      const voiceMeta = TTS_VOICE_MAP[preset] || TTS_VOICE_MAP.gentle_female;
+      const cacheKey = `${voiceMeta.voiceName}::${preset}::${cleanText}`;
+      const cached = ttsMemoryCache.get(cacheKey);
+      if (cached) {
+        // Refresh LRU order
+        ttsMemoryCache.delete(cacheKey);
+        ttsMemoryCache.set(cacheKey, cached);
+        return res.json({
+          audioBase64: cached.audioBase64,
+          mimeType: cached.mimeType,
+          voiceName: cached.voiceName,
+          model: "gemini-3.8-flash-lite-tts",
+          cached: true,
+        });
+      }
+
+      const response = await ai.models.generateContent({
+        model: "gemini-3.8-flash-lite-tts",
+        contents: [
+          {
+            role: "user",
+            parts: [
+              {
+                text: cleanText,
+                speechMetadata: {
+                  style: voiceMeta.style,
+                },
+              } as any,
+            ],
+          },
+        ],
+        config: {
+          responseModalities: ["AUDIO"],
+          speechConfig: {
+            voiceConfig: {
+              prebuiltVoiceConfig: { voiceName: voiceMeta.voiceName },
+            },
+          },
+        },
+      });
+
+      const inlineData = response.candidates?.[0]?.content?.parts?.[0]?.inlineData;
+      const base64Audio = inlineData?.data;
+      const mimeType = inlineData?.mimeType || "audio/wav";
+
+      if (!base64Audio) {
+        return res.status(502).json({ error: "Empty TTS audio response from model" });
+      }
+
+      if (ttsMemoryCache.size >= TTS_CACHE_LIMIT) {
+        const oldestKey = ttsMemoryCache.keys().next().value;
+        if (oldestKey) ttsMemoryCache.delete(oldestKey);
+      }
+      ttsMemoryCache.set(cacheKey, {
+        audioBase64: base64Audio,
+        mimeType,
+        voiceName: voiceMeta.voiceName,
+      });
+
+      return res.json({
+        audioBase64: base64Audio,
+        mimeType,
+        voiceName: voiceMeta.voiceName,
+        model: "gemini-3.8-flash-lite-tts",
+      });
+    } catch (err: any) {
+      console.error("Neural TTS generation error:", err);
+      return res.status(500).json({
+        error: "Neural TTS generation failed",
+        detail: String(err?.message || err),
+      });
+    }
+  });
+
   // 7. Real-Time Voice Conversation WebSocket Bridge using gemini-3.8-live (Live API)
   const wss = new WebSocketServer({ noServer: true });
 

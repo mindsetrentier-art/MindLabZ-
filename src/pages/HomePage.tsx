@@ -24,6 +24,7 @@ import {
   Shuffle,
   Star,
   Quote,
+  Headphones,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { MasteryRing } from '../components/ui/MasteryRing';
@@ -337,10 +338,22 @@ export const HomePage: React.FC = () => {
                   gameAudio.playTap();
                   navigate('/search');
                 }}
-                className="px-4 py-3 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5"
+                className="px-4 py-3 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0"
               >
                 <span>心智全景画廊</span>
                 <ArrowRight className="w-3.5 h-3.5" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  gameAudio.playTap();
+                  navigate('/focus-audio');
+                }}
+                className="px-4 py-3 rounded-2xl bg-sky-500/20 hover:bg-sky-500/30 border border-sky-400/40 text-sky-200 text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 whitespace-nowrap shrink-0"
+              >
+                <Headphones className="w-3.5 h-3.5 text-sky-300" />
+                <span>双耳节拍专注音频</span>
               </button>
             </div>
           </div>

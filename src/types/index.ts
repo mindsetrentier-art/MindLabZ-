@@ -132,6 +132,22 @@ export interface PsychologyLaw {
   sexualCoreConcept?: string;
   sexualAppliedAngle?: string;
   sexualLearningNote?: string;
+  isLove100Psychology?: boolean;
+  love100Pillar?: string;
+  love100Category?: string;
+  love100Context?: string;
+  love100TopicName?: string;
+  love100CoreConcept?: string;
+  love100AppliedAngle?: string;
+  love100LearningNote?: string;
+  isIntimateRelationship?: boolean;
+  intimatePillar?: string;
+  intimateCategory?: string;
+  intimateContext?: string;
+  intimateTopicName?: string;
+  intimateCoreConcept?: string;
+  intimateAppliedAngle?: string;
+  intimateLearningNote?: string;
   experimentSetup?: {
     scenario: string;
     optionA: { label: string; biasDescription?: string; rationalDescription?: string; description?: string };
@@ -143,6 +159,8 @@ export interface PsychologyLaw {
 
 export type GameType = 
   | 'love-aleatoric-arena'
+  | 'love100-aleatoric-arena'
+  | 'intimate-aleatoric-arena'
   | 'reverse-aleatoric-arena'
   | 'criminal-aleatoric-arena'
   | 'sexual-aleatoric-arena'
@@ -168,7 +186,7 @@ export interface GameDefinition {
   nameEn?: string;
   nameZh: string;
   description: string;
-  category: '记忆' | '注意力' | '速度' | '逻辑' | '决策' | '心理实验' | '认知' | '情绪' | '习惯' | '社会' | '犯罪心理' | '性心理';
+  category: '记忆' | '注意力' | '速度' | '逻辑' | '决策' | '心理实验' | '认知' | '情绪' | '习惯' | '社会' | '犯罪心理' | '性心理' | '恋爱心理100' | '亲密关系100';
   difficulty: DifficultyLevel;
   bestScore: number;
   icon: string;
@@ -176,7 +194,7 @@ export interface GameDefinition {
   conceptLearned: string;
   relatedLawId?: string;
   accentColor: string;
-  numberPrefix?: string; // e.g. "01", "02" ... "13"
+  numberPrefix?: string; // e.g. "01", "02" ... "16"
 }
 
 export type GameDifficulty = '低' | '中' | '高' | '高级';

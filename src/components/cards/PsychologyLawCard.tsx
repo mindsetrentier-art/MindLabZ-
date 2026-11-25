@@ -1,11 +1,13 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bookmark, ChevronRight, CheckCircle2, Sparkles, Heart, Eye, Gamepad2, BookOpen, Volume2, ShieldCheck, Shuffle, Scale, HeartHandshake } from 'lucide-react';
+import { Bookmark, ChevronRight, CheckCircle2, Sparkles, Heart, Eye, Gamepad2, BookOpen, ShieldCheck, Shuffle, Scale, HeartHandshake } from 'lucide-react';
 import { PsychologyLaw, CategoryZh } from '../../types';
 import { useApp } from '../../context/AppContext';
 import { gameAudio } from '../../utils/gameAudio';
 import { getLawEmotionalMapping } from '../../data/emotionalLaws';
 import { PSYCHOLOGY_GAMES } from '../../data/games';
+import { toggleLawSpeech, useLawSpeech, LawSpeechSegment } from '../../utils/lawSpeechEngine';
+import { SilverSpeechText, LawVoiceToggleSwitch } from '../ui/SilverSpeechText';
 
 interface PsychologyLawCardProps {
   law: PsychologyLaw;
@@ -30,28 +32,36 @@ export const PsychologyLawCard: React.FC<PsychologyLawCardProps> = ({ law, compa
   const isMastered = mastery >= 80;
 
   const [expanded, setExpanded] = React.useState(false);
-  const [isSpeaking, setIsSpeaking] = React.useState(false);
+  const { isSpeakingThisLaw, activeCpIndex, segments } = useLawSpeech(law.id);
 
   const emotionalMeta = getLawEmotionalMapping(law);
 
-  const handleToggleSpeech = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+  const mechanismText = law.whyItHappens || law.detailedExplanation;
+  const caseText = law.relationshipCase || law.realLifeExample;
+
+  const handleToggleSpeech = () => {
     gameAudio.playTap();
-    if (isSpeaking) {
-      window.speechSynthesis.cancel();
-      setIsSpeaking(false);
-      return;
+    const speechSegments: LawSpeechSegment[] = [
+      { key: 'title', text: law.nameZh, separator: '。' },
+      { key: 'short', text: law.shortExplanation, separator: '。' },
+    ];
+    if (mechanismText) {
+      speechSegments.push({ key: 'mechanism', text: mechanismText, separator: '。' });
     }
-    window.speechSynthesis.cancel();
-    const script = `${law.codeId || ''}，${law.nameZh}。${law.shortExplanation}。现实启示：${law.keyTakeaway}`;
-    const utter = new SpeechSynthesisUtterance(script);
-    utter.lang = 'zh-CN';
-    utter.rate = 1.02;
-    utter.onend = () => setIsSpeaking(false);
-    utter.onerror = () => setIsSpeaking(false);
-    setIsSpeaking(true);
-    window.speechSynthesis.speak(utter);
+    if (caseText) {
+      speechSegments.push({ key: 'case', text: caseText, separator: '。' });
+    }
+    if (law.keyTakeaway) {
+      speechSegments.push({ key: 'takeaway', text: law.keyTakeaway, separator: '。' });
+    }
+
+    const turnedOn = toggleLawSpeech({
+      lawId: law.id,
+      segments: speechSegments,
+    });
+    if (turnedOn && !expanded) {
+      setExpanded(true);
+    }
   };
 
   const palette = CATEGORY_ART_PALETTE[law.categoryZh] || {
@@ -172,6 +182,30 @@ export const PsychologyLawCard: React.FC<PsychologyLawCardProps> = ({ law, compa
             </span>
           )}
 
+          {law.isLove100Psychology && (
+            <span
+              className="inline-flex items-center gap-1 font-mono text-[10px] font-bold px-2 py-0.5 rounded-md border bg-rose-50 text-rose-900 border-rose-200 shadow-2xs"
+              title={`恋爱心理学 100 律 · ${law.love100Pillar || ''} · ${law.love100Category || ''} · ${law.love100Context || ''}`}
+            >
+              <Heart className="w-2.5 h-2.5 fill-rose-500 text-rose-600" />
+              <span>
+                {law.love100Category} · {law.love100Context}
+              </span>
+            </span>
+          )}
+
+          {law.isIntimateRelationship && (
+            <span
+              className="inline-flex items-center gap-1 font-mono text-[10px] font-bold px-2 py-0.5 rounded-md border bg-rose-50 text-rose-900 border-rose-200 shadow-2xs"
+              title={`亲密关系心理学 100 律 · ${law.intimatePillar || ''} · ${law.intimateCategory || ''} · ${law.intimateContext || ''}`}
+            >
+              <HeartHandshake className="w-2.5 h-2.5 text-rose-700" />
+              <span>
+                {law.intimateCategory} · {law.intimateContext}
+              </span>
+            </span>
+          )}
+
           <span className="text-stone-300" aria-hidden="true">/</span>
           <span
             className="font-bold text-xs flex items-center gap-1.5"
@@ -227,20 +261,6 @@ export const PsychologyLawCard: React.FC<PsychologyLawCardProps> = ({ law, compa
 
         <div className="flex items-center gap-1 shrink-0 -mr-1">
           <button
-            type="button"
-            onClick={handleToggleSpeech}
-            className={`w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer ${
-              isSpeaking
-                ? 'bg-teal-600 text-white shadow-xs'
-                : 'text-stone-400 hover:text-stone-900 hover:bg-stone-100'
-            }`}
-            aria-label="语音朗读定律"
-            title={isSpeaking ? '停止语音朗读' : '点击语音随听该定律'}
-          >
-            <Volume2 className="w-4 h-4" />
-          </button>
-
-          <button
             onClick={(e) => {
               e.stopPropagation();
               gameAudio.playTap();
@@ -263,7 +283,12 @@ export const PsychologyLawCard: React.FC<PsychologyLawCardProps> = ({ law, compa
       <div className="mb-3.5">
         <div className="flex items-baseline justify-between gap-3">
           <h3 className="font-serif-editorial text-lg sm:text-xl font-bold text-stone-900 group-hover:text-stone-950 transition-colors leading-snug tracking-tight">
-            {law.nameZh}
+            <SilverSpeechText
+              text={law.nameZh}
+              isSpeaking={isSpeakingThisLaw}
+              activeCpIndex={activeCpIndex}
+              segmentRange={segments.title}
+            />
           </h3>
           {law.chapter && (
             <span className="text-[11px] font-medium text-stone-500 shrink-0 font-serif-editorial italic">
@@ -279,7 +304,14 @@ export const PsychologyLawCard: React.FC<PsychologyLawCardProps> = ({ law, compa
       {/* Literary Definition / Pull Quote */}
       <div className={`mb-3.5 rounded-xl p-4 border border-stone-200/70 transition-colors ${palette.bgSoft}`}>
         <p className="text-xs sm:text-[13px] text-stone-700 leading-relaxed font-normal">
-          “{law.shortExplanation}”
+          “
+          <SilverSpeechText
+            text={law.shortExplanation}
+            isSpeaking={isSpeakingThisLaw}
+            activeCpIndex={activeCpIndex}
+            segmentRange={segments.short}
+          />
+          ”
         </p>
       </div>
 
@@ -294,19 +326,29 @@ export const PsychologyLawCard: React.FC<PsychologyLawCardProps> = ({ law, compa
                 <span>底层机制与认知逻辑</span>
               </span>
               <p className="text-stone-600 leading-relaxed font-sans pl-2.5 border-l-2 border-stone-200">
-                {law.whyItHappens || law.detailedExplanation}
+                <SilverSpeechText
+                  text={mechanismText}
+                  isSpeaking={isSpeakingThisLaw}
+                  activeCpIndex={activeCpIndex}
+                  segmentRange={segments.mechanism}
+                />
               </p>
             </div>
 
             {/* 2. Real-life / Relationship Case */}
-            {(law.relationshipCase || law.realLifeExample) && (
+            {caseText && (
               <div className="space-y-1">
                 <span className="font-bold text-stone-900 font-mono text-[11px] uppercase tracking-wider flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
                   <span>生活与亲密关系实案</span>
                 </span>
                 <p className="text-stone-600 leading-relaxed font-sans pl-2.5 border-l-2 border-amber-200">
-                  {law.relationshipCase || law.realLifeExample}
+                  <SilverSpeechText
+                    text={caseText}
+                    isSpeaking={isSpeakingThisLaw}
+                    activeCpIndex={activeCpIndex}
+                    segmentRange={segments.case}
+                  />
                 </p>
               </div>
             )}
@@ -380,6 +422,32 @@ export const PsychologyLawCard: React.FC<PsychologyLawCardProps> = ({ law, compa
               </div>
             )}
 
+            {/* Love 100 Psychology Non-Diagnostic & Relational Safety Boundary */}
+            {law.isLove100Psychology && law.healthyBoundary && (
+              <div className="p-3.5 rounded-xl bg-rose-50/75 border border-rose-200/80 space-y-1">
+                <div className="flex items-center gap-1.5 text-[11px] font-bold text-rose-900">
+                  <Heart className="w-3.5 h-3.5 text-rose-700 fill-rose-500/30" />
+                  <span>恋爱心理学 100 律 · 平等边界与安全提示（{law.love100Context}）</span>
+                </div>
+                <p className="text-[11px] text-stone-700 leading-relaxed">
+                  {law.healthyBoundary}
+                </p>
+              </div>
+            )}
+
+            {/* Intimate Relationships 100 Psychology Non-Diagnostic & Safety Boundary */}
+            {law.isIntimateRelationship && law.healthyBoundary && (
+              <div className="p-3.5 rounded-xl bg-rose-50/75 border border-rose-200/80 space-y-1">
+                <div className="flex items-center gap-1.5 text-[11px] font-bold text-rose-900">
+                  <HeartHandshake className="w-3.5 h-3.5 text-rose-700" />
+                  <span>亲密关系心理学 100 律 · 自主平等与安全提示（{law.intimateContext}）</span>
+                </div>
+                <p className="text-[11px] text-stone-700 leading-relaxed">
+                  {law.healthyBoundary}
+                </p>
+              </div>
+            )}
+
             {/* Dispatched Arena Games */}
             {law.dispatchedGames && law.dispatchedGames.length > 0 && (
               <div className="flex items-center flex-wrap gap-1.5 pt-0.5 text-[11px]">
@@ -413,7 +481,14 @@ export const PsychologyLawCard: React.FC<PsychologyLawCardProps> = ({ law, compa
                 <span className="font-bold text-emerald-700 font-mono text-[11px] flex items-center gap-1">
                   <span>✦ 现实行动启示：</span>
                 </span>
-                <p className="leading-relaxed">{law.keyTakeaway}</p>
+                <p className="leading-relaxed">
+                  <SilverSpeechText
+                    text={law.keyTakeaway}
+                    isSpeaking={isSpeakingThisLaw}
+                    activeCpIndex={activeCpIndex}
+                    segmentRange={segments.takeaway}
+                  />
+                </p>
               </div>
             )}
 
@@ -445,11 +520,11 @@ export const PsychologyLawCard: React.FC<PsychologyLawCardProps> = ({ law, compa
         </div>
       </div>
 
-      {/* Footer: Mastery Progress & Subtle Disclosure */}
-      <div className="flex items-center justify-between pt-3 border-t border-stone-200/60 text-xs">
-        <div className="flex items-center gap-3 flex-1 mr-4">
-          <span className="text-[11px] text-stone-500 font-medium">心智内化</span>
-          <div className="w-20 sm:w-28 h-1.5 bg-stone-100 border border-stone-200/60 rounded-full overflow-hidden">
+      {/* Footer: Mastery Progress, Disclosure & Bottom-Right Voice Switch */}
+      <div className="flex flex-wrap items-center justify-between gap-2.5 pt-3 border-t border-stone-200/60 text-xs">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <span className="text-[11px] text-stone-500 font-medium shrink-0">心智内化</span>
+          <div className="w-16 sm:w-24 h-1.5 bg-stone-100 border border-stone-200/60 rounded-full overflow-hidden shrink-0">
             <div
               className="h-full rounded-full transition-all duration-300"
               style={{
@@ -458,17 +533,25 @@ export const PsychologyLawCard: React.FC<PsychologyLawCardProps> = ({ law, compa
               }}
             />
           </div>
-          <span className="font-numeric text-[11px] font-bold text-stone-700">{mastery}%</span>
+          <span className="font-numeric text-[11px] font-bold text-stone-700 shrink-0">{mastery}%</span>
         </div>
 
-        <div className="flex items-center gap-1 text-xs font-bold text-stone-900 group-hover:text-amber-800 transition-colors shrink-0">
-          <span className="font-serif-editorial">
-            {expanded ? '收起详情' : '点击平滑展开速读'}
-          </span>
-          <ChevronRight
-            className={`w-3.5 h-3.5 text-stone-500 transition-transform duration-300 ${
-              expanded ? 'rotate-90 text-amber-600' : 'group-hover:translate-x-0.5'
-            }`}
+        <div className="flex items-center gap-2.5 shrink-0 ml-auto">
+          <div className="flex items-center gap-1 text-[11px] sm:text-xs font-bold text-stone-800 group-hover:text-amber-800 transition-colors">
+            <span className="font-serif-editorial">
+              {expanded ? '收起详情' : '速读'}
+            </span>
+            <ChevronRight
+              className={`w-3.5 h-3.5 text-stone-500 transition-transform duration-300 ${
+                expanded ? 'rotate-90 text-amber-600' : 'group-hover:translate-x-0.5'
+              }`}
+            />
+          </div>
+
+          <LawVoiceToggleSwitch
+            isOn={isSpeakingThisLaw}
+            onToggle={handleToggleSpeech}
+            size="sm"
           />
         </div>
       </div>
