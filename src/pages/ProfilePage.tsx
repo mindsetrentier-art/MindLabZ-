@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Flame, Star, Trophy, Bookmark, Settings, RotateCcw, Sparkles, Shield, ShieldCheck, Heart, HelpCircle, Check, Info, Cloud, LogIn, LogOut, CheckCircle2, Database, RefreshCw, ExternalLink, KeyRound, Users, UserPlus, Copy, PenLine, ArrowRight, Lock, Unlock, Fingerprint, ScanFace } from 'lucide-react';
+import { User, Flame, Star, Trophy, Bookmark, Settings, RotateCcw, Sparkles, Shield, ShieldCheck, Heart, HelpCircle, Check, Info, Cloud, LogIn, LogOut, CheckCircle2, Database, RefreshCw, ExternalLink, KeyRound, Users, UserPlus, Copy, PenLine, ArrowRight, Lock, Unlock, Fingerprint, ScanFace, Cpu } from 'lucide-react';
 import { doc, getDocFromServer } from 'firebase/firestore';
 import { db, diagnoseFirebaseAuthError, AuthErrorDiagnostic } from '../firebase';
 import firebaseConfig from '../../firebase-applet-config.json';
@@ -1211,6 +1211,26 @@ export const ProfilePage: React.FC = () => {
               className="text-xs font-semibold px-3 py-1.5 bg-[#FAF8F5] hover:bg-stone-200 text-stone-800 border border-stone-300 rounded-lg transition-colors cursor-pointer shrink-0"
             >
               {netlifyCleanSuccess ? '✓ 已深度清除' : '立即清除遮挡'}
+            </button>
+          </div>
+
+          <div className="py-1 border-b border-stone-100 flex items-center justify-between gap-3">
+            <div>
+              <span className="text-xs font-semibold text-stone-900 flex items-center gap-1.5">
+                <Cpu className="w-3.5 h-3.5 text-amber-700" />
+                AI Studio Master Skills · 20 项技能管理后台
+              </span>
+              <span className="text-[11px] text-stone-500 block mt-0.5">
+                查看分类目录、按任务筛选加载真实 SKILL.md 上下文并控制每项技能的启用状态
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate('/admin/skills')}
+              className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 bg-stone-900 hover:bg-stone-800 text-white rounded-lg transition-colors cursor-pointer shrink-0"
+            >
+              <span>打开管理后台</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
 

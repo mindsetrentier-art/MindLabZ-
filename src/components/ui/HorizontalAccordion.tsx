@@ -409,7 +409,7 @@ export const HorizontalAccordion: React.FC<HorizontalAccordionProps> = ({
         {/* Action Controls & Scenario Tabs */}
         <div className="flex flex-wrap items-center gap-2 self-start sm:self-center shrink-0">
           {showScenarioTabs && (
-            <div className="flex items-center gap-1 p-1 bg-stone-100 rounded-xl border border-stone-200/80 text-xs font-semibold">
+            <div className="flex items-center gap-1 p-1 bg-[#F2EEE6] rounded-xl border border-stone-200/80 text-xs font-semibold">
               <button
                 type="button"
                 onClick={() => {
@@ -418,8 +418,8 @@ export const HorizontalAccordion: React.FC<HorizontalAccordionProps> = ({
                 }}
                 className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                   scenario === 'laws'
-                    ? 'bg-stone-900 text-white shadow-2xs'
-                    : 'text-stone-600 hover:text-stone-900 hover:bg-stone-200/60'
+                    ? 'luxury-dark-btn'
+                    : 'text-[#57514A] hover:text-[#181411] hover:bg-white/70'
                 }`}
               >
                 经典定律
@@ -432,8 +432,8 @@ export const HorizontalAccordion: React.FC<HorizontalAccordionProps> = ({
                 }}
                 className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                   scenario === 'disciplines'
-                    ? 'bg-stone-900 text-white shadow-2xs'
-                    : 'text-stone-600 hover:text-stone-900 hover:bg-stone-200/60'
+                    ? 'luxury-dark-btn'
+                    : 'text-[#57514A] hover:text-[#181411] hover:bg-white/70'
                 }`}
               >
                 五维脑力
@@ -446,8 +446,8 @@ export const HorizontalAccordion: React.FC<HorizontalAccordionProps> = ({
                 }}
                 className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
                   scenario === 'experiments'
-                    ? 'bg-stone-900 text-white shadow-2xs'
-                    : 'text-stone-600 hover:text-stone-900 hover:bg-stone-200/60'
+                    ? 'luxury-dark-btn'
+                    : 'text-[#57514A] hover:text-[#181411] hover:bg-white/70'
                 }`}
               >
                 名家实验
@@ -460,10 +460,10 @@ export const HorizontalAccordion: React.FC<HorizontalAccordionProps> = ({
             type="button"
             onClick={handleResetEqual}
             title="全部恢复等宽窄条"
-            className={`p-2 rounded-xl border text-xs font-medium transition-colors cursor-pointer flex items-center gap-1 ${
+            className={`p-2 rounded-xl border text-xs font-medium cursor-pointer flex items-center gap-1 ${
               activeId === null
-                ? 'bg-stone-900 text-white border-stone-900'
-                : 'bg-white hover:bg-stone-100 text-stone-700 border-stone-200'
+                ? 'luxury-dark-btn'
+                : 'luxury-surface-btn'
             }`}
           >
             <RotateCcw className="w-3.5 h-3.5" />
@@ -660,7 +660,11 @@ export const HorizontalAccordion: React.FC<HorizontalAccordionProps> = ({
                             gameAudio.playTap();
                             navigate(item.actionRoute!);
                           }}
-                          className="px-4 py-2 rounded-xl bg-amber-400 hover:bg-amber-300 text-stone-950 font-bold text-xs flex items-center gap-1.5 transition-transform hover:scale-[1.02] active:scale-95 cursor-pointer shadow-md"
+                          className="px-4 py-2 rounded-xl text-[#181411] font-bold text-xs flex items-center gap-1.5 transition-all hover:brightness-105 active:scale-95 cursor-pointer"
+                          style={{
+                            background: 'linear-gradient(135deg, #F0D28E 0%, #C8933B 100%)',
+                            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.45), 0 6px 16px -4px rgba(212,166,86,0.4)',
+                          }}
                         >
                           <span>{item.actionText || '立即探索'}</span>
                           <ArrowRight className="w-3.5 h-3.5" />
@@ -673,7 +677,7 @@ export const HorizontalAccordion: React.FC<HorizontalAccordionProps> = ({
                           e.stopPropagation();
                           handleResetEqual();
                         }}
-                        className="px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold border border-white/15 transition-colors cursor-pointer"
+                        className="luxury-ghost-dark-btn px-3 py-2 rounded-xl text-xs font-semibold cursor-pointer"
                       >
                         收回为等宽条
                       </button>
@@ -691,9 +695,9 @@ export const HorizontalAccordion: React.FC<HorizontalAccordionProps> = ({
       </div>
 
       {/* 3. Bottom Indicator & Legend */}
-      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-stone-500 pt-1 font-numeric">
+      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-[#6E675F] pt-1 font-numeric">
         <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="w-2 h-2 rounded-full bg-[#157F5D]" />
           <span>当前展示: {currentItems.find((i) => i.id === activeId)?.title || '全部等宽条'}</span>
           <span aria-hidden="true">·</span>
           <span>共 {currentItems.length} 个条目</span>

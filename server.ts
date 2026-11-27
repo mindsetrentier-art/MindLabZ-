@@ -12,12 +12,18 @@ import {
   MICROEXPRESSION_CATALOG,
   type MicroexpressionCatalogEntry,
 } from "./src/data/microexpressionCatalog";
+import {
+  getSkillsInventory,
+  getSkillDetailFromDisk,
+  setSkillEnabledState,
+  loadAgentSkillContext,
+} from "./server/skillsEngine";
 
 function getValidGeminiModel(envModel?: string): string {
   if (envModel && (envModel.startsWith("gemini-") || envModel.startsWith("models/gemini-"))) {
     return envModel;
   }
-  return "gemini-3.8-flash";
+  return "gemini-4-hydrogen";
 }
 
 const MODEL = getValidGeminiModel(process.env.GEMINI_MODEL);
@@ -27,6 +33,7 @@ function getAI(): GoogleGenAI | null {
   if (!aiClient && process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== "MY_GEMINI_API_KEY") {
     aiClient = new GoogleGenAI({
       apiKey: process.env.GEMINI_API_KEY,
+      apiVersion: "v1beta",
       httpOptions: {
         headers: {
           "User-Agent": "aistudio-build",
@@ -242,24 +249,55 @@ async function startServer() {
         return res.status(400).json({ error: "Message or question is required" });
       }
 
+      // Select relevant ENABLED Master Skills and genuinely read their SKILL.md files from disk
+      const skillContext = await loadAgentSkillContext(rootDir, String(message), {
+        maxSkills: 3,
+      });
+
+      const appliedSkillsMeta = skillContext.loadedSkills.map((s) => ({
+        id: s.id,
+        name: s.name,
+        categoryLabel: s.categoryLabel,
+        path: s.path,
+        loadedFromDisk: s.loadedFromDisk,
+        bytesLoaded: s.bytesLoaded,
+        sha256Prefix: s.sha256Prefix,
+      }));
+
       const ai = getAI();
       if (!ai) {
         const fallbackText = `【智心堂 AI 认知教练分析】\n针对您提出的问题：“${message}”：\n\n1. **认知机制解析**：人类大脑为了节省前额叶能量，常依赖“系统1（快速直觉启发式）”而非“系统2（深度理性分析）”。\n2. **定律关联洞察**：${lawContext ? `结合当前聚焦的【${typeof lawContext === "string" ? lawContext : JSON.stringify(lawContext)}】，` : ""}这种现象往往源于大脑对确定性与认知闭合的本能渴求。\n3. **实操行动建议**：在面临关键判断时，刻意暂停 3 秒并列出 2 个反向证据，能显著提升决策质量。`;
-        return res.json({ text: fallbackText, answer: fallbackText, isFallback: true });
+        return res.json({
+          text: fallbackText,
+          answer: fallbackText,
+          isFallback: true,
+          appliedSkills: appliedSkillsMeta,
+          skillsHonestyNotice: skillContext.honestyNotice,
+        });
       }
 
       const contextStr =
         typeof lawContext === "string" ? lawContext : JSON.stringify(lawContext, null, 2);
       const prompt = `用户问题：${message}\n\n当前定律上下文：${contextStr || "通用心理学与认知科学训练"}\n\n请用结构清晰、富有洞察力且包含1个立即能用的生活实操建议的方式回答：`;
 
+      const effectiveSystemInstruction = skillContext.hasVerifiedLoadedContext
+        ? `${systemInstruction}\n\n${skillContext.agentSystemPromptBlock}`
+        : systemInstruction;
+
       const response = await ai.models.generateContent({
         model: MODEL,
         contents: prompt,
-        config: { systemInstruction },
+        config: { systemInstruction: effectiveSystemInstruction },
       });
 
       const text = response.text || "暂时无法生成回答，请稍后再试。";
-      return res.json({ text, answer: text, isFallback: false });
+      return res.json({
+        text,
+        answer: text,
+        isFallback: false,
+        appliedSkills: appliedSkillsMeta,
+        skillsHonestyNotice: skillContext.honestyNotice,
+      });
     } catch (err: any) {
       console.error("Chat error:", err);
       const fallbackText =
@@ -275,6 +313,66 @@ async function startServer() {
 
   app.post("/api/chat", handleAIChat);
   app.post("/api/ai/ask", handleAIChat);
+
+  // 4.0 AI Studio Master Skills Registry, Selection & Genuine Context Loader API
+  app.get("/api/skills", async (_req, res) => {
+    try {
+      const inventory = await getSkillsInventory(rootDir);
+      return res.json(inventory);
+    } catch (err: any) {
+      return res.status(500).json({ error: "Failed to load skills registry", detail: String(err?.message || err) });
+    }
+  });
+
+  app.get("/api/skills/:id", async (req, res) => {
+    try {
+      const skillId = String(req.params.id || "").trim();
+      const detail = await getSkillDetailFromDisk(rootDir, skillId);
+      return res.json(detail);
+    } catch (err: any) {
+      const msg = String(err?.message || err);
+      const status = msg.startsWith("Unknown skill") || msg.startsWith("Invalid skill") ? 404 : 500;
+      return res.status(status).json({ error: msg });
+    }
+  });
+
+  app.patch("/api/skills/:id/toggle", async (req, res) => {
+    try {
+      const skillId = String(req.params.id || "").trim();
+      const enabled = req.body?.enabled;
+      if (typeof enabled !== "boolean") {
+        return res.status(400).json({ error: "Body field 'enabled' must be a strict boolean" });
+      }
+      const updatedInventory = await setSkillEnabledState(rootDir, skillId, enabled);
+      return res.json(updatedInventory);
+    } catch (err: any) {
+      const msg = String(err?.message || err);
+      const status = msg.startsWith("Unknown skill") || msg.startsWith("Invalid skill") ? 400 : 500;
+      return res.status(status).json({ error: msg });
+    }
+  });
+
+  app.post("/api/skills/select-and-load", async (req, res) => {
+    try {
+      const task = typeof req.body?.task === "string" ? req.body.task.trim() : "";
+      const maxSkills = req.body?.maxSkills !== undefined ? Number(req.body.maxSkills) : 3;
+      const explicitSkillIds = Array.isArray(req.body?.explicitSkillIds)
+        ? req.body.explicitSkillIds.filter((x: unknown): x is string => typeof x === "string")
+        : undefined;
+
+      if (!task && (!explicitSkillIds || explicitSkillIds.length === 0)) {
+        return res.status(400).json({ error: "Provide a non-empty 'task' string or 'explicitSkillIds' array" });
+      }
+
+      const result = await loadAgentSkillContext(rootDir, task || "Chargement explicite", {
+        maxSkills: Number.isFinite(maxSkills) ? maxSkills : 3,
+        explicitSkillIds,
+      });
+      return res.json(result);
+    } catch (err: any) {
+      return res.status(500).json({ error: "Failed to select and load skill context", detail: String(err?.message || err) });
+    }
+  });
 
   // 4.1 AI-Powered Deep Emotional Analysis & Daily Psychological Insight
   app.post("/api/journal/analyze", async (req, res) => {
@@ -1483,7 +1581,7 @@ ${classicCatalogText}
         if (ai) {
           try {
             const mapsResp = await ai.models.generateContent({
-              model: "gemini-3.8-flash",
+              model: "gemini-4-hydrogen",
               contents: `Identifie précisément le quartier, la rue ou le point d'intérêt le plus proche aux coordonnées GPS (${lat.toFixed(5)}, ${lon.toFixed(5)}) en une phrase concise (en français et chinois).`,
               config: {
                 tools: [{ googleMaps: {} }],
@@ -1685,7 +1783,7 @@ ${classicCatalogText}
                 speechMetadata: {
                   style: voiceMeta.style,
                 },
-              } as any,
+              },
             ],
           },
         ],
@@ -1725,7 +1823,9 @@ ${classicCatalogText}
       });
     } catch (err: any) {
       console.error("Neural TTS generation error:", err);
-      return res.status(500).json({
+      const upstreamStatus = Number(err?.status || err?.httpStatusCode);
+      const statusCode = upstreamStatus >= 400 && upstreamStatus < 600 ? upstreamStatus : 500;
+      return res.status(statusCode).json({
         error: "Neural TTS generation failed",
         detail: String(err?.message || err),
       });

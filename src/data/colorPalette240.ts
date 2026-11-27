@@ -59,9 +59,13 @@ function hexToRgb(hex: string): { r: number; g: number; b: number } {
 
 function getContrastText(hex: string): string {
   const { r, g, b } = hexToRgb(hex);
-  // Relative luminance formula
-  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  return luminance > 0.66 ? '#0F172A' : '#FFFFFF';
+  const toLinear = (c: number) => {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+  };
+  // Relative WCAG luminance
+  const luminance = 0.2126 * toLinear(r) + 0.7152 * toLinear(g) + 0.0722 * toLinear(b);
+  return luminance > 0.38 ? '#181411' : '#FAF8F5';
 }
 
 const DARK_NAMES_FR = [
@@ -116,18 +120,16 @@ function build240Palette(): ChameleonColor[] {
   const palette: ChameleonColor[] = [];
   let idCounter = 1;
 
-  // We interleave categories (Spectre -> Foncée -> Fluo) across 80 triads = 240 colors total!
-  // This ensures that every 30-second step naturally alternates across all styles
-  // while also allowing filtering by category if desired.
+  // Curated gallery chromatic tuning: nuanced saturation & analogous depth across 240 tones
   for (let i = 0; i < 80; i++) {
     const hueBase = (i * 4.5) % 360;
 
-    // 1. Spectre Complet (Full Spectrum / Jewel & Satin tones)
+    // 1. Spectre Chromatique (Velvety Jewel & Satin Gallery tones)
     const hSpec = Math.round((hueBase + 258) % 360);
-    const sSpec = 72 + (i % 4) * 5; // 72% - 87%
-    const lSpec = 46 + (i % 3) * 4; // 46% - 54%
-    const primarySpec = i === 0 ? '#6C4CF1' : hslToHex(hSpec, sSpec, lSpec);
-    const secondarySpec = i === 0 ? '#532CD8' : hslToHex((hSpec + 22) % 360, sSpec, Math.max(32, lSpec - 10));
+    const sSpec = 48 + (i % 4) * 5; // 48% - 63% refined saturation
+    const lSpec = 41 + (i % 3) * 4; // 41% - 49% rich mid-luminance
+    const primarySpec = i === 0 ? '#5B45B8' : hslToHex(hSpec, sSpec, lSpec);
+    const secondarySpec = i === 0 ? '#3E2C8A' : hslToHex((hSpec + 15) % 360, Math.max(40, sSpec - 4), Math.max(28, lSpec - 9));
     const rgbSpec = hexToRgb(primarySpec);
 
     palette.push({
@@ -136,22 +138,22 @@ function build240Palette(): ChameleonColor[] {
       nameFr: `${SPECTRE_NAMES_FR[i % SPECTRE_NAMES_FR.length]} ${Math.floor(i / 20) + 1}`,
       nameZh: `${SPECTRE_NAMES_ZH[i % SPECTRE_NAMES_ZH.length]} · ${String(idCounter).padStart(3, '0')}`,
       category: 'spectre',
-      categoryLabelFr: 'Spectre Chromatique',
+      categoryLabelFr: 'Spectre Satin',
       primary: primarySpec,
       secondary: secondarySpec,
-      glow: `rgba(${rgbSpec.r}, ${rgbSpec.g}, ${rgbSpec.b}, 0.28)`,
-      soft: `rgba(${rgbSpec.r}, ${rgbSpec.g}, ${rgbSpec.b}, 0.12)`,
-      border: `rgba(${rgbSpec.r}, ${rgbSpec.g}, ${rgbSpec.b}, 0.36)`,
+      glow: `rgba(${rgbSpec.r}, ${rgbSpec.g}, ${rgbSpec.b}, 0.22)`,
+      soft: `rgba(${rgbSpec.r}, ${rgbSpec.g}, ${rgbSpec.b}, 0.08)`,
+      border: `rgba(${rgbSpec.r}, ${rgbSpec.g}, ${rgbSpec.b}, 0.28)`,
       onPrimary: getContrastText(primarySpec),
     });
     idCounter++;
 
-    // 2. Couleur Foncée (Dark & Deep tones)
+    // 2. Couleur Foncée (Mineral Obsidian, Prussian & Patina Bronze tones)
     const hDark = Math.round((hueBase + 195) % 360);
-    const sDark = 62 + (i % 5) * 6; // 62% - 86%
-    const lDark = 22 + (i % 4) * 4; // 22% - 34% (Rich Dark tones)
+    const sDark = 38 + (i % 5) * 4; // 38% - 54% mineral nuance
+    const lDark = 18 + (i % 4) * 3; // 18% - 27% deep gallery shadow
     const primaryDark = hslToHex(hDark, sDark, lDark);
-    const secondaryDark = hslToHex((hDark + 18) % 360, Math.min(95, sDark + 8), Math.max(16, lDark - 6));
+    const secondaryDark = hslToHex((hDark + 14) % 360, Math.min(62, sDark + 6), Math.max(13, lDark - 5));
     const rgbDark = hexToRgb(primaryDark);
 
     palette.push({
@@ -160,22 +162,22 @@ function build240Palette(): ChameleonColor[] {
       nameFr: `${DARK_NAMES_FR[i % DARK_NAMES_FR.length]} ${Math.floor(i / 20) + 1}`,
       nameZh: `${DARK_NAMES_ZH[i % DARK_NAMES_ZH.length]} · ${String(idCounter).padStart(3, '0')}`,
       category: 'foncee',
-      categoryLabelFr: 'Couleur Foncée',
+      categoryLabelFr: 'Minéral Profond',
       primary: primaryDark,
       secondary: secondaryDark,
-      glow: `rgba(${rgbDark.r}, ${rgbDark.g}, ${rgbDark.b}, 0.32)`,
-      soft: `rgba(${rgbDark.r}, ${rgbDark.g}, ${rgbDark.b}, 0.12)`,
-      border: `rgba(${rgbDark.r}, ${rgbDark.g}, ${rgbDark.b}, 0.42)`,
-      onPrimary: '#FFFFFF',
+      glow: `rgba(${rgbDark.r}, ${rgbDark.g}, ${rgbDark.b}, 0.24)`,
+      soft: `rgba(${rgbDark.r}, ${rgbDark.g}, ${rgbDark.b}, 0.075)`,
+      border: `rgba(${rgbDark.r}, ${rgbDark.g}, ${rgbDark.b}, 0.30)`,
+      onPrimary: '#FAF8F5',
     });
     idCounter++;
 
-    // 3. Couleur Fluo / Néon (Fluorescent & Electric tones)
+    // 3. Couleur Fluo / Éclat (Controlled Luminous Silk Accents — vibrant without harsh neon)
     const hFluo = Math.round((hueBase + 310) % 360);
-    const sFluo = 95 + (i % 2) * 5; // 95% - 100% saturation
-    const lFluo = 50 + (i % 3) * 4; // 50% - 58% lightness (Vivid Fluo)
+    const sFluo = 72 + (i % 3) * 4; // 72% - 80% poised radiance
+    const lFluo = 45 + (i % 3) * 3; // 45% - 51% balanced luminance
     const primaryFluo = hslToHex(hFluo, sFluo, lFluo);
-    const secondaryFluo = hslToHex((hFluo + 28) % 360, 96, Math.max(42, lFluo - 8));
+    const secondaryFluo = hslToHex((hFluo + 18) % 360, Math.max(62, sFluo - 6), Math.max(36, lFluo - 8));
     const rgbFluo = hexToRgb(primaryFluo);
 
     palette.push({
@@ -184,12 +186,12 @@ function build240Palette(): ChameleonColor[] {
       nameFr: `${FLUO_NAMES_FR[i % FLUO_NAMES_FR.length]} ${Math.floor(i / 20) + 1}`,
       nameZh: `${FLUO_NAMES_ZH[i % FLUO_NAMES_ZH.length]} · ${String(idCounter).padStart(3, '0')}`,
       category: 'fluo',
-      categoryLabelFr: 'Couleur Fluo / Néon',
+      categoryLabelFr: 'Éclat Lumineux',
       primary: primaryFluo,
       secondary: secondaryFluo,
-      glow: `rgba(${rgbFluo.r}, ${rgbFluo.g}, ${rgbFluo.b}, 0.34)`,
-      soft: `rgba(${rgbFluo.r}, ${rgbFluo.g}, ${rgbFluo.b}, 0.13)`,
-      border: `rgba(${rgbFluo.r}, ${rgbFluo.g}, ${rgbFluo.b}, 0.45)`,
+      glow: `rgba(${rgbFluo.r}, ${rgbFluo.g}, ${rgbFluo.b}, 0.24)`,
+      soft: `rgba(${rgbFluo.r}, ${rgbFluo.g}, ${rgbFluo.b}, 0.09)`,
+      border: `rgba(${rgbFluo.r}, ${rgbFluo.g}, ${rgbFluo.b}, 0.32)`,
       onPrimary: getContrastText(primaryFluo),
     });
     idCounter++;

@@ -17,6 +17,7 @@ import {
   ChevronDown,
   ArrowUpRight,
   Timer,
+  BookmarkPlus,
 } from 'lucide-react';
 import {
   BINAURAL_PRESETS,
@@ -33,6 +34,7 @@ interface CognitiveFocusAudioPlayerProps {
   className?: string;
   recommendedBinauralId?: BinauralPresetId;
   taskContextLabel?: string;
+  onBookmarkTimestamp?: () => void;
 }
 
 const TIMER_PRESETS = [
@@ -68,6 +70,7 @@ export const CognitiveFocusAudioPlayer: React.FC<CognitiveFocusAudioPlayerProps>
   className = '',
   recommendedBinauralId,
   taskContextLabel,
+  onBookmarkTimestamp,
 }) => {
   const navigate = useNavigate();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -524,6 +527,18 @@ export const CognitiveFocusAudioPlayer: React.FC<CognitiveFocusAudioPlayerProps>
           <span className="font-semibold text-stone-900">
             Session {activeTimerLabel}
           </span>
+          {onBookmarkTimestamp && (
+            <button
+              type="button"
+              onClick={onBookmarkTimestamp}
+              className="px-2.5 py-1 rounded-lg bg-white border border-stone-200 hover:border-stone-400 text-stone-700 hover:text-stone-950 font-sans text-[11px] font-medium inline-flex items-center gap-1 transition-colors cursor-pointer whitespace-nowrap shrink-0"
+              title="标记当前专注时间戳"
+              aria-label="标记当前专注时间戳"
+            >
+              <BookmarkPlus className="w-3.5 h-3.5 text-sky-700 shrink-0" aria-hidden="true" />
+              <span>标记时间点</span>
+            </button>
+          )}
           <button
             type="button"
             onClick={() => {

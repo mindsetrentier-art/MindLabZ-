@@ -277,6 +277,52 @@ class GameAudioEngine {
       // ignore
     }
   }
+
+  /**
+   * Soft, airy archival paper page-turn rustle using bandpass-filtered noise
+   */
+  public playPageTurn() {
+    if (this.isMuted) return;
+    this.init();
+    if (!this.ctx) return;
+
+    try {
+      const ctx = this.ctx;
+      const now = ctx.currentTime;
+      const duration = 0.14;
+      const sampleCount = Math.floor(ctx.sampleRate * duration);
+      const buffer = ctx.createBuffer(1, sampleCount, ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+
+      for (let i = 0; i < sampleCount; i++) {
+        const env = Math.sin((i / sampleCount) * Math.PI);
+        data[i] = (Math.random() * 2 - 1) * env;
+      }
+
+      const src = ctx.createBufferSource();
+      src.buffer = buffer;
+
+      const filter = ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(1250, now);
+      filter.frequency.exponentialRampToValueAtTime(2400, now + duration);
+      filter.Q.setValueAtTime(1.1, now);
+
+      const gain = ctx.createGain();
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(0.045, now + 0.035);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+      src.connect(filter);
+      filter.connect(gain);
+      gain.connect(ctx.destination);
+
+      src.start(now);
+      src.stop(now + duration);
+    } catch {
+      // ignore
+    }
+  }
 }
 
 export const gameAudio = new GameAudioEngine();

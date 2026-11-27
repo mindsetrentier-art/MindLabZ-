@@ -407,14 +407,14 @@ export const GamesPage: React.FC = () => {
             <button
               onClick={() => navigate('/assessment')}
               type="button"
-              className="flex items-center justify-between px-3.5 py-2 rounded-xl bg-indigo-500/25 hover:bg-indigo-500/35 border border-indigo-400/40 text-xs font-bold transition-all cursor-pointer active:scale-95 text-indigo-200"
+              className="luxury-ghost-dark-btn flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-bold cursor-pointer active:scale-95 text-[#D2C9F8]"
               title="查看基于游戏得分生成的六维认知能力评估雷达与心智报告"
             >
               <div className="flex items-center gap-1.5">
-                <Brain className="w-4 h-4 text-indigo-300" />
+                <Brain className="w-4 h-4 text-[#A594EE]" />
                 <span>认知多维评估雷达</span>
               </div>
-              <span className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-indigo-500/30 text-indigo-100 font-extrabold">
+              <span className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-[#5B45B8]/30 text-[#E4DDFB] border border-[#8B7BE0]/30 font-semibold">
                 全维测评 →
               </span>
             </button>
@@ -423,14 +423,14 @@ export const GamesPage: React.FC = () => {
             <button
               onClick={() => navigate('/profile')}
               type="button"
-              className="flex items-center justify-between px-3.5 py-2 rounded-xl bg-amber-400/20 hover:bg-amber-400/30 border border-amber-400/40 text-xs font-bold transition-all cursor-pointer active:scale-95 text-amber-200"
+              className="luxury-ghost-dark-btn flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-bold cursor-pointer active:scale-95 text-[#F3D89E]"
               title="前往个人资料页查看认知勋章荣誉殿堂"
             >
               <div className="flex items-center gap-1.5">
-                <Award className="w-4 h-4 text-amber-300" />
+                <Award className="w-4 h-4 text-[#E5C07B]" />
                 <span>认知勋章荣誉展馆</span>
               </div>
-              <span className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-amber-400/25 text-amber-100 font-extrabold">
+              <span className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-[#D4A656]/20 text-[#F8E7C1] border border-[#D4A656]/35 font-semibold">
                 {user.unlockedBadges?.length || 0} 枚已解锁 →
               </span>
             </button>
@@ -439,13 +439,13 @@ export const GamesPage: React.FC = () => {
             <button
               onClick={handleToggleSound}
               type="button"
-              className="flex items-center justify-between px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/20 text-xs font-bold transition-all cursor-pointer active:scale-95"
+              className="luxury-ghost-dark-btn flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-bold cursor-pointer active:scale-95"
             >
               <div className="flex items-center gap-2">
-                {isMuted ? <VolumeX className="w-4 h-4 text-stone-400" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
+                {isMuted ? <VolumeX className="w-4 h-4 text-stone-400" /> : <Volume2 className="w-4 h-4 text-[#6EE7B7]" />}
                 <span>游戏合成音效</span>
               </div>
-              <span className={`text-[10px] px-2 py-0.5 rounded-md ${isMuted ? 'bg-stone-800 text-stone-400' : 'bg-emerald-500/20 text-emerald-300'}`}>
+              <span className={`text-[10px] px-2 py-0.5 rounded-md font-mono ${isMuted ? 'bg-white/10 text-stone-400' : 'bg-[#34A88B]/20 text-[#A7F3D0] border border-[#34A88B]/35'}`}>
                 {isMuted ? '已静音' : '开启中'}
               </span>
             </button>

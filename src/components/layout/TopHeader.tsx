@@ -26,7 +26,7 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ title, showBack, hasTopBar
           {showBack ? (
             <button
               onClick={() => navigate(-1)}
-              className="w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-full flex items-center justify-center bg-white border border-stone-200/80 hover:border-stone-400 transition-colors btn-tactile text-stone-800"
+              className="w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-full flex items-center justify-center luxury-surface-btn text-stone-800 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-900"
               aria-label="Back"
             >
               <ArrowLeft className="w-4 h-4" />
@@ -98,17 +98,17 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ title, showBack, hasTopBar
           </div>
         </div>
 
-        {/* Gamification Stats & Quick Actions (Clean Unboxed Editorial Metadata) */}
-        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+        {/* Gamification Stats & Quick Actions (Clean Unboxed Editorial Metadata & Luxury Small Buttons) */}
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {/* Global Lunr.js Search Trigger (Cmd/Ctrl + K) */}
           <button
             type="button"
             onClick={openSearchModal}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white border border-stone-200/90 text-stone-700 hover:text-stone-900 hover:border-stone-400 hover:bg-stone-50 transition-colors btn-tactile cursor-pointer whitespace-nowrap shrink-0"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl luxury-surface-btn text-stone-800 cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-900"
             title="全局全文检索定律库与竞技场 (⌘K / Ctrl+K)"
             aria-label="全局全文检索"
           >
-            <Search className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+            <Search className="w-3.5 h-3.5 text-[#A66C1E] shrink-0" />
             <span className="text-[11px] font-semibold hidden md:inline">检索</span>
             <span className="text-[10px] font-mono text-stone-400 hidden lg:inline">⌘K</span>
           </button>
@@ -116,10 +116,10 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ title, showBack, hasTopBar
           {/* Cloud Auth / Google Connection Trigger */}
           <button
             onClick={openAuthModal}
-            className={`flex items-center gap-1 px-2 py-1.5 rounded-lg border transition-all btn-tactile cursor-pointer ${
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border transition-all btn-tactile cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-900 ${
               firebaseUser
-                ? 'bg-emerald-50/90 border-emerald-300/80 text-emerald-800 hover:bg-emerald-100 shadow-xs'
-                : 'bg-white border-stone-200/90 text-stone-700 hover:border-stone-400 hover:bg-stone-50'
+                ? 'bg-gradient-to-b from-emerald-50/90 to-emerald-100/60 border-emerald-700/20 text-emerald-900 hover:border-emerald-700/35 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]'
+                : 'luxury-surface-btn text-stone-700'
             }`}
             title={
               firebaseUser
@@ -152,31 +152,31 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ title, showBack, hasTopBar
           {/* Streak Indicator */}
           <button
             onClick={() => navigate('/progress')}
-            className="flex items-center gap-1 px-2 py-1.5 rounded-lg hover:bg-stone-200/50 transition-colors btn-tactile cursor-pointer text-stone-800"
+            className="flex items-center gap-1 px-2 py-1.5 rounded-xl hover:bg-stone-900/[0.045] transition-colors btn-tactile cursor-pointer text-stone-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-900"
             title="连续研习天数"
           >
-            <Flame className="w-3.5 h-3.5 text-amber-600 fill-amber-600" />
+            <Flame className="w-3.5 h-3.5 text-[#B87314] fill-[#D4A656]" />
             <span className="text-xs font-semibold font-numeric whitespace-nowrap">
-              {user.streak} <span className="text-[10px] text-stone-600 font-normal hidden sm:inline">天</span>
+              {user.streak} <span className="text-[10px] text-stone-500 font-normal hidden sm:inline">天</span>
             </span>
           </button>
 
           {/* XP Indicator (Visible on medium screens and up) */}
           <button
             onClick={() => navigate('/progress')}
-            className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg hover:bg-stone-200/50 transition-colors btn-tactile cursor-pointer text-stone-800"
+            className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl hover:bg-stone-900/[0.045] transition-colors btn-tactile cursor-pointer text-stone-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-900"
             title="大脑训练经验"
           >
-            <Star className="w-3.5 h-3.5 text-stone-600 fill-stone-400" />
+            <Star className="w-3.5 h-3.5 text-[#8A7F72] fill-[#D4A656]/55" />
             <span className="text-xs font-semibold font-numeric whitespace-nowrap">
-              {user.xp.toLocaleString()} <span className="text-[10px] text-stone-600 font-normal">XP</span>
+              {user.xp.toLocaleString()} <span className="text-[10px] text-stone-500 font-normal">XP</span>
             </span>
           </button>
 
           {/* Focused Breathing Quick Action (Visible on tablet & desktop) */}
           <button
             onClick={() => setBreathingOpen(true)}
-            className="hidden sm:flex w-8 h-8 rounded-full bg-white border border-stone-200/90 text-stone-700 hover:text-stone-900 hover:border-stone-400 items-center justify-center transition-transform hover:scale-105 btn-tactile cursor-pointer"
+            className="hidden sm:flex w-8 h-8 rounded-full luxury-surface-btn text-stone-700 items-center justify-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-900"
             title="开启专注呼吸觉察调节"
             aria-label="专注呼吸调节"
           >
@@ -186,8 +186,9 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ title, showBack, hasTopBar
           {/* AI Tutor Icon */}
           <button
             onClick={() => setAiTutorOpen(true)}
-            className="w-7 h-7 sm:w-8 sm:h-8 rounded-full chameleon-btn flex items-center justify-center transition-transform hover:scale-105 btn-tactile shadow-xs"
+            className="w-8 h-8 rounded-full chameleon-btn flex items-center justify-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-stone-900"
             title="咨询 AI 认知导师"
+            aria-label="咨询 AI 认知导师"
           >
             <Sparkles className="w-3.5 h-3.5" />
           </button>

@@ -49,7 +49,7 @@ export const GameCard: React.FC<GameCardProps> = ({ game, difficulty = '中' }) 
   const highScore = (user?.gameHighScores && user.gameHighScores[game.id]) ? user.gameHighScores[game.id] : 0;
   const isCompleted = Boolean(user?.completedGames?.includes(game.id));
   const diffConfig = DIFFICULTY_CONFIGS[difficulty];
-  const accentColor = game.accentColor || '#6366F1';
+  const accentColor = game.accentColor || '#4F46B8';
 
   const handleStartGame = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
@@ -64,80 +64,83 @@ export const GameCard: React.FC<GameCardProps> = ({ game, difficulty = '中' }) 
   return (
     <article
       onClick={(e) => handleStartGame(e)}
-      className={`group game-arcade-card rounded-3xl cursor-pointer flex flex-col justify-between relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1.5 border ${
+      className={`group art-museum-mat rounded-3xl cursor-pointer flex flex-col justify-between relative overflow-hidden transition-all duration-300 ${
         isLaunching
-          ? 'border-indigo-400 ring-2 ring-indigo-400/40 scale-[0.99] shadow-indigo-500/20 shadow-lg'
-          : 'border-stone-200/90 hover:border-indigo-300/80 bg-white'
+          ? 'border-[#5B45B8]/60 ring-2 ring-[#5B45B8]/25 scale-[0.99] shadow-lg'
+          : ''
       }`}
     >
       {/* Top Ambient Radiant Glow Header with Game Accent */}
       <div
-        className="h-2 w-full transition-all duration-300 group-hover:h-2.5"
+        className="h-[3px] w-full transition-all duration-300 opacity-85 group-hover:opacity-100"
         style={{
-          background: `linear-gradient(90deg, ${accentColor} 0%, ${accentColor}99 60%, #FAF8F5 100%)`,
+          background: `linear-gradient(90deg, ${accentColor} 0%, ${accentColor}90 55%, transparent 95%)`,
         }}
       />
 
       <div className="p-5 sm:p-6.5 flex-1 flex flex-col justify-between">
         <div>
           {/* Top Arcade Status Bar */}
-          <div className="flex items-center justify-between mb-4 pb-3 border-b border-stone-200/60 text-xs">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-4 pb-3 border-b border-stone-200/60 text-xs">
             <div className="flex items-center gap-2">
               {game.numberPrefix ? (
                 <span
-                  className="font-mono font-black text-white px-2 py-0.5 rounded-lg text-[11px] shadow-xs"
-                  style={{ backgroundColor: accentColor }}
+                  className="font-mono font-bold text-[#FAF8F5] px-2 py-0.5 rounded-lg text-[11px]"
+                  style={{
+                    background: `linear-gradient(135deg, ${accentColor} 0%, ${accentColor}DD 100%)`,
+                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.28), 0 2px 6px rgba(24,20,17,0.12)',
+                  }}
                 >
                   #{game.numberPrefix}
                 </span>
               ) : (
-                <span className="font-mono font-bold text-stone-700 bg-stone-100 px-2 py-0.5 rounded-lg text-[11px]">
+                <span className="luxury-badge-ink text-[11px]">
                   ARCADE
                 </span>
               )}
-              <span className="font-semibold text-stone-900 text-xs">{game.category}训练</span>
+              <span className="font-semibold text-[#181411] text-xs">{game.category}训练</span>
               <span className="text-stone-300" aria-hidden="true">·</span>
-              <span className="inline-flex items-center gap-1 font-numeric text-stone-500 text-[11px]">
-                <Clock className="w-3 h-3 text-stone-400" />
+              <span className="inline-flex items-center gap-1 font-numeric text-[#6E675F] text-[11px]">
+                <Clock className="w-3 h-3 text-[#8E867D]" />
                 {game.estimatedTime}
               </span>
             </div>
 
             <div className="flex items-center gap-2 font-numeric text-xs">
               {isCompleted ? (
-                <span className="text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full text-[10px] font-bold border border-emerald-200 flex items-center gap-1 shadow-2xs">
-                  <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                <span className="text-[#157F5D] bg-[#157F5D]/8 px-2.5 py-0.5 rounded-lg text-[10px] font-bold border border-[#157F5D]/25 flex items-center gap-1">
+                  <CheckCircle2 className="w-3 h-3 text-[#157F5D]" />
                   已通关 (+30~45XP)
                 </span>
               ) : (
-                <span className="text-indigo-700 bg-indigo-50/90 px-2.5 py-0.5 rounded-full text-[10px] font-bold border border-indigo-200 flex items-center gap-1 shadow-2xs">
-                  <Sparkles className="w-3 h-3 text-indigo-600" />
+                <span className="text-[#4F46B8] bg-[#4F46B8]/8 px-2.5 py-0.5 rounded-lg text-[10px] font-bold border border-[#4F46B8]/22 flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-[#4F46B8]" />
                   首胜 +30~45 XP
                 </span>
               )}
 
               {highScore > 0 && (
-                <span className="text-xs font-black text-amber-900 flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-200/80">
-                  <Trophy className="w-3 h-3 text-amber-500 fill-amber-400" />
+                <span className="text-xs font-bold text-[#8E5B13] flex items-center gap-1 bg-[#D4A656]/12 px-2 py-0.5 rounded-lg border border-[#D4A656]/30">
+                  <Trophy className="w-3 h-3 text-[#C8933B] fill-[#D4A656]" />
                   {(highScore ?? 0).toLocaleString()}
                 </span>
               )}
             </div>
           </div>
 
-          {/* Game Title & Tactile Glowing Monogram */}
+          {/* Game Title & Tactile Specular Monogram */}
           <div className="flex items-start gap-3.5 mb-3">
             {game.id === 'first-impression' ? (
               <FirstImpressionGameIcon size={48} glow={false} className="group-hover:scale-105 transition-transform duration-200" />
             ) : (
               <div
-                className="w-12 h-12 rounded-2xl flex items-center justify-center text-white shrink-0 shadow-md group-hover:scale-105 transition-transform duration-200"
+                className="w-12 h-12 rounded-2xl flex items-center justify-center text-[#FAF8F5] shrink-0 group-hover:scale-105 transition-transform duration-200"
                 style={{
-                  backgroundColor: accentColor,
-                  boxShadow: `0 6px 18px -4px ${accentColor}55`,
+                  background: `linear-gradient(145deg, ${accentColor} 0%, ${accentColor}D9 100%)`,
+                  boxShadow: `inset 0 1px 0 rgba(255,255,255,0.32), 0 8px 20px -5px ${accentColor}52`,
                 }}
               >
-                <IconComponent className="w-6 h-6 text-white" />
+                <IconComponent className="w-6 h-6 text-[#FAF8F5]" />
               </div>
             )}
 
@@ -169,9 +172,9 @@ export const GameCard: React.FC<GameCardProps> = ({ game, difficulty = '中' }) 
         </div>
 
         {/* Action Footer Bar */}
-        <div className="pt-3.5 flex items-center justify-between border-t border-stone-200/60 text-xs">
+        <div className="pt-3.5 flex flex-wrap items-center justify-between gap-2 border-t border-stone-200/60 text-xs">
           <div className="flex items-center gap-1.5">
-            <span className="text-stone-400 text-[11px] font-medium">难度加成:</span>
+            <span className="text-[#8E867D] text-[11px] font-medium">难度加成:</span>
             <span className={`font-bold px-2 py-0.5 rounded-lg border text-[11px] ${diffConfig.bgLightClass} ${diffConfig.colorClass} ${diffConfig.borderClass}`}>
               {difficulty} ({diffConfig.multiplierText})
             </span>
@@ -184,12 +187,12 @@ export const GameCard: React.FC<GameCardProps> = ({ game, difficulty = '中' }) 
             }}
             type="button"
             disabled={isLaunching}
-            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-white transition-all shadow-md group-hover:shadow-lg active:scale-95 cursor-pointer game-btn-tactile ${
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-[#FAF8F5] transition-all active:scale-95 cursor-pointer btn-tactile hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5B45B8]/40 ${
               isLaunching ? 'opacity-90 scale-95' : ''
             }`}
             style={{
-              backgroundColor: accentColor,
-              boxShadow: `0 4px 14px -2px ${accentColor}60`,
+              background: `linear-gradient(135deg, ${accentColor} 0%, ${accentColor}D4 100%)`,
+              boxShadow: `inset 0 1px 0 rgba(255,255,255,0.28), 0 6px 16px -4px ${accentColor}58`,
             }}
           >
             {isLaunching ? (

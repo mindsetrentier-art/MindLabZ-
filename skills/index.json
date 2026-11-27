@@ -1,0 +1,384 @@
+{
+  "version": "1.0.0",
+  "packName": "AI Studio Master Skills",
+  "goldenRule": "Sélectionne seulement les compétences pertinentes à la tâche. Ne charge pas automatiquement les 20 à chaque requête. Les Skills sont des fichiers d'instructions et ne doivent jamais être simulées comme actives sans chargement réel depuis le disque.",
+  "updatedAt": "2026-11-27T06:30:00.000Z",
+  "categories": [
+    {
+      "id": "product",
+      "label": "Cadrage produit",
+      "labelEn": "Product Strategy",
+      "description": "Définition du problème utilisateur, priorisation MVP/V1, métriques et critères d'acceptation.",
+      "order": 1
+    },
+    {
+      "id": "design",
+      "label": "Design",
+      "labelEn": "Design & Motion",
+      "description": "Direction artistique, ergonomie UI/UX, tokens visuels, animations fluides, accessibilité et i18n.",
+      "order": 2
+    },
+    {
+      "id": "development",
+      "label": "Développement",
+      "labelEn": "Engineering",
+      "description": "Architecture frontend, backend, bases de données, mobile Flutter et intégrations API résilientes.",
+      "order": 3
+    },
+    {
+      "id": "ai_media",
+      "label": "IA et médias",
+      "labelEn": "AI & Media",
+      "description": "Agents IA contrôlables, intelligence audio/TTS, génération/analyse d'images et storytelling vidéo.",
+      "order": 4
+    },
+    {
+      "id": "quality_delivery",
+      "label": "Qualité et livraison",
+      "labelEn": "Quality & Delivery",
+      "description": "Audit sécurité, performance, QA & tests, analytics, DevOps CI/CD, documentation et debugging.",
+      "order": 5
+    }
+  ],
+  "skills": [
+    {
+      "id": "11-product-management",
+      "order": 11,
+      "name": "product-management",
+      "description": "Transforme une idée en produit clair, priorisé et livrable.",
+      "category": "product",
+      "categoryLabel": "Cadrage produit",
+      "path": "skills/11-product-management/SKILL.md",
+      "originalAttachmentPath": "public/assets/aistudio/SKILL_56f53d00.md",
+      "enabled": true,
+      "priority": 10,
+      "keywords": [
+        "product", "produit", "mvp", "roadmap", "user story", "user stories",
+        "priorisation", "cadrage", "kpi", "metrique", "spec", "specification",
+        "criteres d'acceptation", "valeur", "scope", "prd", "feature", "backlog"
+      ]
+    },
+    {
+      "id": "01-ui-ux-premium",
+      "order": 1,
+      "name": "ui-ux-premium",
+      "description": "Conçoit des interfaces premium, intuitives, accessibles et responsive.",
+      "category": "design",
+      "categoryLabel": "Design",
+      "path": "skills/01-ui-ux-premium/SKILL.md",
+      "originalAttachmentPath": "public/assets/aistudio/SKILL_b56490cf.md",
+      "enabled": true,
+      "priority": 10,
+      "keywords": [
+        "ui", "ux", "interface", "design", "maquette", "ergonomie", "responsive",
+        "layout", "typographie", "palette", "tokens", "composant", "ecran",
+        "dashboard", "admin", "carte", "card", "hover", "focus", "mobile", "美学", "界面"
+      ]
+    },
+    {
+      "id": "07-animation-motion",
+      "order": 7,
+      "name": "animation-motion",
+      "description": "Spécifie des animations d'interface utiles, cohérentes et performantes.",
+      "category": "design",
+      "categoryLabel": "Design",
+      "path": "skills/07-animation-motion/SKILL.md",
+      "originalAttachmentPath": "public/assets/aistudio/SKILL_2b40c9f0.md",
+      "enabled": true,
+      "priority": 8,
+      "keywords": [
+        "animation", "motion", "transition", "micro-interaction", "keyframes",
+        "fluid", "fluide", "brushstroke", "easing", "cubic-bezier", "spring",
+        "reduced-motion", "prefers-reduced-motion", "fps", "scroll", "动效"
+      ]
+    },
+    {
+      "id": "17-accessibility-i18n",
+      "order": 17,
+      "name": "accessibility-i18n",
+      "description": "Améliore accessibilité, internationalisation et localisation.",
+      "category": "design",
+      "categoryLabel": "Design",
+      "path": "skills/17-accessibility-i18n/SKILL.md",
+      "originalAttachmentPath": "public/assets/aistudio/SKILL_52e530ec.md",
+      "enabled": true,
+      "priority": 9,
+      "keywords": [
+        "accessibility", "accessibilite", "a11y", "wcag", "aria", "clavier",
+        "keyboard", "lecteur d'ecran", "screen reader", "contraste", "contrast",
+        "i18n", "l10n", "internationalisation", "localisation", "traduction",
+        "translation", "multilingue", "francais", "anglais", "chinois", "locale"
+      ]
+    },
+    {
+      "id": "02-frontend-development",
+      "order": 2,
+      "name": "frontend-development",
+      "description": "Développe des interfaces frontend robustes et maintenables.",
+      "category": "development",
+      "categoryLabel": "Développement",
+      "path": "skills/02-frontend-development/SKILL.md",
+      "originalAttachmentPath": "public/assets/aistudio/SKILL_0f89f285.md",
+      "enabled": true,
+      "priority": 10,
+      "keywords": [
+        "frontend", "react", "typescript", "tsx", "jsx", "vite", "tailwind",
+        "css", "dom", "component", "composant", "hook", "state", "router",
+        "navigation", "spa", "client", "browser", "web app", "formulaire"
+      ]
+    },
+    {
+      "id": "03-backend-architecture",
+      "order": 3,
+      "name": "backend-architecture",
+      "description": "Conçoit des backends sécurisés, évolutifs et documentés.",
+      "category": "development",
+      "categoryLabel": "Développement",
+      "path": "skills/03-backend-architecture/SKILL.md",
+      "originalAttachmentPath": "public/assets/aistudio/SKILL_5d3291f8.md",
+      "enabled": true,
+      "priority": 10,
+      "keywords": [
+        "backend", "serveur", "server", "express", "node", "endpoint", "route",
+        "rest", "controller", "middleware", "service", "architecture", "auth",
+        "autorisation", "validation", "contrat api", "logging", "dto"
+      ]
+    },
+    {
+      "id": "04-database-engineering",
+      "order": 4,
+      "name": "database-engineering",
+      "description": "Modélise et optimise les bases SQL, NoSQL et leurs règles d'accès.",
+      "category": "development",
+      "categoryLabel": "Développement",
+      "path": "skills/04-database-engineering/SKILL.md",
+      "originalAttachmentPath": "public/assets/aistudio/SKILL_14785207.md",
+      "enabled": true,
+      "priority": 9,
+      "keywords": [
+        "database", "base de donnees", "sql", "postgres", "postgresql", "nosql",
+        "firestore", "firebase", "supabase", "rls", "schema", "migration",
+        "index", "indexeddb", "requete", "query", "stockage", "storage", "modele"
+      ]
+    },
+    {
+      "id": "06-flutter-mobile",
+      "order": 6,
+      "name": "flutter-mobile",
+      "description": "Construit des applications Flutter iOS et Android de qualité production.",
+      "category": "development",
+      "categoryLabel": "Développement",
+      "path": "skills/06-flutter-mobile/SKILL.md",
+      "originalAttachmentPath": "public/assets/aistudio/SKILL_da48e672.md",
+      "enabled": true,
+      "priority": 7,
+      "keywords": [
+        "flutter", "dart", "widget", "ios", "android", "mobile natif",
+        "pubspec", "riverpod", "bloc", "apk", "ipa", "statefulwidget"
+      ]
+    },
+    {
+      "id": "12-api-integration",
+      "order": 12,
+      "name": "api-integration",
+      "description": "Intègre des API externes de façon résiliente et documentée.",
+      "category": "development",
+      "categoryLabel": "Développement",
+      "path": "skills/12-api-integration/SKILL.md",
+      "originalAttachmentPath": "public/assets/aistudio/SKILL_fafcabe1.md",
+      "enabled": true,
+      "priority": 9,
+      "keywords": [
+        "api", "webhook", "oauth", "fetch", "http", "retry", "backoff",
+        "timeout", "idempotence", "rate limit", "quota", "pagination",
+        "adaptateur", "externe", "client http", "sdk", "rest api", "graphql"
+      ]
+    },
+    {
+      "id": "05-ai-agent-development",
+      "order": 5,
+      "name": "ai-agent-development",
+      "description": "Conçoit des agents IA outillés, contrôlables et évaluables.",
+      "category": "ai_media",
+      "categoryLabel": "IA et médias",
+      "path": "skills/05-ai-agent-development/SKILL.md",
+      "originalAttachmentPath": "public/assets/aistudio/SKILL_8e6aa965.md",
+      "enabled": true,
+      "priority": 10,
+      "keywords": [
+        "agent", "agents", "ia", "ai", "llm", "gemini", "prompt", "contexte",
+        "context", "tool", "outil", "function calling", "skill", "skills",
+        "workflow", "evaluation", "orchestration", "system instruction", "rag"
+      ]
+    },
+    {
+      "id": "13-audio-music-intelligence",
+      "order": 13,
+      "name": "audio-music-intelligence",
+      "description": "Conçoit des fonctions d'analyse audio, transcription et synchronisation de paroles.",
+      "category": "ai_media",
+      "categoryLabel": "IA et médias",
+      "path": "skills/13-audio-music-intelligence/SKILL.md",
+      "originalAttachmentPath": "public/assets/aistudio/SKILL_71298540.md",
+      "enabled": true,
+      "priority": 9,
+      "keywords": [
+        "audio", "tts", "voix", "voice", "speech", "musique", "music",
+        "transcription", "paroles", "lyrics", "synchronisation", "timestamps",
+        "srt", "vtt", "diarisation", "equalizer", "son", "soundscape", "语音"
+      ]
+    },
+    {
+      "id": "14-image-generation-vision",
+      "order": 14,
+      "name": "image-generation-vision",
+      "description": "Spécifie les workflows de génération et d'analyse d'images.",
+      "category": "ai_media",
+      "categoryLabel": "IA et médias",
+      "path": "skills/14-image-generation-vision/SKILL.md",
+      "originalAttachmentPath": "public/assets/aistudio/SKILL_6a52fc56.md",
+      "enabled": true,
+      "priority": 8,
+      "keywords": [
+        "image", "images", "vision", "ocr", "illustration", "photo",
+        "visuel", "generation d'image", "avatar", "banner", "microexpression",
+        "faciale", "detection", "crop", "aspect ratio"
+      ]
+    },
+    {
+      "id": "15-video-storytelling",
+      "order": 15,
+      "name": "video-storytelling",
+      "description": "Conçoit des scripts, storyboards et workflows de montage vidéo.",
+      "category": "ai_media",
+      "categoryLabel": "IA et médias",
+      "path": "skills/15-video-storytelling/SKILL.md",
+      "originalAttachmentPath": "public/assets/aistudio/SKILL_f7ee1836.md",
+      "enabled": true,
+      "priority": 7,
+      "keywords": [
+        "video", "storyboard", "montage", "script", "camera", "plan",
+        "sous-titres", "reel", "short", "youtube", "tiktok", "storytelling", "clip"
+      ]
+    },
+    {
+      "id": "08-security-audit",
+      "order": 8,
+      "name": "security-audit",
+      "description": "Audite les risques applicatifs et propose des corrections défensives.",
+      "category": "quality_delivery",
+      "categoryLabel": "Qualité et livraison",
+      "path": "skills/08-security-audit/SKILL.md",
+      "originalAttachmentPath": "public/assets/aistudio/SKILL_d0a0f105.md",
+      "enabled": true,
+      "priority": 10,
+      "keywords": [
+        "securite", "security", "audit", "xss", "csrf", "injection", "traversal",
+        "path traversal", "secret", "cle", "token", "owasp", "permission",
+        "biometrie", "pin", "chiffrement", "risque", "vulnerabilite", "defensif"
+      ]
+    },
+    {
+      "id": "09-performance-optimization",
+      "order": 9,
+      "name": "performance-optimization",
+      "description": "Mesure et améliore les performances web, backend et mobile.",
+      "category": "quality_delivery",
+      "categoryLabel": "Qualité et livraison",
+      "path": "skills/09-performance-optimization/SKILL.md",
+      "originalAttachmentPath": "public/assets/aistudio/SKILL_d098ddfa.md",
+      "enabled": true,
+      "priority": 9,
+      "keywords": [
+        "performance", "perf", "latence", "latency", "vitesse", "lcp", "cls",
+        "bundle", "memoire", "memory", "cache", "optimisation", "goulot",
+        "bottleneck", "preload", "chargement", "offline"
+      ]
+    },
+    {
+      "id": "10-qa-testing",
+      "order": 10,
+      "name": "qa-testing",
+      "description": "Élabore une stratégie QA et détecte les régressions.",
+      "category": "quality_delivery",
+      "categoryLabel": "Qualité et livraison",
+      "path": "skills/10-qa-testing/SKILL.md",
+      "originalAttachmentPath": "public/assets/aistudio/SKILL_5f7d2f4b.md",
+      "enabled": true,
+      "priority": 10,
+      "keywords": [
+        "qa", "test", "tests", "testing", "unitaire", "integration", "e2e",
+        "playwright", "vitest", "jest", "regression", "recette", "cas limite",
+        "edge case", "assertion", "coverage", "verification"
+      ]
+    },
+    {
+      "id": "16-data-analytics",
+      "order": 16,
+      "name": "data-analytics",
+      "description": "Analyse des données avec méthode, visualisations et limites explicites.",
+      "category": "quality_delivery",
+      "categoryLabel": "Qualité et livraison",
+      "path": "skills/16-data-analytics/SKILL.md",
+      "originalAttachmentPath": "public/assets/aistudio/SKILL_240ec721.md",
+      "enabled": true,
+      "priority": 8,
+      "keywords": [
+        "data", "analytics", "analyse", "statistique", "correlation", "biais",
+        "echantillon", "graphique", "chart", "recharts", "d3", "kpi", "cohort",
+        "visualisation", "journal", "rapport", "metriques"
+      ]
+    },
+    {
+      "id": "18-devops-deployment",
+      "order": 18,
+      "name": "devops-deployment",
+      "description": "Prépare intégration continue, déploiement et observabilité.",
+      "category": "quality_delivery",
+      "categoryLabel": "Qualité et livraison",
+      "path": "skills/18-devops-deployment/SKILL.md",
+      "originalAttachmentPath": "public/assets/aistudio/SKILL_1bc7fc0a.md",
+      "enabled": true,
+      "priority": 8,
+      "keywords": [
+        "devops", "ci", "cd", "ci/cd", "deploiement", "deploy", "docker",
+        "pipeline", "build", "health check", "monitoring", "alertes",
+        "rollback", "production", "github actions", "observabilite"
+      ]
+    },
+    {
+      "id": "19-documentation-technical-writing",
+      "order": 19,
+      "name": "documentation-technical-writing",
+      "description": "Produit une documentation claire pour développeurs et utilisateurs.",
+      "category": "quality_delivery",
+      "categoryLabel": "Qualité et livraison",
+      "path": "skills/19-documentation-technical-writing/SKILL.md",
+      "originalAttachmentPath": "public/assets/aistudio/SKILL_89f0f429.md",
+      "enabled": true,
+      "priority": 7,
+      "keywords": [
+        "documentation", "doc", "docs", "readme", "guide", "manuel",
+        "changelog", "architecture", "onboarding", "exemple", "tutorial",
+        "redaction technique", "reference"
+      ]
+    },
+    {
+      "id": "20-debugging-code-review",
+      "order": 20,
+      "name": "debugging-code-review",
+      "description": "Diagnostique les bugs et réalise des revues de code rigoureuses.",
+      "category": "quality_delivery",
+      "categoryLabel": "Qualité et livraison",
+      "path": "skills/20-debugging-code-review/SKILL.md",
+      "originalAttachmentPath": "public/assets/aistudio/SKILL_ca1d2e87.md",
+      "enabled": true,
+      "priority": 10,
+      "keywords": [
+        "debug", "debugging", "bug", "bugs", "erreur", "error", "crash",
+        "fix", "corriger", "diagnostic", "cause racine", "root cause",
+        "code review", "revue de code", "stack trace", "reproduction", "regression"
+      ]
+    }
+  ]
+}

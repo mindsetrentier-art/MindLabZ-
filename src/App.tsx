@@ -21,6 +21,7 @@ import { ProfilePage } from './pages/ProfilePage';
 import { JournalPage } from './pages/JournalPage';
 import { BreathingPage } from './pages/BreathingPage';
 import { FocusAudioPage } from './pages/FocusAudioPage';
+import { SkillsAdminPage } from './pages/SkillsAdminPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { OnboardingModal } from './pages/OnboardingModal';
 import { JournalComposerModal } from './components/journal/JournalComposerModal';
@@ -29,6 +30,7 @@ import { GoogleAuthModal } from './components/auth/GoogleAuthModal';
 import { PwaInstallModal } from './components/pwa/PwaInstallModal';
 import { PwaUpdateToast } from './components/pwa/PwaUpdateToast';
 import { OfflineStatusToast } from './components/pwa/OfflineStatusToast';
+import { LawSpeechFloatingBar } from './components/audio/LawSpeechFloatingBar';
 import { BiometricSetupModal } from './components/journal/BiometricSetupModal';
 import { BadgeUnlockedModal } from './components/profile/BadgeUnlockedModal';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
@@ -95,6 +97,8 @@ const AppRoutes: React.FC = () => {
             <Route path="/assessment" element={<CognitiveAssessmentPage />} />
             <Route path="/cognitive-assessment" element={<CognitiveAssessmentPage />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/admin/skills" element={<SkillsAdminPage />} />
+            <Route path="/skills-admin" element={<SkillsAdminPage />} />
             {/* Universal 404 Recovery Route */}
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
@@ -103,6 +107,7 @@ const AppRoutes: React.FC = () => {
 
       <PwaUpdateToast />
       <OfflineStatusToast />
+      <LawSpeechFloatingBar />
 
       <FocusedBreathingModal
         isOpen={breathingOpen}

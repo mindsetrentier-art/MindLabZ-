@@ -214,14 +214,14 @@ export const ProgressPage: React.FC = () => {
         </div>
 
         {/* Deep Dive Cognitive Assessment Banner */}
-        <div className="pt-4 border-t border-stone-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-stone-900 to-indigo-950 text-white p-4 sm:p-5 rounded-xl shadow-sm">
+        <div className="pt-4 border-t border-stone-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4 art-salon-canvas text-[#FAF8F5] p-4 sm:p-5 rounded-2xl shadow-md">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300 bg-amber-400/20 px-2 py-0.5 rounded">深度测评</span>
+              <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-[#F3D89E] bg-[#D4A656]/15 border border-[#D4A656]/35 px-2 py-0.5 rounded">深度测评</span>
               <span className="text-stone-300 text-xs">· 实时映射 10 款游戏实战战绩</span>
             </div>
-            <h4 className="font-serif-editorial text-base sm:text-lg font-bold text-white flex items-center gap-2">
-              <Compass className="w-4 h-4 text-amber-300" />
+            <h4 className="font-serif-editorial text-base sm:text-lg font-bold text-[#FAF8F5] flex items-center gap-2">
+              <Compass className="w-4 h-4 text-[#E5C07B]" />
               六维认知能力深度雷达 & 心智原型报告
             </h4>
             <p className="text-xs text-stone-300 font-normal leading-relaxed">
@@ -230,7 +230,11 @@ export const ProgressPage: React.FC = () => {
           </div>
           <Link
             to="/assessment"
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-amber-400 hover:bg-amber-300 text-stone-950 font-bold text-xs shadow-md transition-all shrink-0 active:scale-95"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[#181411] font-bold text-xs transition-all shrink-0 active:scale-95 hover:brightness-105"
+            style={{
+              background: 'linear-gradient(135deg, #F2D794 0%, #D4A656 52%, #B8842E 100%)',
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.45), 0 8px 20px -5px rgba(212,166,86,0.4)',
+            }}
           >
             <span>进入多维评估雷达</span>
             <ArrowRight className="w-4 h-4" />

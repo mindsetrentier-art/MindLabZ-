@@ -53,10 +53,17 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
   const isPlayingGame = location.pathname.startsWith('/game/') || location.pathname === '/challenge';
 
   return (
-    <div className="min-h-screen bg-[#FAF8F5] text-[#1C1917] flex flex-col items-center justify-start antialiased selection:bg-[#532CD8]/15 selection:text-[#532CD8] relative overflow-x-hidden">
-      {/* 1. Subtle Editorial Paper Grain & Atmospheric Restraint */}
+    <div className="min-h-screen bg-[#F6F3EC] text-[#181411] flex flex-col items-center justify-start antialiased selection:bg-[#5B45B8]/15 selection:text-[#3E2C8A] relative overflow-x-hidden">
+      {/* 1. Editorial Cotton-Paper Grain & Subtle Dynamic Chromatic Aura */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div className="absolute inset-0 bg-paper-grid opacity-70" />
+        <div
+          className="absolute inset-x-0 top-0 h-[520px] transition-colors duration-1000"
+          style={{
+            background:
+              'radial-gradient(ellipse 85% 380px at 50% -40px, var(--chameleon-soft), transparent 72%)',
+          }}
+        />
+        <div className="absolute inset-0 bg-paper-grid opacity-65" />
       </div>
 
       {/* 2. Main Responsive Shell (Generous Whitespace & Editorial Balance) */}
@@ -103,7 +110,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
         {!isPlayingGame && (
           <button
             onClick={() => setAiTutorOpen(true)}
-            className="fixed right-4 sm:right-6 md:right-10 bottom-20 sm:bottom-24 z-30 group flex items-center justify-center gap-1.5 sm:gap-2 w-11 h-11 sm:w-auto sm:h-auto sm:px-4 sm:py-2.5 rounded-full chameleon-btn transition-all btn-tactile shadow-lg border border-white/20 active:scale-95 cursor-pointer"
+            className="fixed right-4 sm:right-6 md:right-10 bottom-20 sm:bottom-24 z-30 group flex items-center justify-center gap-1.5 sm:gap-2 w-11 h-11 sm:w-auto sm:h-auto sm:px-4 sm:py-2.5 rounded-full chameleon-btn transition-all btn-tactile shadow-lg cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-stone-900"
             title="咨询 AI 认知导师"
             aria-label="咨询 AI 认知导师"
           >

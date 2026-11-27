@@ -44,6 +44,14 @@ export interface NaturePreset {
   acousticProfile: string;
   description: string;
   accentColor: string;
+  /** Effective rhythmic modulation / pulse cadence in beats per minute */
+  bpm: number;
+  bpmLabel: string;
+  /** Synthesized acoustic passband / spectrum bounds in Hz */
+  minHz: number;
+  maxHz: number;
+  frequencyRangeLabel: string;
+  modulationSummary: string;
 }
 
 export const BINAURAL_PRESETS: BinauralPreset[] = [
@@ -109,43 +117,127 @@ export const NATURE_PRESETS: NaturePreset[] = [
     id: 'canopy-rain',
     name: 'Canopy Rainfall',
     nameZh: '林间细雨',
-    acousticProfile: 'Decorrelated stereo pink rain (180–1600 Hz)',
+    acousticProfile: 'Decorrelated stereo pink rain (190–1830 Hz)',
     description: '宽频柔化雨幕声床，温和掩蔽突发性环境人声与键盘噪音。',
     accentColor: '#0284C7',
+    bpm: 8.4,
+    bpmLabel: '8.4 BPM (0.14 Hz 雨势呼吸起伏)',
+    minHz: 190,
+    maxHz: 1830,
+    frequencyRangeLabel: '190 Hz – 1,830 Hz',
+    modulationSummary: 'Pink Noise · HP 190 Hz / LP 1550±280 Hz',
   },
   {
     id: 'ocean-tide',
     name: 'Deep Ocean Tide',
     nameZh: '深海长潮',
-    acousticProfile: '0.09 Hz rhythmic surf swell (80–540 Hz)',
+    acousticProfile: '0.09 Hz rhythmic surf swell (40–510 Hz)',
     description: '贴合 11 秒深呼吸节律的低频海潮涌动，稳定自主神经节奏。',
     accentColor: '#0D9488',
+    bpm: 5.4,
+    bpmLabel: '5.4 BPM (0.09 Hz 潮汐长波周期)',
+    minHz: 40,
+    maxHz: 510,
+    frequencyRangeLabel: '40 Hz – 510 Hz',
+    modulationSummary: 'Brown Noise Swell · LP 340±170 Hz',
   },
   {
     id: 'alpine-stream',
     name: 'Alpine Wind & Stream',
     nameZh: '山涧松风',
-    acousticProfile: 'Stereo brook & pine canopy resonance',
+    acousticProfile: 'Stereo brook & pine canopy resonance (320–2400 Hz)',
     description: '清澈溪流泛音与舒缓林风交织，适合长时间伏案阅读与思考。',
     accentColor: '#059669',
+    bpm: 11.4,
+    bpmLabel: '11.4 BPM (0.19 Hz 溪风带通扫频)',
+    minHz: 320,
+    maxHz: 2400,
+    frequencyRangeLabel: '320 Hz – 2,400 Hz',
+    modulationSummary: 'Pink Bandpass · Fc 760±240 Hz (Q 0.85)',
   },
   {
     id: 'night-hearth',
     name: 'Hearth & Brown Noise',
     nameZh: '暖炉棕噪',
-    acousticProfile: 'Warm deep brown noise (< 340 Hz) + soft embers',
+    acousticProfile: 'Warm brown noise (30–340 Hz) + ember crackles',
     description: '低沉温暖的布朗噪声底噪与微弱余烬声，降低听觉疲劳。',
     accentColor: '#D97706',
+    bpm: 51,
+    bpmLabel: '51 BPM (余烬随机轻响平均脉动)',
+    minHz: 30,
+    maxHz: 3300,
+    frequencyRangeLabel: '30 Hz – 340 Hz (底噪) / 3.3 kHz (余烬)',
+    modulationSummary: 'Brown LP 340 Hz + Triangle Embers',
   },
   {
     id: 'none',
     name: 'Pure Binaural Only',
     nameZh: '纯双耳节拍',
-    acousticProfile: 'Nature bed muted (0 dB acoustic floor)',
+    acousticProfile: 'Nature bed muted (pure dual-sine carrier)',
     description: '关闭自然环境声床，仅保留纯净左右耳正弦载波差频信号。',
     accentColor: '#64748B',
+    bpm: 0,
+    bpmLabel: '0 BPM (稳态连续正弦载波)',
+    minHz: 120,
+    maxHz: 325,
+    frequencyRangeLabel: '纯载波窄带 (无环境白噪)',
+    modulationSummary: 'Stereo Sine L/R Only (0 dB Nature Floor)',
   },
 ];
+
+export interface SoundscapeAcousticTelemetry {
+  soundscapeId: NaturePresetId;
+  soundscapeNameZh: string;
+  soundscapeNameEn: string;
+  bpm: number;
+  bpmDisplay: string;
+  bpmDetail: string;
+  minHz: number;
+  maxHz: number;
+  frequencyRangeDisplay: string;
+  binauralRangeDisplay: string;
+  combinedSpectrumDisplay: string;
+  modulationSummary: string;
+  accentColor: string;
+}
+
+export function getSoundscapeAcousticTelemetry(
+  snap: Pick<FocusAudioSnapshot, 'naturePresetId' | 'carrierHz' | 'beatHz'>
+): SoundscapeAcousticTelemetry {
+  const nature =
+    NATURE_PRESETS.find((n) => n.id === snap.naturePresetId) || NATURE_PRESETS[0];
+  const leftHz = Math.round(snap.carrierHz);
+  const rightHz = Number((snap.carrierHz + snap.beatHz).toFixed(1));
+  const binauralRangeDisplay = `${leftHz} Hz – ${rightHz} Hz`;
+
+  const effectiveMinHz =
+    nature.id === 'none' ? leftHz : Math.min(nature.minHz, leftHz);
+  const effectiveMaxHz =
+    nature.id === 'none' ? rightHz : Math.max(nature.maxHz, rightHz);
+
+  const formatHz = (hz: number) =>
+    hz >= 1000 ? `${hz.toLocaleString('en-US')} Hz` : `${hz} Hz`;
+
+  return {
+    soundscapeId: nature.id,
+    soundscapeNameZh: nature.nameZh,
+    soundscapeNameEn: nature.name,
+    bpm: nature.bpm,
+    bpmDisplay: nature.bpm === 0 ? '0 BPM' : `${nature.bpm} BPM`,
+    bpmDetail: nature.bpmLabel,
+    minHz: effectiveMinHz,
+    maxHz: effectiveMaxHz,
+    frequencyRangeDisplay:
+      nature.id === 'none'
+        ? binauralRangeDisplay
+        : `${formatHz(nature.minHz)} – ${formatHz(nature.maxHz)}`,
+    binauralRangeDisplay,
+    combinedSpectrumDisplay: `${formatHz(effectiveMinHz)} – ${formatHz(Math.round(effectiveMaxHz))}`,
+    modulationSummary: nature.modulationSummary,
+    accentColor: nature.accentColor,
+  };
+}
+
 
 export interface FocusAudioSnapshot {
   isPlaying: boolean;
@@ -160,6 +252,102 @@ export interface FocusAudioSnapshot {
   timerDurationSec: number; // 0 = continuous
   timerRemainingSec: number;
   sessionElapsedSec: number;
+}
+
+export interface FocusSessionBookmarkInput {
+  id: string;
+  userId: string;
+  label: string;
+  timestampSec: number;
+  binauralPresetId: BinauralPresetId;
+  naturePresetId: NaturePresetId;
+  beatHz: number;
+  carrierHz: number;
+  binauralMix: number;
+  natureMix: number;
+  masterVolume: number;
+  timerDurationSec: number;
+}
+
+export interface FocusSessionBookmark extends FocusSessionBookmarkInput {
+  createdAt?: unknown;
+  updatedAt?: unknown;
+}
+
+export const MAX_BOOKMARK_LABEL_LEN = 80;
+export const MAX_SESSION_TIMESTAMP_SEC = 86400;
+export const MAX_TIMER_DURATION_SEC = 14400;
+
+export function clampSessionTimestamp(seconds: number): number {
+  if (typeof seconds !== 'number' || !Number.isFinite(seconds)) return 0;
+  return Math.max(0, Math.min(MAX_SESSION_TIMESTAMP_SEC, Math.round(seconds)));
+}
+
+export function formatSessionTimestamp(totalSeconds: number): string {
+  const safeSec = clampSessionTimestamp(totalSeconds);
+  const hours = Math.floor(safeSec / 3600);
+  const mins = Math.floor((safeSec % 3600) / 60);
+  const secs = safeSec % 60;
+  if (hours > 0) {
+    return `${hours}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  }
+  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+}
+
+export function sanitizeBookmarkLabel(label: string, fallback = '专注声场书签'): string {
+  const cleaned = (typeof label === 'string' ? label : '').trim().replace(/\s+/g, ' ');
+  if (!cleaned) {
+    return fallback.trim().slice(0, MAX_BOOKMARK_LABEL_LEN) || '专注声场书签';
+  }
+  return cleaned.slice(0, MAX_BOOKMARK_LABEL_LEN);
+}
+
+export function computeRemainingFromElapsed(
+  elapsedSec: number,
+  timerDurationSec: number
+): number {
+  const safeDur = Math.max(0, Math.min(MAX_TIMER_DURATION_SEC, Math.round(timerDurationSec || 0)));
+  if (safeDur <= 0) return 0;
+  const safeElapsed = clampSessionTimestamp(elapsedSec);
+  if (safeElapsed <= 0) return safeDur;
+  const mod = safeElapsed % safeDur;
+  return mod === 0 ? safeDur : safeDur - mod;
+}
+
+export function buildBookmarkSegmentFromSnapshot(
+  snap: FocusAudioSnapshot,
+  customLabel?: string
+): Omit<FocusSessionBookmarkInput, 'id' | 'userId'> {
+  const validBinaural =
+    BINAURAL_PRESETS.find((p) => p.id === snap.binauralPresetId) || BINAURAL_PRESETS[0];
+  const validNature =
+    NATURE_PRESETS.find((n) => n.id === snap.naturePresetId) || NATURE_PRESETS[0];
+
+  const timestampSec = clampSessionTimestamp(snap.sessionElapsedSec);
+  const beatHz = Math.max(4, Math.min(45, Number((snap.beatHz || validBinaural.beatHz).toFixed(1))));
+  const carrierHz = Math.max(100, Math.min(320, Math.round(snap.carrierHz || validBinaural.carrierHz)));
+  const binauralMix = Math.max(0, Math.min(1, Number((snap.binauralMix ?? 0.42).toFixed(2))));
+  const natureMix = Math.max(0, Math.min(1, Number((snap.natureMix ?? 0.72).toFixed(2))));
+  const masterVolume = Math.max(0, Math.min(1, Number((snap.masterVolume ?? 0.68).toFixed(2))));
+  const timerDurationSec = Math.max(
+    0,
+    Math.min(MAX_TIMER_DURATION_SEC, Math.round(snap.timerDurationSec || 0))
+  );
+
+  const defaultLabel = `${validBinaural.nameZh} · ${validNature.nameZh} @ ${formatSessionTimestamp(timestampSec)}`;
+
+  return {
+    label: sanitizeBookmarkLabel(customLabel || '', defaultLabel),
+    timestampSec,
+    binauralPresetId: validBinaural.id,
+    naturePresetId: validNature.id,
+    beatHz,
+    carrierHz,
+    binauralMix,
+    natureMix,
+    masterVolume,
+    timerDurationSec,
+  };
 }
 
 const STORAGE_KEY = 'mindlabz_cognitive_focus_audio_v1';
@@ -892,6 +1080,74 @@ class CognitiveFocusAudioEngine {
       timerRemainingSec: this.state.timerDurationSec,
       sessionElapsedSec: 0,
     };
+    this.emit();
+  }
+
+  public seekSessionTimestamp(timestampSec: number): void {
+    const safeSec = clampSessionTimestamp(timestampSec);
+    this.state = {
+      ...this.state,
+      sessionElapsedSec: safeSec,
+      timerRemainingSec: computeRemainingFromElapsed(safeSec, this.state.timerDurationSec),
+    };
+    this.persist();
+    this.emit();
+  }
+
+  public applySessionBookmark(
+    segment: Omit<FocusSessionBookmarkInput, 'id' | 'userId' | 'label'>,
+    options?: { autoPlay?: boolean }
+  ): void {
+    const validBinaural = BINAURAL_PRESETS.some((p) => p.id === segment.binauralPresetId)
+      ? segment.binauralPresetId
+      : 'gamma-40';
+    const validNature = NATURE_PRESETS.some((n) => n.id === segment.naturePresetId)
+      ? segment.naturePresetId
+      : 'canopy-rain';
+
+    const beatHz = Math.max(4, Math.min(45, Number((segment.beatHz || 14).toFixed(1))));
+    const carrierHz = Math.max(100, Math.min(320, Math.round(segment.carrierHz || 180)));
+    const binauralMix = Math.max(0, Math.min(1, segment.binauralMix ?? 0.42));
+    const natureMix = Math.max(0, Math.min(1, segment.natureMix ?? 0.72));
+    const masterVolume = Math.max(0, Math.min(1, segment.masterVolume ?? 0.68));
+    const timerDurationSec = Math.max(
+      0,
+      Math.min(MAX_TIMER_DURATION_SEC, Math.round(segment.timerDurationSec || 0))
+    );
+    const timestampSec = clampSessionTimestamp(segment.timestampSec);
+    const natureChanged = validNature !== this.state.naturePresetId;
+    const autoPlay = options?.autoPlay !== false;
+
+    this.state = {
+      ...this.state,
+      binauralPresetId: validBinaural,
+      naturePresetId: validNature,
+      beatHz,
+      carrierHz,
+      binauralMix,
+      natureMix,
+      masterVolume,
+      isMuted: autoPlay && masterVolume > 0 ? false : this.state.isMuted,
+      timerDurationSec,
+      sessionElapsedSec: timestampSec,
+      timerRemainingSec: computeRemainingFromElapsed(timestampSec, timerDurationSec),
+    };
+
+    if (this.state.isPlaying && this.ctx) {
+      if (this.leftOsc && this.rightOsc) {
+        const now = this.ctx.currentTime;
+        this.leftOsc.frequency.setTargetAtTime(carrierHz, now, 0.04);
+        this.rightOsc.frequency.setTargetAtTime(carrierHz + beatHz, now, 0.04);
+      }
+      if (natureChanged) {
+        this.startNatureNodes();
+      }
+      this.updateGains();
+    } else if (autoPlay) {
+      this.play();
+    }
+
+    this.persist();
     this.emit();
   }
 

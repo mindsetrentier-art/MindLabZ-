@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Headphones } from 'lucide-react';
 import { CognitiveFocusAudioPlayer } from '../components/audio/CognitiveFocusAudioPlayer';
+import { AmbientSoundscapeVisualizer } from '../components/audio/AmbientSoundscapeVisualizer';
+import { SoundscapeAcousticMetrics } from '../components/audio/SoundscapeAcousticMetrics';
+import { FocusSessionBookmarksPanel } from '../components/audio/FocusSessionBookmarksPanel';
 import { cognitiveFocusAudio, BinauralPresetId, NaturePresetId } from '../utils/cognitiveFocusAudio';
 import { gameAudio } from '../utils/gameAudio';
 
@@ -56,6 +59,7 @@ const COGNITIVE_TASK_PAIRINGS: CognitiveTaskPairing[] = [
 
 export const FocusAudioPage: React.FC = () => {
   const navigate = useNavigate();
+  const [captureTrigger, setCaptureTrigger] = useState(0);
 
   const handleLaunchPairing = (pairing: CognitiveTaskPairing) => {
     gameAudio.playTap();
@@ -83,14 +87,26 @@ export const FocusAudioPage: React.FC = () => {
         </p>
       </header>
 
+      {/* Currently Selected Soundscape BPM & Frequency Range Telemetry */}
+      <SoundscapeAcousticMetrics />
+
+      {/* Real-Time CSS Equalizer Ambient Soundscape Visualizer */}
+      <AmbientSoundscapeVisualizer />
+
       {/* Full Studio Workstation Component */}
-      <CognitiveFocusAudioPlayer variant="studio" />
+      <CognitiveFocusAudioPlayer
+        variant="studio"
+        onBookmarkTimestamp={() => setCaptureTrigger((n) => n + 1)}
+      />
+
+      {/* Focus Session Timestamp Bookmarks */}
+      <FocusSessionBookmarksPanel externalCaptureTrigger={captureTrigger} />
 
       {/* Cognitive Task Acoustic Pairing Guide */}
       <section className="space-y-4">
         <div className="flex items-baseline justify-between gap-4">
           <h2 className="font-serif-editorial text-lg sm:text-xl font-bold text-stone-900">
-            01. 按认知任务一键配置专注声场
+            02. 按认知任务一键配置专注声场
           </h2>
           <span className="text-xs text-stone-500 font-mono">
             Apply Preset &amp; Enter Task

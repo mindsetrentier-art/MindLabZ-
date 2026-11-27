@@ -296,7 +296,7 @@ export const BottomNavigation: React.FC = () => {
                   // ignore
                 }
               }}
-              className={`flex flex-col items-center justify-center min-w-[60px] sm:min-w-[74px] min-h-[44px] py-1.5 px-3.5 sm:px-5 rounded-full transition-colors duration-200 relative z-10 group active:scale-95 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#532CD8] ${
+              className={`flex flex-col items-center justify-center min-w-[60px] sm:min-w-[74px] min-h-[44px] py-1.5 px-3.5 sm:px-5 rounded-full transition-colors duration-200 relative z-10 group active:scale-95 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5B45B8] ${
                 isCurrent
                   ? 'text-stone-950 font-bold'
                   : 'text-stone-500 hover:text-stone-900'

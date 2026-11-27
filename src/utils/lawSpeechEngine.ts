@@ -113,6 +113,14 @@ const DEFAULT_PREFERENCES: LawSpeechPreferences = {
   highlightMarker: 'underline',
 };
 
+export const MIN_PLAYBACK_RATE = 0.5;
+export const MAX_PLAYBACK_RATE = 2.0;
+
+export function clampPlaybackRate(value: number): number {
+  if (typeof value !== 'number' || Number.isNaN(value)) return 1.0;
+  return Math.min(MAX_PLAYBACK_RATE, Math.max(MIN_PLAYBACK_RATE, Number(value.toFixed(2))));
+}
+
 function loadPreferences(): LawSpeechPreferences {
   if (typeof window === 'undefined') return { ...DEFAULT_PREFERENCES };
   try {
@@ -127,7 +135,7 @@ function loadPreferences(): LawSpeechPreferences {
       : DEFAULT_PREFERENCES.highlightMarker;
     const clampedRate =
       typeof parsed.rate === 'number' && !Number.isNaN(parsed.rate)
-        ? Math.min(1.6, Math.max(0.65, Number(parsed.rate.toFixed(2))))
+        ? clampPlaybackRate(parsed.rate)
         : DEFAULT_PREFERENCES.rate;
 
     return {
@@ -158,7 +166,7 @@ export function updateLawSpeechPreferences(
 ): LawSpeechPreferences {
   const nextRate =
     typeof partial.rate === 'number' && !Number.isNaN(partial.rate)
-      ? Math.min(1.6, Math.max(0.65, Number(partial.rate.toFixed(2))))
+      ? clampPlaybackRate(partial.rate)
       : preferences.rate;
 
   const nextPreset =
@@ -188,20 +196,22 @@ export function updateLawSpeechPreferences(
   }
 
   // Keep active playback rate & brushstroke timing synchronized live if speed changes mid-reading
-  if (typeof partial.rate === 'number' && snapshot.isSpeaking) {
+  if (typeof partial.rate === 'number') {
     const activePresetMeta =
       VOICE_PRESETS.find((p) => p.id === preferences.voicePreset) || VOICE_PRESETS[0];
-    const liveRate = Math.min(1.8, Math.max(0.6, preferences.rate * activePresetMeta.rateMultiplier));
-    snapshot = { ...snapshot, rate: liveRate };
-    syncBrushTimingCssVars(liveRate);
-    if (activeAudioEl) {
-      try {
-        activeAudioEl.playbackRate = liveRate;
-      } catch {
-        // ignore unsupported rate assignment
+    const liveRate = clampPlaybackRate(preferences.rate * activePresetMeta.rateMultiplier);
+    syncBrushTimingCssVars(snapshot.isSpeaking ? liveRate : preferences.rate);
+    if (snapshot.isSpeaking) {
+      snapshot = { ...snapshot, rate: liveRate };
+      if (activeAudioEl) {
+        try {
+          activeAudioEl.playbackRate = liveRate;
+        } catch {
+          // ignore unsupported rate assignment
+        }
       }
+      notify();
     }
-    notify();
   }
 
   for (const listener of prefListeners) {
@@ -264,6 +274,7 @@ export interface SegmentRange {
 
 export interface LawSpeechSnapshot {
   activeLawId: string | null;
+  activeTitle?: string;
   isSpeaking: boolean;
   activeCpIndex: number;
   activeRangeLength: number;
@@ -312,7 +323,7 @@ let snapshot: LawSpeechSnapshot = {
 
 function syncBrushTimingCssVars(playbackRate: number) {
   if (typeof document === 'undefined') return;
-  const clamped = Math.max(0.65, Math.min(1.6, playbackRate || 1.0));
+  const clamped = clampPlaybackRate(playbackRate || 1.0);
   const brushMs = Math.round(230 / clamped);
   const trailMs = Math.round(340 / clamped);
   const markerMs = Math.round(680 / clamped);
@@ -321,6 +332,9 @@ function syncBrushTimingCssVars(playbackRate: number) {
   rootStyle.setProperty('--tts-trail-ms', `${trailMs}ms`);
   rootStyle.setProperty('--tts-marker-ms', `${markerMs}ms`);
 }
+
+// Initialize root brushstroke timing CSS vars from stored preference on startup
+syncBrushTimingCssVars(preferences.rate);
 
 export function getActiveSpeechRate(): number {
   return snapshot.isSpeaking ? snapshot.rate : preferences.rate;
@@ -372,7 +386,7 @@ function pickVoiceAndPitch(prefs: LawSpeechPreferences): {
     VOICE_PRESETS.find((p) => p.id === prefs.voicePreset) || VOICE_PRESETS[0];
 
   const baseRate = prefs.rate || 1.0;
-  const effectiveRate = Math.min(1.8, Math.max(0.6, baseRate * presetMeta.rateMultiplier));
+  const effectiveRate = clampPlaybackRate(baseRate * presetMeta.rateMultiplier);
 
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
     return { voice: null, pitch: presetMeta.pitch, effectiveRate };
@@ -990,15 +1004,21 @@ export function startLawSpeech({
     VOICE_PRESETS.find((p) => p.id === effectivePrefs.voicePreset) || VOICE_PRESETS[0];
   const resolvedRate =
     typeof rate === 'number'
-      ? rate
-      : Math.min(1.8, Math.max(0.6, (effectivePrefs.rate || 1.0) * presetMeta.rateMultiplier));
+      ? clampPlaybackRate(rate)
+      : clampPlaybackRate((effectivePrefs.rate || 1.0) * presetMeta.rateMultiplier);
 
   const { fullScript, codepoints, segmentMap, cumWeights } = buildScriptAndMaps(segments);
   const totalCp = codepoints.length;
 
+  const activeTitle =
+    segments.find((s) => s.key === 'title')?.text?.trim() ||
+    segments[0]?.text?.trim().slice(0, 28) ||
+    '';
+
   if (!fullScript || totalCp === 0) {
     snapshot = {
       activeLawId: null,
+      activeTitle: undefined,
       isSpeaking: false,
       activeCpIndex: -1,
       activeRangeLength: 1,
@@ -1011,6 +1031,7 @@ export function startLawSpeech({
 
   snapshot = {
     activeLawId: lawId,
+    activeTitle,
     isSpeaking: true,
     activeCpIndex: 0,
     activeRangeLength: 1,
@@ -1110,9 +1131,12 @@ export function startLawSpeech({
         }
 
         const chunk = webChunks[chunkIdx];
+        const liveChunkRate = snapshot.isSpeaking ? clampPlaybackRate(snapshot.rate) : speechRate;
+        syncBrushTimingCssVars(liveChunkRate);
+
         const utter = new SpeechSynthesisUtterance(chunk.spokenText);
         utter.lang = voice?.lang || 'zh-CN';
-        utter.rate = speechRate;
+        utter.rate = liveChunkRate;
         utter.pitch = pitch;
         if (voice) {
           utter.voice = voice;
@@ -1121,7 +1145,7 @@ export function startLawSpeech({
         const chunkWeightSpan = Math.max(0.5, chunk.endWeight - chunk.startWeight);
         const estimatedMs = Math.max(
           900,
-          (chunkWeightSpan / (4.4 * Math.max(0.5, speechRate))) * 1000
+          (chunkWeightSpan / (4.4 * Math.max(0.5, liveChunkRate))) * 1000
         );
 
         let chunkStartedAt = performance.now();
@@ -1148,14 +1172,19 @@ export function startLawSpeech({
           if (mySession !== sessionCounter || settled) return;
           const now = performance.now();
           let nextCp = snapshot.activeCpIndex;
+          const activeRate = snapshot.isSpeaking ? clampPlaybackRate(snapshot.rate) : liveChunkRate;
 
           if (lastBoundaryAt > 0 && now - lastBoundaryAt < 1100) {
             const span = Math.max(1, lastBoundaryNextCp - lastBoundaryCp);
-            const msPerChar = 200 / Math.max(0.5, speechRate);
+            const msPerChar = 200 / Math.max(0.5, activeRate);
             const step = Math.min(span - 1, Math.floor((now - lastBoundaryAt) / msPerChar));
             nextCp = Math.min(chunk.endCp - 1, lastBoundaryCp + step);
           } else {
-            const frac = Math.min(0.98, Math.max(0, (now - chunkStartedAt) / estimatedMs));
+            const dynamicEstMs = Math.max(
+              900,
+              (chunkWeightSpan / (4.4 * Math.max(0.5, activeRate))) * 1000
+            );
+            const frac = Math.min(0.98, Math.max(0, (now - chunkStartedAt) / dynamicEstMs));
             const targetW = chunk.startWeight + frac * chunkWeightSpan;
             nextCp = findCpByWeight(cumWeights, targetW, chunk.startCp, chunk.endCp - 1);
           }
@@ -1302,18 +1331,22 @@ export function startLawSpeech({
       return;
     }
 
+    const liveChunkRate = snapshot.isSpeaking ? clampPlaybackRate(snapshot.rate) : resolvedRate;
+    syncBrushTimingCssVars(liveChunkRate);
+
     const audio = new Audio(blobUrl);
     activeAudioEl = audio;
-    audio.playbackRate = resolvedRate;
+    audio.playbackRate = liveChunkRate;
     if ('preservesPitch' in audio) {
       (audio as HTMLAudioElement & { preservesPitch: boolean }).preservesPitch = true;
     }
 
     const chunkWeightSpan = Math.max(0.5, chunk.endWeight - chunk.startWeight);
-    const estDurationSec = Math.max(0.8, chunkWeightSpan / (4.4 * Math.max(0.5, resolvedRate)));
 
     const syncHighlightLoop = () => {
       if (mySession !== sessionCounter || activeAudioEl !== audio) return;
+      const currentRate = snapshot.isSpeaking ? clampPlaybackRate(snapshot.rate) : liveChunkRate;
+      const estDurationSec = Math.max(0.8, chunkWeightSpan / (4.4 * Math.max(0.5, currentRate)));
       const dur = Number.isFinite(audio.duration) && audio.duration > 0 ? audio.duration : estDurationSec;
       const frac = Math.min(1, Math.max(0, audio.currentTime / dur));
       const targetWeight = chunk.startWeight + frac * chunkWeightSpan;
@@ -1396,9 +1429,10 @@ export function useLawSpeech(lawId?: string) {
     isSpeakingThisLaw,
     globalIsSpeaking: state.isSpeaking,
     activeLawId: state.activeLawId,
+    activeTitle: state.activeTitle,
     activeCpIndex: isSpeakingThisLaw ? state.activeCpIndex : -1,
     activeRangeLength: isSpeakingThisLaw ? state.activeRangeLength : 0,
     segments: isSpeakingThisLaw ? state.segments : {},
-    rate: isSpeakingThisLaw ? state.rate : preferences.rate,
+    rate: state.isSpeaking ? state.rate : preferences.rate,
   };
 }

@@ -47,6 +47,7 @@ import {
   stopLawSpeech,
   toggleLawSpeech,
   useLawSpeech,
+  useLawSpeechPreferences,
   LawSpeechSegment,
 } from '../utils/lawSpeechEngine';
 import { SilverSpeechText, LawVoiceToggleSwitch } from '../components/ui/SilverSpeechText';
@@ -328,7 +329,8 @@ export const LearnPage: React.FC = () => {
 
   // Audio Listening Mode (随听朗读连播状态)
   const [audioPlayingIdx, setAudioPlayingIdx] = useState<number | null>(null);
-  const [audioRate, setAudioRate] = useState<number>(1.0);
+  const [speechPrefs, updateSpeechPrefs] = useLawSpeechPreferences();
+  const audioRate = speechPrefs.rate;
 
   // Epiphany random generator modal
   const [epiphanyLaw, setEpiphanyLaw] = useState<PsychologyLaw | null>(null);
@@ -806,7 +808,7 @@ export const LearnPage: React.FC = () => {
   );
 
   // Continuous Web Speech Audio Queue Handler (听力库随听连播 — 同步触发银字高亮)
-  const speakLawAt = (idx: number, rateOverride: number = audioRate) => {
+  const speakLawAt = (idx: number) => {
     if (idx < 0 || idx >= filteredLaws.length) {
       stopLawSpeech();
       setAudioPlayingIdx(null);
@@ -833,10 +835,9 @@ export const LearnPage: React.FC = () => {
     startLawSpeech({
       lawId: targetLaw.id,
       segments: speechSegments,
-      rate: rateOverride,
       onComplete: () => {
         if (idx + 1 < filteredLaws.length) {
-          speakLawAt(idx + 1, rateOverride);
+          speakLawAt(idx + 1);
         } else {
           setAudioPlayingIdx(null);
         }
@@ -850,7 +851,7 @@ export const LearnPage: React.FC = () => {
       stopLawSpeech();
       setAudioPlayingIdx(null);
     } else if (filteredLaws.length > 0) {
-      speakLawAt(0, audioRate);
+      speakLawAt(0);
     }
   };
 
@@ -888,15 +889,15 @@ export const LearnPage: React.FC = () => {
         </div>
 
         {/* Ambient Chromatic Glow Orbs */}
-        <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-gradient-to-br from-amber-500/20 via-purple-600/25 to-transparent blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-24 -left-20 w-80 h-80 rounded-full bg-gradient-to-tr from-indigo-600/25 via-emerald-500/15 to-transparent blur-3xl pointer-events-none" />
+        <div className="absolute -top-20 -right-20 w-80 h-80 rounded-full bg-gradient-to-br from-[#D4A656]/18 via-[#5B45B8]/22 to-transparent blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -left-20 w-80 h-80 rounded-full bg-gradient-to-tr from-[#3E2C8A]/25 via-[#157F5D]/14 to-transparent blur-3xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6 sm:gap-8">
           <div className="space-y-3.5 max-w-2xl">
             {/* Museum Catalog Rubric */}
             <div className="flex items-center gap-2.5 text-xs font-mono">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400/15 text-amber-300 border border-amber-300/35 font-semibold tracking-wider text-[11px] shadow-xs">
-                <Palette className="w-3.5 h-3.5 text-amber-400" />
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#D4A656]/12 text-[#F3D89E] border border-[#D4A656]/35 font-semibold tracking-wider text-[11px] shadow-[inset_0_1px_0_rgba(255,255,255,0.12)]">
+                <Palette className="w-3.5 h-3.5 text-[#E5C07B]" />
                 <span>SALON DE PSYCHOLOGIE · 艺术典藏</span>
               </span>
               <span className="text-stone-500" aria-hidden="true">/</span>
@@ -906,7 +907,7 @@ export const LearnPage: React.FC = () => {
             </div>
 
             {/* High-Contrast Literary Headline */}
-            <h1 className="font-serif-editorial text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight leading-tight text-white drop-shadow-sm">
+            <h1 className="font-serif-editorial text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight leading-tight text-[#FAF8F5] drop-shadow-sm">
               MindLabZ 全景心理学定律与随听典藏馆
             </h1>
 
@@ -917,20 +918,20 @@ export const LearnPage: React.FC = () => {
 
             {/* Curatorial Index Stats */}
             <div className="pt-1.5 flex items-center gap-4 text-xs font-numeric text-stone-300 flex-wrap">
-              <span className="flex items-center gap-1.5 bg-white/5 border border-white/10 px-2.5 py-1 rounded-lg">
-                <span className="w-2 h-2 rounded-full bg-indigo-400 shadow-xs shadow-indigo-400/50" />
+              <span className="flex items-center gap-1.5 bg-white/[0.06] border border-white/12 px-2.5 py-1 rounded-lg">
+                <span className="w-2 h-2 rounded-full bg-[#8B7BE0]" />
                 <span>馆藏卷轴:</span>
-                <strong className="text-white font-bold">{laws.length} 篇</strong>
+                <strong className="text-[#FAF8F5] font-bold">{laws.length} 篇</strong>
               </span>
-              <span className="flex items-center gap-1.5 bg-white/5 border border-white/10 px-2.5 py-1 rounded-lg">
-                <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-xs shadow-emerald-400/50" />
+              <span className="flex items-center gap-1.5 bg-white/[0.06] border border-white/12 px-2.5 py-1 rounded-lg">
+                <span className="w-2 h-2 rounded-full bg-[#34A88B]" />
                 <span>心智展厅:</span>
-                <strong className="text-white font-bold">8 大领域</strong>
+                <strong className="text-[#FAF8F5] font-bold">8 大领域</strong>
               </span>
-              <span className="flex items-center gap-1.5 bg-white/5 border border-white/10 px-2.5 py-1 rounded-lg">
-                <span className="w-2 h-2 rounded-full bg-amber-400 shadow-xs shadow-amber-400/50" />
+              <span className="flex items-center gap-1.5 bg-white/[0.06] border border-white/12 px-2.5 py-1 rounded-lg">
+                <span className="w-2 h-2 rounded-full bg-[#E5C07B]" />
                 <span>已内化掌握:</span>
-                <strong className="text-amber-300 font-bold">{(user?.lawsMastered || []).length} 项</strong>
+                <strong className="text-[#F3D89E] font-bold">{(user?.lawsMastered || []).length} 项</strong>
               </span>
             </div>
           </div>
@@ -939,18 +940,24 @@ export const LearnPage: React.FC = () => {
           <div className="shrink-0 flex flex-col sm:flex-row md:flex-col items-center gap-3">
             <button
               onClick={handleRandomEpiphany}
-              className="group p-5 rounded-3xl bg-gradient-to-b from-white/15 to-white/5 backdrop-blur-md border border-amber-400/30 hover:border-amber-300 flex flex-col items-center justify-center text-center space-y-1.5 shadow-xl hover:scale-105 active:scale-95 transition-all cursor-pointer w-full sm:w-auto"
+              className="group p-5 rounded-3xl bg-gradient-to-b from-white/[0.12] to-white/[0.03] backdrop-blur-md border border-[#D4A656]/35 hover:border-[#E5C07B]/75 flex flex-col items-center justify-center text-center space-y-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.16),0_16px_32px_-8px_rgba(0,0,0,0.45)] hover:scale-[1.03] active:scale-95 transition-all cursor-pointer w-full sm:w-auto"
               title="随机启迪：抽选一条心智艺术定律"
             >
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-400 via-amber-300 to-amber-500 text-stone-950 flex items-center justify-center shadow-lg shadow-amber-500/30 group-hover:rotate-12 transition-transform">
+              <div
+                className="w-12 h-12 rounded-2xl text-[#181411] flex items-center justify-center group-hover:rotate-12 transition-transform"
+                style={{
+                  background: 'linear-gradient(135deg, #F2D794 0%, #D4A656 52%, #B8842E 100%)',
+                  boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.45), 0 8px 20px -4px rgba(212,166,86,0.42)',
+                }}
+              >
                 <Shuffle className="w-6 h-6 stroke-[2.2]" />
               </div>
-              <span className="text-[10px] text-amber-200 font-mono tracking-widest uppercase">
+              <span className="text-[10px] text-[#E5C07B] font-mono tracking-widest uppercase">
                 Random Epiphany
               </span>
-              <span className="font-serif-editorial font-bold text-white text-sm flex items-center gap-1">
+              <span className="font-serif-editorial font-bold text-[#FAF8F5] text-sm flex items-center gap-1">
                 <span>随机启迪</span>
-                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                <Sparkles className="w-3.5 h-3.5 text-[#E5C07B]" />
               </span>
             </button>
 
@@ -960,10 +967,10 @@ export const LearnPage: React.FC = () => {
                 gameAudio.playTap();
                 navigate('/knowledge-graph');
               }}
-              className="px-4 py-2.5 rounded-2xl bg-amber-400/15 hover:bg-amber-400/25 text-amber-100 border border-amber-300/35 text-xs font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer whitespace-nowrap shrink-0 w-full sm:w-auto"
+              className="luxury-ghost-dark-btn px-4 py-2.5 rounded-2xl text-xs font-semibold flex items-center justify-center gap-2 cursor-pointer whitespace-nowrap shrink-0 w-full sm:w-auto"
               title="以 D3 交互式力导向知识图谱探索 500 条心理学定律关联"
             >
-              <Network className="w-4 h-4 text-amber-300" />
+              <Network className="w-4 h-4 text-[#E5C07B]" />
               <span>500 律知识图谱 (D3)</span>
             </button>
           </div>
@@ -977,18 +984,18 @@ export const LearnPage: React.FC = () => {
       />
 
       {/* Featured Hall Portal: 情感心理学 50 律典藏馆 */}
-      <section className="relative rounded-2xl overflow-hidden art-salon-canvas p-5 sm:p-6 text-white border border-amber-500/35 shadow-xl transition-all">
+      <section className="relative rounded-2xl overflow-hidden art-salon-canvas p-5 sm:p-6 text-[#FAF8F5] border border-[#D4A656]/30 shadow-xl transition-all">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 relative z-10">
           <div className="space-y-1.5 max-w-xl">
             <div className="flex items-center gap-2">
-              <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/40 text-[10px] font-mono font-semibold tracking-wider uppercase">
+              <span className="px-2.5 py-0.5 rounded-md bg-[#D4A656]/15 text-[#F3D89E] border border-[#D4A656]/35 text-[10px] font-mono font-semibold tracking-wider uppercase">
                 NEW · 深度特展
               </span>
               <span className="text-stone-400 text-xs font-serif italic">
                 Salon d'Émotion
               </span>
             </div>
-            <h3 className="text-base sm:text-lg font-bold text-white font-serif tracking-tight">
+            <h3 className="text-base sm:text-lg font-bold text-[#FAF8F5] font-serif tracking-tight">
               情感心理学 50 条定律 · 深度典藏馆
             </h3>
             <p className="text-xs text-stone-300 leading-relaxed">
@@ -1000,25 +1007,29 @@ export const LearnPage: React.FC = () => {
               gameAudio.playTap();
               navigate('/emotional-laws');
             }}
-            className="shrink-0 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-stone-950 font-bold text-xs shadow-[0_0_15px_rgba(245,158,11,0.35)] hover:brightness-110 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer border border-amber-300/40"
+            className="shrink-0 px-4 py-2.5 rounded-xl text-[#181411] font-bold text-xs hover:brightness-105 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+            style={{
+              background: 'linear-gradient(135deg, #F2D794 0%, #D4A656 52%, #B8842E 100%)',
+              boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.45), 0 8px 20px -5px rgba(212,166,86,0.42)',
+            }}
           >
             <span>进入 50 律典藏馆</span>
-            <ArrowRight className="w-4 h-4 text-stone-950" />
+            <ArrowRight className="w-4 h-4 text-[#181411]" />
           </button>
         </div>
       </section>
 
       {/* Dedicated Showcase Box: 性心理学与亲密健康 100 律 · 4 大分类栏框 */}
-      <section className="rounded-3xl bg-gradient-to-br from-[#231030] via-[#1C1433] to-[#111827] p-5 sm:p-6 text-white border border-purple-400/30 shadow-lg space-y-4">
+      <section className="rounded-3xl bg-gradient-to-br from-[#1C1229] via-[#17132B] to-[#111524] p-5 sm:p-6 text-[#FAF8F5] border border-[#7C5AC2]/30 shadow-lg space-y-4">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="space-y-1.5 max-w-2xl">
             <div className="flex flex-wrap items-center gap-2 text-[11px] font-mono text-purple-200">
-              <HeartHandshake className="w-3.5 h-3.5 text-purple-300 shrink-0" />
-              <span className="font-bold text-purple-200">SEX0101–SEX2005</span>
+              <HeartHandshake className="w-3.5 h-3.5 text-[#C0A6EB] shrink-0" />
+              <span className="font-bold text-[#D9C7F5]">SEX0101–SEX2005</span>
               <span className="text-stone-500" aria-hidden="true">·</span>
-              <span className="text-amber-300 tabular-nums">4 大主题板块 · 5 大应用场景 · 100 律</span>
+              <span className="text-[#E5C07B] tabular-nums">4 大主题板块 · 5 大应用场景 · 100 律</span>
             </div>
-            <h3 className="font-serif-editorial text-lg sm:text-xl font-bold text-white tracking-tight">
+            <h3 className="font-serif-editorial text-lg sm:text-xl font-bold text-[#FAF8F5] tracking-tight">
               性心理学与亲密健康 · 100 律结构化专馆
             </h3>
             <p className="text-xs text-stone-300 leading-relaxed">
@@ -1040,7 +1051,7 @@ export const LearnPage: React.FC = () => {
                   document.getElementById('sexual-organizer')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }, 80);
               }}
-              className="px-4 py-2.5 rounded-xl bg-white text-stone-900 hover:bg-purple-50 text-xs font-bold flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 transition-colors"
+              className="luxury-surface-btn px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
             >
               <span>展开 100 律分类总栏</span>
               <ChevronRight className="w-3.5 h-3.5" />
@@ -1052,7 +1063,11 @@ export const LearnPage: React.FC = () => {
                 gameAudio.playSuccess();
                 navigate('/game/sexual-aleatoric-arena');
               }}
-              className="px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 transition-colors"
+              className="px-4 py-2.5 rounded-xl text-[#FAF8F5] text-xs font-bold flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 transition-all hover:brightness-110 active:scale-95"
+              style={{
+                background: 'linear-gradient(135deg, #6D3EC4 0%, #522CA0 100%)',
+                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.28), 0 6px 16px -4px rgba(109,62,196,0.45)',
+              }}
             >
               <Shuffle className="w-3.5 h-3.5" />
               <span>竞技场真随机演练</span>
@@ -1130,7 +1145,7 @@ export const LearnPage: React.FC = () => {
                   document.getElementById('love100-organizer')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 }, 80);
               }}
-              className="px-4 py-2.5 rounded-xl bg-white text-stone-900 hover:bg-rose-50 text-xs font-bold flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 transition-colors"
+              className="luxury-surface-btn px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
             >
               <span>展开 100 卡分类总栏</span>
               <ChevronRight className="w-3.5 h-3.5" />
@@ -1142,7 +1157,11 @@ export const LearnPage: React.FC = () => {
                 gameAudio.playSuccess();
                 navigate('/game/love100-aleatoric-arena');
               }}
-              className="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 transition-colors"
+              className="px-4 py-2.5 rounded-xl text-[#FAF8F5] text-xs font-bold flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 transition-all hover:brightness-110 active:scale-95"
+              style={{
+                background: 'linear-gradient(135deg, #A82442 0%, #861B33 100%)',
+                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.28), 0 6px 16px -4px rgba(168,36,66,0.45)',
+              }}
             >
               <Shuffle className="w-3.5 h-3.5" />
               <span>竞技场真随机博弈</span>
@@ -1281,30 +1300,35 @@ export const LearnPage: React.FC = () => {
       {/* 2. Artistic Search & Multimodal Query Console */}
       <section className="space-y-4">
         {/* Floating Museum Glass Search Bar */}
-        <div className="flex items-center gap-3">
-          <div className="relative flex-1 group">
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center justify-center text-stone-400 group-focus-within:text-amber-600 transition-colors pointer-events-none">
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2.5 sm:gap-3">
+          <div className="relative flex-1 min-w-[220px] group">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 flex items-center justify-center text-[#8B8278] group-focus-within:text-[#A66C1E] transition-colors pointer-events-none">
               <Search className="w-5 h-5" />
             </div>
 
             <input
-              type="text"
+              type="search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              aria-label="搜索心理学定律编号、名称或关键词"
               placeholder="搜索编号（如 LAW001）、中英文定律名、心理学关键词..."
-              className="w-full pl-12 pr-11 py-4 bg-white/95 backdrop-blur-xl border-2 border-stone-200/90 hover:border-stone-300 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 rounded-2xl text-xs sm:text-sm font-medium text-stone-900 placeholder-stone-400 focus:outline-none transition-all shadow-sm"
+              className="w-full h-14 pl-12 pr-12 bg-white/95 backdrop-blur-xl border border-stone-200/90 hover:border-stone-300 focus:border-[#C8933B] focus:ring-4 focus:ring-[#D4A656]/15 rounded-2xl text-xs sm:text-sm font-medium text-[#181411] placeholder-[#8B8278] focus:outline-none transition-all shadow-xs"
             />
 
             {searchQuery && (
               <button
+                type="button"
                 onClick={() => {
                   gameAudio.playTap();
                   setSearchQuery('');
                 }}
-                className="absolute right-4 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-500 hover:text-stone-800 text-xs flex items-center justify-center transition-colors cursor-pointer"
+                aria-label="清空检索关键词"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 w-11 h-11 rounded-xl flex items-center justify-center text-[#6E675F] hover:text-[#181411] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5B45B8]/45"
                 title="清空检索"
               >
-                ✕
+                <span className="w-6 h-6 rounded-full bg-[#EFECE5] hover:bg-stone-200 text-xs flex items-center justify-center">
+                  ✕
+                </span>
               </button>
             )}
           </div>
@@ -1315,35 +1339,45 @@ export const LearnPage: React.FC = () => {
               gameAudio.playSuccess();
               setSearchQuery(text);
             }}
-            className="h-14 px-5 bg-white border-2 border-stone-200 hover:border-amber-400 text-stone-700 hover:text-amber-700 hover:bg-amber-50/50 rounded-2xl shadow-sm transition-all flex items-center gap-2 cursor-pointer font-bold text-xs"
+            className="luxury-surface-btn h-14 px-4 sm:px-5 hover:border-[#D4A656]/60 text-[#2B2520] hover:text-[#8E5B13] rounded-2xl transition-all flex items-center gap-2 cursor-pointer font-bold text-xs shrink-0"
           />
 
           {/* View Mode Toggle: Grid vs Dossier + Knowledge Graph Portal */}
-          <div className="flex items-center gap-2 shrink-0">
-            <div className="hidden sm:flex items-center p-1 bg-white border-2 border-stone-200 rounded-2xl shadow-xs h-14">
+          <div className="flex items-center gap-2 shrink-0 ml-auto sm:ml-0">
+            <div
+              role="group"
+              aria-label="定律展示视图切换"
+              className="flex items-center p-1 bg-white/95 border border-stone-200/90 rounded-2xl shadow-2xs h-14"
+            >
               <button
+                type="button"
                 onClick={() => {
                   gameAudio.playTap();
                   setViewMode('grid');
                 }}
-                className={`p-2.5 rounded-xl transition-all cursor-pointer ${
+                aria-pressed={viewMode === 'grid'}
+                aria-label="切换至艺术画廊展卡视图"
+                className={`min-w-[44px] h-11 px-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5B45B8]/45 ${
                   viewMode === 'grid'
-                    ? 'bg-stone-900 text-white shadow-xs'
-                    : 'text-stone-400 hover:text-stone-700'
+                    ? 'luxury-dark-btn'
+                    : 'text-[#8B8278] hover:text-[#181411]'
                 }`}
                 title="艺术画廊展卡视图"
               >
                 <Grid3X3 className="w-4 h-4" />
               </button>
               <button
+                type="button"
                 onClick={() => {
                   gameAudio.playTap();
                   setViewMode('dossier');
                 }}
-                className={`p-2.5 rounded-xl transition-all cursor-pointer ${
+                aria-pressed={viewMode === 'dossier'}
+                aria-label="切换至策展卷宗速览列表"
+                className={`min-w-[44px] h-11 px-2.5 rounded-xl transition-all cursor-pointer flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5B45B8]/45 ${
                   viewMode === 'dossier'
-                    ? 'bg-stone-900 text-white shadow-xs'
-                    : 'text-stone-400 hover:text-stone-700'
+                    ? 'luxury-dark-btn'
+                    : 'text-[#8B8278] hover:text-[#181411]'
                 }`}
                 title="策展卷宗速览列表"
               >
@@ -1357,26 +1391,28 @@ export const LearnPage: React.FC = () => {
                 gameAudio.playTap();
                 navigate('/knowledge-graph');
               }}
-              className="h-14 px-4 bg-stone-900 hover:bg-stone-800 text-amber-100 border-2 border-stone-900 rounded-2xl shadow-sm transition-colors flex items-center gap-2 cursor-pointer font-semibold text-xs whitespace-nowrap shrink-0"
+              aria-label="打开 D3.js 交互式心理定律知识图谱"
+              className="luxury-dark-btn h-14 px-4 rounded-2xl flex items-center gap-2 cursor-pointer font-semibold text-xs whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4A656]"
               title="打开 D3.js 交互式心理定律知识图谱"
             >
-              <Network className="w-4 h-4 text-amber-300" />
+              <Network className="w-4 h-4 text-[#E6B85C]" />
               <span className="hidden md:inline">知识图谱</span>
             </button>
           </div>
         </div>
 
         {/* Hot Query Swatches: Colored Chromatic Badges */}
-        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 text-xs text-stone-600">
-          <span className="text-[11px] font-bold text-stone-400 shrink-0 font-serif-editorial flex items-center gap-1 mr-1">
-            <Flame className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5 text-xs text-[#6E675F]">
+          <span className="text-[11px] font-bold text-[#8B8278] shrink-0 font-serif-editorial flex items-center gap-1 mr-1">
+            <Flame className="w-3.5 h-3.5 text-[#C8933B] fill-[#D4A656]" />
             <span>研习焦点:</span>
           </span>
           {POPULAR_SEARCH_TAGS.map((tag) => (
             <button
+              type="button"
               key={tag.text}
               onClick={() => handleTagClick(tag.text)}
-              className="px-3 py-1.5 rounded-xl bg-white hover:bg-stone-50 border border-stone-200/90 text-stone-700 hover:text-stone-900 text-[11px] font-medium transition-all shrink-0 cursor-pointer flex items-center gap-1.5 shadow-2xs hover:shadow-xs active:scale-95"
+              className="luxury-surface-btn min-h-[36px] px-3 py-1.5 rounded-xl text-[#2B2520] hover:text-[#181411] text-[11px] font-medium shrink-0 cursor-pointer flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5B45B8]/40"
             >
               <span
                 className="w-1.5 h-1.5 rounded-full"
@@ -1401,15 +1437,16 @@ export const LearnPage: React.FC = () => {
           />
 
           {/* CSPRNG Shuffle & Audio Listening Bar (随听图书馆控制台) */}
-          <div className="bg-white rounded-2xl p-3.5 sm:p-4 border border-stone-200/90 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          <div className="art-museum-mat rounded-2xl p-3.5 sm:p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
                 onClick={handleReshuffle}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all whitespace-nowrap shrink-0 border ${
+                aria-pressed={sortMode === 'aleatoric'}
+                className={`min-h-[40px] px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#0F766E]/45 ${
                   sortMode === 'aleatoric'
-                    ? 'bg-teal-700 hover:bg-teal-800 text-white border-teal-700 shadow-xs'
-                    : 'bg-stone-50 hover:bg-stone-100 text-stone-800 border-stone-200'
+                    ? 'bg-[#0F766E] hover:bg-[#0D625B] text-white border border-[#0F766E] shadow-xs'
+                    : 'luxury-surface-btn text-[#2B2520]'
                 }`}
               >
                 <Shuffle className="w-3.5 h-3.5" />
@@ -1422,7 +1459,7 @@ export const LearnPage: React.FC = () => {
                   gameAudio.playTap();
                   setSortMode((prev) => (prev === 'aleatoric' ? 'sequential' : 'aleatoric'));
                 }}
-                className="px-3 py-2 rounded-xl text-xs font-semibold bg-stone-50 hover:bg-stone-100 text-stone-700 border border-stone-200 cursor-pointer whitespace-nowrap shrink-0"
+                className="luxury-surface-btn min-h-[40px] px-3 py-2 rounded-xl text-xs font-semibold text-[#2B2520] cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5B45B8]/40"
               >
                 当前排序：{sortMode === 'aleatoric' ? '零重复真随机序' : '按编号顺序'}（点此切换）
               </button>
@@ -1435,7 +1472,7 @@ export const LearnPage: React.FC = () => {
                     resetLibraryAleatoricScope();
                     setShuffleNonce((n) => n + 1);
                   }}
-                  className="px-2.5 py-2 rounded-xl text-[11px] font-medium text-stone-500 hover:text-stone-800 hover:bg-stone-100 cursor-pointer whitespace-nowrap shrink-0 flex items-center gap-1"
+                  className="luxury-surface-btn min-h-[40px] px-3 py-2 rounded-xl text-[11px] font-medium text-[#57514A] hover:text-[#181411] cursor-pointer whitespace-nowrap shrink-0 flex items-center gap-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5B45B8]/40"
                   title="清空跨会话已浏览顺序记录并彻底重洗全库"
                 >
                   <RotateCcw className="w-3 h-3" />
@@ -1445,14 +1482,15 @@ export const LearnPage: React.FC = () => {
             </div>
 
             {/* Web Speech Continuous Audio Listening Bar */}
-            <div className="flex flex-wrap items-center gap-2 pt-2 lg:pt-0 border-t lg:border-t-0 border-stone-100">
+            <div className="flex flex-wrap items-center gap-2 pt-2 lg:pt-0 border-t lg:border-t-0 border-stone-200/70">
               <button
                 type="button"
                 onClick={handleToggleGlobalListen}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all whitespace-nowrap shrink-0 ${
+                aria-pressed={audioPlayingIdx !== null}
+                className={`min-h-[40px] px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-all whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4A656] ${
                   audioPlayingIdx !== null
-                    ? 'bg-amber-600 hover:bg-amber-700 text-white shadow-xs'
-                    : 'bg-stone-900 hover:bg-stone-800 text-white shadow-xs'
+                    ? 'bg-[#B06014] hover:bg-[#96500E] text-white border border-[#B06014] shadow-xs'
+                    : 'luxury-dark-btn'
                 }`}
               >
                 {audioPlayingIdx !== null ? (
@@ -1462,7 +1500,7 @@ export const LearnPage: React.FC = () => {
                   </>
                 ) : (
                   <>
-                    <Volume2 className="w-3.5 h-3.5 text-amber-300" />
+                    <Volume2 className="w-3.5 h-3.5 text-[#E6B85C]" />
                     <span>听力随听连播（当前随机队列）</span>
                     <Play className="w-3 h-3 fill-current" />
                   </>
@@ -1475,9 +1513,9 @@ export const LearnPage: React.FC = () => {
                   onClick={() => {
                     gameAudio.playTap();
                     const nextIdx = (audioPlayingIdx + 1) % Math.max(1, filteredLaws.length);
-                    speakLawAt(nextIdx, audioRate);
+                    speakLawAt(nextIdx);
                   }}
-                  className="px-2.5 py-2 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-bold flex items-center gap-1 cursor-pointer whitespace-nowrap shrink-0"
+                  className="luxury-surface-btn min-h-[40px] px-3 py-2 rounded-xl text-[#181411] text-xs font-bold flex items-center gap-1 cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5B45B8]/40"
                   title="跳听下一条随机定律"
                 >
                   <SkipForward className="w-3.5 h-3.5" />
@@ -1489,36 +1527,41 @@ export const LearnPage: React.FC = () => {
                 value={audioRate}
                 onChange={(e) => {
                   const nextRate = Number(e.target.value);
-                  setAudioRate(nextRate);
-                  if (audioPlayingIdx !== null) {
-                    speakLawAt(audioPlayingIdx, nextRate);
-                  }
+                  updateSpeechPrefs({ rate: nextRate });
                 }}
-                aria-label="随听朗读语速"
-                className="px-2.5 py-2 rounded-xl bg-stone-50 border border-stone-200 text-xs font-mono font-bold text-stone-700 cursor-pointer shrink-0"
+                aria-label="随听朗读语速 (0.5x 至 2.0x)"
+                className="luxury-surface-btn min-h-[40px] px-3 py-2 rounded-xl text-xs font-mono font-bold text-[#181411] cursor-pointer shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5B45B8]/40"
               >
-                <option value={0.9}>0.9× 慢听</option>
-                <option value={1.0}>1.0× 常速</option>
+                <option value={0.5}>0.50× 慢听</option>
+                <option value={0.75}>0.75× 精读</option>
+                <option value={0.9}>0.90× 舒缓</option>
+                <option value={1.0}>1.00× 常速</option>
                 <option value={1.25}>1.25× 快听</option>
+                <option value={1.5}>1.50× 速览</option>
+                <option value={1.75}>1.75× 高速</option>
+                <option value={2.0}>2.00× 极速</option>
               </select>
             </div>
           </div>
 
           {audioPlayingIdx !== null && filteredLaws[audioPlayingIdx] && (
-            <div className="rounded-xl px-3.5 py-2.5 bg-amber-50/90 border border-amber-200 flex items-center justify-between gap-3 text-xs">
+            <div
+              role="status"
+              className="rounded-xl px-4 py-2.5 bg-[#FAF6EC] border border-[#D4A656]/45 flex items-center justify-between gap-3 text-xs"
+            >
               <div className="min-w-0 flex items-center gap-2">
-                <Volume2 className="w-4 h-4 text-amber-700 shrink-0" />
-                <span className="font-mono font-bold text-amber-900 shrink-0">
+                <Volume2 className="w-4 h-4 text-[#A66C1E] shrink-0" />
+                <span className="luxury-badge-ink font-mono font-bold text-[#8E5B13] shrink-0">
                   {filteredLaws[audioPlayingIdx].codeId}
                 </span>
-                <span className="font-bold text-stone-900 truncate">
+                <span className="font-bold text-[#181411] truncate">
                   正在随听：{filteredLaws[audioPlayingIdx].nameZh}
                 </span>
               </div>
               <button
                 type="button"
                 onClick={() => navigate(`/law/${filteredLaws[audioPlayingIdx].id}`)}
-                className="text-xs font-bold text-amber-900 hover:underline whitespace-nowrap shrink-0 cursor-pointer"
+                className="min-h-[36px] px-2 text-xs font-bold text-[#8E5B13] hover:underline whitespace-nowrap shrink-0 cursor-pointer"
               >
                 进入图文解析 →
               </button>
@@ -2137,11 +2180,19 @@ export const LearnPage: React.FC = () => {
                 }}
                 className={`text-xs font-bold px-4 py-2.5 rounded-2xl transition-all shrink-0 flex items-center gap-1.5 whitespace-nowrap cursor-pointer active:scale-95 ${
                   onlyBookmarked
-                    ? 'bg-amber-500 text-white shadow-md shadow-amber-500/30'
-                    : 'bg-white text-stone-700 border border-stone-200 hover:border-stone-400'
+                    ? 'text-[#181411] shadow-md'
+                    : 'luxury-surface-btn'
                 }`}
+                style={
+                  onlyBookmarked
+                    ? {
+                        background: 'linear-gradient(135deg, #F0D28E 0%, #C8933B 100%)',
+                        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.45), 0 6px 16px -4px rgba(212,166,86,0.42)',
+                      }
+                    : undefined
+                }
               >
-                <Bookmark className={`w-3.5 h-3.5 ${onlyBookmarked ? 'fill-white text-white' : 'text-stone-500'}`} />
+                <Bookmark className={`w-3.5 h-3.5 ${onlyBookmarked ? 'fill-[#181411] text-[#181411]' : 'text-[#6E675F]'}`} />
                 <span className="font-numeric">收藏 ({user.bookmarks.length})</span>
               </button>
             </div>
@@ -2289,11 +2340,19 @@ export const LearnPage: React.FC = () => {
                 }}
                 className={`text-xs font-bold px-4 py-2.5 rounded-2xl transition-all shrink-0 flex items-center gap-1.5 whitespace-nowrap cursor-pointer active:scale-95 ${
                   onlyBookmarked
-                    ? 'bg-amber-500 text-white shadow-md shadow-amber-500/30'
-                    : 'bg-white text-stone-700 border border-stone-200 hover:border-stone-400'
+                    ? 'text-[#181411] shadow-md'
+                    : 'luxury-surface-btn'
                 }`}
+                style={
+                  onlyBookmarked
+                    ? {
+                        background: 'linear-gradient(135deg, #F0D28E 0%, #C8933B 100%)',
+                        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.45), 0 6px 16px -4px rgba(212,166,86,0.42)',
+                      }
+                    : undefined
+                }
               >
-                <Bookmark className={`w-3.5 h-3.5 ${onlyBookmarked ? 'fill-white text-white' : 'text-stone-500'}`} />
+                <Bookmark className={`w-3.5 h-3.5 ${onlyBookmarked ? 'fill-[#181411] text-[#181411]' : 'text-[#6E675F]'}`} />
                 <span className="font-numeric">收藏 ({user.bookmarks.length})</span>
               </button>
             </div>
@@ -2409,11 +2468,19 @@ export const LearnPage: React.FC = () => {
                 }}
                 className={`text-xs font-bold px-4 py-2.5 rounded-2xl transition-all shrink-0 flex items-center gap-1.5 whitespace-nowrap cursor-pointer active:scale-95 ${
                   onlyBookmarked
-                    ? 'bg-amber-500 text-white shadow-md shadow-amber-500/30'
-                    : 'bg-white text-stone-700 border border-stone-200 hover:border-stone-400'
+                    ? 'text-[#181411] shadow-md'
+                    : 'luxury-surface-btn'
                 }`}
+                style={
+                  onlyBookmarked
+                    ? {
+                        background: 'linear-gradient(135deg, #F0D28E 0%, #C8933B 100%)',
+                        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.45), 0 6px 16px -4px rgba(212,166,86,0.42)',
+                      }
+                    : undefined
+                }
               >
-                <Bookmark className={`w-3.5 h-3.5 ${onlyBookmarked ? 'fill-white text-white' : 'text-stone-500'}`} />
+                <Bookmark className={`w-3.5 h-3.5 ${onlyBookmarked ? 'fill-[#181411] text-[#181411]' : 'text-[#6E675F]'}`} />
                 <span className="font-numeric">收藏馆藏 ({user.bookmarks.length})</span>
               </button>
             </div>
@@ -2618,20 +2685,22 @@ export const LearnPage: React.FC = () => {
               {filteredLaws.length > visibleLaws.length && (
                 <div className="col-span-full flex flex-wrap items-center justify-center gap-3 pt-2">
                   <button
+                    type="button"
                     onClick={() => {
                       gameAudio.playTap();
                       setVisibleLimit((prev) => prev + 24);
                     }}
-                    className="px-6 py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold transition-all shadow-sm cursor-pointer"
+                    className="luxury-dark-btn min-h-[44px] px-6 py-2.5 rounded-xl text-xs font-bold cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4A656]"
                   >
                     加载更多（已显示 {visibleLaws.length} / {filteredLaws.length} 条）
                   </button>
                   <button
+                    type="button"
                     onClick={() => {
                       gameAudio.playTap();
                       setVisibleLimit(filteredLaws.length);
                     }}
-                    className="px-4 py-2.5 rounded-xl bg-white border border-stone-300 hover:border-stone-500 text-stone-700 text-xs font-semibold transition-all cursor-pointer"
+                    className="luxury-surface-btn min-h-[44px] px-5 py-2.5 rounded-xl text-[#2B2520] text-xs font-semibold cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5B45B8]/40"
                   >
                     展开全部 {filteredLaws.length} 条
                   </button>
@@ -2639,17 +2708,18 @@ export const LearnPage: React.FC = () => {
               )}
             </>
           ) : (
-            <div className="col-span-full bg-white rounded-3xl p-12 text-center border-2 border-dashed border-stone-200 space-y-4">
-              <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-200 flex items-center justify-center mx-auto text-amber-600">
+            <div className="col-span-full art-museum-mat rounded-3xl p-10 sm:p-12 text-center border-2 border-dashed border-stone-200 space-y-4">
+              <div className="w-14 h-14 rounded-2xl bg-[#FAF4E6] border border-[#D4A656]/35 flex items-center justify-center mx-auto text-[#8E5B13]">
                 <Search className="w-7 h-7" />
               </div>
-              <h3 className="font-serif-editorial text-lg font-bold text-stone-900">
+              <h3 className="font-serif-editorial text-lg font-bold text-[#181411]">
                 在当前展厅未检索到匹配的定律
               </h3>
-              <p className="text-xs text-stone-500 max-w-sm mx-auto leading-relaxed">
+              <p className="text-xs text-[#6E675F] max-w-sm mx-auto leading-relaxed">
                 建议尝试更换中英文关键词、编号（如 LOVE001 或 LAW001）或切换至“全部分类”继续探索。
               </p>
               <button
+                type="button"
                 onClick={() => {
                   gameAudio.playTap();
                   setSearchQuery('');
@@ -2660,7 +2730,7 @@ export const LearnPage: React.FC = () => {
                   setSelectedChapter('all');
                   setOnlyBookmarked(false);
                 }}
-                className="px-6 py-2.5 bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold rounded-xl transition-all cursor-pointer shadow-md inline-flex items-center gap-2"
+                className="luxury-dark-btn min-h-[44px] px-6 py-2.5 text-xs font-bold rounded-xl cursor-pointer inline-flex items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4A656]"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 <span>重置筛选并显示全部典藏</span>
@@ -2670,9 +2740,10 @@ export const LearnPage: React.FC = () => {
         </CylinderScrollList>
       ) : (
         /* Dossier List Mode: Sleek High-End Archival View */
-        <CylinderScrollList className="space-y-3">
+        <CylinderScrollList className="space-y-3.5">
           {isLoading ? (
             <>
+              <LawCardSkeleton />
               <LawCardSkeleton />
               <LawCardSkeleton />
             </>
@@ -2698,20 +2769,46 @@ export const LearnPage: React.FC = () => {
               {filteredLaws.length > visibleLaws.length && (
                 <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
                   <button
+                    type="button"
                     onClick={() => {
                       gameAudio.playTap();
                       setVisibleLimit((prev) => prev + 36);
                     }}
-                    className="px-6 py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold transition-all shadow-sm cursor-pointer"
+                    className="luxury-dark-btn min-h-[44px] px-6 py-2.5 rounded-xl text-xs font-bold cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4A656]"
                   >
                     加载更多（已显示 {visibleLaws.length} / {filteredLaws.length} 条）
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      gameAudio.playTap();
+                      setVisibleLimit(filteredLaws.length);
+                    }}
+                    className="luxury-surface-btn min-h-[44px] px-5 py-2.5 rounded-xl text-[#2B2520] text-xs font-semibold cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5B45B8]/40"
+                  >
+                    展开全部 {filteredLaws.length} 条
                   </button>
                 </div>
               )}
             </>
           ) : (
-            <div className="bg-white rounded-3xl p-10 text-center border border-stone-200">
-              <p className="text-xs text-stone-500">未检索到匹配结果</p>
+            <div className="art-museum-mat rounded-3xl p-10 text-center border-2 border-dashed border-stone-200 space-y-3">
+              <p className="font-serif-editorial text-base font-bold text-[#181411]">未检索到匹配卷宗</p>
+              <p className="text-xs text-[#6E675F]">请调整关键词或重置展厅筛选条件。</p>
+              <button
+                type="button"
+                onClick={() => {
+                  gameAudio.playTap();
+                  setSearchQuery('');
+                  setSelectedCategory('all');
+                  setSelectedChapter('all');
+                  setOnlyBookmarked(false);
+                }}
+                className="luxury-dark-btn min-h-[44px] px-5 py-2 rounded-xl text-xs font-bold cursor-pointer inline-flex items-center gap-1.5"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>重置筛选</span>
+              </button>
             </div>
           )}
         </CylinderScrollList>
@@ -2739,13 +2836,50 @@ export const LearnPage: React.FC = () => {
   );
 };
 
+const DOSSIER_DOMAIN_COLOR: Record<CategoryZh, string> = {
+  '认知': '#4F46B8',
+  '记忆': '#0F766E',
+  '决策': '#157F5D',
+  '社会': '#6D3EC4',
+  '情绪': '#A82442',
+  '行为': '#B06014',
+};
+
 const LearnDossierLawRow: React.FC<{
   law: PsychologyLaw;
   mastery: number;
   isMastered: boolean;
   onOpen: () => void;
-}> = ({ law, isMastered, onOpen }) => {
+}> = ({ law, mastery, isMastered, onOpen }) => {
   const { isSpeakingThisLaw, activeCpIndex, segments } = useLawSpeech(law.id);
+  const emotionalMeta = getLawEmotionalMapping(law);
+  const accentColor = emotionalMeta
+    ? emotionalMeta.themeColor
+    : law.isLoveCodex || law.isLove100Psychology || law.isIntimateRelationship
+    ? '#A82442'
+    : law.isReversePsychology
+    ? '#0F766E'
+    : law.isCriminalPsychology
+    ? '#961D38'
+    : law.isSexualPsychology
+    ? '#6D3EC4'
+    : DOSSIER_DOMAIN_COLOR[law.categoryZh] || '#5B45B8';
+
+  const collectionBadge = emotionalMeta
+    ? `情感 50 律 · ${String(emotionalMeta.order).padStart(2, '0')}`
+    : law.isLove100Psychology
+    ? law.love100Category
+    : law.isIntimateRelationship
+    ? law.intimateCategory
+    : law.isReversePsychology
+    ? law.reverseCategory
+    : law.isCriminalPsychology
+    ? law.criminalCategory
+    : law.isSexualPsychology
+    ? law.sexualCategory
+    : law.isMicroexpression
+    ? `${law.categoryZh} #${law.categoryRank || 1}`
+    : law.subTag;
 
   const handleToggleSpeech = () => {
     gameAudio.playTap();
@@ -2763,21 +2897,52 @@ const LearnDossierLawRow: React.FC<{
   };
 
   return (
-    <div
+    <article
+      tabIndex={0}
+      role="button"
+      aria-label={`进入《${law.nameZh}》专著详情`}
       onClick={(e) => {
         if ((e.target as HTMLElement).closest('button')) return;
         onOpen();
       }}
-      className="group bg-white hover:bg-stone-50/80 rounded-2xl p-4 sm:p-5 border border-stone-200/80 hover:border-amber-400/80 transition-colors cursor-pointer flex flex-col gap-3"
+      onKeyDown={(e) => {
+        if (e.target !== e.currentTarget) return;
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onOpen();
+        }
+      }}
+      className="group art-museum-mat rounded-2xl p-4 sm:p-5 pl-5 sm:pl-6 relative overflow-hidden cursor-pointer flex flex-col gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5B45B8]/50 focus-visible:ring-offset-2 focus-visible:ring-offset-[#F6F3EC]"
     >
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      {/* Left Vertical Archival Collection Spline */}
+      <div
+        aria-hidden="true"
+        className="absolute top-0 bottom-0 left-0 w-1 opacity-80 group-hover:opacity-100 transition-opacity"
+        style={{ backgroundColor: accentColor }}
+      />
+
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3.5">
         <div className="flex items-start gap-3.5 min-w-0 flex-1">
-          <span className="font-mono text-xs font-bold text-stone-800 shrink-0 mt-0.5 tabular-nums">
-            {law.codeId || 'LAW'}
-          </span>
-          <div className="min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <h3 className="font-serif-editorial text-base font-bold text-stone-900 group-hover:text-amber-800 transition-colors truncate">
+          <div className="flex flex-col items-start gap-1.5 shrink-0 pt-0.5">
+            <span className="luxury-badge-ink font-mono text-xs font-bold text-[#181411] tabular-nums">
+              {law.codeId || 'LAW'}
+            </span>
+            <span
+              className={`text-[10px] px-1.5 py-0.5 rounded font-semibold border ${
+                law.difficulty === 'Easy'
+                  ? 'bg-[#157F5D]/8 text-[#157F5D] border-[#157F5D]/20'
+                  : law.difficulty === 'Medium'
+                  ? 'bg-[#A66C1E]/10 text-[#8E5B13] border-[#A66C1E]/25'
+                  : 'bg-[#A82442]/8 text-[#961D38] border-[#A82442]/20'
+              }`}
+            >
+              {law.difficulty}
+            </span>
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <div className="flex items-baseline gap-2 flex-wrap">
+              <h3 className="font-serif-editorial text-base sm:text-lg font-bold text-[#181411] group-hover:text-black transition-colors">
                 <SilverSpeechText
                   text={law.nameZh}
                   isSpeaking={isSpeakingThisLaw}
@@ -2785,59 +2950,98 @@ const LearnDossierLawRow: React.FC<{
                   segmentRange={segments.title}
                 />
               </h3>
-              <span className="text-xs text-stone-400 font-serif-editorial italic truncate">
+              <span className="text-xs text-[#6E675F] font-serif-editorial italic truncate max-w-full">
                 {law.nameEn}
               </span>
             </div>
-            <p className={`text-xs text-stone-600 mt-0.5 ${isSpeakingThisLaw ? 'leading-relaxed' : 'line-clamp-1'}`}>
+
+            <p className={`text-xs sm:text-[13px] text-[#3B342D] mt-1.5 leading-relaxed ${isSpeakingThisLaw ? '' : 'line-clamp-2'}`}>
+              “
               <SilverSpeechText
                 text={law.shortExplanation}
                 isSpeaking={isSpeakingThisLaw}
                 activeCpIndex={activeCpIndex}
                 segmentRange={segments.short}
               />
+              ”
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0 self-end sm:self-center text-[11px] text-stone-600">
-          {law.subTag && (
-            <>
-              <span className="text-rose-700 font-medium">{law.subTag}</span>
-              <span className="text-stone-300" aria-hidden="true">·</span>
-            </>
+        <div className="flex items-center flex-wrap gap-2 shrink-0 md:justify-end text-[11px] text-[#6E675F]">
+          {collectionBadge && (
+            <span
+              className="font-mono text-[10px] font-bold px-2 py-0.5 rounded-md border"
+              style={{
+                color: accentColor,
+                borderColor: `${accentColor}30`,
+                backgroundColor: `${accentColor}0D`,
+              }}
+            >
+              {collectionBadge}
+            </span>
           )}
           {law.assignedCityZh && (
-            <>
-              <span className="text-amber-800 font-medium">
-                {law.assignedCityZh.split(' ')[0]}
-              </span>
-              <span className="text-stone-300" aria-hidden="true">·</span>
-            </>
+            <span className="luxury-badge-ink text-[10.5px] font-sans">
+              {law.assignedCityZh.split(' ')[0]}
+            </span>
           )}
-          <span className="font-medium text-stone-600">{law.categoryZh}</span>
+          <span
+            className="font-semibold flex items-center gap-1"
+            style={{ color: DOSSIER_DOMAIN_COLOR[law.categoryZh] || '#181411' }}
+          >
+            <span
+              className="w-1.5 h-1.5 rounded-full"
+              style={{ backgroundColor: DOSSIER_DOMAIN_COLOR[law.categoryZh] || '#181411' }}
+            />
+            {law.categoryZh}展厅
+          </span>
+
           {isMastered && (
-            <>
-              <span className="text-stone-300" aria-hidden="true">·</span>
-              <span className="text-emerald-700 font-semibold flex items-center gap-1">
-                <CheckCircle2 className="w-3.5 h-3.5 fill-emerald-600 text-white" />
-                <span>已内化</span>
-              </span>
-            </>
+            <span className="text-[#157F5D] font-semibold flex items-center gap-1">
+              <CheckCircle2 className="w-3.5 h-3.5 fill-[#157F5D] text-white" />
+              <span>已内化</span>
+            </span>
           )}
-          <ChevronRight className="w-4 h-4 text-stone-400 group-hover:text-stone-900 group-hover:translate-x-1 transition-all ml-1" />
         </div>
       </div>
 
-      {/* Bottom-Right Voice Switch */}
-      <div className="flex items-center justify-end pt-2 border-t border-stone-100">
-        <LawVoiceToggleSwitch
-          isOn={isSpeakingThisLaw}
-          onToggle={handleToggleSpeech}
-          size="sm"
-        />
+      {/* Bottom Dossier Action Bar */}
+      <div className="flex flex-wrap items-center justify-between gap-2.5 pt-2.5 border-t border-stone-200/65">
+        <div className="flex items-center gap-2 text-[11px]">
+          <span className="text-[#6E675F]">内化进度</span>
+          <div className="w-16 sm:w-24 h-1.5 bg-[#EFECE5] border border-stone-200/70 rounded-full overflow-hidden">
+            <div
+              className="h-full rounded-full transition-all duration-300"
+              style={{
+                width: `${mastery}%`,
+                background: `linear-gradient(90deg, ${accentColor} 0%, #157F5D 100%)`,
+              }}
+            />
+          </div>
+          <span className="font-numeric font-bold text-[#2B2520]">{mastery}%</span>
+        </div>
+
+        <div className="flex items-center gap-2 ml-auto">
+          <LawVoiceToggleSwitch
+            isOn={isSpeakingThisLaw}
+            onToggle={handleToggleSpeech}
+            size="sm"
+          />
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpen();
+            }}
+            className="luxury-surface-btn min-h-[36px] px-3 rounded-lg text-[11px] font-bold text-[#181411] inline-flex items-center gap-1 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5B45B8]/40"
+          >
+            <span>进入专著</span>
+            <ChevronRight className="w-3.5 h-3.5 text-[#6E675F] group-hover:translate-x-0.5 transition-transform" />
+          </button>
+        </div>
       </div>
-    </div>
+    </article>
   );
 };
 
@@ -2848,6 +3052,14 @@ const EpiphanyLawModal: React.FC<{
   onNavigate: (id: string) => void;
 }> = ({ epiphanyLaw, onClose, onNext, onNavigate }) => {
   const { isSpeakingThisLaw, activeCpIndex, segments } = useLawSpeech(epiphanyLaw.id);
+
+  React.useEffect(() => {
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [onClose]);
 
   const handleToggleSpeech = () => {
     gameAudio.playTap();
@@ -2862,39 +3074,51 @@ const EpiphanyLawModal: React.FC<{
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
-      <div className="relative w-full max-w-lg rounded-3xl bg-white border border-amber-300 shadow-2xl p-7 sm:p-9 space-y-5 animate-stageEnter overflow-hidden">
-        <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-amber-400 via-amber-300 to-amber-600" />
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="epiphany-modal-title"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0D0B16]/65 backdrop-blur-sm animate-fadeIn"
+    >
+      <div className="relative w-full max-w-lg rounded-3xl art-museum-mat border border-[#D4A656]/45 shadow-2xl p-6 sm:p-8 space-y-5 animate-stageEnter overflow-hidden">
+        <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#B88635] via-[#E6B85C] to-[#5B45B8]" />
 
         <div className="flex items-center justify-between pb-3 border-b border-stone-200/80">
           <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-xl bg-amber-100 text-amber-800">
+            <span className="p-1.5 rounded-xl bg-[#FAF4E6] border border-[#D4A656]/35 text-[#8E5B13]">
               <Sparkles className="w-4 h-4" />
             </span>
-            <span className="font-serif-editorial text-xs font-bold text-stone-900 tracking-wider uppercase">
+            <span className="font-serif-editorial text-xs font-bold text-[#181411] tracking-wider uppercase">
               今日心智灵感 · 随机启迪
             </span>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="w-8 h-8 rounded-full flex items-center justify-center text-stone-400 hover:text-stone-800 hover:bg-stone-100 transition-colors cursor-pointer"
+            aria-label="关闭随机启迪弹窗"
+            className="w-11 h-11 -mr-2 rounded-full flex items-center justify-center text-[#6E675F] hover:text-[#181411] cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5B45B8]/45"
           >
-            <X className="w-4 h-4" />
+            <span className="luxury-surface-btn w-8 h-8 rounded-full flex items-center justify-center">
+              <X className="w-4 h-4" />
+            </span>
           </button>
         </div>
 
         <div className="space-y-3">
           <div className="flex items-center gap-2 text-xs">
-            <span className="font-mono font-bold px-2 py-0.5 rounded bg-stone-100 text-stone-900">
+            <span className="luxury-badge-ink font-mono font-bold text-[#181411]">
               {epiphanyLaw.codeId}
             </span>
-            <span className="text-stone-400">/</span>
-            <span className="font-semibold text-amber-800">
+            <span className="text-stone-300" aria-hidden="true">/</span>
+            <span className="font-semibold text-[#8E5B13]">
               {epiphanyLaw.categoryZh}展厅
             </span>
           </div>
 
-          <h3 className="font-serif-editorial text-2xl font-bold text-stone-900 leading-snug">
+          <h3 id="epiphany-modal-title" className="font-serif-editorial text-2xl font-bold text-[#181411] leading-snug">
             <SilverSpeechText
               text={epiphanyLaw.nameZh}
               isSpeaking={isSpeakingThisLaw}
@@ -2902,11 +3126,11 @@ const EpiphanyLawModal: React.FC<{
               segmentRange={segments.title}
             />
           </h3>
-          <p className="text-xs text-stone-500 font-serif-editorial italic">
+          <p className="text-xs text-[#6E675F] font-serif-editorial italic">
             {epiphanyLaw.nameEn}
           </p>
 
-          <blockquote className="rounded-2xl p-4 bg-amber-50/70 border border-amber-200/80 font-serif-editorial text-xs sm:text-sm text-stone-800 leading-relaxed italic">
+          <blockquote className="rounded-xl p-4 bg-[#FAF7F1] border border-stone-200/75 border-l-[3px] border-l-[#C8933B] font-serif-editorial text-xs sm:text-sm text-[#2B2520] leading-relaxed italic">
             “
             <SilverSpeechText
               text={epiphanyLaw.shortExplanation}
@@ -2917,7 +3141,7 @@ const EpiphanyLawModal: React.FC<{
             ”
           </blockquote>
 
-          <p className={`text-xs text-stone-600 leading-relaxed ${isSpeakingThisLaw ? '' : 'line-clamp-3'}`}>
+          <p className={`text-xs text-[#4F4740] leading-relaxed ${isSpeakingThisLaw ? '' : 'line-clamp-3'}`}>
             <SilverSpeechText
               text={epiphanyLaw.detailedExplanation}
               isSpeaking={isSpeakingThisLaw}
@@ -2937,16 +3161,18 @@ const EpiphanyLawModal: React.FC<{
 
         <div className="pt-2 flex items-center justify-between gap-3">
           <button
+            type="button"
             onClick={onNext}
-            className="px-4 py-2.5 rounded-xl border border-stone-200 text-stone-700 hover:bg-stone-100 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1.5"
+            className="luxury-surface-btn min-h-[44px] px-4 py-2.5 rounded-xl text-[#2B2520] text-xs font-bold cursor-pointer flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5B45B8]/40"
           >
             <Shuffle className="w-3.5 h-3.5" />
             <span>换一条启迪</span>
           </button>
 
           <button
+            type="button"
             onClick={() => onNavigate(epiphanyLaw.id)}
-            className="flex-1 px-5 py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
+            className="luxury-dark-btn flex-1 min-h-[44px] px-5 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4A656]"
           >
             <span>进入深度解析</span>
             <ArrowRight className="w-4 h-4" />

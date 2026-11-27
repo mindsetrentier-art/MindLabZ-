@@ -333,6 +333,99 @@
         "createdAt",
         "updatedAt"
       ]
+    },
+    "FocusSessionBookmark": {
+      "title": "FocusSessionBookmark",
+      "description": "Bookmarked focus audio session timestamp and exact stereo binaural/nature soundscape configuration owned strictly by the user.",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier of the bookmark.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Firebase Auth UID of the bookmark owner.",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[a-zA-Z0-9_\\-]+$"
+        },
+        "label": {
+          "type": "string",
+          "description": "User-provided or default title describing the bookmarked ambient segment.",
+          "minLength": 1,
+          "maxLength": 80
+        },
+        "timestampSec": {
+          "type": "number",
+          "description": "Session elapsed timestamp in seconds (0 to 86400)."
+        },
+        "binauralPresetId": {
+          "type": "string",
+          "description": "Active binaural brainwave band preset ID.",
+          "minLength": 1,
+          "maxLength": 32
+        },
+        "naturePresetId": {
+          "type": "string",
+          "description": "Active procedural nature soundscape preset ID.",
+          "minLength": 1,
+          "maxLength": 32
+        },
+        "beatHz": {
+          "type": "number",
+          "description": "Binaural beat difference frequency in Hz (4 to 45)."
+        },
+        "carrierHz": {
+          "type": "number",
+          "description": "Left-ear carrier base frequency in Hz (100 to 320)."
+        },
+        "binauralMix": {
+          "type": "number",
+          "description": "Normalized binaural layer gain mix (0 to 1)."
+        },
+        "natureMix": {
+          "type": "number",
+          "description": "Normalized nature soundscape layer gain mix (0 to 1)."
+        },
+        "masterVolume": {
+          "type": "number",
+          "description": "Normalized master output volume (0 to 1)."
+        },
+        "timerDurationSec": {
+          "type": "number",
+          "description": "Configured session timer duration in seconds (0 for continuous, up to 14400)."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Immutable server timestamp when the bookmark was created."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Server timestamp when the bookmark was last updated."
+        }
+      },
+      "required": [
+        "id",
+        "userId",
+        "label",
+        "timestampSec",
+        "binauralPresetId",
+        "naturePresetId",
+        "beatHz",
+        "carrierHz",
+        "binauralMix",
+        "natureMix",
+        "masterVolume",
+        "timerDurationSec",
+        "createdAt",
+        "updatedAt"
+      ]
     }
   },
   "firestore": {
@@ -347,6 +440,12 @@
         "$ref": "#/entities/CognitiveJournal"
       },
       "description": "Private structured cognitive journal logs owned strictly by {userId}."
+    },
+    "/users/{userId}/focusSessionBookmarks/{bookmarkId}": {
+      "schema": {
+        "$ref": "#/entities/FocusSessionBookmark"
+      },
+      "description": "Private focus audio session timestamp bookmarks owned strictly by {userId}."
     },
     "/gameLeaderboards/{scoreId}": {
       "schema": {

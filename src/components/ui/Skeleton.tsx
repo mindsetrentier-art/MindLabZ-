@@ -62,23 +62,23 @@ export const Skeleton: React.FC<SkeletonProps> = ({
   if (variant === 'card') {
     return (
       <div
-        className={`bg-white rounded-3xl p-5 border border-[#E6E2F5] shadow-[0_4px_20px_-2px_rgba(108,76,241,0.05)] space-y-4 overflow-hidden relative ${className}`}
+        className={`art-museum-mat rounded-2xl p-5 sm:p-6 space-y-4 overflow-hidden relative ${className}`}
         style={inlineStyle}
         aria-hidden="true"
         {...props}
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Skeleton className="w-16 h-5 rounded-full" />
+            <Skeleton className="w-16 h-5 rounded-md" />
             <Skeleton className="w-12 h-4 rounded-md" />
           </div>
-          <Skeleton variant="avatar" className="w-8 h-8 rounded-2xl" />
+          <Skeleton variant="avatar" className="w-8 h-8 rounded-full" />
         </div>
         <div className="space-y-2">
           <Skeleton className="w-3/4 h-5 rounded-lg" />
           <Skeleton className="w-1/2 h-3.5 rounded-md" />
         </div>
-        <div className="p-3.5 bg-[#FAF9FF] rounded-2xl border border-[#E6E2F5] space-y-2">
+        <div className="p-3.5 bg-[#FAF7F1] rounded-xl border border-stone-200/75 space-y-2">
           <Skeleton className="w-full h-3.5 rounded-md" />
           <Skeleton className="w-4/5 h-3.5 rounded-md" />
         </div>
@@ -157,37 +157,44 @@ export const SkeletonAvatar: React.FC<{
  */
 export const LawCardSkeleton: React.FC = () => {
   return (
-    <div className="bg-white rounded-3xl p-5 border border-[#E6E2F5] shadow-[0_4px_20px_-2px_rgba(108,76,241,0.05)] space-y-3.5 overflow-hidden relative">
+    <div
+      className="art-museum-mat rounded-2xl p-5 sm:p-7 space-y-3.5 overflow-hidden relative"
+      aria-busy="true"
+      aria-label="正在载入定律展卡"
+    >
+      <div className="h-[3px] w-full -mt-5 sm:-mt-7 -mx-5 sm:-mx-7 mb-2 bg-stone-200/70" />
       {/* Top badges */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between pb-2.5 border-b border-stone-200/60">
         <div className="flex items-center gap-2">
-          <Skeleton className="w-14 h-5 rounded-full" />
+          <Skeleton className="w-14 h-5 rounded-md" />
+          <Skeleton className="w-16 h-4 rounded-md" />
           <Skeleton className="w-10 h-4 rounded-md" />
         </div>
-        <Skeleton variant="avatar" className="w-8 h-8 rounded-2xl" />
+        <Skeleton variant="avatar" className="w-8 h-8 rounded-full" />
       </div>
 
       {/* Title & Subtitle */}
-      <div className="space-y-1.5">
+      <div className="space-y-2">
         <Skeleton className="w-3/5 h-6 rounded-lg" />
         <Skeleton className="w-2/5 h-3.5 rounded-md" />
       </div>
 
       {/* Quote / Short explanation box */}
-      <div className="p-3 rounded-2xl bg-[#FAF9FF] border border-[#E6E2F5] space-y-2">
+      <div className="p-4 rounded-xl bg-[#FAF7F1] border border-stone-200/70 border-l-[3px] border-l-stone-300 space-y-2">
         <Skeleton className="w-full h-3.5 rounded-md" />
         <Skeleton className="w-4/5 h-3.5 rounded-md" />
       </div>
 
       {/* Footer info: Mastery and XP */}
-      <div className="pt-2 border-t border-[#F5F3FF] flex items-center justify-between">
+      <div className="pt-3 border-t border-stone-200/60 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Skeleton className="w-16 h-2 rounded-full" />
-          <Skeleton className="w-6 h-3 rounded-md" />
+          <Skeleton className="w-12 h-3 rounded-md" />
+          <Skeleton className="w-20 h-1.5 rounded-full" />
+          <Skeleton className="w-7 h-3 rounded-md" />
         </div>
-        <div className="flex items-center gap-1.5">
-          <Skeleton className="w-12 h-4 rounded-full" />
-          <Skeleton variant="avatar" className="w-4 h-4" />
+        <div className="flex items-center gap-2">
+          <Skeleton className="w-12 h-7 rounded-lg" />
+          <Skeleton className="w-14 h-7 rounded-full" />
         </div>
       </div>
     </div>
@@ -273,12 +280,13 @@ export const HomeHeroSkeleton: React.FC = () => {
  */
 export const LawDetailSkeleton: React.FC = () => {
   return (
-    <div className="space-y-5 pb-8 animate-fadeIn">
+    <div className="space-y-6 pb-8 animate-fadeIn max-w-4xl mx-auto" aria-busy="true" aria-label="正在载入定律专著">
       {/* Header Card */}
-      <div className="bg-white rounded-3xl p-6 border border-[#E6E2F5] shadow-[0_4px_20px_-2px_rgba(108,76,241,0.05)] space-y-4">
-        <div className="flex justify-between items-center">
-          <Skeleton className="w-24 h-6 rounded-full" />
+      <div className="editorial-card rounded-2xl p-7 sm:p-10 space-y-4">
+        <div className="flex justify-between items-center pb-3 border-b border-stone-200/70">
+          <Skeleton className="w-40 h-5 rounded-md" />
           <div className="flex gap-2">
+            <Skeleton className="w-20 h-9 rounded-xl" />
             <Skeleton variant="avatar" className="w-9 h-9" />
             <Skeleton variant="avatar" className="w-9 h-9" />
           </div>
@@ -287,18 +295,18 @@ export const LawDetailSkeleton: React.FC = () => {
           <Skeleton className="w-2/3 h-8 rounded-xl" />
           <Skeleton className="w-1/3 h-4 rounded-md" />
         </div>
-        <div className="p-4 rounded-2xl bg-[#FAF9FF] border border-[#E6E2F5] space-y-2">
+        <div className="p-5 rounded-r-xl bg-[#FAF7F1] border-l-[3px] border-l-[#D4A656]/50 space-y-2">
           <Skeleton className="w-full h-4 rounded-md" />
           <Skeleton className="w-4/5 h-4 rounded-md" />
         </div>
-        <div className="pt-3 border-t border-[#F5F3FF] flex justify-between items-center">
-          <Skeleton className="w-24 h-4 rounded-md" />
-          <Skeleton className="w-32 h-3 rounded-full" />
+        <div className="pt-3 border-t border-stone-200/70 flex justify-between items-center">
+          <Skeleton className="w-28 h-4 rounded-md" />
+          <Skeleton className="w-36 h-2 rounded-full" />
         </div>
       </div>
 
       {/* Mechanism Card */}
-      <div className="bg-white rounded-3xl p-6 border border-[#E6E2F5] space-y-3">
+      <div className="editorial-card rounded-2xl p-7 sm:p-10 space-y-3">
         <Skeleton className="w-36 h-5 rounded-lg" />
         <Skeleton className="w-full h-4 rounded-md" />
         <Skeleton className="w-full h-4 rounded-md" />
@@ -306,9 +314,9 @@ export const LawDetailSkeleton: React.FC = () => {
       </div>
 
       {/* Real-life Scenario Card */}
-      <div className="bg-white rounded-3xl p-6 border border-[#E6E2F5] space-y-3">
+      <div className="editorial-card rounded-2xl p-7 sm:p-10 space-y-3">
         <Skeleton className="w-32 h-5 rounded-lg" />
-        <div className="p-4 rounded-2xl bg-[#FAF9FF] space-y-2">
+        <div className="p-4 rounded-xl bg-[#FAF7F1] border border-stone-200/70 space-y-2">
           <Skeleton className="w-full h-4 rounded-md" />
           <Skeleton className="w-5/6 h-4 rounded-md" />
         </div>

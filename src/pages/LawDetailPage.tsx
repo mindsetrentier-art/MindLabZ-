@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
   Bookmark,
+  BookOpen,
   Volume2,
   VolumeX,
   Sparkles,
@@ -33,6 +34,10 @@ import { KineticCutoutHero } from '../components/ui/KineticCutoutHero';
 import { PSYCHOLOGY_GAMES } from '../data/games';
 import { toggleLawSpeech, stopLawSpeech, useLawSpeech } from '../utils/lawSpeechEngine';
 import { SilverSpeechText, LawVoiceToggleSwitch } from '../components/ui/SilverSpeechText';
+import { LawBookReader } from '../components/law/LawBookReader';
+import { buildLawBookCodex, getAdjacentLaws } from '../utils/lawBookFolioBuilder';
+
+const READING_MODE_STORAGE_KEY = 'mindlabz_law_reading_mode_v1';
 
 export const LawDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -56,6 +61,7 @@ export const LawDetailPage: React.FC = () => {
   // Structured Output data from POST /api/laws/generate
   const [structuredLaw, setStructuredLaw] = useState<StructuredLawData | null>(null);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [structuredError, setStructuredError] = useState<string | null>(null);
 
   // Active case tab (4 Cases per law)
   const [activeCaseTab, setActiveCaseTab] = useState<'life' | 'workplace' | 'relationship' | 'business'>('life');
@@ -67,6 +73,25 @@ export const LawDetailPage: React.FC = () => {
   const [activeQuizIdx, setActiveQuizIdx] = useState(0);
   const [quizAnswers, setQuizAnswers] = useState<Record<number, number>>({});
 
+  // Reading experience mode: 'book' (3D turning editorial codex) or 'scroll' (classic vertical view)
+  const [readingMode, setReadingMode] = useState<'book' | 'scroll'>(() => {
+    try {
+      const saved = window.localStorage.getItem(READING_MODE_STORAGE_KEY);
+      return saved === 'scroll' ? 'scroll' : 'book';
+    } catch {
+      return 'book';
+    }
+  });
+
+  const handleSetReadingMode = (mode: 'book' | 'scroll') => {
+    setReadingMode(mode);
+    try {
+      window.localStorage.setItem(READING_MODE_STORAGE_KEY, mode);
+    } catch {
+      // Ignore storage quota errors
+    }
+  };
+
   // Match law by slug id OR codeId (LAW001 - LAW100)
   const law = laws.find(
     (l) =>
@@ -74,10 +99,24 @@ export const LawDetailPage: React.FC = () => {
       (l.codeId && l.codeId.toLowerCase() === (id || '').toLowerCase())
   );
 
+  const codex = useMemo(
+    () => (law ? buildLawBookCodex(law, structuredLaw) : null),
+    [law, structuredLaw]
+  );
+
+  const adjacent = useMemo(
+    () =>
+      law
+        ? getAdjacentLaws(laws, law.id)
+        : { currentIndex: -1, totalCount: laws.length, prevLaw: null, nextLaw: null },
+    [laws, law]
+  );
+
   const { isSpeakingThisLaw, activeCpIndex, segments } = useLawSpeech(law?.id);
 
   const fetchStructuredLaw = async (lawCodeOrId: string, forceRefresh = false) => {
     try {
+      setStructuredError(null);
       if (forceRefresh) setIsGeneratingAI(true);
       const res = await fetch('/api/laws/generate', {
         method: 'POST',
@@ -87,14 +126,21 @@ export const LawDetailPage: React.FC = () => {
           force_refresh: forceRefresh,
         }),
       });
-      if (res.ok) {
-        const data = await res.json();
-        if (data?.law) {
-          setStructuredLaw(data.law);
+      if (!res.ok) {
+        if (forceRefresh) {
+          setStructuredError('深度结构化解析生成暂未成功，当前继续展示馆藏标准文本。');
         }
+        return;
+      }
+      const data = await res.json();
+      if (data?.law) {
+        setStructuredLaw(data.law);
       }
     } catch (e) {
       console.error('Failed to fetch structured law data:', e);
+      if (forceRefresh) {
+        setStructuredError('网络连接波动，暂无法刷新深度解析，请稍后重试。');
+      }
     } finally {
       setIsGeneratingAI(false);
     }
@@ -103,6 +149,7 @@ export const LawDetailPage: React.FC = () => {
   useEffect(() => {
     setIsLoading(true);
     setStructuredLaw(null);
+    setStructuredError(null);
     setSelectedGameChoice(null);
     setActiveQuizIdx(0);
     setQuizAnswers({});
@@ -137,13 +184,25 @@ export const LawDetailPage: React.FC = () => {
 
   if (!law) {
     return (
-      <div className="bg-white rounded-3xl p-8 text-center border border-[#E8E5F0] space-y-4 my-8">
-        <h2 className="text-lg font-bold text-[#1B192E]">未找到该心理学定律</h2>
+      <div
+        role="status"
+        className="art-museum-mat rounded-3xl p-8 sm:p-10 text-center space-y-4 my-8 max-w-xl mx-auto"
+      >
+        <div className="w-12 h-12 rounded-2xl bg-[#FAF4E6] border border-[#D4A656]/35 flex items-center justify-center mx-auto text-[#8E5B13]">
+          <AlertCircle className="w-6 h-6" />
+        </div>
+        <h2 className="font-serif-editorial text-xl font-bold text-[#181411]">
+          未在馆藏检索到该心理学定律
+        </h2>
+        <p className="text-xs text-[#6E675F] leading-relaxed">
+          可能是编号或路径已更新，请返回定律库重新选择或检索目标条目。
+        </p>
         <button
+          type="button"
           onClick={() => navigate('/learn')}
-          className="px-4 py-2 bg-[#6C4CF1] text-white text-xs font-bold rounded-xl"
+          className="luxury-dark-btn min-h-[44px] px-5 py-2.5 text-xs font-bold rounded-xl cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4A656]"
         >
-          返回 100 定律库
+          返回 500+ 心理学定律库
         </button>
       </div>
     );
@@ -267,6 +326,51 @@ export const LawDetailPage: React.FC = () => {
       };
     });
 
+  if (readingMode === 'book' && codex) {
+    return (
+      <>
+        <LawBookReader
+          law={law}
+          codex={codex}
+          adjacent={adjacent}
+          relatedLawItems={relatedLawItems}
+          mastery={mastery}
+          bookmarked={bookmarked}
+          structuredLaw={structuredLaw}
+          isGeneratingAI={isGeneratingAI}
+          structuredError={structuredError}
+          activeCaseTab={activeCaseTab}
+          setActiveCaseTab={setActiveCaseTab}
+          selectedGameChoice={selectedGameChoice}
+          onSelectGameChoice={handleGameChoice}
+          activeQuizIdx={activeQuizIdx}
+          setActiveQuizIdx={setActiveQuizIdx}
+          quizAnswers={quizAnswers}
+          onSelectQuizOption={handleQuizSelect}
+          isSpeakingThisLaw={isSpeakingThisLaw}
+          activeCpIndex={activeCpIndex}
+          segments={segments}
+          onToggleAudio={handleToggleAudio}
+          onToggleBookmark={() => toggleBookmark(law.id)}
+          onRefreshAI={() => fetchStructuredLaw(law.codeId || law.id, true)}
+          onOpenJournal={() =>
+            openComposerWithPreload({
+              relatedLawId: law.id,
+              relatedLawName: `${law.nameZh} (${law.nameEn})`,
+              templateType: 'cbt-restructure',
+              title: `关于【${law.nameZh}】的心智反思与觉察`,
+              tags: [law.nameZh, law.categoryZh, '认知重构'],
+            })
+          }
+          onOpenAITutor={handleAskAITutor}
+          onSwitchToScrollMode={() => handleSetReadingMode('scroll')}
+          fontScale={fontScale}
+        />
+        <FloatingFontScaleControl tone="paper" title="定律书籍字号调节" />
+      </>
+    );
+  }
+
   return (
     <div
       className={`space-y-8 sm:space-y-10 pb-12 animate-fadeIn mx-auto transition-[max-width] duration-200 quiz-font-scope ${
@@ -275,7 +379,7 @@ export const LawDetailPage: React.FC = () => {
       data-quiz-font-scale={fontScale}
     >
       {/* 0. Kinetic Cutout Typography Detail Header: Photo emerges from letterforms with scroll zoom */}
-      <section className="rounded-3xl overflow-hidden shadow-2xl border border-amber-400/35 bg-[#0B0918]">
+      <section className="rounded-3xl overflow-hidden shadow-2xl border border-[#D4A656]/30 bg-[#0D0B16]">
         <KineticCutoutHero
           mainTitle={law.nameZh}
           subtitle={`${law.codeId || 'LAW'} · ${law.nameEn}`}
@@ -286,29 +390,29 @@ export const LawDetailPage: React.FC = () => {
       </section>
 
       {/* 1. Header Editorial Lead Article Cover */}
-      <article className="editorial-card rounded-2xl p-7 sm:p-10 md:p-12 space-y-6">
+      <article className="editorial-card rounded-2xl p-6 sm:p-10 md:p-12 space-y-6">
         {/* Top Folio / Rubric */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-stone-200/80">
-          <div className="flex items-center gap-2.5 text-xs text-stone-500 font-medium flex-wrap">
+          <div className="flex items-center gap-2.5 text-xs text-[#6E675F] font-medium flex-wrap">
             {law.codeId && (
-              <span className="font-mono text-xs font-bold text-stone-900 tracking-wider">
+              <span className="luxury-badge-ink font-mono text-xs font-bold text-[#181411] tracking-wider tabular-nums">
                 {law.codeId}
               </span>
             )}
             <span className="text-stone-300" aria-hidden="true">/</span>
-            <span className="font-semibold text-stone-800">
+            <span className="font-semibold text-[#181411]">
               {law.categoryZh}心理学
             </span>
             <span className="text-stone-300" aria-hidden="true">·</span>
             <span>难度 {structuredLaw?.difficulty || law.difficulty}</span>
             <span className="text-stone-300" aria-hidden="true">·</span>
-            <span className="font-numeric font-medium text-stone-700">
+            <span className="font-numeric font-medium text-[#2B2520]">
               证据等级 {structuredLaw?.evidence_level || law.evidenceLevel || 'A'}
             </span>
             {law.isLoveCodex && law.subTag && (
               <>
                 <span className="text-stone-300" aria-hidden="true">·</span>
-                <span className="px-2 py-0.5 rounded-md bg-rose-50 text-rose-700 border border-rose-200 font-semibold">
+                <span className="px-2 py-0.5 rounded-md bg-[#FDF3F5] text-[#961D38] border border-[#A82442]/20 font-semibold">
                   爱情心理 · {law.subTag}
                 </span>
               </>
@@ -316,7 +420,7 @@ export const LawDetailPage: React.FC = () => {
             {law.assignedCityZh && (
               <>
                 <span className="text-stone-300" aria-hidden="true">·</span>
-                <span className="px-2 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-200 font-semibold">
+                <span className="px-2 py-0.5 rounded-md bg-[#FAF6EC] text-[#8E5B13] border border-[#D4A656]/30 font-semibold">
                   驻守首都 · {law.assignedCityZh}
                 </span>
               </>
@@ -324,24 +428,26 @@ export const LawDetailPage: React.FC = () => {
             {law.isMicroexpression && (
               <>
                 <span className="text-stone-300" aria-hidden="true">·</span>
-                <span className="font-semibold text-indigo-800 tabular-nums">
+                <span className="font-semibold text-[#4338A6] tabular-nums">
                   {law.categoryZh}分类排行第 {law.categoryRank || 1} 名 · 微表情总榜 #{law.microGlobalRank || 1}
                 </span>
                 {law.actionUnitCode && (
                   <>
                     <span className="text-stone-300" aria-hidden="true">·</span>
-                    <span className="font-mono font-bold text-stone-800">{law.actionUnitCode}</span>
+                    <span className="font-mono font-bold text-[#181411]">{law.actionUnitCode}</span>
                   </>
                 )}
               </>
             )}
           </div>
 
-          <div className="flex items-center gap-2 self-start sm:self-auto">
+          <div className="flex items-center gap-2 self-start sm:self-auto flex-wrap">
             <button
+              type="button"
               onClick={() => fetchStructuredLaw(law.codeId || law.id, true)}
               disabled={isGeneratingAI}
-              className="px-3 h-8 rounded-lg flex items-center gap-1.5 bg-stone-100 hover:bg-stone-200/80 text-stone-700 text-xs font-medium transition-colors cursor-pointer"
+              aria-busy={isGeneratingAI}
+              className="luxury-surface-btn px-3 min-h-[40px] rounded-xl flex items-center gap-1.5 text-[#2B2520] text-xs font-semibold cursor-pointer disabled:opacity-55 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5B45B8]/45"
               title="使用 Gemini 实时生成深度结构化内容"
             >
               <RefreshCw className={`w-3.5 h-3.5 ${isGeneratingAI ? 'animate-spin' : ''}`} />
@@ -349,37 +455,47 @@ export const LawDetailPage: React.FC = () => {
             </button>
 
             <button
+              type="button"
               onClick={handleToggleAudio}
-              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-colors cursor-pointer border ${
+              aria-pressed={isSpeakingThisLaw}
+              aria-label={isSpeakingThisLaw ? '停止朗读本定律' : '语音朗读本定律'}
+              className={`min-w-[40px] min-h-[40px] px-2.5 rounded-xl flex items-center justify-center transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5B45B8]/45 ${
                 isSpeakingThisLaw
-                  ? 'bg-stone-900 text-white border-stone-900'
-                  : 'bg-white text-stone-700 border-stone-200 hover:border-stone-400'
+                  ? 'luxury-dark-btn'
+                  : 'luxury-surface-btn text-[#2B2520]'
               }`}
               title="语音朗读"
             >
-              {isSpeakingThisLaw ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+              {isSpeakingThisLaw ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
             </button>
 
             <button
+              type="button"
               onClick={() => toggleBookmark(law.id)}
-              className="w-8 h-8 rounded-lg flex items-center justify-center bg-white text-stone-700 border border-stone-200 hover:border-stone-400 transition-colors cursor-pointer"
-              title="收藏本定律"
+              aria-pressed={bookmarked}
+              aria-label={bookmarked ? '取消收藏本定律' : '收藏本定律'}
+              className={`luxury-surface-btn min-w-[40px] min-h-[40px] px-2.5 rounded-xl flex items-center justify-center cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5B45B8]/45 ${
+                bookmarked ? 'border-[#C8933B]/45 bg-[#FAF4E6]' : 'text-[#2B2520]'
+              }`}
+              title={bookmarked ? '已收藏至心智藏品' : '收藏本定律'}
             >
-              <Bookmark className={`w-3.5 h-3.5 ${bookmarked ? 'fill-stone-900 text-stone-900' : ''}`} />
+              <Bookmark className={`w-4 h-4 ${bookmarked ? 'fill-[#C8933B] text-[#9E6B1E]' : ''}`} />
             </button>
 
             <button
               type="button"
               onClick={() => navigate(`/knowledge-graph?focus=${encodeURIComponent(law.id)}`)}
-              className="px-2.5 h-8 rounded-lg flex items-center gap-1.5 bg-white hover:bg-stone-100 text-stone-800 border border-stone-200 text-xs font-medium transition-colors cursor-pointer whitespace-nowrap shrink-0"
+              aria-label="在知识图谱中定位本定律"
+              className="luxury-surface-btn px-3 min-h-[40px] rounded-xl flex items-center gap-1.5 text-[#181411] text-xs font-semibold cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5B45B8]/45"
               title="在 500 律 D3 知识图谱中定位本定律"
             >
-              <Network className="w-3.5 h-3.5 text-amber-800" />
+              <Network className="w-3.5 h-3.5 text-[#A66C1E]" />
               <span className="hidden sm:inline">图谱关联</span>
             </button>
 
             {/* Cognitive Journal quick action */}
             <button
+              type="button"
               onClick={() =>
                 openComposerWithPreload({
                   relatedLawId: law.id,
@@ -389,23 +505,54 @@ export const LawDetailPage: React.FC = () => {
                   tags: [law.nameZh, law.categoryZh, '认知重构'],
                 })
               }
-              className="px-2.5 h-8 rounded-lg flex items-center gap-1.5 bg-stone-900 hover:bg-stone-800 text-white text-xs font-medium transition-colors cursor-pointer btn-tactile"
+              aria-label="记录关于本定律的觉察手记"
+              className="luxury-dark-btn px-3 min-h-[40px] rounded-xl flex items-center gap-1.5 text-xs font-semibold cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4A656]"
               title="对此定律记录心智觉察手记 (+50 XP)"
             >
               <PenLine className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">记录觉察手记</span>
             </button>
+
+            <button
+              type="button"
+              onClick={() => handleSetReadingMode('book')}
+              aria-label="切换至典藏书籍翻页阅读模式"
+              className="luxury-surface-btn px-3 min-h-[40px] rounded-xl flex items-center gap-1.5 text-[#8E5B13] border-[#C8933B]/45 bg-[#FAF4E6] text-xs font-semibold cursor-pointer whitespace-nowrap shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4A656]"
+              title="切换至沉浸式书籍翻页模式"
+            >
+              <BookOpen className="w-3.5 h-3.5" />
+              <span>书籍翻阅模式</span>
+            </button>
           </div>
         </div>
 
+        {structuredError && (
+          <div
+            role="alert"
+            className="rounded-xl px-4 py-3 bg-[#FDF4F6] border border-[#A82442]/25 text-xs text-[#961D38] flex flex-wrap items-center justify-between gap-2"
+          >
+            <div className="flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0" />
+              <span>{structuredError}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => fetchStructuredLaw(law.codeId || law.id, true)}
+              className="luxury-surface-btn px-2.5 py-1 rounded-lg text-[11px] font-bold text-[#961D38] cursor-pointer"
+            >
+              重试解析
+            </button>
+          </div>
+        )}
+
         {law.chapter && (
-          <p className="text-xs text-stone-500 font-serif-editorial italic">
+          <p className="text-xs text-[#6E675F] font-serif-editorial italic">
             Chapter Archive · {law.chapter}
           </p>
         )}
 
         <div className="space-y-2">
-          <h1 className="font-serif-editorial text-2xl sm:text-3xl md:text-4xl font-bold text-stone-900 tracking-tight leading-tight">
+          <h1 className="font-serif-editorial text-2xl sm:text-3xl md:text-4xl font-bold text-[#181411] tracking-tight leading-tight">
             <SilverSpeechText
               text={law.nameZh}
               isSpeaking={isSpeakingThisLaw}
@@ -413,14 +560,14 @@ export const LawDetailPage: React.FC = () => {
               segmentRange={segments.title}
             />
           </h1>
-          <p className="font-serif-editorial italic text-stone-500 text-sm sm:text-base tracking-wide">
+          <p className="font-serif-editorial italic text-[#6E675F] text-sm sm:text-base tracking-wide">
             {law.nameEn}
           </p>
         </div>
 
         {/* Literary Definition Quote Box */}
-        <div className="bg-[#FAF8F5]/90 border-l-2 border-stone-900 p-5 sm:p-6 rounded-r-xl">
-          <p className="font-serif-editorial text-base sm:text-lg text-stone-800 leading-relaxed font-normal">
+        <div className="bg-[#FAF7F1] border border-stone-200/75 border-l-[3px] border-l-[#C8933B] p-5 sm:p-6 rounded-r-xl">
+          <p className="font-serif-editorial text-base sm:text-lg text-[#2B2520] leading-relaxed font-normal">
             “
             <SilverSpeechText
               text={displayDefinition}
@@ -434,17 +581,17 @@ export const LawDetailPage: React.FC = () => {
 
         {/* Current Mastery, Reward Progress & Bottom-Right Voice Switch */}
         <div className="pt-4 border-t border-stone-200/80 flex flex-wrap items-center justify-between gap-3 text-xs">
-          <span className="text-stone-500">
-            当前心智内化度 · 研习奖励 <strong className="text-stone-800 font-numeric font-semibold">+{structuredLaw?.xp || law.xpReward || 20} XP</strong>
+          <span className="text-[#6E675F]">
+            当前心智内化度 · 研习奖励 <strong className="text-[#181411] font-numeric font-semibold">+{structuredLaw?.xp || law.xpReward || 20} XP</strong>
           </span>
           <div className="flex items-center gap-3 ml-auto flex-wrap justify-end">
-            <div className="w-28 sm:w-36 h-1 bg-stone-200 rounded-full overflow-hidden">
+            <div className="w-28 sm:w-36 h-1.5 bg-[#EFECE5] border border-stone-200/70 rounded-full overflow-hidden">
               <div
                 className="h-full chameleon-bar rounded-full"
                 style={{ width: `${mastery}%` }}
               />
             </div>
-            <span className="font-numeric font-semibold text-stone-800">{mastery}%</span>
+            <span className="font-numeric font-semibold text-[#181411]">{mastery}%</span>
             <LawVoiceToggleSwitch
               isOn={isSpeakingThisLaw}
               onToggle={handleToggleAudio}
@@ -646,7 +793,11 @@ export const LawDetailPage: React.FC = () => {
         </div>
 
         {/* 4 Case Tabs */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 border-b border-stone-200/80 pb-3">
+        <div
+          role="tablist"
+          aria-label="四大核心应用场景"
+          className="grid grid-cols-2 sm:grid-cols-4 gap-2 border-b border-stone-200/80 pb-3"
+        >
           {[
             { key: 'life', label: '日常生活', icon: Home },
             { key: 'workplace', label: '职场协作', icon: Briefcase },
@@ -657,12 +808,15 @@ export const LawDetailPage: React.FC = () => {
             const active = activeCaseTab === tab.key;
             return (
               <button
+                type="button"
+                role="tab"
+                aria-selected={active}
                 key={tab.key}
                 onClick={() => setActiveCaseTab(tab.key as any)}
-                className={`py-2 px-3 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
+                className={`min-h-[44px] py-2 px-3 rounded-xl text-xs font-medium flex items-center justify-center gap-1.5 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5B45B8]/45 ${
                   active
-                    ? 'bg-stone-900 text-white font-semibold'
-                    : 'text-stone-600 hover:text-stone-900 hover:bg-stone-100'
+                    ? 'luxury-dark-btn font-semibold'
+                    : 'luxury-surface-btn text-[#57514A] hover:text-[#181411]'
                 }`}
               >
                 <Icon className="w-3.5 h-3.5 shrink-0" />
@@ -672,7 +826,10 @@ export const LawDetailPage: React.FC = () => {
           })}
         </div>
 
-        <div className="bg-[#FAF8F5]/90 rounded-xl p-5 border border-stone-200/60 text-sm sm:text-base text-stone-700 leading-relaxed">
+        <div
+          role="tabpanel"
+          className="bg-[#FAF7F1] rounded-xl p-5 border border-stone-200/70 text-sm sm:text-base text-[#2B2520] leading-relaxed"
+        >
           <SilverSpeechText
             text={cases[activeCaseTab]}
             isSpeaking={isSpeakingThisLaw}
@@ -687,11 +844,11 @@ export const LawDetailPage: React.FC = () => {
         {/* Recognition Signals */}
         <section className="editorial-card rounded-2xl p-6 sm:p-7 space-y-4">
           <div>
-            <span className="editorial-kicker text-[10px] text-stone-500 block mb-1">
+            <span className="editorial-kicker text-[10px] text-[#6E675F] block mb-1">
               03 · Recognition Signals
             </span>
-            <h3 className="font-serif-editorial text-base sm:text-lg font-bold text-stone-900 flex items-center gap-1.5">
-              <Eye className="w-4 h-4 text-stone-700" />
+            <h3 className="font-serif-editorial text-base sm:text-lg font-bold text-[#181411] flex items-center gap-1.5">
+              <Eye className="w-4 h-4 text-[#4338A6]" />
               三大触发识别信号
             </h3>
           </div>
@@ -699,9 +856,9 @@ export const LawDetailPage: React.FC = () => {
             {recognitionSignals.map((sig, idx) => (
               <li
                 key={idx}
-                className="p-3.5 rounded-xl bg-[#FAF8F5] border border-stone-200/60 text-sm text-stone-700 leading-relaxed flex items-start gap-2.5"
+                className="p-3.5 rounded-xl bg-[#FAF7F1] border border-stone-200/70 text-sm text-[#2B2520] leading-relaxed flex items-start gap-2.5"
               >
-                <span className="font-mono text-xs font-bold text-stone-400 shrink-0 mt-1">
+                <span className="font-mono text-xs font-bold text-[#8E5B13] shrink-0 mt-0.5 tabular-nums">
                   0{idx + 1}
                 </span>
                 <span>{sig}</span>
@@ -713,11 +870,11 @@ export const LawDetailPage: React.FC = () => {
         {/* Anti-Manipulation */}
         <section className="editorial-card rounded-2xl p-6 sm:p-7 space-y-4">
           <div>
-            <span className="editorial-kicker text-[10px] text-stone-500 block mb-1">
+            <span className="editorial-kicker text-[10px] text-[#6E675F] block mb-1">
               04 · Defense Strategy
             </span>
-            <h3 className="font-serif-editorial text-base sm:text-lg font-bold text-stone-900 flex items-center gap-1.5">
-              <ShieldAlert className="w-4 h-4 text-stone-700" />
+            <h3 className="font-serif-editorial text-base sm:text-lg font-bold text-[#181411] flex items-center gap-1.5">
+              <ShieldAlert className="w-4 h-4 text-[#157F5D]" />
               反操控与破局防御
             </h3>
           </div>
@@ -725,9 +882,9 @@ export const LawDetailPage: React.FC = () => {
             {antiManipulation.map((defense, idx) => (
               <li
                 key={idx}
-                className="p-3.5 rounded-xl bg-[#FAF8F5] border border-stone-200/60 text-sm text-stone-700 leading-relaxed flex items-start gap-2.5"
+                className="p-3.5 rounded-xl bg-[#FAF7F1] border border-stone-200/70 text-sm text-[#2B2520] leading-relaxed flex items-start gap-2.5"
               >
-                <span className="text-emerald-700 font-bold shrink-0 mt-0.5">✓</span>
+                <span className="text-[#157F5D] font-bold shrink-0 mt-0.5">✓</span>
                 <span>{defense}</span>
               </li>
             ))}
@@ -739,18 +896,18 @@ export const LawDetailPage: React.FC = () => {
       <section className="editorial-card rounded-2xl p-7 sm:p-10 space-y-5">
         <div className="flex items-center justify-between">
           <div>
-            <span className="editorial-kicker text-[10px] text-stone-500 block mb-1">
+            <span className="editorial-kicker text-[10px] text-[#6E675F] block mb-1">
               05 · Dialectical Decision Lab
             </span>
-            <h3 className="font-serif-editorial text-lg sm:text-xl font-bold text-stone-900 flex items-center gap-2">
-              <Gamepad2 className="w-4 h-4 text-stone-700" />
+            <h3 className="font-serif-editorial text-lg sm:text-xl font-bold text-[#181411] flex items-center gap-2">
+              <Gamepad2 className="w-4 h-4 text-[#5B45B8]" />
               {lawGame.title}
             </h3>
           </div>
-          <span className="font-numeric text-xs font-semibold text-stone-700">+30 XP</span>
+          <span className="luxury-badge-ink font-numeric text-xs font-semibold text-[#8E5B13]">+30 XP</span>
         </div>
 
-        <div className="bg-[#FAF8F5] p-5 sm:p-6 rounded-xl border border-stone-200/60 text-base sm:text-lg text-stone-800 leading-relaxed font-medium">
+        <div className="bg-[#FAF7F1] p-5 sm:p-6 rounded-xl border border-stone-200/70 text-base sm:text-lg text-[#181411] leading-relaxed font-medium">
           {lawGame.scenario}
         </div>
 
@@ -762,23 +919,25 @@ export const LawDetailPage: React.FC = () => {
 
             return (
               <button
+                type="button"
                 key={choiceKey}
                 onClick={() => handleGameChoice(choiceKey)}
                 disabled={selectedGameChoice !== null}
-                className={`p-4 sm:p-5 rounded-xl border-2 text-left text-sm sm:text-base font-semibold transition-colors cursor-pointer ${
+                aria-pressed={isSelected}
+                className={`min-h-[64px] p-4 sm:p-5 rounded-xl border-2 text-left text-sm sm:text-base font-semibold transition-all cursor-pointer disabled:cursor-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5B45B8]/45 ${
                   selectedGameChoice === null
-                    ? 'bg-white hover:bg-stone-50 border-stone-200 text-stone-900'
+                    ? 'bg-white hover:bg-[#FAF7F1] border-stone-200 hover:border-[#D4A656]/60 text-[#181411]'
                     : isRational
-                    ? 'bg-emerald-50 border-emerald-400 text-emerald-900'
+                    ? 'bg-[#EEF7F3] border-[#157F5D]/60 text-[#0F5C43]'
                     : isSelected
-                    ? 'bg-amber-50 border-amber-300 text-amber-900'
-                    : 'bg-stone-50/60 border-stone-200 text-stone-500'
+                    ? 'bg-[#FAF4E6] border-[#C8933B]/60 text-[#7A5011]'
+                    : 'bg-[#FAF8F4] border-stone-200/70 text-[#6E675F]'
                 }`}
               >
                 <div className="flex items-center justify-between mb-1.5">
-                  <span className="font-mono font-bold text-xs sm:text-sm text-stone-900">选项 {choiceKey}</span>
+                  <span className="font-mono font-bold text-xs sm:text-sm text-[#181411]">选项 {choiceKey}</span>
                   {selectedGameChoice !== null && isRational && (
-                    <span className="text-xs font-medium text-emerald-800">
+                    <span className="text-xs font-semibold text-[#157F5D]">
                       系统2 理性解
                     </span>
                   )}
@@ -790,8 +949,11 @@ export const LawDetailPage: React.FC = () => {
         </div>
 
         {selectedGameChoice && (
-          <div className="p-4 sm:p-5 rounded-xl bg-stone-100/80 border border-stone-200 text-sm sm:text-base text-stone-800 leading-relaxed animate-fadeIn">
-            <strong className="block mb-1 font-semibold">实验洞察与反思：</strong>
+          <div
+            role="status"
+            className="p-4 sm:p-5 rounded-xl bg-[#FAF7F1] border border-[#D4A656]/35 text-sm sm:text-base text-[#2B2520] leading-relaxed animate-fadeIn"
+          >
+            <strong className="block mb-1 font-semibold text-[#181411]">实验洞察与反思：</strong>
             {lawGame.insight}
           </div>
         )}
@@ -801,10 +963,10 @@ export const LawDetailPage: React.FC = () => {
       <section className="editorial-card rounded-2xl p-7 sm:p-10 space-y-5">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div>
-            <span className="editorial-kicker text-[10px] text-stone-500 block mb-1">
+            <span className="editorial-kicker text-[10px] text-[#6E675F] block mb-1">
               06 · Three-Step Dialectic Quiz
             </span>
-            <h3 className="font-serif-editorial text-lg sm:text-xl font-bold text-stone-900">
+            <h3 className="font-serif-editorial text-lg sm:text-xl font-bold text-[#181411]">
               定律深度思辨自测（{activeQuizIdx + 1} / {quizList.length}）
             </h3>
           </div>
@@ -812,14 +974,17 @@ export const LawDetailPage: React.FC = () => {
           <div className="flex items-center gap-1.5 font-numeric text-xs">
             {quizList.map((_, idx) => (
               <button
+                type="button"
                 key={idx}
                 onClick={() => setActiveQuizIdx(idx)}
-                className={`w-8 h-8 rounded-lg text-xs font-bold transition-colors cursor-pointer ${
+                aria-label={`切换至第 ${idx + 1} 题`}
+                aria-current={activeQuizIdx === idx ? 'step' : undefined}
+                className={`min-w-[40px] min-h-[40px] rounded-xl text-xs font-bold transition-colors cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5B45B8]/45 ${
                   activeQuizIdx === idx
-                    ? 'bg-stone-900 text-white'
+                    ? 'luxury-dark-btn'
                     : quizAnswers[idx] !== undefined
-                    ? 'bg-emerald-100 text-emerald-900'
-                    : 'bg-stone-100 text-stone-600 hover:bg-stone-200'
+                    ? 'bg-[#EEF7F3] text-[#157F5D] border border-[#157F5D]/30'
+                    : 'luxury-surface-btn text-[#57514A]'
                 }`}
               >
                 {idx + 1}
@@ -828,7 +993,7 @@ export const LawDetailPage: React.FC = () => {
           </div>
         </div>
 
-        <p className="font-serif-editorial text-lg sm:text-xl md:text-2xl font-bold text-stone-900 leading-relaxed">
+        <p className="font-serif-editorial text-lg sm:text-xl md:text-2xl font-bold text-[#181411] leading-relaxed">
           {currentQuiz.question}
         </p>
 
@@ -842,48 +1007,54 @@ export const LawDetailPage: React.FC = () => {
 
             return (
               <button
+                type="button"
                 key={idx}
                 disabled={isCurrentQuizAnswered}
+                aria-pressed={isSelected}
                 onClick={() => handleQuizSelect(idx)}
-                className={`w-full text-left p-4 sm:p-5 rounded-xl text-base sm:text-lg font-semibold leading-relaxed border-2 transition-colors flex items-center justify-between gap-3 cursor-pointer ${
+                className={`w-full min-h-[56px] text-left p-4 sm:p-5 rounded-xl text-base sm:text-lg font-semibold leading-relaxed border-2 transition-all flex items-center justify-between gap-3 cursor-pointer disabled:cursor-default focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5B45B8]/45 ${
                   showSuccess
-                    ? 'bg-emerald-50 border-emerald-400 text-emerald-900'
+                    ? 'bg-[#EEF7F3] border-[#157F5D]/60 text-[#0F5C43]'
                     : showWrong
-                    ? 'bg-rose-50 border-rose-300 text-rose-900'
-                    : 'bg-white hover:bg-stone-50 border-stone-200 hover:border-stone-400 text-stone-900'
+                    ? 'bg-[#FDF4F6] border-[#A82442]/50 text-[#961D38]'
+                    : 'bg-white hover:bg-[#FAF7F1] border-stone-200 hover:border-[#D4A656]/60 text-[#181411]'
                 }`}
               >
                 <div className="flex items-start gap-3">
                   <span
                     className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center text-xs sm:text-sm font-mono font-bold shrink-0 mt-0.5 ${
                       showSuccess
-                        ? 'bg-emerald-600 text-white'
+                        ? 'bg-[#157F5D] text-white'
                         : showWrong
-                        ? 'bg-rose-600 text-white'
-                        : 'bg-stone-100 text-stone-700'
+                        ? 'bg-[#A82442] text-white'
+                        : 'bg-[#F1EDE4] text-[#2B2520]'
                     }`}
                   >
                     {optionLetter}
                   </span>
                   <span>{ans}</span>
                 </div>
-                {showSuccess && <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-700 shrink-0" />}
-                {showWrong && <AlertCircle className="w-5 h-5 sm:w-6 sm:h-6 text-rose-600 shrink-0" />}
+                {showSuccess && <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6 text-[#157F5D] shrink-0" />}
+                {showWrong && <AlertCircle className="w-5 h-5 sm:w-6 sm:h-6 text-[#A82442] shrink-0" />}
               </button>
             );
           })}
         </div>
 
         {isCurrentQuizAnswered && (
-          <div className="p-4 sm:p-5 bg-stone-100/80 border border-stone-200 rounded-xl text-sm sm:text-base text-stone-800 space-y-3 animate-fadeIn">
+          <div
+            role="status"
+            className="p-4 sm:p-5 bg-[#FAF7F1] border border-stone-200/80 rounded-xl text-sm sm:text-base text-[#2B2520] space-y-3 animate-fadeIn"
+          >
             <p className="leading-relaxed">
-              <strong>解析：</strong>
+              <strong className="text-[#181411]">解析：</strong>
               {currentQuiz.explanation}
             </p>
             {activeQuizIdx < quizList.length - 1 && (
               <button
+                type="button"
                 onClick={() => setActiveQuizIdx((prev) => prev + 1)}
-                className="px-4 py-2.5 rounded-lg bg-stone-900 text-white font-semibold text-xs sm:text-sm hover:bg-stone-800 transition-colors cursor-pointer"
+                className="luxury-dark-btn min-h-[44px] px-5 py-2.5 rounded-xl font-semibold text-xs sm:text-sm cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4A656]"
               >
                 继续下一题 ({activeQuizIdx + 2}/{quizList.length}) →
               </button>
@@ -893,17 +1064,17 @@ export const LawDetailPage: React.FC = () => {
       </section>
 
       {/* 7. Module 8: Related Cognitive Laws & Thinkers Stack (1/3 Overlap Spread & Collapse) */}
-      <section className="editorial-card rounded-2xl p-6 sm:p-8 space-y-4 bg-white border border-stone-200 shadow-xs">
+      <section className="editorial-card rounded-2xl p-6 sm:p-8 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-stone-200/70 pb-3">
           <div>
-            <span className="editorial-kicker text-[10px] text-stone-500 block mb-0.5">
+            <span className="editorial-kicker text-[10px] text-[#6E675F] block mb-0.5">
               07 · Related Principles & Observers
             </span>
-            <h3 className="font-serif-editorial text-base sm:text-lg font-bold text-stone-900">
+            <h3 className="font-serif-editorial text-base sm:text-lg font-bold text-[#181411]">
               同领域关联思维模型与思辨巨擘
             </h3>
           </div>
-          <span className="text-[11px] text-stone-500 font-sans">
+          <span className="text-[11px] text-[#6E675F] font-sans">
             1/3 叠放 · 点击依次散开并显露名称
           </span>
         </div>
@@ -922,16 +1093,18 @@ export const LawDetailPage: React.FC = () => {
       {/* 8. Bottom Editorial Actions */}
       <div className="flex flex-col sm:flex-row gap-3 pt-2">
         <button
+          type="button"
           onClick={handleAskAITutor}
-          className="flex-1 py-3.5 px-4 rounded-xl bg-white border border-stone-200 hover:border-stone-400 text-stone-800 font-semibold text-xs flex items-center justify-center gap-2 transition-colors cursor-pointer"
+          className="luxury-surface-btn flex-1 min-h-[48px] py-3.5 px-4 rounded-xl text-[#181411] font-semibold text-xs flex items-center justify-center gap-2 cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#5B45B8]/45"
         >
-          <MessageSquarePlus className="w-4 h-4 text-stone-700" />
+          <MessageSquarePlus className="w-4 h-4 text-[#4338A6]" />
           <span>向 AI 认知导师咨询深度案例</span>
         </button>
 
         <button
+          type="button"
           onClick={() => navigate(`/game/${law.relatedGame}`)}
-          className="flex-1 py-3.5 px-4 rounded-xl chameleon-btn font-semibold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
+          className="flex-1 min-h-[48px] py-3.5 px-4 rounded-xl chameleon-btn font-semibold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D4A656]"
         >
           <Play className="w-3.5 h-3.5 fill-current" />
           <span>进入认知竞技场实战演练</span>

@@ -29,4 +29,6 @@
 13. **Payload 13 (Leaderboard Score Forgery)**: User `user_A` attempts to submit `/gameLeaderboards/score_1` with `userId: "user_B"`. -> `PERMISSION_DENIED`
 14. **Payload 14 (Leaderboard Timestamp Tampering)**: User `user_A` attempts to submit leaderboard score with client-manipulated `createdAt` or `updatedAt`. -> `PERMISSION_DENIED`
 15. **Payload 15 (Leaderboard Ghost Field Injection)**: User `user_A` submits leaderboard score containing unapproved property `cheatMultiplier: 100`. -> `PERMISSION_DENIED`
-
+16. **Payload 16 (Focus Bookmark Cross-User Ownership & Identity Spoof)**: User `user_A` attempts to create `/users/user_B/focusSessionBookmarks/bm_1` or set `userId: "user_B"`. -> `PERMISSION_DENIED`
+17. **Payload 17 (Focus Bookmark Range Poisoning)**: User `user_A` submits `beatHz: 500` (outside `4..45`) or `timestampSec: -10` or `label` > 80 chars. -> `PERMISSION_DENIED`
+18. **Payload 18 (Focus Bookmark Shadow Field / Immutable Tamper)**: User `user_A` updates `/users/user_A/focusSessionBookmarks/bm_1` trying to alter `createdAt` or inject `isFeatured: true`. -> `PERMISSION_DENIED`

@@ -43,6 +43,7 @@ import {
   LawSpeechSegment,
 } from '../utils/lawSpeechEngine';
 import { SilverSpeechText, LawVoiceToggleSwitch } from '../components/ui/SilverSpeechText';
+import { ViewportLawCard } from '../components/ui/ViewportLawCard';
 
 type LibraryViewMode = 'corpus' | 'emotional-archive';
 type DifficultyFilter = 'all' | DifficultyLevel;
@@ -64,6 +65,7 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
   const [visibleLimit, setVisibleLimit] = useState(PAGE_BATCH_SIZE);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set(['emo-01', 'emo-11']));
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [spotlightState, setSpotlightState] = useState<{ id: string; tick: number } | null>(null);
   const { activeLawId, globalIsSpeaking, activeCpIndex, segments } = useLawSpeech();
 
   const SECTION_TABS = [
@@ -344,6 +346,7 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
         setVisibleLimit(idx + 6);
       }
       setExpandedIds((prev) => new Set(prev).add(picked.id));
+      setSpotlightState((prev) => ({ id: picked.id, tick: (prev?.tick || 0) + 1 }));
       window.setTimeout(() => {
         document.getElementById(`corpus-${picked.id}`)?.scrollIntoView({
           behavior: 'smooth',
@@ -361,6 +364,7 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
     }
     const randomLaw = EMOTIONAL_PSYCHOLOGY_LAWS[idx];
     setExpandedIds((prev) => new Set(prev).add(randomLaw.id));
+    setSpotlightState((prev) => ({ id: randomLaw.id, tick: (prev?.tick || 0) + 1 }));
     document.getElementById(randomLaw.id)?.scrollIntoView({
       behavior: 'smooth',
       block: 'center',
@@ -843,20 +847,20 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
               ) : (
                 <>
                   <div className="space-y-3">
-                    {visibleCorpus.map(({ law, primaryTagLabel }) => {
+                    {visibleCorpus.map(({ law, primaryTagLabel }, idx) => {
                       const isExpanded = expandedIds.has(law.id);
                       const bookmarked = isBookmarked(law.id);
                       const speaking = globalIsSpeaking && activeLawId === law.id;
 
                       return (
-                        <article
+                        <ViewportLawCard
                           key={law.id}
+                          as="article"
                           id={`corpus-${law.id}`}
-                          className={`rounded-2xl transition-colors overflow-hidden relative ${
-                            isExpanded
-                              ? 'bg-gradient-to-b from-[#17130f] to-[#0e0b09] art-gold-border shadow-[0_12px_36px_rgba(245,158,11,0.14)]'
-                              : 'bg-[#120f0c]/95 border border-stone-800/90 hover:border-amber-500/45'
-                          }`}
+                          index={idx}
+                          isExpanded={isExpanded}
+                          spotlightTick={spotlightState?.id === law.id ? spotlightState.tick : 0}
+                          className="rounded-2xl"
                         >
                           {/* Clickable Accordion Header */}
                           <div
@@ -1048,7 +1052,7 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
                                       }}
                                       className="px-4 py-1.5 rounded-xl bg-amber-500 hover:brightness-110 text-stone-950 font-bold text-xs inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
                                     >
-                                      <span>进入完整解析与测验</span>
+                                      <span>翻阅典藏书籍 &amp; 测验</span>
                                       <ArrowRight className="w-3.5 h-3.5 shrink-0" />
                                     </button>
                                   </div>
@@ -1069,7 +1073,7 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
                               size="sm"
                             />
                           </div>
-                        </article>
+                        </ViewportLawCard>
                       );
                     })}
                   </div>
@@ -1224,20 +1228,20 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
                       </div>
 
                       <div className="space-y-3.5">
-                        {group.laws.map((law) => {
+                        {group.laws.map((law, idx) => {
                           const isExpanded = expandedIds.has(law.id);
                           const bookmarked = isBookmarked(law.id);
                           const speakingEmo = globalIsSpeaking && activeLawId === law.id;
 
                           return (
-                            <div
+                            <ViewportLawCard
                               key={law.id}
+                              as="div"
                               id={law.id}
-                              className={`group/card rounded-2xl transition-all duration-300 overflow-hidden relative ${
-                                isExpanded
-                                  ? 'bg-gradient-to-b from-[#16120e] via-[#120f0d] to-[#0d0b0a] art-gold-border shadow-[0_12px_40px_rgba(245,158,11,0.16)]'
-                                  : 'bg-[#100d0b]/85 border border-stone-800/90 hover:border-amber-500/45'
-                              }`}
+                              index={idx}
+                              isExpanded={isExpanded}
+                              spotlightTick={spotlightState?.id === law.id ? spotlightState.tick : 0}
+                              className="group/card rounded-2xl"
                             >
                               <div
                                 onClick={() => toggleExpand(law.id)}
@@ -1461,11 +1465,15 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
                                           type="button"
                                           onClick={() => {
                                             gameAudio.playTap();
-                                            navigate('/learn');
+                                            const targetId =
+                                              law.isDuplicateOfCore && law.duplicateCoreId
+                                                ? law.duplicateCoreId
+                                                : law.id;
+                                            navigate(`/law/${targetId}`);
                                           }}
                                           className="px-4 py-1.5 rounded-xl bg-amber-500 hover:brightness-110 text-stone-950 font-bold text-xs inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
                                         >
-                                          <span>在主画廊中研习 & 测验</span>
+                                          <span>翻阅典藏书籍 &amp; 测验</span>
                                           <ArrowRight className="w-3.5 h-3.5 shrink-0" />
                                         </button>
                                       </div>
@@ -1486,7 +1494,7 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
                                   size="sm"
                                 />
                               </div>
-                            </div>
+                            </ViewportLawCard>
                           );
                         })}
                       </div>

@@ -99,10 +99,10 @@ export const AmbientSoundscapeControl: React.FC<AmbientSoundscapeControlProps> =
     <div className={`relative ${className}`}>
       {/* 1. Main Floating Capsule Switch */}
       <div
-        className={`flex items-center rounded-full backdrop-blur-xl border transition-all duration-300 shadow-xl p-0.5 text-xs ${
+        className={`flex items-center rounded-full backdrop-blur-xl border transition-all duration-300 shadow-[inset_0_1px_0_rgba(255,255,255,0.12),0_10px_24px_-8px_rgba(0,0,0,0.45)] p-0.5 text-xs ${
           isPlaying
-            ? 'bg-black/80 hover:bg-black/95 border-emerald-400/60 text-white shadow-emerald-500/20'
-            : 'bg-black/65 hover:bg-black/85 border-white/20 text-stone-300'
+            ? 'bg-[#121619]/85 hover:bg-[#121619]/95 border-[#34A88B]/50 text-[#FAF8F5]'
+            : 'bg-[#14121D]/75 hover:bg-[#14121D]/90 border-white/15 text-stone-300'
         }`}
       >
         {/* Play / Pause Quick Action */}
@@ -110,7 +110,7 @@ export const AmbientSoundscapeControl: React.FC<AmbientSoundscapeControlProps> =
           onClick={handleTogglePlay}
           className={`w-7 h-7 rounded-full flex items-center justify-center transition-all cursor-pointer active:scale-95 ${
             isPlaying
-              ? 'bg-emerald-500 text-stone-950 hover:bg-emerald-400 shadow-xs'
+              ? 'bg-gradient-to-br from-[#34A88B] to-[#1D7F67] text-[#FAF8F5] shadow-[inset_0_1px_0_rgba(255,255,255,0.3)] hover:brightness-110'
               : 'bg-white/10 text-stone-300 hover:text-white hover:bg-white/20'
           }`}
           title={isPlaying ? '暂停环境音景' : '开启环境音景（静谧森林 / 禅意空间）'}
@@ -135,10 +135,10 @@ export const AmbientSoundscapeControl: React.FC<AmbientSoundscapeControlProps> =
           {isPlaying ? (
             /* Animated Equalizer Wavebars */
             <div className="flex items-center gap-0.5 h-3.5 px-0.5">
-              <span className="w-0.5 bg-emerald-400 rounded-full animate-soundWave1" />
-              <span className="w-0.5 bg-emerald-400 rounded-full animate-soundWave2" />
-              <span className="w-0.5 bg-emerald-400 rounded-full animate-soundWave3" />
-              <span className="w-0.5 bg-emerald-400 rounded-full animate-soundWave4" />
+              <span className="w-0.5 bg-[#6EE7B7] rounded-full animate-soundWave1" />
+              <span className="w-0.5 bg-[#6EE7B7] rounded-full animate-soundWave2" />
+              <span className="w-0.5 bg-[#6EE7B7] rounded-full animate-soundWave3" />
+              <span className="w-0.5 bg-[#6EE7B7] rounded-full animate-soundWave4" />
             </div>
           ) : (
             <Headphones className="w-3.5 h-3.5 text-stone-400" />
@@ -146,7 +146,7 @@ export const AmbientSoundscapeControl: React.FC<AmbientSoundscapeControlProps> =
 
           <span
             className={`font-serif-editorial truncate max-w-[85px] sm:max-w-none ${
-              isPlaying ? 'text-emerald-300 font-bold' : 'text-stone-300'
+              isPlaying ? 'text-[#A7F3D0] font-bold' : 'text-stone-300'
             }`}
           >
             {isPlaying ? activeSoundscape.name.split('·')[0].trim() : '环境音景'}
@@ -155,7 +155,7 @@ export const AmbientSoundscapeControl: React.FC<AmbientSoundscapeControlProps> =
           <span
             className={`px-1.5 py-0.2 rounded text-[10px] font-mono ${
               isPlaying
-                ? 'bg-emerald-400/20 text-emerald-300 border border-emerald-400/30'
+                ? 'bg-[#34A88B]/20 text-[#A7F3D0] border border-[#34A88B]/35'
                 : 'bg-white/10 text-stone-400'
             }`}
           >

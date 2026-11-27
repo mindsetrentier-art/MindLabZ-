@@ -25,11 +25,12 @@ const SAMPLE_PREFIX = 'settings-voice-sample-';
 const CUSTOM_VOICE_SAMPLE_ID = 'settings-voice-custom-sample';
 
 const SPEED_PRESETS = [
-  { rate: 0.75, label: '0.75x 慢速精读' },
-  { rate: 0.9, label: '0.90x 沉静伴读' },
+  { rate: 0.5, label: '0.50x 精微慢听' },
+  { rate: 0.75, label: '0.75x 从容精读' },
   { rate: 1.0, label: '1.00x 标准语速' },
-  { rate: 1.2, label: '1.20x 高效略读' },
-  { rate: 1.4, label: '1.40x 极速复习' },
+  { rate: 1.25, label: '1.25x 高效伴读' },
+  { rate: 1.5, label: '1.50x 敏捷浏览' },
+  { rate: 2.0, label: '2.00x 极速复习' },
 ];
 
 export const VoiceReadingPreferencesSection: React.FC = () => {
@@ -113,7 +114,6 @@ export const VoiceReadingPreferencesSection: React.FC = () => {
 
   const handleSpeedChange = (newRate: number) => {
     updatePrefs({ rate: newRate });
-    triggerPreviewRestartIfPlaying();
   };
 
   const handleToggleSmoothHighlight = () => {
@@ -361,38 +361,47 @@ export const VoiceReadingPreferencesSection: React.FC = () => {
         )}
       </div>
 
-      {/* 2. Reading Speed Control */}
+      {/* 2. Reading Speed Control (0.5x - 2.0x synced with brushstroke duration) */}
       <div className="space-y-3 pt-2 border-t border-stone-100">
         <div className="flex items-center justify-between gap-2">
           <div>
             <span className="text-xs font-semibold text-stone-900 flex items-center gap-1.5">
               <Gauge className="w-3.5 h-3.5 text-stone-700" />
-              <span>阅读语速调节</span>
+              <span>阅读语速调节 (0.50x – 2.00x)</span>
             </span>
             <span className="text-[11px] text-stone-500 block mt-0.5">
-              支持 0.70x 至 1.50x 无级调节，银色字迹高亮频率将自动同步匹配语速
+              支持 0.50x 至 2.00x 实时无级变速，银色笔触扫掠周期（当前{' '}
+              {Math.round(230 / Math.max(0.5, prefs.rate))}ms）与字迹跟读节奏自动同步
             </span>
           </div>
-          <span className="font-numeric tabular-nums text-sm font-bold text-stone-900 px-2.5 py-1 rounded-lg bg-[#FAF8F5] border border-stone-200">
+          <span className="font-numeric tabular-nums text-sm font-bold text-stone-900 px-2.5 py-1 rounded-lg bg-[#FAF8F5] border border-stone-200 shrink-0">
             {prefs.rate.toFixed(2)}x
           </span>
         </div>
 
         <div className="space-y-2.5">
-          <input
-            type="range"
-            min={0.7}
-            max={1.5}
-            step={0.05}
-            value={prefs.rate}
-            aria-label="调节阅读语速"
-            onChange={(e) => handleSpeedChange(parseFloat(e.target.value))}
-            className="w-full h-2 bg-stone-200 rounded-full appearance-none cursor-pointer accent-stone-900"
-          />
+          <div className="flex items-center gap-2.5">
+            <span className="text-[10.5px] font-numeric tabular-nums text-stone-400 shrink-0">
+              0.5x
+            </span>
+            <input
+              type="range"
+              min={0.5}
+              max={2.0}
+              step={0.05}
+              value={prefs.rate}
+              aria-label="调节阅读语速（0.5x 至 2.0x）"
+              onChange={(e) => handleSpeedChange(parseFloat(e.target.value))}
+              className="w-full h-2 bg-stone-200 rounded-full appearance-none cursor-pointer accent-stone-900"
+            />
+            <span className="text-[10.5px] font-numeric tabular-nums text-stone-400 shrink-0">
+              2.0x
+            </span>
+          </div>
 
           <div className="flex flex-wrap gap-1.5">
             {SPEED_PRESETS.map((item) => {
-              const isSelected = Math.abs(prefs.rate - item.rate) < 0.02;
+              const isSelected = Math.abs(prefs.rate - item.rate) < 0.025;
               return (
                 <button
                   key={item.rate}
@@ -401,7 +410,7 @@ export const VoiceReadingPreferencesSection: React.FC = () => {
                     gameAudio.playTap();
                     handleSpeedChange(item.rate);
                   }}
-                  className={`px-2.5 py-1 rounded-lg text-[11px] font-medium font-numeric tabular-nums border transition-colors cursor-pointer ${
+                  className={`px-2.5 py-1 rounded-lg text-[11px] font-medium font-numeric tabular-nums border transition-colors cursor-pointer whitespace-nowrap ${
                     isSelected
                       ? 'bg-stone-900 text-white border-stone-900'
                       : 'bg-white text-stone-600 border-stone-200 hover:border-stone-400 hover:text-stone-900'

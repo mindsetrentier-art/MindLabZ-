@@ -97,6 +97,59 @@ service cloud.firestore {
         && data.updatedAt is timestamp;
     }
 
+    // Blueprint for FocusSessionBookmark entity
+    function isValidFocusSessionBookmark(data) {
+      return data.keys().hasAll([
+          'id',
+          'userId',
+          'label',
+          'timestampSec',
+          'binauralPresetId',
+          'naturePresetId',
+          'beatHz',
+          'carrierHz',
+          'binauralMix',
+          'natureMix',
+          'masterVolume',
+          'timerDurationSec',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id',
+          'userId',
+          'label',
+          'timestampSec',
+          'binauralPresetId',
+          'naturePresetId',
+          'beatHz',
+          'carrierHz',
+          'binauralMix',
+          'natureMix',
+          'masterVolume',
+          'timerDurationSec',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 && data.userId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.userId == request.auth.uid
+        && data.label is string && data.label.size() >= 1 && data.label.size() <= 80
+        && data.timestampSec is number && data.timestampSec >= 0 && data.timestampSec <= 86400
+        && data.binauralPresetId is string && data.binauralPresetId.size() >= 1 && data.binauralPresetId.size() <= 32
+        && data.binauralPresetId in ['gamma-40', 'beta-18', 'smr-14', 'alpha-10', 'theta-6']
+        && data.naturePresetId is string && data.naturePresetId.size() >= 1 && data.naturePresetId.size() <= 32
+        && data.naturePresetId in ['canopy-rain', 'ocean-tide', 'alpine-stream', 'night-hearth', 'none']
+        && data.beatHz is number && data.beatHz >= 4 && data.beatHz <= 45
+        && data.carrierHz is number && data.carrierHz >= 100 && data.carrierHz <= 320
+        && data.binauralMix is number && data.binauralMix >= 0 && data.binauralMix <= 1
+        && data.natureMix is number && data.natureMix >= 0 && data.natureMix <= 1
+        && data.masterVolume is number && data.masterVolume >= 0 && data.masterVolume <= 1
+        && data.timerDurationSec is number && data.timerDurationSec >= 0 && data.timerDurationSec <= 14400
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
     // Pillar 2: Standalone Entity Validation Blueprint for GameLeaderboardEntry
     function isValidLeaderboardEntry(data) {
       return data.keys().hasAll([
@@ -300,6 +353,22 @@ service cloud.firestore {
       ]);
     }
 
+    function isFocusBookmarkUpdateAction() {
+      return incoming().diff(existing()).affectedKeys().hasOnly([
+        'label',
+        'timestampSec',
+        'binauralPresetId',
+        'naturePresetId',
+        'beatHz',
+        'carrierHz',
+        'binauralMix',
+        'natureMix',
+        'masterVolume',
+        'timerDurationSec',
+        'updatedAt'
+      ]);
+    }
+
     // Collection: /users/{userId}
     match /users/{userId} {
       allow get: if isSignedIn() && isValidId(userId) && isOwner(userId);
@@ -349,6 +418,32 @@ service cloud.firestore {
           && incoming().updatedAt == request.time;
 
         allow delete: if isOwner(userId) && isValidId(journalId);
+      }
+
+      // Subcollection: /users/{userId}/focusSessionBookmarks/{bookmarkId}
+      match /focusSessionBookmarks/{bookmarkId} {
+        allow get, list: if isSignedIn() && isValidId(userId) && isOwner(userId);
+
+        allow create: if isOwner(userId)
+          && isValidId(bookmarkId)
+          && incoming().id == bookmarkId
+          && incoming().userId == userId
+          && isValidFocusSessionBookmark(incoming())
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+
+        allow update: if isValidFocusSessionBookmark(incoming())
+          && isOwner(userId)
+          && isValidId(bookmarkId)
+          && incoming().id == bookmarkId
+          && incoming().userId == userId
+          && incoming().id == existing().id
+          && incoming().userId == existing().userId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && isFocusBookmarkUpdateAction();
+
+        allow delete: if isOwner(userId) && isValidId(bookmarkId);
       }
     }
 
