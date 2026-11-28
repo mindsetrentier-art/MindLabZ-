@@ -21,6 +21,8 @@ import { ProfilePage } from './pages/ProfilePage';
 import { JournalPage } from './pages/JournalPage';
 import { BreathingPage } from './pages/BreathingPage';
 import { FocusAudioPage } from './pages/FocusAudioPage';
+import { BrainGymPage } from './pages/BrainGymPage';
+import { ReviewSchedulePage } from './pages/ReviewSchedulePage';
 import { SkillsAdminPage } from './pages/SkillsAdminPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { OnboardingModal } from './pages/OnboardingModal';
@@ -35,6 +37,8 @@ import { BiometricSetupModal } from './components/journal/BiometricSetupModal';
 import { BadgeUnlockedModal } from './components/profile/BadgeUnlockedModal';
 import { ErrorBoundary } from './components/ui/ErrorBoundary';
 import { GlobalSearchModal } from './components/search/GlobalSearchModal';
+import { ReviewScheduleProvider } from './context/ReviewScheduleContext';
+import { ReviewReminderToast } from './components/review/ReviewReminderToast';
 
 const AppRoutes: React.FC = () => {
   const navigate = useNavigate();
@@ -90,6 +94,8 @@ const AppRoutes: React.FC = () => {
             <Route path="/breathing" element={<BreathingPage />} />
             <Route path="/focus-audio" element={<FocusAudioPage />} />
             <Route path="/games" element={<GamesPage />} />
+            <Route path="/brain-gym" element={<BrainGymPage />} />
+            <Route path="/review" element={<ReviewSchedulePage />} />
             <Route path="/game/:id" element={<GamePlayPage />} />
             <Route path="/quiz" element={<RapidQuizPage />} />
             <Route path="/challenge" element={<DailyChallengePage />} />
@@ -107,6 +113,7 @@ const AppRoutes: React.FC = () => {
 
       <PwaUpdateToast />
       <OfflineStatusToast />
+      <ReviewReminderToast />
       <LawSpeechFloatingBar />
 
       <FocusedBreathingModal
@@ -157,9 +164,11 @@ export default function App() {
       <ThemeColorProvider>
         <FontScaleProvider>
           <AppProvider>
-            <BiometricLockProvider>
-              <AppRoutes />
-            </BiometricLockProvider>
+            <ReviewScheduleProvider>
+              <BiometricLockProvider>
+                <AppRoutes />
+              </BiometricLockProvider>
+            </ReviewScheduleProvider>
           </AppProvider>
         </FontScaleProvider>
       </ThemeColorProvider>

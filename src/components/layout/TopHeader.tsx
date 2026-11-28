@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Flame, Star, ArrowLeft, Sparkles, Wind, Cloud, Search } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { ChameleonColorControl } from '../ui/ChameleonColorPopover';
+import { ReviewNotificationBell } from '../review/ReviewNotificationBell';
 
 interface TopHeaderProps {
   title?: string;
@@ -112,6 +113,9 @@ export const TopHeader: React.FC<TopHeaderProps> = ({ title, showBack, hasTopBar
             <span className="text-[11px] font-semibold hidden md:inline">检索</span>
             <span className="text-[10px] font-mono text-stone-400 hidden lg:inline">⌘K</span>
           </button>
+
+          {/* Spaced Repetition Review Schedule & Notification Bell */}
+          <ReviewNotificationBell />
 
           {/* Cloud Auth / Google Connection Trigger */}
           <button

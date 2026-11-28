@@ -25,6 +25,14 @@ import {
   Star,
   Quote,
   Headphones,
+  Bookmark,
+  BookmarkCheck,
+  Heart,
+  Pin,
+  Trash2,
+  Bell,
+  CalendarClock,
+  Clock,
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { MasteryRing } from '../components/ui/MasteryRing';
@@ -51,18 +59,44 @@ import {
   createShuffledCitationDeck,
 } from '../data/worldCitations';
 import { gameAudio } from '../utils/gameAudio';
+import {
+  LawPageBookmarkRecord,
+  computeReadingProgressPercent,
+  findReadingProgressForLaw,
+  resolveBookLawById,
+} from '../utils/lawReadingBookmarkHelpers';
+import {
+  deleteLawPageBookmark,
+  subscribeToAllLawPageBookmarks,
+} from '../services/lawReadingBookmarkService';
+import { useReviewSchedule } from '../context/ReviewScheduleContext';
+import {
+  classifyReviewDueStatus,
+  formatReviewCountdown,
+} from '../utils/lawSpacedRepetition';
 
 export const HomePage: React.FC = () => {
   const navigate = useNavigate();
   const {
     user,
+    firebaseUser,
     laws,
     isDailyChallengeCompleted,
     setAiTutorOpen,
     journals,
     openComposerWithPreload,
     setBreathingOpen,
+    toggleBookmark,
   } = useApp();
+  const {
+    schedules: reviewSchedules,
+    dueSchedules,
+    upcomingSchedules,
+    masteredSchedules,
+    dueCount: reviewDueCount,
+    reviewNowMs,
+    getScheduleForLaw,
+  } = useReviewSchedule();
   const {
     progress: worldCityProgress,
     newlyUnlockedPointIndex,
@@ -76,6 +110,8 @@ export const HomePage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isStackLabOpen, setIsStackLabOpen] = useState(false);
   const [homeSearchQuery, setHomeSearchQuery] = useState('');
+  const [pageBookmarks, setPageBookmarks] = useState<LawPageBookmarkRecord[]>([]);
+  const [bookmarkFilterTab, setBookmarkFilterTab] = useState<'all' | 'progress' | 'page-pin'>('all');
 
   // Non-repeating randomized shuffle-bag for 500 bilingual world citations (10s rotation)
   const citationDeckRef = useRef<number[]>(createShuffledCitationDeck());
@@ -110,6 +146,14 @@ export const HomePage: React.FC = () => {
     return () => clearInterval(rotationTimer);
   }, [advanceRandomCitation]);
 
+  useEffect(() => {
+    const unsubscribe = subscribeToAllLawPageBookmarks(
+      firebaseUser?.uid,
+      (records) => setPageBookmarks(records)
+    );
+    return () => unsubscribe();
+  }, [firebaseUser?.uid]);
+
   const activeCitation = WORLD_CITATIONS[citationIndex] || WORLD_CITATIONS[0];
 
   // Average mastery percentage across laws with full defensive guarding
@@ -132,6 +176,27 @@ export const HomePage: React.FC = () => {
   const safeLawsMastered = Array.isArray(user?.lawsMastered) ? user.lawsMastered : [];
   const safeStreak = Number(user?.streak ?? 0);
   const safeXp = Number(user?.xp ?? 0);
+  const safeFavoriteIds = Array.isArray(user?.bookmarks) ? user.bookmarks : [];
+  const favoriteLaws = safeFavoriteIds
+    .map((favId) => resolveBookLawById(safeLaws, favId))
+    .filter((item): item is NonNullable<typeof item> => Boolean(item));
+
+  const progressBookmarks = pageBookmarks.filter((b) => b.bookmarkKind === 'progress');
+  const pinBookmarks = pageBookmarks.filter((b) => b.bookmarkKind === 'page-pin');
+  const displayedPageBookmarks =
+    bookmarkFilterTab === 'all'
+      ? pageBookmarks
+      : pageBookmarks.filter((b) => b.bookmarkKind === bookmarkFilterTab);
+
+  const handleRemovePageBookmark = async (bookmarkId: string) => {
+    try {
+      await deleteLawPageBookmark(firebaseUser?.uid, bookmarkId);
+      setPageBookmarks((prev) => prev.filter((item) => item.id !== bookmarkId));
+      gameAudio.playTap();
+    } catch (err) {
+      console.error('Failed to delete page bookmark from dashboard:', err);
+    }
+  };
 
   // Latest Journal Entry
   const safeJournals = Array.isArray(journals) ? journals : [];
@@ -608,6 +673,376 @@ export const HomePage: React.FC = () => {
         />
       </section>
 
+      {/* 2C. Reading Bookmarks & Favorite Laws Quick Access */}
+      <section className="space-y-4">
+        <div className="flex flex-wrap items-baseline justify-between gap-3 pb-3 border-b border-stone-200/80">
+          <div>
+            <span className="editorial-kicker text-[10px] text-[#6E675F] block mb-0.5">
+              Reading Desk &amp; Bookmarks · 典藏书签与收藏定律
+            </span>
+            <h3 className="font-serif-editorial text-lg sm:text-xl font-bold text-[#181411] tracking-tight">
+              书页阅读进度与收藏定律快速入口
+            </h3>
+          </div>
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => {
+                gameAudio.playTap();
+                navigate('/review');
+              }}
+              className={`min-h-[36px] px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0 tabular-nums ${
+                reviewDueCount > 0
+                  ? 'luxury-dark-btn'
+                  : 'luxury-surface-btn text-[#181411]'
+              }`}
+            >
+              <CalendarClock
+                className={`w-3.5 h-3.5 ${reviewDueCount > 0 ? 'text-[#D4A656]' : 'text-[#8E5B13]'}`}
+                aria-hidden="true"
+              />
+              <span>
+                {reviewDueCount > 0
+                  ? `间隔复习 (${reviewDueCount} 条到期)`
+                  : '间隔复习排期'}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                gameAudio.playTap();
+                navigate('/emotional-library');
+              }}
+              className="luxury-surface-btn px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
+            >
+              <BookOpen className="w-3.5 h-3.5 text-[#8E5B13]" />
+              <span>进入典藏定律库</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          {/* Left Panel: Saved Reading Progress & Specific Page Pins */}
+          <div className="art-museum-mat rounded-2xl p-5 sm:p-6 space-y-4 flex flex-col">
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-stone-200/80">
+              <div className="flex items-center gap-2">
+                <BookmarkCheck className="w-4 h-4 text-[#8E5B13] shrink-0" />
+                <h4 className="font-serif-editorial text-base font-bold text-[#181411]">
+                  书页阅读进度与页签
+                </h4>
+              </div>
+              <div className="flex items-center gap-1 text-[11px] font-numeric tabular-nums">
+                {(
+                  [
+                    { key: 'all', label: `全部 ${pageBookmarks.length}` },
+                    { key: 'progress', label: `进度 ${progressBookmarks.length}` },
+                    { key: 'page-pin', label: `页签 ${pinBookmarks.length}` },
+                  ] as const
+                ).map((tab) => (
+                  <button
+                    key={tab.key}
+                    type="button"
+                    onClick={() => setBookmarkFilterTab(tab.key)}
+                    className={`px-2 py-1 rounded-lg font-semibold transition-colors cursor-pointer whitespace-nowrap shrink-0 ${
+                      bookmarkFilterTab === tab.key
+                        ? 'bg-[#181411] text-[#FAF8F5]'
+                        : 'text-[#57514A] hover:bg-stone-200/70'
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {displayedPageBookmarks.length === 0 ? (
+              <div className="flex-1 flex flex-col items-center justify-center text-center py-6 space-y-3">
+                <div className="w-10 h-10 rounded-xl bg-[#FAF4E8] border border-[#D4A656]/35 flex items-center justify-center text-[#8E5B13]">
+                  <Bookmark className="w-4 h-4" />
+                </div>
+                <p className="text-xs text-[#57514A] max-w-xs leading-relaxed">
+                  在任意定律书籍翻页阅读时点击“保存进度”或书页右上角书签，即可在此一键续读具体书页。
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    gameAudio.playTap();
+                    navigate('/emotional-library');
+                  }}
+                  className="luxury-dark-btn px-4 py-2 rounded-xl text-xs font-semibold cursor-pointer whitespace-nowrap shrink-0"
+                >
+                  前往翻阅定律书籍 →
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">
+                {displayedPageBookmarks.slice(0, 8).map((bm) => {
+                  const pct = computeReadingProgressPercent(bm.pageIndex);
+                  const isProgress = bm.bookmarkKind === 'progress';
+                  return (
+                    <div
+                      key={bm.id}
+                      className="p-3.5 rounded-xl bg-[#FAF7F1] border border-stone-200/85 flex items-start justify-between gap-3"
+                    >
+                      <div className="min-w-0 flex-1 space-y-1.5">
+                        <div className="flex items-center gap-2 text-[11px] font-numeric tabular-nums flex-wrap">
+                          <span
+                            className={`font-bold inline-flex items-center gap-1 ${
+                              isProgress ? 'text-[#157F5D]' : 'text-[#961D38]'
+                            }`}
+                          >
+                            {isProgress ? (
+                              <BookmarkCheck className="w-3 h-3 shrink-0" />
+                            ) : (
+                              <Pin className="w-3 h-3 shrink-0" />
+                            )}
+                            <span>
+                              {isProgress ? '阅读进度' : '页签'} · 第 {bm.pageIndex + 1} / 12 页
+                            </span>
+                          </span>
+                          <span className="text-stone-400" aria-hidden="true">·</span>
+                          <span className="text-[#6E675F] truncate">{bm.pageTitle}</span>
+                        </div>
+
+                        <div className="font-serif-editorial text-sm font-bold text-[#181411] truncate">
+                          {bm.lawNameZh}
+                        </div>
+
+                        {bm.note && (
+                          <p className="text-[11px] text-[#57514A] line-clamp-1">
+                            {bm.note}
+                          </p>
+                        )}
+
+                        <div className="flex items-center gap-2 pt-0.5">
+                          <div className="flex-1 h-1 bg-[#EAE3D5] rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-[#157F5D] rounded-full transition-all"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                          <span className="text-[10px] font-mono font-semibold text-[#57514A] tabular-nums shrink-0">
+                            {pct}%
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            gameAudio.playTap();
+                            navigate(`/law/${bm.lawId}?page=${bm.pageIndex + 1}`);
+                          }}
+                          className="luxury-dark-btn min-h-[34px] px-3 py-1.5 rounded-lg text-[11px] font-semibold cursor-pointer whitespace-nowrap shrink-0 tabular-nums"
+                        >
+                          续读第 {bm.pageIndex + 1} 页 →
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleRemovePageBookmark(bm.id)}
+                          className="w-8 h-8 rounded-lg flex items-center justify-center text-[#6E675F] hover:text-[#961D38] hover:bg-stone-200/70 transition-colors cursor-pointer"
+                          aria-label={`移除《${bm.lawNameZh}》第 ${bm.pageIndex + 1} 页书签`}
+                          title="移除书签"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Right Panel: Favorite Laws Quick Access */}
+          <div className="art-museum-mat rounded-2xl p-5 sm:p-6 space-y-4 flex flex-col">
+            <div className="flex items-center justify-between gap-2 pb-3 border-b border-stone-200/80">
+              <div className="flex items-center gap-2">
+                <Heart className="w-4 h-4 text-[#961D38] fill-[#961D38]/20 shrink-0" />
+                <h4 className="font-serif-editorial text-base font-bold text-[#181411]">
+                  已收藏心理学定律
+                </h4>
+              </div>
+              <span className="text-xs font-numeric tabular-nums font-semibold text-[#6E675F]">
+                {favoriteLaws.length} 条藏品
+              </span>
+            </div>
+
+            {favoriteLaws.length === 0 ? (
+              <div className="flex-1 flex flex-col items-center justify-center text-center py-6 space-y-3">
+                <div className="w-10 h-10 rounded-xl bg-[#FDF3F5] border border-[#961D38]/25 flex items-center justify-center text-[#961D38]">
+                  <Heart className="w-4 h-4" />
+                </div>
+                <p className="text-xs text-[#57514A] max-w-xs leading-relaxed">
+                  在定律库或书籍阅读器中点击“收藏定律”，即可在此建立你的专属心理学定律快速通道。
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    gameAudio.playTap();
+                    navigate('/emotional-library');
+                  }}
+                  className="luxury-surface-btn px-4 py-2 rounded-xl text-xs font-semibold text-[#181411] cursor-pointer whitespace-nowrap shrink-0"
+                >
+                  浏览并收藏定律 →
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">
+                {favoriteLaws.slice(0, 8).map((favLaw) => {
+                  const savedProg = findReadingProgressForLaw(pageBookmarks, favLaw.id);
+                  const reviewSched = getScheduleForLaw(favLaw.id);
+                  const reviewStatus = reviewSched
+                    ? classifyReviewDueStatus(reviewSched, reviewNowMs)
+                    : null;
+                  const reviewLabel = reviewSched
+                    ? formatReviewCountdown(reviewSched.nextReviewAtMs, reviewNowMs)
+                    : null;
+                  const targetUrl = savedProg
+                    ? `/law/${favLaw.id}?page=${savedProg.pageIndex + 1}`
+                    : `/law/${favLaw.id}`;
+                  return (
+                    <div
+                      key={favLaw.id}
+                      className="p-3.5 rounded-xl bg-[#FAF7F1] border border-stone-200/85 flex items-center justify-between gap-3"
+                    >
+                      <div className="min-w-0 flex-1 space-y-1">
+                        <div className="flex items-center gap-2 text-[11px] font-numeric tabular-nums text-[#6E675F] flex-wrap">
+                          <span className="font-bold text-[#8E5B13]">
+                            {favLaw.codeId || 'LAW'}
+                          </span>
+                          <span aria-hidden="true">·</span>
+                          <span>{favLaw.categoryZh}心理学</span>
+                          {savedProg && (
+                            <>
+                              <span aria-hidden="true">·</span>
+                              <span className="text-[#157F5D] font-semibold">
+                                已读第 {savedProg.pageIndex + 1}/12 页
+                              </span>
+                            </>
+                          )}
+                          {reviewLabel && (
+                            <>
+                              <span aria-hidden="true">·</span>
+                              <span
+                                className={`font-semibold ${
+                                  reviewStatus === 'due'
+                                    ? 'text-[#961D38]'
+                                    : reviewStatus === 'mastered'
+                                    ? 'text-[#157F5D]'
+                                    : 'text-[#8E5B13]'
+                                }`}
+                              >
+                                复习：{reviewLabel}
+                              </span>
+                            </>
+                          )}
+                        </div>
+                        <div className="font-serif-editorial text-sm font-bold text-[#181411] truncate">
+                          {favLaw.nameZh}
+                        </div>
+                        <div className="text-[11px] font-serif-editorial italic text-[#6E675F] truncate">
+                          {favLaw.nameEn}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {reviewStatus === 'due' && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              gameAudio.playTap();
+                              navigate(`/review?focus=${encodeURIComponent(favLaw.id)}`);
+                            }}
+                            className="luxury-dark-btn min-h-[34px] px-2.5 py-1.5 rounded-lg text-[11px] font-semibold cursor-pointer whitespace-nowrap shrink-0"
+                          >
+                            复习
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => {
+                            gameAudio.playTap();
+                            navigate(targetUrl);
+                          }}
+                          className="luxury-surface-btn min-h-[34px] px-3 py-1.5 rounded-lg text-[11px] font-semibold text-[#181411] cursor-pointer whitespace-nowrap shrink-0"
+                        >
+                          {savedProg ? `续读 P.${savedProg.pageIndex + 1} →` : '进入阅读 →'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            gameAudio.playTap();
+                            toggleBookmark(favLaw.id);
+                          }}
+                          className="w-8 h-8 rounded-lg flex items-center justify-center text-[#961D38] hover:bg-[#FDF3F5] transition-colors cursor-pointer"
+                          aria-label={`取消收藏《${favLaw.nameZh}》`}
+                          title="取消收藏"
+                        >
+                          <Heart className="w-4 h-4 fill-[#961D38]" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Spaced Repetition Review Schedule Strip for Favorited Laws */}
+        <div className="art-museum-mat rounded-2xl p-5 sm:p-6 border border-[#C8933B]/30 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-1.5 min-w-0 flex-1">
+            <div className="flex items-center gap-2 text-[11px] font-mono uppercase tracking-wider text-[#8E5B13] font-semibold tabular-nums flex-wrap">
+              <Bell className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+              <span>SM-2 艾宾浩斯间隔复习日程</span>
+              <span aria-hidden="true">·</span>
+              <span className={reviewDueCount > 0 ? 'text-[#961D38]' : 'text-[#157F5D]'}>
+                今日到期 {reviewDueCount} 条
+              </span>
+              <span aria-hidden="true">·</span>
+              <span>已巩固 {masteredSchedules.length} / {reviewSchedules.length} 条</span>
+            </div>
+            <h4 className="font-serif-editorial text-base sm:text-lg font-bold text-[#181411]">
+              {reviewDueCount > 0
+                ? `你有 ${reviewDueCount} 条已收藏心理学定律到达最佳回忆复习点`
+                : '所有已收藏定律均处于最佳记忆周期内'}
+            </h4>
+            <p className="text-xs text-[#57514A] leading-relaxed">
+              {dueSchedules.length > 0
+                ? `优先回顾：《${dueSchedules[0].lawNameZh}》${dueSchedules.length > 1 ? `、《${dueSchedules[1].lawNameZh}》等` : ''}。完成主动回忆评级后将自动演算下一次提醒日期。`
+                : upcomingSchedules.length > 0
+                ? `下一条将到期的定律：《${upcomingSchedules[0].lawNameZh}》（${formatReviewCountdown(upcomingSchedules[0].nextReviewAtMs, reviewNowMs)}）。`
+                : '收藏任意心理学定律后，系统将自动为其编排 SM-2 记忆巩固时间表。'}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            {upcomingSchedules.length > 0 && dueSchedules.length === 0 && (
+              <span className="text-xs font-numeric tabular-nums text-[#6E675F] inline-flex items-center gap-1 mr-1">
+                <Clock className="w-3.5 h-3.5 text-[#8E5B13]" aria-hidden="true" />
+                <span>{formatReviewCountdown(upcomingSchedules[0].nextReviewAtMs, reviewNowMs)}</span>
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={() => {
+                gameAudio.playTap();
+                navigate('/review');
+              }}
+              className="luxury-dark-btn min-h-[40px] px-4 py-2 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
+            >
+              <CalendarClock className="w-3.5 h-3.5 text-[#D4A656]" aria-hidden="true" />
+              <span>{reviewDueCount > 0 ? `开始复习 (${reviewDueCount})` : '查看复习排期'}</span>
+              <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+            </button>
+          </div>
+        </div>
+      </section>
+
       {/* 3. Daily Cognitive Journal Feature Section */}
       <section className="space-y-4">
         <div className="flex items-baseline justify-between pb-3 border-b border-stone-200/80">
@@ -727,7 +1162,7 @@ export const HomePage: React.FC = () => {
 
       {/* 5. Popular Cognitive Experiments (Laboratory Section) */}
       <section className="space-y-5">
-        <div className="flex items-baseline justify-between pb-3 border-b border-stone-200/80">
+        <div className="flex flex-wrap items-baseline justify-between gap-2 pb-3 border-b border-stone-200/80">
           <div>
             <span className="editorial-kicker text-[10px] text-[#6E675F] block mb-0.5">
               03 · Interactive Experiments
@@ -736,16 +1171,28 @@ export const HomePage: React.FC = () => {
               热门心智认知实验工坊
             </h3>
           </div>
-          <button
-            onClick={() => {
-              gameAudio.playTap();
-              navigate('/games');
-            }}
-            className="luxury-surface-btn px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 cursor-pointer"
-          >
-            <span>进入竞技场 ({PSYCHOLOGY_GAMES.length})</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => {
+                gameAudio.playTap();
+                navigate('/brain-gym');
+              }}
+              className="luxury-surface-btn px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
+            >
+              <Zap className="w-3.5 h-3.5 text-[#8E5B13]" />
+              <span>Brain Gym 记忆反应</span>
+            </button>
+            <button
+              onClick={() => {
+                gameAudio.playTap();
+                navigate('/games');
+              }}
+              className="luxury-surface-btn px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 cursor-pointer whitespace-nowrap shrink-0"
+            >
+              <span>进入竞技场 ({PSYCHOLOGY_GAMES.length})</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">

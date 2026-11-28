@@ -150,6 +150,217 @@ service cloud.firestore {
         && data.updatedAt is timestamp;
     }
 
+    // Blueprint for BrainGymSession entity
+    function isValidBrainGymSession(data) {
+      return data.keys().hasAll([
+          'id',
+          'userId',
+          'gameId',
+          'gameTitle',
+          'category',
+          'difficulty',
+          'score',
+          'accuracy',
+          'avgReactionMs',
+          'bestReactionMs',
+          'maxSpan',
+          'roundsCompleted',
+          'xpEarned',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id',
+          'userId',
+          'gameId',
+          'gameTitle',
+          'category',
+          'difficulty',
+          'score',
+          'accuracy',
+          'avgReactionMs',
+          'bestReactionMs',
+          'maxSpan',
+          'roundsCompleted',
+          'xpEarned',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 && data.userId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.userId == request.auth.uid
+        && data.gameId is string && data.gameId.size() >= 1 && data.gameId.size() <= 32
+        && data.gameId in ['nback-sequence', 'chrono-span', 'reflex-pulse', 'go-nogo-gate']
+        && data.gameTitle is string && data.gameTitle.size() >= 1 && data.gameTitle.size() <= 80
+        && data.category is string && data.category.size() >= 1 && data.category.size() <= 16
+        && data.category in ['memory', 'reaction']
+        && data.difficulty is string && data.difficulty.size() >= 1 && data.difficulty.size() <= 16
+        && data.difficulty in ['standard', 'intense', 'master']
+        && data.score is number && data.score >= 0 && data.score <= 1000000
+        && data.accuracy is number && data.accuracy >= 0 && data.accuracy <= 100
+        && data.avgReactionMs is number && data.avgReactionMs >= 0 && data.avgReactionMs <= 10000
+        && data.bestReactionMs is number && data.bestReactionMs >= 0 && data.bestReactionMs <= 10000
+        && data.maxSpan is number && data.maxSpan >= 0 && data.maxSpan <= 32
+        && data.roundsCompleted is number && data.roundsCompleted >= 0 && data.roundsCompleted <= 200
+        && data.xpEarned is number && data.xpEarned >= 0 && data.xpEarned <= 500
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // Blueprint for LawMarginaliaNote entity
+    function isValidLawMarginaliaNote(data) {
+      return data.keys().hasAll([
+          'id',
+          'userId',
+          'lawId',
+          'pageIndex',
+          'content',
+          'inkColor',
+          'handwritingStyle',
+          'anchorZone',
+          'tiltDeg',
+          'sourceMode',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id',
+          'userId',
+          'lawId',
+          'pageIndex',
+          'content',
+          'inkColor',
+          'handwritingStyle',
+          'anchorZone',
+          'tiltDeg',
+          'sourceMode',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 && data.userId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.userId == request.auth.uid
+        && data.lawId is string && data.lawId.size() >= 1 && data.lawId.size() <= 128 && data.lawId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.pageIndex is number && data.pageIndex >= 0 && data.pageIndex <= 11
+        && data.content is string && data.content.size() >= 1 && data.content.size() <= 800
+        && data.inkColor is string && data.inkColor in ['sepia', 'crimson', 'indigo', 'emerald']
+        && data.handwritingStyle is string && data.handwritingStyle in ['cursive', 'running', 'archival']
+        && data.anchorZone is string && data.anchorZone in ['top-margin', 'side-margin', 'bottom-margin']
+        && data.tiltDeg is number && data.tiltDeg >= -5 && data.tiltDeg <= 5
+        && data.sourceMode is string && data.sourceMode in ['typed', 'dictated']
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // Pillar 2: Standalone Entity Validation Blueprint for LawPageBookmark
+    function isValidLawPageBookmark(data) {
+      return data.keys().hasAll([
+          'id',
+          'userId',
+          'lawId',
+          'lawNameZh',
+          'lawNameEn',
+          'categoryZh',
+          'pageIndex',
+          'pageTitle',
+          'bookmarkKind',
+          'note',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id',
+          'userId',
+          'lawId',
+          'lawNameZh',
+          'lawNameEn',
+          'categoryZh',
+          'pageIndex',
+          'pageTitle',
+          'bookmarkKind',
+          'note',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 && data.userId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.userId == request.auth.uid
+        && data.lawId is string && data.lawId.size() >= 1 && data.lawId.size() <= 128 && data.lawId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.lawNameZh is string && data.lawNameZh.size() >= 1 && data.lawNameZh.size() <= 120
+        && data.lawNameEn is string && data.lawNameEn.size() <= 160
+        && data.categoryZh is string && data.categoryZh.size() >= 1 && data.categoryZh.size() <= 40
+        && data.pageIndex is number && data.pageIndex >= 0 && data.pageIndex <= 11
+        && data.pageTitle is string && data.pageTitle.size() >= 1 && data.pageTitle.size() <= 80
+        && data.bookmarkKind is string && data.bookmarkKind in ['progress', 'page-pin']
+        && data.note is string && data.note.size() <= 240
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    // Pillar 2: Standalone Entity Validation Blueprint for LawReviewSchedule
+    function isValidLawReviewSchedule(data) {
+      return data.keys().hasAll([
+          'id',
+          'userId',
+          'lawId',
+          'lawNameZh',
+          'lawNameEn',
+          'categoryZh',
+          'easeFactor',
+          'intervalDays',
+          'repetitions',
+          'lapses',
+          'totalReviews',
+          'lastRating',
+          'nextReviewAtMs',
+          'lastReviewedAtMs',
+          'snoozedUntilMs',
+          'notificationsEnabled',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.keys().hasOnly([
+          'id',
+          'userId',
+          'lawId',
+          'lawNameZh',
+          'lawNameEn',
+          'categoryZh',
+          'easeFactor',
+          'intervalDays',
+          'repetitions',
+          'lapses',
+          'totalReviews',
+          'lastRating',
+          'nextReviewAtMs',
+          'lastReviewedAtMs',
+          'snoozedUntilMs',
+          'notificationsEnabled',
+          'createdAt',
+          'updatedAt'
+        ])
+        && data.id is string && data.id.size() >= 1 && data.id.size() <= 128 && data.id.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 && data.userId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.userId == request.auth.uid
+        && data.lawId is string && data.lawId.size() >= 1 && data.lawId.size() <= 128 && data.lawId.matches('^[a-zA-Z0-9_\\-]+$')
+        && data.id == data.lawId
+        && data.lawNameZh is string && data.lawNameZh.size() >= 1 && data.lawNameZh.size() <= 120
+        && data.lawNameEn is string && data.lawNameEn.size() <= 160
+        && data.categoryZh is string && data.categoryZh.size() >= 1 && data.categoryZh.size() <= 40
+        && data.easeFactor is number && data.easeFactor >= 1.3 && data.easeFactor <= 3.5
+        && data.intervalDays is number && data.intervalDays >= 0 && data.intervalDays <= 3650
+        && data.repetitions is number && data.repetitions >= 0 && data.repetitions <= 1000
+        && data.lapses is number && data.lapses >= 0 && data.lapses <= 1000
+        && data.totalReviews is number && data.totalReviews >= 0 && data.totalReviews <= 5000
+        && data.lastRating is string && data.lastRating in ['none', 'again', 'hard', 'good', 'easy']
+        && data.nextReviewAtMs is number && data.nextReviewAtMs >= 0 && data.nextReviewAtMs <= 4102444800000
+        && data.lastReviewedAtMs is number && data.lastReviewedAtMs >= 0 && data.lastReviewedAtMs <= 4102444800000
+        && data.snoozedUntilMs is number && data.snoozedUntilMs >= 0 && data.snoozedUntilMs <= 4102444800000
+        && data.notificationsEnabled is bool
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
     // Pillar 2: Standalone Entity Validation Blueprint for GameLeaderboardEntry
     function isValidLeaderboardEntry(data) {
       return data.keys().hasAll([
@@ -300,7 +511,7 @@ service cloud.firestore {
         && isValidStringList(data.lawsMastered, 120)
         && data.lawMasteryMap is map && data.lawMasteryMap.size() <= 120
         && isValidStringList(data.bookmarks, 120)
-        && data.gameHighScores is map && data.gameHighScores.size() <= 20
+        && data.gameHighScores is map && data.gameHighScores.size() <= 50
         && isValidStringList(data.unlockedBadges, 50)
         && isValidStringList(data.selectedGoals, 20)
         && (!('completedGames' in data) || isValidStringList(data.completedGames, 100))
@@ -365,6 +576,49 @@ service cloud.firestore {
         'natureMix',
         'masterVolume',
         'timerDurationSec',
+        'updatedAt'
+      ]);
+    }
+
+    function isLawMarginaliaUpdateAction() {
+      return incoming().diff(existing()).affectedKeys().hasOnly([
+        'content',
+        'inkColor',
+        'handwritingStyle',
+        'anchorZone',
+        'tiltDeg',
+        'sourceMode',
+        'updatedAt'
+      ]);
+    }
+
+    function isLawPageBookmarkUpdateAction() {
+      return incoming().diff(existing()).affectedKeys().hasOnly([
+        'pageIndex',
+        'pageTitle',
+        'note',
+        'lawNameZh',
+        'lawNameEn',
+        'categoryZh',
+        'updatedAt'
+      ]);
+    }
+
+    function isLawReviewScheduleUpdateAction() {
+      return incoming().diff(existing()).affectedKeys().hasOnly([
+        'lawNameZh',
+        'lawNameEn',
+        'categoryZh',
+        'easeFactor',
+        'intervalDays',
+        'repetitions',
+        'lapses',
+        'totalReviews',
+        'lastRating',
+        'nextReviewAtMs',
+        'lastReviewedAtMs',
+        'snoozedUntilMs',
+        'notificationsEnabled',
         'updatedAt'
       ]);
     }
@@ -444,6 +698,108 @@ service cloud.firestore {
           && isFocusBookmarkUpdateAction();
 
         allow delete: if isOwner(userId) && isValidId(bookmarkId);
+      }
+
+      // Subcollection: /users/{userId}/brainGymSessions/{sessionId}
+      match /brainGymSessions/{sessionId} {
+        allow get, list: if isSignedIn() && isValidId(userId) && isOwner(userId);
+
+        allow create: if isOwner(userId)
+          && isValidId(sessionId)
+          && incoming().id == sessionId
+          && incoming().userId == userId
+          && isValidBrainGymSession(incoming())
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+
+        allow update: if false;
+
+        allow delete: if isOwner(userId) && isValidId(sessionId);
+      }
+
+      // Subcollection: /users/{userId}/lawMarginalia/{noteId}
+      match /lawMarginalia/{noteId} {
+        allow get, list: if isSignedIn() && isValidId(userId) && isOwner(userId);
+
+        allow create: if isOwner(userId)
+          && isValidId(noteId)
+          && incoming().id == noteId
+          && incoming().userId == userId
+          && isValidLawMarginaliaNote(incoming())
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+
+        allow update: if isValidLawMarginaliaNote(incoming())
+          && isOwner(userId)
+          && isValidId(noteId)
+          && incoming().id == noteId
+          && incoming().userId == userId
+          && incoming().id == existing().id
+          && incoming().userId == existing().userId
+          && incoming().lawId == existing().lawId
+          && incoming().pageIndex == existing().pageIndex
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && isLawMarginaliaUpdateAction();
+
+        allow delete: if isOwner(userId) && isValidId(noteId);
+      }
+
+      // Subcollection: /users/{userId}/lawPageBookmarks/{bookmarkId}
+      match /lawPageBookmarks/{bookmarkId} {
+        allow get, list: if isSignedIn() && isValidId(userId) && isOwner(userId);
+
+        allow create: if isOwner(userId)
+          && isValidId(bookmarkId)
+          && incoming().id == bookmarkId
+          && incoming().userId == userId
+          && isValidLawPageBookmark(incoming())
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+
+        allow update: if isValidLawPageBookmark(incoming())
+          && isOwner(userId)
+          && isValidId(bookmarkId)
+          && incoming().id == bookmarkId
+          && incoming().userId == userId
+          && incoming().id == existing().id
+          && incoming().userId == existing().userId
+          && incoming().lawId == existing().lawId
+          && incoming().bookmarkKind == existing().bookmarkKind
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && isLawPageBookmarkUpdateAction();
+
+        allow delete: if isOwner(userId) && isValidId(bookmarkId);
+      }
+
+      // Subcollection: /users/{userId}/lawReviewSchedules/{lawId}
+      match /lawReviewSchedules/{lawId} {
+        allow get, list: if isSignedIn() && isValidId(userId) && isOwner(userId);
+
+        allow create: if isOwner(userId)
+          && isValidId(lawId)
+          && incoming().id == lawId
+          && incoming().lawId == lawId
+          && incoming().userId == userId
+          && isValidLawReviewSchedule(incoming())
+          && incoming().createdAt == request.time
+          && incoming().updatedAt == request.time;
+
+        allow update: if isValidLawReviewSchedule(incoming())
+          && isOwner(userId)
+          && isValidId(lawId)
+          && incoming().id == lawId
+          && incoming().lawId == lawId
+          && incoming().userId == userId
+          && incoming().id == existing().id
+          && incoming().userId == existing().userId
+          && incoming().lawId == existing().lawId
+          && incoming().createdAt == existing().createdAt
+          && incoming().updatedAt == request.time
+          && isLawReviewScheduleUpdateAction();
+
+        allow delete: if isOwner(userId) && isValidId(lawId);
       }
     }
 

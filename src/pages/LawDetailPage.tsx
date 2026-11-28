@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Bookmark,
   BookOpen,
@@ -36,16 +36,23 @@ import { toggleLawSpeech, stopLawSpeech, useLawSpeech } from '../utils/lawSpeech
 import { SilverSpeechText, LawVoiceToggleSwitch } from '../components/ui/SilverSpeechText';
 import { LawBookReader } from '../components/law/LawBookReader';
 import { buildLawBookCodex, getAdjacentLaws } from '../utils/lawBookFolioBuilder';
+import {
+  parsePageQueryParam,
+  resolveBookLawById,
+} from '../utils/lawReadingBookmarkHelpers';
 
 const READING_MODE_STORAGE_KEY = 'mindlabz_law_reading_mode_v1';
 
 export const LawDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const initialPageIndex = parsePageQueryParam(searchParams.get('page'));
   const { fontScale } = useFontScale();
   const {
     laws,
     user,
+    firebaseUser,
     isBookmarked,
     toggleBookmark,
     updateLawMastery,
@@ -92,12 +99,8 @@ export const LawDetailPage: React.FC = () => {
     }
   };
 
-  // Match law by slug id OR codeId (LAW001 - LAW100)
-  const law = laws.find(
-    (l) =>
-      l.id.toLowerCase() === (id || '').toLowerCase() ||
-      (l.codeId && l.codeId.toLowerCase() === (id || '').toLowerCase())
-  );
+  // Match law across both 1,348 corpus laws (id or codeId) and 50 Emotional Archive deep-dive laws
+  const law = useMemo(() => resolveBookLawById(laws, id), [laws, id]);
 
   const codex = useMemo(
     () => (law ? buildLawBookCodex(law, structuredLaw) : null),
@@ -365,6 +368,8 @@ export const LawDetailPage: React.FC = () => {
           onOpenAITutor={handleAskAITutor}
           onSwitchToScrollMode={() => handleSetReadingMode('scroll')}
           fontScale={fontScale}
+          userId={firebaseUser?.uid}
+          initialPageIndex={initialPageIndex}
         />
         <FloatingFontScaleControl tone="paper" title="定律书籍字号调节" />
       </>

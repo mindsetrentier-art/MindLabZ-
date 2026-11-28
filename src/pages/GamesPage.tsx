@@ -403,6 +403,25 @@ export const GamesPage: React.FC = () => {
               </div>
             </div>
 
+            {/* Brain Gym Memory & Reflex Module Access */}
+            <button
+              onClick={() => {
+                gameAudio.playTap();
+                navigate('/brain-gym');
+              }}
+              type="button"
+              className="luxury-ghost-dark-btn flex items-center justify-between px-3.5 py-2 rounded-xl text-xs font-bold cursor-pointer active:scale-95 text-[#EDD08B]"
+              title="前往 Brain Gym 进行工作记忆与毫秒反应训练"
+            >
+              <div className="flex items-center gap-1.5">
+                <Zap className="w-4 h-4 text-[#E5C07B]" />
+                <span>Brain Gym · 记忆反应馆</span>
+              </div>
+              <span className="text-[11px] font-mono px-2 py-0.5 rounded-md bg-[#D4A656]/20 text-[#F8E7C1] border border-[#D4A656]/35 font-semibold whitespace-nowrap shrink-0">
+                4 项训练 →
+              </span>
+            </button>
+
             {/* Cognitive Assessment Radar Quick Access Pill */}
             <button
               onClick={() => navigate('/assessment')}

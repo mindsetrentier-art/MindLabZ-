@@ -38,6 +38,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
     if (path === '/learn' || path === '/search') return { title: '心智定律库 · 艺术典藏', showBack: false };
     if (path === '/knowledge-graph') return { title: '心理定律知识图谱', showBack: true };
     if (path === '/games') return { title: '认知训练游戏', showBack: false };
+    if (path === '/brain-gym') return { title: 'Brain Gym · 记忆与反应训练馆', showBack: true };
     if (path === '/quiz') return { title: '心理快问快答', showBack: false };
     if (path === '/progress') return { title: '认知能力图谱', showBack: true };
     if (path === '/assessment' || path === '/cognitive-assessment') return { title: '认知能力多维评估', showBack: true };
@@ -46,6 +47,7 @@ export const AppShell: React.FC<AppShellProps> = ({ children }) => {
     if (path.startsWith('/game/')) return { title: '认知竞技场', showBack: true };
     if (path === '/challenge') return { title: '今日挑战', showBack: true };
     if (path === '/focus-audio') return { title: '专注声学实验室', showBack: true };
+    if (path === '/review') return { title: '收藏定律 · 间隔复习排期', showBack: true };
     return { showBack: true };
   };
 

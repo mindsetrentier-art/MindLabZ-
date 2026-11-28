@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { generateCognitiveAssessment, CognitiveDomainAssessment } from '../services/assessmentService';
+import { BRAIN_GYM_GAMES } from '../utils/brainGymHelpers';
 import { CognitiveRadarChart } from '../components/assessment/CognitiveRadarChart';
 import { gameAudio } from '../utils/gameAudio';
 
@@ -415,7 +416,8 @@ export const CognitiveAssessmentPage: React.FC = () => {
                         e.stopPropagation();
                         gameAudio.playTap();
                         const targetId = domain.recommendedGameIds[0];
-                        navigate(`/game/${targetId}`);
+                        const isBrainGym = BRAIN_GYM_GAMES.some((g) => g.id === targetId);
+                        navigate(isBrainGym ? `/brain-gym?game=${targetId}` : `/game/${targetId}`);
                       }}
                       className={`w-full py-1.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1 transition-colors ${
                         isSelected
@@ -461,7 +463,8 @@ export const CognitiveAssessmentPage: React.FC = () => {
               key={plan.gameId}
               onClick={() => {
                 gameAudio.playTap();
-                navigate(`/game/${plan.gameId}`);
+                const isBrainGym = BRAIN_GYM_GAMES.some((g) => g.id === plan.gameId);
+                navigate(isBrainGym ? `/brain-gym?game=${plan.gameId}` : `/game/${plan.gameId}`);
               }}
               className="p-5 rounded-2xl bg-stone-50 hover:bg-white border border-stone-200 hover:border-stone-400 hover:shadow-sm transition-all duration-300 cursor-pointer flex flex-col justify-between space-y-4 group"
             >
@@ -507,17 +510,31 @@ export const CognitiveAssessmentPage: React.FC = () => {
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => {
-            gameAudio.playTap();
-            navigate('/games');
-          }}
-          className="px-5 py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold transition-all shadow-xs shrink-0 cursor-pointer active:scale-95 flex items-center gap-1.5"
-        >
-          <span>进入认知训练游戏竞技场</span>
-          <ArrowRight className="w-3.5 h-3.5" />
-        </button>
+        <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+          <button
+            type="button"
+            onClick={() => {
+              gameAudio.playTap();
+              navigate('/brain-gym');
+            }}
+            className="px-4 py-2.5 rounded-xl bg-white hover:bg-stone-50 text-stone-900 border border-stone-300 text-xs font-bold transition-all shadow-xs shrink-0 cursor-pointer active:scale-95 flex items-center gap-1.5 whitespace-nowrap"
+          >
+            <Zap className="w-3.5 h-3.5 text-[#8E5B13]" />
+            <span>前往 Brain Gym 强化记忆与反应</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              gameAudio.playTap();
+              navigate('/games');
+            }}
+            className="px-5 py-2.5 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-bold transition-all shadow-xs shrink-0 cursor-pointer active:scale-95 flex items-center gap-1.5 whitespace-nowrap"
+          >
+            <span>进入认知训练游戏竞技场</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
     </div>
   );

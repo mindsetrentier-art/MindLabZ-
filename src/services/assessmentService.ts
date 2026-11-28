@@ -1,5 +1,6 @@
 import { UserProfile, UserStats } from '../types';
 import { PSYCHOLOGY_GAMES } from '../data/games';
+import { BRAIN_GYM_GAMES } from '../utils/brainGymHelpers';
 
 export interface ContributingGameScore {
   gameId: string;
@@ -189,9 +190,11 @@ export function generateCognitiveAssessment(user: UserProfile): OverallAssessmen
   const memoryCalc = calculateDomainScore(
     stats.memory,
     [
-      { id: 'memory-lab', weight: 0.35, benchmark: 8000 },
-      { id: 'peak-end', weight: 0.15, benchmark: 3000 },
-      { id: 'first-impression', weight: 0.15, benchmark: 2600 },
+      { id: 'memory-lab', weight: 0.25, benchmark: 8000 },
+      { id: 'nback-sequence', weight: 0.2, benchmark: 4500 },
+      { id: 'chrono-span', weight: 0.2, benchmark: 5500 },
+      { id: 'peak-end', weight: 0.12, benchmark: 3000 },
+      { id: 'first-impression', weight: 0.12, benchmark: 2600 },
     ],
     gameHighScores
   );
@@ -211,8 +214,9 @@ export function generateCognitiveAssessment(user: UserProfile): OverallAssessmen
   const focusCalc = calculateDomainScore(
     stats.attention,
     [
-      { id: 'brain-rush', weight: 0.4, benchmark: 10000 },
-      { id: 'emotion-detective', weight: 0.25, benchmark: 3000 },
+      { id: 'brain-rush', weight: 0.3, benchmark: 10000 },
+      { id: 'go-nogo-gate', weight: 0.25, benchmark: 6500 },
+      { id: 'emotion-detective', weight: 0.2, benchmark: 3000 },
     ],
     gameHighScores
   );
@@ -229,14 +233,17 @@ export function generateCognitiveAssessment(user: UserProfile): OverallAssessmen
   );
 
   // 5. Cognitive Speed Domain (神经反应与处理吞吐)
-  const speedScore = Math.min(
-    100,
-    Math.round(
-      (stats.attention * 0.4) +
-      (Math.min(100, ((gameHighScores['brain-rush'] || 0) / 10000) * 100) * 0.35) +
-      (Math.min(100, ((gameHighScores['mind-trap'] || 0) / 5000) * 100) * 0.25)
-    )
+  const speedCalc = calculateDomainScore(
+    stats.attention,
+    [
+      { id: 'reflex-pulse', weight: 0.3, benchmark: 8500 },
+      { id: 'go-nogo-gate', weight: 0.2, benchmark: 6500 },
+      { id: 'brain-rush', weight: 0.25, benchmark: 10000 },
+      { id: 'mind-trap', weight: 0.15, benchmark: 5000 },
+    ],
+    gameHighScores
   );
+  const speedScore = speedCalc.score;
 
   // 6. Insight & Metacognition (元认知与心智深度)
   const insightScore = Math.min(
@@ -248,19 +255,20 @@ export function generateCognitiveAssessment(user: UserProfile): OverallAssessmen
     )
   );
 
-  // Helper to map contributing games
+  // Helper to map contributing games (Arena + Brain Gym)
   const getContributingGamesList = (items: { id: string; score: number; benchmark: number; percentage: number }[]): ContributingGameScore[] => {
     return items.map((item) => {
       const def = PSYCHOLOGY_GAMES.find((g) => g.id === item.id);
+      const brainGymDef = BRAIN_GYM_GAMES.find((g) => g.id === item.id);
       return {
         gameId: item.id,
-        gameNameZh: def?.nameZh || item.id,
+        gameNameZh: def?.nameZh || brainGymDef?.titleZh || item.id,
         gameNumber: def?.numberPrefix,
         score: item.score,
         benchmarkScore: item.benchmark,
         percentage: item.percentage,
-        category: def?.category || '认知训练',
-        accentColor: def?.accentColor || '#6366F1',
+        category: def?.category || brainGymDef?.categoryLabelZh || '认知训练',
+        accentColor: def?.accentColor || (brainGymDef ? '#D4A656' : '#6366F1'),
       };
     });
   };
@@ -278,8 +286,8 @@ export function generateCognitiveAssessment(user: UserProfile): OverallAssessmen
       description: '衡量瞬间暂存信息组块、在头脑中操纵多维空间矩阵以及防范遗忘干扰的神经能力。',
       neuroscienceMechanism: '由海马体与前额叶外侧皮层协同构建，依赖空间网格细胞与长期增益突触增强效应 (LTP)。',
       contributingGames: getContributingGamesList(memoryCalc.contributing),
-      recommendedGameIds: ['memory-lab', 'peak-end', 'first-impression'],
-      keyAdvice: '采用艾宾浩斯组块法与空间挂钩策略，将抽象线索锚定在熟悉的场景以延展记忆广度。',
+      recommendedGameIds: ['nback-sequence', 'chrono-span', 'memory-lab'],
+      keyAdvice: '采用艾宾浩斯组块法与空间挂钩策略，结合 N-Back 与顺逆序矩阵延展工作记忆广度。',
       accentColor: '#6C4CF1',
       glowColor: 'rgba(108, 76, 241, 0.4)',
       iconName: 'brain',
@@ -314,8 +322,8 @@ export function generateCognitiveAssessment(user: UserProfile): OverallAssessmen
       description: '衡量在杂乱刺激中精确过滤噪音、维持警觉性并快速捕捉关键信号的神经自控力。',
       neuroscienceMechanism: '前扣带皮层（ACC）和顶叶注意力网络协同调节，抑制背景杂波并锁定高阶目标。',
       contributingGames: getContributingGamesList(focusCalc.contributing),
-      recommendedGameIds: ['brain-rush', 'emotion-detective'],
-      keyAdvice: '配合呼吸节律训练降低交感神经兴奋度，通过“视觉窄化专注”迅速击退思维游移。',
+      recommendedGameIds: ['go-nogo-gate', 'brain-rush', 'emotion-detective'],
+      keyAdvice: '配合呼吸节律训练降低交感神经兴奋度，通过“视觉窄化专注”与 Go/No-Go 抑制控制击退思维游移。',
       accentColor: '#F59E0B',
       glowColor: 'rgba(245, 158, 11, 0.4)',
       iconName: 'target',
@@ -349,19 +357,9 @@ export function generateCognitiveAssessment(user: UserProfile): OverallAssessmen
       masterBenchmark: 93,
       description: '衡量视觉-运动神经回路的毫秒级反应吞吐量与快速指令执行延迟。',
       neuroscienceMechanism: '髓鞘化程度与基底核多巴胺受体通路决定了动作电位传导速度与动作准备时间。',
-      contributingGames: [
-        {
-          gameId: 'brain-rush',
-          gameNameZh: 'Brain Rush 瞬时反应',
-          score: gameHighScores['brain-rush'] || 0,
-          benchmarkScore: 10000,
-          percentage: Math.min(100, Math.round(((gameHighScores['brain-rush'] || 0) / 10000) * 100)),
-          category: '反应训练',
-          accentColor: '#3B82F6',
-        },
-      ],
-      recommendedGameIds: ['brain-rush', 'mind-trap'],
-      keyAdvice: '每日进行短时高频的 60 秒限时竞技，刺激神经轴突髓鞘增厚以缩短知觉传导延迟。',
+      contributingGames: getContributingGamesList(speedCalc.contributing),
+      recommendedGameIds: ['reflex-pulse', 'go-nogo-gate', 'brain-rush'],
+      keyAdvice: '每日在 Brain Gym 进行毫秒神经冲刺与选择反应校准，缩短知觉-动作传导潜伏期。',
       accentColor: '#0284C7',
       glowColor: 'rgba(2, 132, 199, 0.4)',
       iconName: 'activity',
@@ -424,12 +422,13 @@ export function generateCognitiveAssessment(user: UserProfile): OverallAssessmen
     .slice(0, 3)
     .map(([gameId, reason]) => {
       const def = PSYCHOLOGY_GAMES.find((g) => g.id === gameId);
+      const brainGymDef = BRAIN_GYM_GAMES.find((g) => g.id === gameId);
       return {
         gameId,
-        gameNameZh: def?.nameZh || gameId,
-        targetDomain: def?.category || '综合认知',
+        gameNameZh: def?.nameZh || brainGymDef?.titleZh || gameId,
+        targetDomain: def?.category || brainGymDef?.categoryLabelZh || '综合认知',
         reason,
-        accentColor: def?.accentColor || '#6366F1',
+        accentColor: def?.accentColor || (brainGymDef ? '#D4A656' : '#6366F1'),
       };
     });
 

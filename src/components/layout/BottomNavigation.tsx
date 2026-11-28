@@ -76,6 +76,7 @@ export const BottomNavigation: React.FC = () => {
     if (pathname.startsWith('/journal')) return 2;
     if (
       pathname.startsWith('/games') ||
+      pathname.startsWith('/brain-gym') ||
       pathname.startsWith('/game/') ||
       pathname === '/challenge' ||
       pathname === '/quiz'

@@ -4,28 +4,36 @@ import {
   ArrowLeft,
   ArrowRight,
   Bookmark,
+  BookmarkCheck,
+  BookmarkPlus,
   BookOpen,
   Brain,
   Briefcase,
+  CalendarClock,
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
   Eye,
   Gamepad2,
+  Heart,
   HeartHandshake,
   Home,
   MessageSquarePlus,
   Network,
   PenLine,
+  Pin,
   Play,
   RefreshCw,
   ScrollText,
   ShieldAlert,
   ShoppingBag,
   Sparkles,
+  Trash2,
   Volume2,
   VolumeX,
   AlertCircle,
+  Feather,
+  X,
 } from 'lucide-react';
 import type { PsychologyLaw, StructuredLawData } from '../../types';
 import { PSYCHOLOGY_GAMES } from '../../data/games';
@@ -38,6 +46,41 @@ import {
   AdjacentLawsResult,
   LawBookCodex,
 } from '../../utils/lawBookFolioBuilder';
+import {
+  LawMarginaliaNoteInput,
+  LawMarginaliaNoteRecord,
+  countMarginaliaForLaw,
+  filterMarginaliaForPage,
+} from '../../utils/lawMarginaliaHelpers';
+import {
+  LawMarginaliaUpdatePatch,
+  createLawMarginaliaNote,
+  deleteLawMarginaliaNote,
+  subscribeToLawMarginalia,
+  updateLawMarginaliaNote,
+} from '../../services/lawMarginaliaService';
+import { LawMarginaliaPageOverlay } from './LawMarginaliaPageOverlay';
+import {
+  LawPageBookmarkRecord,
+  MAX_BOOKMARK_NOTE_LENGTH,
+  clampLawBookPageIndex,
+  computeReadingProgressPercent,
+  filterPagePinsForLaw,
+  findReadingProgressForLaw,
+  getBookPageMeta,
+} from '../../utils/lawReadingBookmarkHelpers';
+import {
+  createPagePinBookmark,
+  deleteLawPageBookmark,
+  saveReadingProgressBookmark,
+  subscribeToAllLawPageBookmarks,
+} from '../../services/lawReadingBookmarkService';
+import { useReviewSchedule } from '../../context/ReviewScheduleContext';
+import {
+  classifyReviewDueStatus,
+  formatReviewCountdown,
+  previewNextIntervals,
+} from '../../utils/lawSpacedRepetition';
 
 interface LawBookReaderProps {
   law: PsychologyLaw;
@@ -67,6 +110,8 @@ interface LawBookReaderProps {
   onOpenAITutor: () => void;
   onSwitchToScrollMode: () => void;
   fontScale: string;
+  userId?: string | null;
+  initialPageIndex?: number;
 }
 
 interface FlipAnimationState {
@@ -103,31 +148,74 @@ export const LawBookReader: React.FC<LawBookReaderProps> = ({
   onOpenAITutor,
   onSwitchToScrollMode,
   fontScale,
+  userId,
+  initialPageIndex,
 }) => {
   const navigate = useNavigate();
 
+  const resolvedInitialPage =
+    typeof initialPageIndex === 'number' ? clampLawBookPageIndex(initialPageIndex) : 0;
+
   // Desktop uses 6 spreads (0..5), mobile (<1024px) uses 12 single pages (0..11)
-  const [spreadIdx, setSpreadIdx] = useState(0);
-  const [mobilePageIdx, setMobilePageIdx] = useState(0);
+  const [spreadIdx, setSpreadIdx] = useState(() => Math.floor(resolvedInitialPage / 2));
+  const [mobilePageIdx, setMobilePageIdx] = useState(resolvedInitialPage);
   const [mobileDirection, setMobileDirection] = useState<'next' | 'prev' | null>(null);
   const [flipState, setFlipState] = useState<FlipAnimationState | null>(null);
+  const [notesOverlayOpen, setNotesOverlayOpen] = useState(false);
+  const [marginaliaNotes, setMarginaliaNotes] = useState<LawMarginaliaNoteRecord[]>([]);
+  const [allPageBookmarks, setAllPageBookmarks] = useState<LawPageBookmarkRecord[]>([]);
+  const [bookmarkPanelOpen, setBookmarkPanelOpen] = useState(false);
+  const [pinNoteDraft, setPinNoteDraft] = useState('');
+  const [pinTargetPageIdx, setPinTargetPageIdx] = useState(resolvedInitialPage);
+  const [isSavingBookmark, setIsSavingBookmark] = useState(false);
+  const [bookmarkStatusMsg, setBookmarkStatusMsg] = useState<string | null>(null);
+  const {
+    getScheduleForLaw,
+    reviewNowMs,
+    submitReview,
+  } = useReviewSchedule();
+  const lawReviewSchedule = getScheduleForLaw(law.id);
   const flipTimerRef = useRef<number | null>(null);
   const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
 
   const totalSpreads = codex.spreads.length; // 6
   const totalPages = totalSpreads * 2; // 12
 
-  // Reset to page 1 when switching to a different law
+  // Subscribe to persistent handwritten marginalia for the active psychology law
+  useEffect(() => {
+    const unsubscribe = subscribeToLawMarginalia(
+      userId,
+      law.id,
+      (notes) => setMarginaliaNotes(notes)
+    );
+    return () => unsubscribe();
+  }, [userId, law.id]);
+
+  // Subscribe to saved reading progress & pinned page bookmarks
+  useEffect(() => {
+    const unsubscribe = subscribeToAllLawPageBookmarks(
+      userId,
+      (records) => setAllPageBookmarks(records)
+    );
+    return () => unsubscribe();
+  }, [userId]);
+
+  // Reset or jump to initialPageIndex when switching law or URL ?page= target
   useEffect(() => {
     if (flipTimerRef.current !== null) {
       window.clearTimeout(flipTimerRef.current);
       flipTimerRef.current = null;
     }
-    setSpreadIdx(0);
-    setMobilePageIdx(0);
+    const targetPage =
+      typeof initialPageIndex === 'number' ? clampLawBookPageIndex(initialPageIndex) : 0;
+    setSpreadIdx(Math.floor(targetPage / 2));
+    setMobilePageIdx(targetPage);
+    setPinTargetPageIdx(targetPage);
     setMobileDirection(null);
     setFlipState(null);
-  }, [law.id]);
+    setBookmarkPanelOpen(false);
+    setBookmarkStatusMsg(null);
+  }, [law.id, initialPageIndex]);
 
   useEffect(() => {
     return () => {
@@ -183,6 +271,24 @@ export const LawBookReader: React.FC<LawBookReaderProps> = ({
     [mobilePageIdx, totalPages]
   );
 
+  const jumpToPage = useCallback(
+    (targetPageIndex: number) => {
+      const clamped = clampLawBookPageIndex(targetPageIndex);
+      if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+        triggerMobilePageTurn(clamped);
+      } else {
+        const targetSpread = Math.floor(clamped / 2);
+        if (targetSpread !== spreadIdx) {
+          triggerDesktopSpreadFlip(targetSpread);
+        } else {
+          setMobilePageIdx(clamped);
+        }
+      }
+      setPinTargetPageIdx(clamped);
+    },
+    [spreadIdx, triggerDesktopSpreadFlip, triggerMobilePageTurn]
+  );
+
   const handleTurnNext = useCallback(() => {
     if (typeof window !== 'undefined' && window.innerWidth < 1024) {
       if (mobilePageIdx < totalPages - 1) {
@@ -236,6 +342,9 @@ export const LawBookReader: React.FC<LawBookReaderProps> = ({
         } else {
           triggerDesktopSpreadFlip(totalSpreads - 1);
         }
+      } else if (e.key === 'n' || e.key === 'N') {
+        e.preventDefault();
+        setNotesOverlayOpen((prev) => !prev);
       }
     };
     window.addEventListener('keydown', onKeyDown);
@@ -245,7 +354,11 @@ export const LawBookReader: React.FC<LawBookReaderProps> = ({
   // Touch / Pointer Swipe Support
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement | null;
-    if (target?.closest('button, a, input, textarea, select, [role="tab"]')) {
+    if (
+      target?.closest(
+        'button, a, input, textarea, select, [role="tab"], [data-marginalia-interactive="true"]'
+      )
+    ) {
       return;
     }
     swipeStartRef.current = { x: e.clientX, y: e.clientY };
@@ -274,12 +387,155 @@ export const LawBookReader: React.FC<LawBookReaderProps> = ({
   const leftEdgeLayers = Math.max(2, spreadIdx * 2 + 2);
   const rightEdgeLayers = Math.max(2, (totalSpreads - 1 - spreadIdx) * 2 + 2);
 
+  const handleCreateMarginalia = useCallback(
+    async (input: Omit<LawMarginaliaNoteInput, 'userId'>) => {
+      const created = await createLawMarginaliaNote(userId, input);
+      setMarginaliaNotes((prev) => [
+        created,
+        ...prev.filter((item) => item.id !== created.id),
+      ]);
+      return created;
+    },
+    [userId]
+  );
+
+  const handleUpdateMarginalia = useCallback(
+    async (
+      existingNote: LawMarginaliaNoteRecord,
+      patch: LawMarginaliaUpdatePatch
+    ) => {
+      const updated = await updateLawMarginaliaNote(userId, existingNote, patch);
+      setMarginaliaNotes((prev) =>
+        prev.map((item) => (item.id === updated.id ? updated : item))
+      );
+      return updated;
+    },
+    [userId]
+  );
+
+  const handleDeleteMarginalia = useCallback(
+    async (noteId: string) => {
+      await deleteLawMarginaliaNote(userId, noteId);
+      setMarginaliaNotes((prev) => prev.filter((item) => item.id !== noteId));
+    },
+    [userId]
+  );
+
+  const totalBookMarginaliaCount = countMarginaliaForLaw(marginaliaNotes, law.id);
+  const savedProgress = findReadingProgressForLaw(allPageBookmarks, law.id);
+  const savedPagePins = filterPagePinsForLaw(allPageBookmarks, law.id);
+
+  const getCurrentActivePageIndex = useCallback((): number => {
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      return mobilePageIdx;
+    }
+    return spreadIdx * 2;
+  }, [mobilePageIdx, spreadIdx]);
+
+  const showTimedStatus = useCallback((msg: string) => {
+    setBookmarkStatusMsg(msg);
+    window.setTimeout(() => {
+      setBookmarkStatusMsg((prev) => (prev === msg ? null : prev));
+    }, 2600);
+  }, []);
+
+  const handleSaveProgressAtPage = useCallback(
+    async (pageIndex: number) => {
+      if (isSavingBookmark) return;
+      const clamped = clampLawBookPageIndex(pageIndex);
+      const meta = getBookPageMeta(clamped);
+      setIsSavingBookmark(true);
+      try {
+        const saved = await saveReadingProgressBookmark(userId, {
+          lawId: law.id,
+          lawNameZh: law.nameZh,
+          lawNameEn: law.nameEn,
+          categoryZh: law.categoryZh,
+          pageIndex: clamped,
+          pageTitle: `FOL. ${meta.roman} · ${meta.titleZh}`,
+        });
+        setAllPageBookmarks((prev) => [
+          saved,
+          ...prev.filter((item) => item.id !== saved.id),
+        ]);
+        gameAudio.playSuccess();
+        showTimedStatus(`已保存阅读进度：第 ${clamped + 1} / ${totalPages} 页`);
+      } catch (err) {
+        console.error('Failed to save reading progress:', err);
+      } finally {
+        setIsSavingBookmark(false);
+      }
+    },
+    [isSavingBookmark, userId, law.id, law.nameZh, law.nameEn, law.categoryZh, totalPages, showTimedStatus]
+  );
+
+  const handleToggleSinglePagePin = useCallback(
+    async (pageIndex: number, noteText?: string) => {
+      if (isSavingBookmark) return;
+      const clamped = clampLawBookPageIndex(pageIndex);
+      const existingPin = savedPagePins.find((p) => p.pageIndex === clamped);
+      setIsSavingBookmark(true);
+      try {
+        if (existingPin && noteText === undefined) {
+          await deleteLawPageBookmark(userId, existingPin.id);
+          setAllPageBookmarks((prev) =>
+            prev.filter((item) => item.id !== existingPin.id)
+          );
+          gameAudio.playTap();
+          showTimedStatus(`已移除第 ${clamped + 1} 页书签`);
+        } else {
+          const meta = getBookPageMeta(clamped);
+          const created = await createPagePinBookmark(userId, {
+            lawId: law.id,
+            lawNameZh: law.nameZh,
+            lawNameEn: law.nameEn,
+            categoryZh: law.categoryZh,
+            pageIndex: clamped,
+            pageTitle: `FOL. ${meta.roman} · ${meta.titleZh}`,
+            note: noteText ?? '',
+          });
+          setAllPageBookmarks((prev) => [
+            created,
+            ...prev.filter((item) => item.id !== created.id),
+          ]);
+          gameAudio.playSuccess();
+          setPinNoteDraft('');
+          showTimedStatus(`已在第 ${clamped + 1} 页夹入书签`);
+        }
+      } catch (err) {
+        console.error('Failed to toggle page bookmark:', err);
+      } finally {
+        setIsSavingBookmark(false);
+      }
+    },
+    [isSavingBookmark, savedPagePins, userId, law.id, law.nameZh, law.nameEn, law.categoryZh, showTimedStatus]
+  );
+
+  const handleDeleteBookmarkRecord = useCallback(
+    async (bookmarkId: string) => {
+      try {
+        await deleteLawPageBookmark(userId, bookmarkId);
+        setAllPageBookmarks((prev) =>
+          prev.filter((item) => item.id !== bookmarkId)
+        );
+        gameAudio.playTap();
+      } catch (err) {
+        console.error('Failed to delete page bookmark:', err);
+      }
+    },
+    [userId]
+  );
+
   // Renders any single page (0..11) cleanly for stationary spread, mobile leaf, or 3D turning face
   const renderPageContent = (pageIndex: number, isGhostFace = false) => {
     const spreadOfPage = Math.floor(pageIndex / 2);
     const spreadMeta = codex.spreads[spreadOfPage] || codex.spreads[0];
     const isLeftSide = pageIndex % 2 === 0;
     const pageNumber = pageIndex + 1;
+    const isPinnedPage =
+      !isGhostFace && savedPagePins.some((p) => p.pageIndex === pageIndex);
+    const isSavedProgressPage =
+      !isGhostFace && savedProgress?.pageIndex === pageIndex;
 
     const PageHeader = () => (
       <div className="flex items-center justify-between gap-2 pb-3 mb-4 border-b border-stone-300/60 text-[10px] sm:text-[11px] font-mono tracking-wider uppercase text-[#6E675F]">
@@ -288,9 +544,32 @@ export const LawBookReader: React.FC<LawBookReaderProps> = ({
             ? `MINDLABZ 心理典藏 · ${codex.theme.collectionZh}`
             : `FOL. ${spreadMeta.roman} · ${spreadMeta.titleZh}`}
         </span>
-        <span className="tabular-nums shrink-0 font-semibold text-[#8E5B13]">
-          {codex.volumeNumberLabel}
-        </span>
+        <div className="flex items-center gap-2 shrink-0">
+          {isSavedProgressPage && (
+            <span className="text-[10px] font-semibold text-[#157F5D] tracking-normal normal-case tabular-nums">
+              已存进度
+            </span>
+          )}
+          <span className="tabular-nums font-semibold text-[#8E5B13]">
+            {codex.volumeNumberLabel}
+          </span>
+          {!isGhostFace && (
+            <button
+              type="button"
+              onClick={() => handleToggleSinglePagePin(pageIndex)}
+              aria-pressed={isPinnedPage}
+              aria-label={isPinnedPage ? `取消第 ${pageNumber} 页书签` : `在第 ${pageNumber} 页添加书签`}
+              title={isPinnedPage ? `取消第 ${pageNumber} 页书签` : `在第 ${pageNumber} 页夹入书签`}
+              className={`w-7 h-7 rounded-md inline-flex items-center justify-center transition-colors cursor-pointer ${
+                isPinnedPage
+                  ? 'bg-[#961D38]/12 text-[#961D38] border border-[#961D38]/30'
+                  : 'text-[#6E675F] hover:text-[#181411] hover:bg-stone-200/70'
+              }`}
+            >
+              <Bookmark className={`w-3.5 h-3.5 ${isPinnedPage ? 'fill-[#961D38]' : ''}`} />
+            </button>
+          )}
+        </div>
       </div>
     );
 
@@ -1130,6 +1409,48 @@ export const LawBookReader: React.FC<LawBookReaderProps> = ({
                   )}
                 </div>
               )}
+
+              {/* Spaced Repetition Review Schedule Status for Favorited Law */}
+              {!isGhostFace && bookmarked && lawReviewSchedule && (
+                <div className="p-3.5 rounded-xl bg-white/85 border border-[#C8933B]/35 space-y-2.5">
+                  <div className="flex items-center justify-between gap-2 text-xs">
+                    <span className="font-bold text-[#181411] inline-flex items-center gap-1.5">
+                      <CalendarClock className="w-3.5 h-3.5 text-[#8E5B13]" aria-hidden="true" />
+                      <span>SM-2 间隔巩固排期</span>
+                    </span>
+                    <span
+                      className={`font-mono text-[11px] font-semibold tabular-nums ${
+                        classifyReviewDueStatus(lawReviewSchedule, reviewNowMs) === 'due'
+                          ? 'text-[#961D38]'
+                          : 'text-[#157F5D]'
+                      }`}
+                    >
+                      {formatReviewCountdown(lawReviewSchedule.nextReviewAtMs, reviewNowMs)} · 第{' '}
+                      {lawReviewSchedule.repetitions} 轮
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+                    {previewNextIntervals(lawReviewSchedule, reviewNowMs).map((opt) => (
+                      <button
+                        key={opt.rating}
+                        type="button"
+                        onClick={() => {
+                          void submitReview(law.id, opt.rating).then((updated) => {
+                            if (updated) {
+                              showTimedStatus(
+                                `已记录《${law.nameZh}》间隔复习 · 下次：${formatReviewCountdown(updated.nextReviewAtMs, Date.now())}`
+                              );
+                            }
+                          });
+                        }}
+                        className="px-2 py-1.5 rounded-lg bg-[#FAF7F1] border border-stone-200 hover:border-[#8E5B13] text-[11px] font-semibold text-[#181411] cursor-pointer text-center tabular-nums"
+                      >
+                        {opt.labelZh} · {opt.intervalLabel}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Continue to Next / Previous Law Book Volume */}
@@ -1178,11 +1499,28 @@ export const LawBookReader: React.FC<LawBookReaderProps> = ({
         break;
     }
 
+    const pageMarginalia = isGhostFace
+      ? []
+      : filterMarginaliaForPage(marginaliaNotes, law.id, pageIndex);
+
     return (
-      <div className="h-full flex flex-col justify-between p-5 sm:p-7 lg:p-8 select-text">
+      <div className="relative h-full flex flex-col justify-between p-5 sm:p-7 lg:p-8 select-text">
         <PageHeader />
         <div className="flex-1 flex flex-col min-h-[380px] sm:min-h-[430px]">{body}</div>
         <PageFooter />
+        {!isGhostFace && (
+          <LawMarginaliaPageOverlay
+            lawId={law.id}
+            pageIndex={pageIndex}
+            pageTitle={spreadMeta.titleZh}
+            notesOverlayOpen={notesOverlayOpen}
+            notes={pageMarginalia}
+            onToggleOverlay={() => setNotesOverlayOpen((prev) => !prev)}
+            onCreateNote={handleCreateMarginalia}
+            onUpdateNote={handleUpdateMarginalia}
+            onDeleteNote={handleDeleteMarginalia}
+          />
+        )}
       </div>
     );
   };
@@ -1258,6 +1596,92 @@ export const LawBookReader: React.FC<LawBookReaderProps> = ({
         <div className="flex items-center gap-2 flex-wrap">
           <button
             type="button"
+            onClick={() => handleSaveProgressAtPage(getCurrentActivePageIndex())}
+            disabled={isSavingBookmark}
+            className={`min-h-[38px] px-3 rounded-xl inline-flex items-center gap-1.5 text-xs font-semibold cursor-pointer transition-colors whitespace-nowrap shrink-0 ${
+              savedProgress &&
+              Math.floor(savedProgress.pageIndex / 2) === spreadIdx
+                ? 'luxury-surface-btn border-[#157F5D]/50 bg-[#EEF7F3] text-[#0F5C43]'
+                : 'luxury-surface-btn text-[#2B2520]'
+            }`}
+            title="保存当前阅读进度以便从主页快速续读"
+          >
+            {savedProgress &&
+            Math.floor(savedProgress.pageIndex / 2) === spreadIdx ? (
+              <BookmarkCheck className="w-3.5 h-3.5 text-[#157F5D]" aria-hidden="true" />
+            ) : (
+              <BookmarkPlus className="w-3.5 h-3.5 text-[#8E5B13]" aria-hidden="true" />
+            )}
+            <span>
+              {savedProgress &&
+              Math.floor(savedProgress.pageIndex / 2) === spreadIdx
+                ? `已存 P.${savedProgress.pageIndex + 1}`
+                : '保存进度'}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setPinTargetPageIdx(getCurrentActivePageIndex());
+              setBookmarkPanelOpen((prev) => !prev);
+            }}
+            aria-expanded={bookmarkPanelOpen}
+            aria-label="管理书页书签与阅读进度"
+            className={`min-h-[38px] px-3 rounded-xl inline-flex items-center gap-1.5 text-xs font-semibold cursor-pointer transition-colors whitespace-nowrap shrink-0 ${
+              bookmarkPanelOpen
+                ? 'luxury-dark-btn'
+                : savedPagePins.length > 0 || savedProgress
+                ? 'luxury-surface-btn border-[#C8933B]/60 bg-[#FAF4E6] text-[#5C3A16]'
+                : 'luxury-surface-btn text-[#2B2520]'
+            }`}
+            title="查看或添加具体书页书签与阅读进度"
+          >
+            <Pin className="w-3.5 h-3.5" aria-hidden="true" />
+            <span>书页书签</span>
+            {savedPagePins.length > 0 && (
+              <span className="font-numeric tabular-nums text-[11px] font-bold">
+                {savedPagePins.length}
+              </span>
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setNotesOverlayOpen((prev) => !prev)}
+            aria-pressed={notesOverlayOpen}
+            aria-label={notesOverlayOpen ? '收起书页手写批注覆层' : '开启书页手写批注覆层'}
+            className={`min-h-[38px] px-3 rounded-xl inline-flex items-center gap-1.5 text-xs font-semibold cursor-pointer transition-colors whitespace-nowrap shrink-0 ${
+              notesOverlayOpen
+                ? 'luxury-dark-btn'
+                : totalBookMarginaliaCount > 0
+                ? 'luxury-surface-btn border-[#C8933B]/60 bg-[#FAF4E6] text-[#5C3A16]'
+                : 'luxury-surface-btn text-[#2B2520]'
+            }`}
+            title="切换手写 / 听写批注覆层 (快捷键 N)"
+          >
+            <Feather
+              className={`w-3.5 h-3.5 ${
+                notesOverlayOpen ? 'text-[#D4A656]' : 'text-[#8E5B13]'
+              }`}
+              aria-hidden="true"
+            />
+            <span>{notesOverlayOpen ? '退出批注' : '书页批注'}</span>
+            {totalBookMarginaliaCount > 0 && (
+              <span
+                className={`font-numeric tabular-nums text-[11px] px-1.5 py-0.5 rounded-md ${
+                  notesOverlayOpen
+                    ? 'bg-white/15 text-[#F6E2B3]'
+                    : 'bg-[#8E5B13]/12 text-[#5C3A16]'
+                }`}
+              >
+                {totalBookMarginaliaCount}
+              </span>
+            )}
+          </button>
+
+          <button
+            type="button"
             onClick={onRefreshAI}
             disabled={isGeneratingAI}
             aria-busy={isGeneratingAI}
@@ -1287,13 +1711,16 @@ export const LawBookReader: React.FC<LawBookReaderProps> = ({
             type="button"
             onClick={onToggleBookmark}
             aria-pressed={bookmarked}
-            aria-label={bookmarked ? '取消收藏丝带' : '夹入收藏丝带'}
-            className={`luxury-surface-btn min-h-[38px] min-w-[38px] px-2.5 rounded-xl inline-flex items-center justify-center cursor-pointer ${
-              bookmarked ? 'border-[#C8933B]/60 bg-[#FAF4E6]' : 'text-[#2B2520]'
+            aria-label={bookmarked ? '取消收藏本定律' : '设为收藏定律'}
+            className={`luxury-surface-btn min-h-[38px] px-3 rounded-xl inline-flex items-center gap-1.5 text-xs font-semibold cursor-pointer whitespace-nowrap shrink-0 ${
+              bookmarked
+                ? 'border-[#961D38]/40 bg-[#FDF3F5] text-[#961D38]'
+                : 'text-[#2B2520]'
             }`}
-            title={bookmarked ? '已夹入藏书丝带' : '夹入藏书丝带'}
+            title={bookmarked ? '已收藏，可在首页快速访问' : '设为收藏定律以便从首页快速进入'}
           >
-            <Bookmark className={`w-4 h-4 ${bookmarked ? 'fill-[#C8933B] text-[#9E6B1E]' : ''}`} />
+            <Heart className={`w-3.5 h-3.5 ${bookmarked ? 'fill-[#961D38] text-[#961D38]' : ''}`} />
+            <span className="hidden sm:inline">{bookmarked ? '已收藏' : '收藏定律'}</span>
           </button>
 
           <button
@@ -1307,6 +1734,247 @@ export const LawBookReader: React.FC<LawBookReaderProps> = ({
           </button>
         </div>
       </div>
+
+      {/* Live Save Confirmation Feedback */}
+      {bookmarkStatusMsg && (
+        <div
+          role="status"
+          className="rounded-xl px-4 py-2 bg-[#EEF7F3] border border-[#157F5D]/35 text-xs text-[#0F5C43] font-semibold flex items-center justify-between gap-2 animate-fadeIn"
+        >
+          <span className="flex items-center gap-1.5">
+            <BookmarkCheck className="w-4 h-4 shrink-0" aria-hidden="true" />
+            <span>{bookmarkStatusMsg}</span>
+          </span>
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="underline font-bold cursor-pointer whitespace-nowrap shrink-0"
+          >
+            回首页查看 →
+          </button>
+        </div>
+      )}
+
+      {/* Inline Resume Banner when opening at Page 1 with existing reading progress */}
+      {initialPageIndex === undefined &&
+        savedProgress &&
+        savedProgress.pageIndex > 0 &&
+        spreadIdx === 0 &&
+        mobilePageIdx === 0 && (
+          <div className="rounded-2xl px-4 py-3 bg-[#FAF4E8] border border-[#C8933B]/45 flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2 text-xs text-[#2B2520] font-numeric tabular-nums">
+              <BookmarkCheck className="w-4 h-4 text-[#8E5B13] shrink-0" aria-hidden="true" />
+              <span>
+                上次阅读进度：<strong className="text-[#181411]">第 {savedProgress.pageIndex + 1} / {totalPages} 页</strong>
+                {' · '}
+                {savedProgress.pageTitle}
+                {' · '}
+                {computeReadingProgressPercent(savedProgress.pageIndex)}%
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => jumpToPage(savedProgress.pageIndex)}
+              className="luxury-dark-btn min-h-[34px] px-3.5 py-1.5 rounded-xl text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
+            >
+              <span>续读第 {savedProgress.pageIndex + 1} 页</span>
+              <ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+            </button>
+          </div>
+        )}
+
+      {/* Reading Progress & Specific Page Bookmarks Manager Panel */}
+      {bookmarkPanelOpen && (
+        <div
+          role="region"
+          aria-label="书页书签与阅读进度管理"
+          className="rounded-2xl bg-[#FAF7F1] border border-[#C8933B]/45 p-4 sm:p-5 space-y-4 shadow-sm animate-fadeIn"
+        >
+          <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-stone-300/60">
+            <div>
+              <div className="text-[11px] font-mono uppercase tracking-wider text-[#8E5B13]">
+                Reading Progress &amp; Page Pins
+              </div>
+              <h3 className="font-serif-editorial text-sm sm:text-base font-bold text-[#181411]">
+                《{law.nameZh}》阅读进度与特定书页书签
+              </h3>
+            </div>
+            <button
+              type="button"
+              onClick={() => setBookmarkPanelOpen(false)}
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-[#6E675F] hover:text-[#181411] hover:bg-stone-200/70 cursor-pointer"
+              aria-label="关闭书签管理面板"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Left Column: Save Reading Progress & Add Page Pin */}
+            <div className="space-y-3 bg-white/85 rounded-xl p-3.5 border border-stone-200/80">
+              <div className="text-xs font-bold text-[#181411]">
+                记录当前书页位置
+              </div>
+
+              {/* Page Selector (Desktop Left/Right or Current Page) */}
+              <div className="flex flex-wrap items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setPinTargetPageIdx(spreadIdx * 2)}
+                  className={`hidden lg:inline-flex px-2.5 py-1.5 rounded-lg text-xs font-semibold cursor-pointer border transition-colors ${
+                    pinTargetPageIdx === spreadIdx * 2
+                      ? 'bg-[#181411] text-[#FAF8F5] border-[#181411]'
+                      : 'bg-[#FAF7F1] text-[#2B2520] border-stone-300'
+                  }`}
+                >
+                  左页 P.{spreadIdx * 2 + 1}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPinTargetPageIdx(spreadIdx * 2 + 1)}
+                  className={`hidden lg:inline-flex px-2.5 py-1.5 rounded-lg text-xs font-semibold cursor-pointer border transition-colors ${
+                    pinTargetPageIdx === spreadIdx * 2 + 1
+                      ? 'bg-[#181411] text-[#FAF8F5] border-[#181411]'
+                      : 'bg-[#FAF7F1] text-[#2B2520] border-stone-300'
+                  }`}
+                >
+                  右页 P.{spreadIdx * 2 + 2}
+                </button>
+                <span className="lg:hidden text-xs font-mono font-semibold text-[#8E5B13] tabular-nums">
+                  当前单页：第 {mobilePageIdx + 1} / {totalPages} 页
+                </span>
+              </div>
+
+              <input
+                type="text"
+                value={pinNoteDraft}
+                onChange={(e) => setPinNoteDraft(e.target.value.slice(0, MAX_BOOKMARK_NOTE_LENGTH))}
+                placeholder="可选备注（如：关键认知机制、防操控重点）..."
+                className="w-full px-3 py-2 rounded-lg bg-[#FAF7F1] border border-stone-300 text-xs text-[#181411] placeholder-[#6E675F] focus:outline-none focus:border-[#8E5B13]"
+              />
+
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  disabled={isSavingBookmark}
+                  onClick={() =>
+                    handleSaveProgressAtPage(
+                      typeof window !== 'undefined' && window.innerWidth < 1024
+                        ? mobilePageIdx
+                        : pinTargetPageIdx
+                    )
+                  }
+                  className="luxury-dark-btn min-h-[36px] px-3 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
+                >
+                  <BookmarkCheck className="w-3.5 h-3.5 text-[#D4A656]" />
+                  <span>设为阅读进度</span>
+                </button>
+
+                <button
+                  type="button"
+                  disabled={isSavingBookmark}
+                  onClick={() =>
+                    handleToggleSinglePagePin(
+                      typeof window !== 'undefined' && window.innerWidth < 1024
+                        ? mobilePageIdx
+                        : pinTargetPageIdx,
+                      pinNoteDraft
+                    )
+                  }
+                  className="luxury-surface-btn min-h-[36px] px-3 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
+                >
+                  <Pin className="w-3.5 h-3.5 text-[#961D38]" />
+                  <span>在此页夹入书签</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Right Column: Saved Progress + Pinned Pages List */}
+            <div className="space-y-2.5 bg-white/85 rounded-xl p-3.5 border border-stone-200/80">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-[#181411]">已存书页标记</span>
+                <span className="font-numeric tabular-nums text-[#6E675F]">
+                  {savedProgress ? '含续读进度 · ' : ''}
+                  {savedPagePins.length} 枚书签
+                </span>
+              </div>
+
+              {!savedProgress && savedPagePins.length === 0 ? (
+                <p className="text-xs text-[#6E675F] py-3">
+                  暂未保存该定律的书页书签或阅读进度，点击左侧按钮即可保存至云端与首页。
+                </p>
+              ) : (
+                <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                  {savedProgress && (
+                    <div className="p-2.5 rounded-lg bg-[#EEF7F3] border border-[#157F5D]/30 flex items-center justify-between gap-2 text-xs">
+                      <div className="min-w-0">
+                        <div className="font-bold text-[#0F5C43] tabular-nums">
+                          阅读进度 · 第 {savedProgress.pageIndex + 1} / {totalPages} 页 ({computeReadingProgressPercent(savedProgress.pageIndex)}%)
+                        </div>
+                        <div className="text-[11px] text-[#3F3831] truncate">
+                          {savedProgress.pageTitle}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => jumpToPage(savedProgress.pageIndex)}
+                          className="px-2.5 py-1 rounded-md bg-[#0F5C43] text-white font-semibold text-[11px] cursor-pointer whitespace-nowrap"
+                        >
+                          跳转
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteBookmarkRecord(savedProgress.id)}
+                          className="p-1 rounded text-[#6E675F] hover:text-[#961D38] cursor-pointer"
+                          aria-label="删除阅读进度"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {savedPagePins.map((pin) => (
+                    <div
+                      key={pin.id}
+                      className="p-2.5 rounded-lg bg-[#FAF7F1] border border-stone-200/90 flex items-center justify-between gap-2 text-xs"
+                    >
+                      <div className="min-w-0">
+                        <div className="font-bold text-[#181411] tabular-nums">
+                          第 {pin.pageIndex + 1} 页 · {pin.pageTitle}
+                        </div>
+                        {pin.note && (
+                          <div className="text-[11px] text-[#57514A] truncate">
+                            {pin.note}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => jumpToPage(pin.pageIndex)}
+                          className="px-2.5 py-1 rounded-md bg-[#181411] text-white font-semibold text-[11px] cursor-pointer whitespace-nowrap"
+                        >
+                          翻至此页
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteBookmarkRecord(pin.id)}
+                          className="p-1 rounded text-[#6E675F] hover:text-[#961D38] cursor-pointer"
+                          aria-label={`删除第 ${pin.pageIndex + 1} 页书签`}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {structuredError && (
         <div
@@ -1335,17 +2003,29 @@ export const LawBookReader: React.FC<LawBookReaderProps> = ({
           <button
             type="button"
             onClick={onToggleBookmark}
-            aria-label={bookmarked ? '收起书签丝带' : '夹入书签丝带'}
-            className={`hidden sm:flex absolute right-10 -top-1 z-30 w-6 transition-all duration-300 cursor-pointer items-end justify-center pb-2 shadow-md ${
-              bookmarked
-                ? 'h-14 bg-gradient-to-b from-[#961D38] via-[#B42445] to-[#7D152C]'
-                : 'h-7 bg-gradient-to-b from-[#3B312A] to-[#261E19] opacity-80 hover:opacity-100 hover:h-9'
+            aria-label={bookmarked ? '取消收藏定律' : '收藏本定律以便快速访问'}
+            className={`hidden sm:flex absolute right-10 -top-1 z-30 w-8 transition-all duration-300 cursor-pointer items-end justify-center pb-2.5 shadow-md ${
+              bookmarked || savedProgress
+                ? 'h-16 bg-gradient-to-b from-[#961D38] via-[#B42445] to-[#7D152C] text-[#F6E2B3]'
+                : 'h-8 bg-gradient-to-b from-[#3B312A] to-[#261E19] text-stone-300 opacity-80 hover:opacity-100 hover:h-10'
             }`}
             style={{
               clipPath: 'polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%)',
             }}
-            title={bookmarked ? '已夹入红金丝带书签' : '点击夹入丝带书签'}
-          />
+            title={
+              savedProgress
+                ? `已存阅读进度 P.${savedProgress.pageIndex + 1}${bookmarked ? ' · 已收藏定律' : ''}`
+                : bookmarked
+                ? '已收藏本定律'
+                : '点击收藏本定律'
+            }
+          >
+            {savedProgress && (
+              <span className="text-[9px] font-mono font-bold tabular-nums leading-none">
+                P.{savedProgress.pageIndex + 1}
+              </span>
+            )}
+          </button>
 
           {/* =========================================================
               DESKTOP 2-PAGE SEWN BOOK SPREAD (lg and up)

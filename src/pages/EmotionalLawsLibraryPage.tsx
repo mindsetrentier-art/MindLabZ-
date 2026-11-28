@@ -5,6 +5,8 @@ import {
   Search,
   ChevronDown,
   Bookmark,
+  BookmarkCheck,
+  BookOpen,
   Heart,
   Crown,
   ArrowRight,
@@ -44,6 +46,13 @@ import {
 } from '../utils/lawSpeechEngine';
 import { SilverSpeechText, LawVoiceToggleSwitch } from '../components/ui/SilverSpeechText';
 import { ViewportLawCard } from '../components/ui/ViewportLawCard';
+import {
+  LawPageBookmarkRecord,
+  computeReadingProgressPercent,
+  filterPagePinsForLaw,
+  findReadingProgressForLaw,
+} from '../utils/lawReadingBookmarkHelpers';
+import { subscribeToAllLawPageBookmarks } from '../services/lawReadingBookmarkService';
 
 type LibraryViewMode = 'corpus' | 'emotional-archive';
 type DifficultyFilter = 'all' | DifficultyLevel;
@@ -52,7 +61,7 @@ const PAGE_BATCH_SIZE = 24;
 
 export const EmotionalLawsLibraryPage: React.FC = () => {
   const navigate = useNavigate();
-  const { laws, user, toggleBookmark, isBookmarked } = useApp();
+  const { laws, user, firebaseUser, toggleBookmark, isBookmarked } = useApp();
   const { fontScale } = useFontScale();
 
   const [viewMode, setViewMode] = useState<LibraryViewMode>('corpus');
@@ -66,6 +75,7 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set(['emo-01', 'emo-11']));
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [spotlightState, setSpotlightState] = useState<{ id: string; tick: number } | null>(null);
+  const [pageBookmarks, setPageBookmarks] = useState<LawPageBookmarkRecord[]>([]);
   const { activeLawId, globalIsSpeaking, activeCpIndex, segments } = useLawSpeech();
 
   const SECTION_TABS = [
@@ -76,6 +86,15 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
     { index: 4, label: '失恋与困局', en: 'Heartbreak', range: '31-40', color: '#06B6D4' },
     { index: 5, label: '成熟关系', en: 'Maturity', range: '41-50', color: '#10B981' },
   ];
+
+  // Subscribe to saved reading progress & page bookmarks
+  useEffect(() => {
+    const unsubscribe = subscribeToAllLawPageBookmarks(
+      firebaseUser?.uid,
+      (records) => setPageBookmarks(records)
+    );
+    return () => unsubscribe();
+  }, [firebaseUser?.uid]);
 
   // Stop speech cleanly on unmount
   useEffect(() => {
@@ -851,6 +870,8 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
                       const isExpanded = expandedIds.has(law.id);
                       const bookmarked = isBookmarked(law.id);
                       const speaking = globalIsSpeaking && activeLawId === law.id;
+                      const progressBm = findReadingProgressForLaw(pageBookmarks, law.id);
+                      const pinCount = filterPagePinsForLaw(pageBookmarks, law.id).length;
 
                       return (
                         <ViewportLawCard
@@ -883,6 +904,22 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
                                   <>
                                     <span aria-hidden="true">·</span>
                                     <span className="text-amber-200">{law.actionUnitCode}</span>
+                                  </>
+                                )}
+                                {progressBm && (
+                                  <>
+                                    <span aria-hidden="true">·</span>
+                                    <span className="text-emerald-300 font-semibold">
+                                      已读第 {progressBm.pageIndex + 1}/12 页 ({computeReadingProgressPercent(progressBm.pageIndex)}%)
+                                    </span>
+                                  </>
+                                )}
+                                {pinCount > 0 && (
+                                  <>
+                                    <span aria-hidden="true">·</span>
+                                    <span className="text-amber-200 font-semibold">
+                                      {pinCount} 枚书页书签
+                                    </span>
                                   </>
                                 )}
                               </div>
@@ -952,12 +989,13 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
                                   gameAudio.playTap();
                                   toggleBookmark(law.id);
                                 }}
+                                aria-pressed={bookmarked}
                                 className={`p-2 rounded-xl border transition-colors cursor-pointer ${
                                   bookmarked
                                     ? 'bg-amber-950/80 border-amber-400/60 text-amber-300'
                                     : 'bg-stone-900 border-stone-800 text-stone-400 hover:text-stone-200 hover:border-stone-700'
                                 }`}
-                                title={bookmarked ? '取消收藏' : '收藏此定律'}
+                                title={bookmarked ? '已收藏，可在首页快速访问（点击取消）' : '收藏此定律以便从首页快速访问'}
                                 aria-label={bookmarked ? '取消收藏' : '收藏此定律'}
                               >
                                 <Bookmark className={`w-4 h-4 ${bookmarked ? 'fill-amber-400' : ''}`} />
@@ -1036,7 +1074,7 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
                                     {law.chapter || 'MindLabZ 心智档案馆'}
                                   </span>
 
-                                  <div className="flex items-center gap-2 shrink-0">
+                                  <div className="flex items-center gap-2 shrink-0 flex-wrap">
                                     <button
                                       type="button"
                                       onClick={() => toggleExpand(law.id)}
@@ -1044,6 +1082,19 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
                                     >
                                       收起
                                     </button>
+                                    {progressBm && (
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          gameAudio.playTap();
+                                          navigate(`/law/${law.id}?page=${progressBm.pageIndex + 1}`);
+                                        }}
+                                        className="px-3.5 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-400/50 text-emerald-200 hover:bg-emerald-500/30 font-bold text-xs inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer tabular-nums"
+                                      >
+                                        <BookmarkCheck className="w-3.5 h-3.5 shrink-0" />
+                                        <span>续读第 {progressBm.pageIndex + 1} 页 →</span>
+                                      </button>
+                                    )}
                                     <button
                                       type="button"
                                       onClick={() => {
@@ -1063,9 +1114,24 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
 
                           {/* Always-visible Bottom-Right Voice Switch Footer */}
                           <div className="px-4 sm:px-5 py-2.5 border-t border-stone-800/70 bg-[#0c0907]/90 flex items-center justify-between gap-2">
-                            <span className="text-[10.5px] text-stone-500 font-numeric">
-                              {speaking ? '银字实时跟读定位中...' : '点击右下角开关，银字跟读此定律'}
-                            </span>
+                            <div className="flex items-center gap-3 min-w-0">
+                              <span className="text-[10.5px] text-stone-500 font-numeric truncate">
+                                {speaking ? '银字实时跟读定位中...' : '点击右下角开关，银字跟读此定律'}
+                              </span>
+                              {progressBm && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    gameAudio.playTap();
+                                    navigate(`/law/${law.id}?page=${progressBm.pageIndex + 1}`);
+                                  }}
+                                  className="text-[11px] font-semibold text-emerald-300 hover:text-emerald-200 underline underline-offset-2 whitespace-nowrap shrink-0 cursor-pointer tabular-nums"
+                                >
+                                  续读第 {progressBm.pageIndex + 1} 页 →
+                                </button>
+                              )}
+                            </div>
                             <LawVoiceToggleSwitch
                               isOn={speaking}
                               onToggle={(e) => handleSpeakLaw(law, e)}
@@ -1232,6 +1298,18 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
                           const isExpanded = expandedIds.has(law.id);
                           const bookmarked = isBookmarked(law.id);
                           const speakingEmo = globalIsSpeaking && activeLawId === law.id;
+                          const targetId =
+                            law.isDuplicateOfCore && law.duplicateCoreId
+                              ? law.duplicateCoreId
+                              : law.id;
+                          const emoProgress =
+                            findReadingProgressForLaw(pageBookmarks, targetId) ||
+                            findReadingProgressForLaw(pageBookmarks, law.id);
+                          const emoPinCount =
+                            filterPagePinsForLaw(pageBookmarks, targetId).length +
+                            (targetId !== law.id
+                              ? filterPagePinsForLaw(pageBookmarks, law.id).length
+                              : 0);
 
                           return (
                             <ViewportLawCard
@@ -1283,8 +1361,18 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
                                       ”
                                     </p>
 
-                                    <div className="text-[11px] text-amber-300/75 font-numeric truncate">
-                                      {law.keywords.join(' · ')}
+                                    <div className="text-[11px] text-amber-300/75 font-numeric truncate flex items-center gap-2 flex-wrap">
+                                      <span className="truncate">{law.keywords.join(' · ')}</span>
+                                      {emoProgress && (
+                                        <span className="text-emerald-300 font-semibold tabular-nums shrink-0">
+                                          · 已读第 {emoProgress.pageIndex + 1}/12 页
+                                        </span>
+                                      )}
+                                      {emoPinCount > 0 && (
+                                        <span className="text-amber-200 font-semibold tabular-nums shrink-0">
+                                          · {emoPinCount} 枚书页书签
+                                        </span>
+                                      )}
                                     </div>
                                   </div>
                                 </div>
@@ -1310,12 +1398,14 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
                                       gameAudio.playTap();
                                       toggleBookmark(law.id);
                                     }}
+                                    aria-pressed={bookmarked}
                                     className={`p-2 rounded-xl border transition-colors cursor-pointer ${
                                       bookmarked
                                         ? 'bg-amber-950/80 art-gold-border text-amber-300'
                                         : 'bg-stone-900 border-stone-800 text-stone-500 hover:text-stone-300'
                                     }`}
-                                    title={bookmarked ? '取消收藏' : '收藏此定律'}
+                                    title={bookmarked ? '已收藏，可在首页快速访问（点击取消）' : '收藏此定律以便从首页快速访问'}
+                                    aria-label={bookmarked ? '取消收藏此定律' : '收藏此定律'}
                                   >
                                     <Bookmark className={`w-4 h-4 ${bookmarked ? 'fill-amber-400' : ''}`} />
                                   </button>
@@ -1453,7 +1543,7 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
                                         馆藏编号：LAW-EMO-{String(law.order).padStart(2, '0')}
                                       </div>
 
-                                      <div className="flex items-center gap-2">
+                                      <div className="flex items-center gap-2 flex-wrap">
                                         <button
                                           type="button"
                                           onClick={() => toggleExpand(law.id)}
@@ -1461,14 +1551,23 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
                                         >
                                           收起面板
                                         </button>
+                                        {emoProgress && (
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              gameAudio.playTap();
+                                              navigate(`/law/${targetId}?page=${emoProgress.pageIndex + 1}`);
+                                            }}
+                                            className="px-3.5 py-1.5 rounded-xl bg-emerald-500/20 border border-emerald-400/50 text-emerald-200 hover:bg-emerald-500/30 font-bold text-xs inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer tabular-nums"
+                                          >
+                                            <BookOpen className="w-3.5 h-3.5 shrink-0" />
+                                            <span>续读第 {emoProgress.pageIndex + 1} 页 →</span>
+                                          </button>
+                                        )}
                                         <button
                                           type="button"
                                           onClick={() => {
                                             gameAudio.playTap();
-                                            const targetId =
-                                              law.isDuplicateOfCore && law.duplicateCoreId
-                                                ? law.duplicateCoreId
-                                                : law.id;
                                             navigate(`/law/${targetId}`);
                                           }}
                                           className="px-4 py-1.5 rounded-xl bg-amber-500 hover:brightness-110 text-stone-950 font-bold text-xs inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 cursor-pointer"
@@ -1484,9 +1583,24 @@ export const EmotionalLawsLibraryPage: React.FC = () => {
 
                               {/* Always-visible Bottom-Right Voice Switch Footer */}
                               <div className="px-4 sm:px-5 py-2.5 border-t border-stone-800/70 bg-[#0b0907]/90 flex items-center justify-between gap-2">
-                                <span className="text-[10.5px] text-stone-500 font-numeric">
-                                  {speakingEmo ? '银字实时跟读定位中...' : '打开右下角开关，语音朗读并银色高亮字迹'}
-                                </span>
+                                <div className="flex items-center gap-3 min-w-0">
+                                  <span className="text-[10.5px] text-stone-500 font-numeric truncate">
+                                    {speakingEmo ? '银字实时跟读定位中...' : '打开右下角开关，语音朗读并银色高亮字迹'}
+                                  </span>
+                                  {emoProgress && (
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        gameAudio.playTap();
+                                        navigate(`/law/${targetId}?page=${emoProgress.pageIndex + 1}`);
+                                      }}
+                                      className="text-[11px] font-semibold text-emerald-300 hover:text-emerald-200 underline underline-offset-2 whitespace-nowrap shrink-0 cursor-pointer tabular-nums"
+                                    >
+                                      续读第 {emoProgress.pageIndex + 1} 页 →
+                                    </button>
+                                  )}
+                                </div>
                                 <LawVoiceToggleSwitch
                                   isOn={speakingEmo}
                                   onToggle={(e) => handleSpeakEmotionalLaw(law, e)}

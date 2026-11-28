@@ -793,11 +793,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
 
       const updatedStats = { ...prev.stats };
-      if (gameId === 'memory-lab' || gameId === 'first-impression' || gameId === 'peak-end') {
+      if (
+        gameId === 'memory-lab' ||
+        gameId === 'first-impression' ||
+        gameId === 'peak-end' ||
+        gameId === 'nback-sequence' ||
+        gameId === 'chrono-span'
+      ) {
         updatedStats.memory = Math.min(100, Math.round(updatedStats.memory * 0.9 + result.accuracy * 0.1));
       } else if (gameId === 'mind-trap' || gameId === 'falsification-challenge' || gameId === 'micro-habit') {
         updatedStats.reasoning = Math.min(100, Math.round(updatedStats.reasoning * 0.9 + result.accuracy * 0.1));
-      } else if (gameId === 'brain-rush' || gameId === 'emotion-detective') {
+      } else if (
+        gameId === 'brain-rush' ||
+        gameId === 'emotion-detective' ||
+        gameId === 'reflex-pulse' ||
+        gameId === 'go-nogo-gate'
+      ) {
         updatedStats.attention = Math.min(100, Math.round(updatedStats.attention * 0.9 + result.accuracy * 0.1));
       } else if (gameId === 'mind-detective' || gameId === 'attribution-shift' || gameId === 'bystander-breaker') {
         updatedStats.knowledge = Math.min(100, Math.round(updatedStats.knowledge * 0.9 + result.accuracy * 0.1));

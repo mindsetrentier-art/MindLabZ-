@@ -1683,3 +1683,66 @@ body > div[style*="fixed"][style*="bottom"][class*="netlify"] {
   }
 }
 
+/* ========================================================
+   Handwritten Marginalia Fonts & Archival Vellum Overlay
+   Uses Zhi Mang Xing, Ma Shan Zheng & Long Cang loaded in index.html
+   ======================================================== */
+.font-handwriting-cursive {
+  font-family: 'Zhi Mang Xing', 'Playfair Display', 'Noto Serif SC', cursive;
+  letter-spacing: 0.02em;
+}
+
+.font-handwriting-running {
+  font-family: 'Ma Shan Zheng', 'Cormorant Garamond', 'Noto Serif SC', cursive;
+  letter-spacing: 0.015em;
+}
+
+.font-handwriting-archival {
+  font-family: 'Long Cang', 'Cormorant Garamond', 'Noto Serif SC', cursive;
+  letter-spacing: 0.025em;
+}
+
+.marginalia-vellum-overlay {
+  background: linear-gradient(
+    180deg,
+    rgba(253, 249, 240, 0.94) 0%,
+    rgba(250, 244, 230, 0.91) 52%,
+    rgba(247, 239, 223, 0.94) 100%
+  );
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+.marginalia-lined-vellum {
+  background-color: rgba(255, 252, 245, 0.88);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 27px,
+    rgba(166, 132, 76, 0.14) 27px,
+    rgba(166, 132, 76, 0.14) 28px
+  );
+  background-position: 0 6px;
+}
+
+.marginalia-ink-slip {
+  box-shadow:
+    0 2px 10px -4px rgba(24, 18, 12, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  transition: transform 200ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 200ms ease;
+}
+
+.marginalia-ink-slip:hover {
+  box-shadow:
+    0 6px 16px -6px rgba(24, 18, 12, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marginalia-ink-slip {
+    transform: none !important;
+    transition: box-shadow 150ms ease;
+  }
+}
+
+
